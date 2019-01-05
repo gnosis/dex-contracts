@@ -1,0 +1,33 @@
+{
+  "name": "dex-contracts",
+  "version": "1.0.0",
+  "description": "Contracts for dFusion multi-token batch auction exchange",
+  "main": ".eslintrc.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gnosis/dex-contracts.git"
+  },
+  "keywords": [
+    "decentralized",
+    "exchange",
+    "dFusion",
+    "gnosis",
+    "dex",
+    "batch",
+    "auction",
+    "multi-token"
+  ],
+  "author": "GNOSIS",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gnosis/dex-contracts/issues"
+  },
+  "homepage": "https://github.com/gnosis/dex-contracts#readme",
+  "dependencies": {}
+}

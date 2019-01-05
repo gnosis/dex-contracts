@@ -1,0 +1,18 @@
+#.travis.yml
+sudo: required
+dist: trusty
+language: node_js
+node_js:
+  - '8'
+before_install:
+  - rm -rf build
+  - rm -rf node_modules
+  - npm install -g ganache-cli
+install:
+  - npm install
+before_script:
+  - ganache-cli --defaultBalanceEther 500000000 > /dev/null &
+  - sleep 5
+script:
+  - cd $TRAVIS_BUILD_DIR/travscripts
+  - "chmod +x ./BranchScript.sh && ./BranchScript.sh"
