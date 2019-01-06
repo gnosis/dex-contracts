@@ -10,15 +10,15 @@ contract BatchAuction {
 
     event AccountOpened(uint16 indexed depositor);
 
-    function openAccount(uint16 accountIndex) public {
-        require(accountIndex > 0, "Account index must be positive!");
-        require(accountIndex <= maxAccountNumber, "Account index exceeds max");
+    function openAccount(uint16 accountId) public {
+        require(accountId > 0, "Account index must be positive!");
+        require(accountId <= maxAccountNumber, "Account index exceeds max");
 
         // Ensure bijectivity of this maps (i.e. address can't occupy > 1 slots)
-        require(publicKeyToAccountMap[msg.sender] == 0, "Address already occupies account slot");
-        require(accountToPublicKeyMap[accountIndex] == address(0), "Account slot occupied");
+        require(publicKeyToAccountMap[msg.sender] == 0, "Address occupies account slot");
+        require(accountToPublicKeyMap[accountId] == address(0), "Account slot occupied");
 
-        publicKeyToAccountMap[msg.sender] = accountIndex;
-        accountToPublicKeyMap[accountIndex] = msg.sender;
+        publicKeyToAccountMap[msg.sender] = accountId;
+        accountToPublicKeyMap[accountId] = msg.sender;
     }
 }
