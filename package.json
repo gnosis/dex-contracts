@@ -29,5 +29,8 @@
     "url": "https://github.com/gnosis/dex-contracts/issues"
   },
   "homepage": "https://github.com/gnosis/dex-contracts#readme",
-  "dependencies": {}
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^5.12.0"
+  }
 }
