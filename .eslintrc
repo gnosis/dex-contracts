@@ -1,0 +1,101 @@
+{
+    "extends": [
+      "airbnb"
+    ],
+    "parser": "babel-eslint",
+    "plugins": [
+      "jest"
+    ],
+    "settings": {
+      "import/resolver": {
+        "webpack": {
+          "config": "webpack.dev.config.js"
+        }
+      },
+      "import/extensions": [
+        ".js",
+        ".jsx"
+      ],
+      "import/ignore": [
+        "\\.(s?css|less|styl|svg|json)$"
+      ]
+    },
+    "rules": {
+      "import/no-unresolved": [
+        2,
+        {
+          "commonjs": true,
+          "amd": true,
+          "caseSensitive": true
+        }
+      ],
+      "import/named": 2,
+      "import/default": 2,
+      "import/namespace": 2,
+      "react/jsx-filename-extension": [
+        1,
+        {
+          "extensions": [
+            ".js",
+            ".jsx"
+          ]
+        }
+      ],
+      "react/forbid-prop-types": [
+        1,
+        {
+          "forbid": [
+            "object",
+            "any"
+          ]
+        }
+      ],
+      "class-methods-use-this": 0,
+      "one-var": 0,
+      "one-var-declaration-per-line": 0,
+      "no-nested-ternary": 0,
+      "no-await-in-loop": 0,
+      "no-multi-assign": 0,
+      "object-curly-newline": 0,
+      "no-param-reassign": 0,
+      "import/no-extraneous-dependencies": [
+        "error",
+        {
+          "devDependencies": true,
+          "optionalDependencies": false,
+          "peerDependencies": false
+        }
+      ],
+      "semi": [
+        "error",
+        "never"
+      ],
+      "max-len": [
+        "error",
+        120,
+        2,
+        {
+          "ignoreUrls": true,
+          "ignoreComments": false,
+          "ignoreRegExpLiterals": true,
+          "ignoreStrings": true,
+          "ignoreTemplateLiterals": true
+        }
+      ],
+      "no-restricted-syntax": [
+        "error",
+        "WithStatement"
+      ]
+    },
+    "env": {
+      "jest/globals": true,
+      "browser": true,
+      "mocha": true
+    },
+    "globals": {
+      "assert": true,
+      "contract": true,
+      "artifacts": true,
+      "web3": true
+    }
+  }
