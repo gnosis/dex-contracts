@@ -36,6 +36,7 @@
   "devDependencies": {
     "eslint": "^5.12.0",
     "eslint-plugin-react": "^7.12.3",
-    "solidity-coverage": "^0.5.11"
+    "solidity-coverage": "^0.5.11",
+    "truffle": "^5.0.0-next.26"
   }
 }
