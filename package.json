@@ -7,7 +7,10 @@
     "test": "test"
   },
   "scripts": {
-    "test": "truffle test"
+    "test": "truffle test",
+    "coverage": "./node_modules/.bin/solidity-coverage",
+    "lint": "./node_modules/.bin/eslint .",
+    "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\""
   },
   "repository": {
     "type": "git",
