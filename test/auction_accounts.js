@@ -1,9 +1,10 @@
 const BatchAuction = artifacts.require("BatchAuction")
+const ERC20 = artifacts.require("ERC20")
 
 const { assertRejects } = require("./utilities.js")
 
 contract("BatchAuction", async (accounts) => {
-  const [owner, user_1] = accounts
+  const [owner, user_1, user_2] = accounts
   
   describe("openAccount()", () => {
     it("Account index default is 0", async () => {
@@ -67,5 +68,51 @@ contract("BatchAuction", async (accounts) => {
         assert.equal(accounts[i], await instance.accountToPublicKeyMap.call(i+1))
       }
     })
+  })
+
+  describe("addToken()", () => {
+    it("Owner can add tokens", async () => {
+      const instance = await BatchAuction.new()
+
+      const token_1 = await ERC20.new()
+      instance.addToken(token_1.address)
+
+      assert.equal((await instance.tokenAddresToIdMap.call(token_1.address)).toNumber(), 1)
+      assert.equal(await instance.tokenIdToAddressMap.call(1), token_1.address)
+
+      const token_2 = await ERC20.new()
+      instance.addToken(token_2.address)
+
+      assert.equal((await instance.tokenAddresToIdMap.call(token_2.address)).toNumber(), 2)
+      assert.equal(await instance.tokenIdToAddressMap.call(2), token_2.address)
+    })
+
+    it("Nobody Else can add tokens", async () => {
+      const instance = await BatchAuction.new()
+      const token = await ERC20.new()
+
+      await assertRejects(instance.addToken(token.address, {from: user_1}))
+      await assertRejects(instance.addToken(token.address, {from: user_2}))
+    })
+
+    it("Can't add same token twice", async () => {
+      const instance = await BatchAuction.new()
+      const token = await ERC20.new()
+
+      instance.addToken(token.address)
+      await assertRejects(instance.addToken(token.address))
+    })
+
+    it("Can't exceed max tokens", async () => {
+      const instance = await BatchAuction.new()
+      const max_tokens = (await instance.MAX_TOKENS.call()).toNumber()
+
+      for (let i = 1; i < max_tokens + 1; i++) {
+        instance.addToken((await ERC20.new()).address)
+      }
+      // Last token can't be added (exceeds limit)
+      await assertRejects(instance.addToken((await ERC20.new()).address))
+    })
+
   })
 })
