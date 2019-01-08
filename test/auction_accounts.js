@@ -19,13 +19,13 @@ contract("BatchAuction", async (accounts) => {
 
     it("Do not allow open account at index > maxAccountNumber", async () => {
       const instance = await BatchAuction.new()
-      const max_account_id = (await instance.maxAccountNumber.call()).toNumber()
+      const max_account_id = (await instance.MAX_ACCOUNT_ID.call()).toNumber()
       await assertRejects(instance.openAccount(max_account_id + 1))
     })
 
     it("Do allow open account at index = maxAccountNumber", async () => {
       const instance = await BatchAuction.new()
-      const max_account_id = (await instance.maxAccountNumber.call()).toNumber()
+      const max_account_id = (await instance.MAX_ACCOUNT_ID.call()).toNumber()
       instance.openAccount(max_account_id)
       assert.equal(max_account_id, (await instance.publicKeyToAccountMap.call(owner)).toNumber())
     })
