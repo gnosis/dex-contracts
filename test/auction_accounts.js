@@ -76,7 +76,6 @@ contract("BatchAuction", async (accounts) => {
 
       const token_1 = await ERC20.new()
       await instance.addToken(token_1.address)
-      instance.addToken(token_1.address)
 
       assert.equal((await instance.tokenAddresToIdMap.call(token_1.address)).toNumber(), 1)
       assert.equal(await instance.tokenIdToAddressMap.call(1), token_1.address)
