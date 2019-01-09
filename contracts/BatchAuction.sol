@@ -16,8 +16,6 @@ contract BatchAuction is Ownable {
     mapping (address => uint8) public tokenAddresToIdMap;
     mapping (uint8 => address) public tokenIdToAddressMap;
 
-    event RegisteredToken(address tokenAddress, uint8 tokenId);
-
     function openAccount(uint16 accountId) public {
         require(accountId != 0, "Account index must be positive!");
         require(accountId <= MAX_ACCOUNT_ID, "Account index exceeds max");
@@ -38,7 +36,6 @@ contract BatchAuction is Ownable {
         tokenIdToAddressMap[numTokens + 1] = _tokenAddress;
 
         numTokens++;
-        emit RegisteredToken(_tokenAddress, numTokens);
     }
 
 }
