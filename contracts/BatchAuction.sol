@@ -16,7 +16,18 @@ contract BatchAuction is Ownable {
     mapping (address => uint8) public tokenAddresToIdMap;
     mapping (uint8 => address) public tokenIdToAddressMap;
 
+    bytes32 public depositHash;
+
+    event Deposit(uint16 accountId, uint8 tokenIndex, uint amount);
     event RegisteredToken(address tokenAddress, uint8 tokenId);
+
+    /**
+     * @dev Throws if called by an unregistered account.
+     */
+    modifier onlyRegistered() {
+        require(publicKeyToAccountMap[msg.sender] != 0, "Must have registered account");
+        _;
+    }
 
     function openAccount(uint16 accountId) public {
         require(accountId != 0, "Account index must be positive!");
@@ -41,4 +52,21 @@ contract BatchAuction is Ownable {
         emit RegisteredToken(_tokenAddress, numTokens);
     }
 
+    function deposit(uint8 tokenIndex, uint amount) public onlyRegistered() {
+        require(amount != 0, "Must deposit positive amount");
+
+        address tokenAddress = tokenIdToAddressMap[tokenIndex];
+        require(tokenAddress != address(0), "Requested token is not registered");
+
+        require(
+            ERC20(tokenAddress).transferFrom(msg.sender, address(this), amount), 
+            "Unsuccessful transfer"
+        );
+
+        uint16 accountId = publicKeyToAccountMap[msg.sender]; 
+        depositHash = sha256(
+            abi.encodePacked(depositHash, accountId, tokenIndex, amount)
+        );
+        emit Deposit(accountId, tokenIndex, amount);
+    }
 }
