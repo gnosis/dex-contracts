@@ -16,10 +16,16 @@ contract BatchAuction is Ownable {
     mapping (address => uint8) public tokenAddresToIdMap;
     mapping (uint8 => address) public tokenIdToAddressMap;
 
-    bytes32 public depositHash;
+    struct DepositState {
+        bytes32 shaHash;
+        bool applied;
+    }
+    
+    uint public depositIndex;
+    mapping (uint => DepositState) public depositHashes;
 
-    event Deposit(uint16 accountId, uint8 tokenIndex, uint amount);
-    event RegisteredToken(address tokenAddress, uint8 tokenId);
+    event Deposit(uint16 accountId, uint8 tokenIndex, uint amount, uint slot);
+    event IncrementDepositIndex(uint index);
 
     /**
      * @dev Throws if called by an unregistered account.
@@ -49,7 +55,6 @@ contract BatchAuction is Ownable {
         tokenIdToAddressMap[numTokens + 1] = _tokenAddress;
 
         numTokens++;
-        emit RegisteredToken(_tokenAddress, numTokens);
     }
 
     function deposit(uint8 tokenIndex, uint amount) public onlyRegistered() {
@@ -62,11 +67,22 @@ contract BatchAuction is Ownable {
             ERC20(tokenAddress).transferFrom(msg.sender, address(this), amount), 
             "Unsuccessful transfer"
         );
+        
+        // Increment depositIndex until it matches correct.
+        uint nextDepositIndex = block.number / 20;
+        while (depositIndex != nextDepositIndex) {
+            depositIndex++;
+            depositHashes[depositIndex] = DepositState({shaHash: 0, applied: false});
+            emit IncrementDepositIndex(depositIndex);
+        }
 
-        uint16 accountId = publicKeyToAccountMap[msg.sender]; 
-        depositHash = sha256(
-            abi.encodePacked(depositHash, accountId, tokenIndex, amount)
+        uint16 accountId = publicKeyToAccountMap[msg.sender];
+        bytes32 nextDepositHash = sha256(
+            abi.encodePacked(depositHashes[depositIndex].shaHash, accountId, tokenIndex, amount)
         );
-        emit Deposit(accountId, tokenIndex, amount);
+
+        depositHashes[depositIndex] = DepositState({shaHash: nextDepositHash, applied: false});
+
+        emit Deposit(accountId, tokenIndex, amount, depositIndex);
     }
 }

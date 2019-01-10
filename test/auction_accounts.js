@@ -154,7 +154,7 @@ contract("BatchAuction", async (accounts) => {
       await assertRejects(instance.deposit(token_index, 0, { from: user_1 }))
     })
 
-    it("Generic Deposit", async () => {
+    it.only("Generic Deposit", async () => {
       const instance = await BatchAuction.new()
       const token = await MintableERC20.new()
       const token_index = 1
@@ -168,7 +168,7 @@ contract("BatchAuction", async (accounts) => {
       // user 1 deposits 10
       await instance.deposit(token_index, 10, { from: user_1 })
 
-      assert.notEqual(await instance.depositHash.call(), 0)
+      assert.notEqual((await instance.depositHashes(0)).shaHash, 0)
     })
   })
 })
