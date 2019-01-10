@@ -119,41 +119,38 @@ contract("BatchAuction", async (accounts) => {
   describe("deposit()", () => {
     it("No deposit by unregistered address", async () => {
       const instance = await BatchAuction.new()
-      const token_1 = await ERC20.new()
-      await instance.addToken(token_1.address)
-      const token1Index = (await instance.tokenAddresToIdMap.call(token_1.address)).toNumber()
+      const token = await ERC20.new()
+      await instance.addToken(token.address)
+      const token_index = (await instance.tokenAddresToIdMap.call(token.address)).toNumber()
       
-      await assertRejects(instance.deposit(token1Index, 0))
+      await assertRejects(instance.deposit(token_index, 0))
     })
 
     it("No deposit with failed transfer (insufficeint funds)", async () => {
       const instance = await BatchAuction.new()
-      const token_1 = await ERC20.new()
-      await instance.addToken(token_1.address)
+      const token = await ERC20.new()
+      await instance.addToken(token.address)
       await instance.openAccount(1, { from: user_1 })
+
+      const token_index = (await instance.tokenAddresToIdMap.call(token.address)).toNumber()
       
-      const token1Index = (await instance.tokenAddresToIdMap.call(token_1.address)).toNumber()
-      
-      await assertRejects(instance.deposit(token1Index, 1, { from: user_1 }))
+      await assertRejects(instance.deposit(token_index, 1, { from: user_1 }))
     })
 
     it("No deposit unregistered token", async () => {
       const instance = await BatchAuction.new()
       const num_tokens = (await instance.numTokens.call()).toNumber()
-
       await instance.openAccount(1, { from: user_1 })
-      
-      await assertRejects(instance.deposit(num_tokens, 1, { from: user_1 }))
+      await assertRejects(instance.deposit(num_tokens + 1, 1, { from: user_1 }))
     })
 
     it("No deposit 0", async () => {
       const instance = await BatchAuction.new()
-      const token_1 = await ERC20.new()
-      await instance.addToken(token_1.address)
+      const token = await ERC20.new()
+      await instance.addToken(token.address)
       await instance.openAccount(1, { from: user_1 })
-      
-      const token_index = (await instance.tokenAddresToIdMap.call(token_1.address)).toNumber()
-      
+
+      const token_index = (await instance.tokenAddresToIdMap.call(token.address)).toNumber()
       await assertRejects(instance.deposit(token_index, 0, { from: user_1 }))
     })
 
@@ -167,7 +164,7 @@ contract("BatchAuction", async (accounts) => {
 
       await instance.addToken(token.address)
       await instance.openAccount(token_index, { from: user_1 })
-      
+
       // user 1 deposits 10
       await instance.deposit(token_index, 10, { from: user_1 })
 
