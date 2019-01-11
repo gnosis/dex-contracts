@@ -2,7 +2,11 @@ const BatchAuction = artifacts.require("BatchAuction")
 const ERC20 = artifacts.require("ERC20")
 const MintableERC20 = artifacts.require("./ERC20Mintable.sol")
 
-const { assertRejects, waitForNBlocks } = require("./utilities.js")
+const {
+  assertRejects,
+  waitForNBlocks,
+  fundAccounts,
+  approveContract } = require("./utilities.js")
 
 contract("BatchAuction", async (accounts) => {
   const [owner, user_1, user_2] = accounts
@@ -159,16 +163,19 @@ contract("BatchAuction", async (accounts) => {
       const token = await MintableERC20.new()
       const token_index = 1
       // Mint 100 tokens to user_1 and approve contract to transfer
-      await token.mint(user_1, 100)
-      await token.approve(instance.address, 10, { from: user_1 })
+
+      // await token.mint(user_1, 100)
+      await fundAccounts(owner, accounts, token, 100)
+      // await token.approve(instance.address, 10, { from: user_1 })
+      await approveContract(instance, accounts, token, 100)
 
       await instance.addToken(token.address)
       await instance.openAccount(token_index, { from: user_1 })
 
       // user 1 deposits 10
       await instance.deposit(token_index, 10, { from: user_1 })
-
-      assert.notEqual((await instance.depositHashes(0)).shaHash, 0)
+      const deposit_slot = (await instance.depositIndex.call()).toNumber()
+      assert.notEqual((await instance.depositHashes(deposit_slot)).shaHash, 0)
     })
 
     it("Deposits over consecutive slots", async () => {
@@ -191,7 +198,7 @@ contract("BatchAuction", async (accounts) => {
       await instance.deposit(token_index, 10, { from: user_1 })
       const deposit_slot = Math.floor(await web3.eth.getBlockNumber()/20)
       assert.notEqual((await instance.depositHashes(deposit_slot)).shaHash, 0)
-      assert.false((await instance.depositHashes(deposit_slot)).applied)
+      assert.equal((await instance.depositHashes(deposit_slot)).applied, false)
 
       // wait for another 20 blocks and deposit again
       await waitForNBlocks(20, owner)
