@@ -27,9 +27,6 @@ contract BatchAuction is Ownable {
     event Deposit(uint16 accountId, uint8 tokenIndex, uint amount, uint slot);
     event IncrementDepositIndex(uint index);
 
-    /**
-     * @dev Throws if called by an unregistered account.
-     */
     modifier onlyRegistered() {
         require(publicKeyToAccountMap[msg.sender] != 0, "Must have registered account");
         _;
