@@ -81,11 +81,8 @@ contract BatchAuction is Ownable {
             "Unsuccessful transfer"
         );
         
-        // Increment depositIndex until it matches correct.
-        uint nextDepositIndex = block.number / 20;
-        while (depositIndex != nextDepositIndex) {
-            depositIndex++;
-            depositHashes[depositIndex] = DepositState({shaHash: 0, applied: false});
+        if (depositIndex != block.number / 20) {
+            depositIndex = block.number / 20;
             emit IncrementDepositIndex(depositIndex);
         }
 
