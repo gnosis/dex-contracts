@@ -162,11 +162,9 @@ contract("BatchAuction", async (accounts) => {
       const instance = await BatchAuction.new()
       const token = await MintableERC20.new()
       const token_index = 1
-      // Mint 100 tokens to user_1 and approve contract to transfer
 
-      // await token.mint(user_1, 100)
+      // fund accounts and approve contract for transfers
       await fundAccounts(owner, accounts, token, 100)
-      // await token.approve(instance.address, 10, { from: user_1 })
       await approveContract(instance, accounts, token, 100)
 
       await instance.addToken(token.address)
@@ -182,14 +180,14 @@ contract("BatchAuction", async (accounts) => {
       const instance = await BatchAuction.new()
       const token = await MintableERC20.new()
       const token_index = 1
-      // Mint 100 tokens to user_1 and approve contract to transfer
-      await token.mint(user_1, 100)
-      await token.approve(instance.address, 100, { from: user_1 })
+      
+      // fund accounts and approve contract for transfers
+      await fundAccounts(owner, accounts, token, 100)
+      await approveContract(instance, accounts, token, 100)
 
       await instance.addToken(token.address)
       await instance.openAccount(token_index, { from: user_1 })
 
-      // First deposit slot is missed (i.e. empty)
       await waitForNBlocks(20, owner)
       // First deposit slot is missed (i.e. empty)
       assert.equal((await instance.depositHashes(0)).shaHash, 0)
