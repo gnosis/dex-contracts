@@ -17,6 +17,14 @@ const assertRejects = async (q, msg) => {
   }
 }
 
+// Wait for n blocks to pass
+const waitForNBlocks = async function(numBlocks, authority) {
+  for (let i = 0; i < numBlocks; i++) {
+    await web3.eth.sendTransaction({from: authority, "to": authority, value: 10})
+  }
+}
+
 module.exports = {
   assertRejects,
+  waitForNBlocks,
 }

@@ -2,7 +2,7 @@ const BatchAuction = artifacts.require("BatchAuction")
 const ERC20 = artifacts.require("ERC20")
 const MintableERC20 = artifacts.require("./ERC20Mintable.sol")
 
-const { assertRejects } = require("./utilities.js")
+const { assertRejects, waitForNBlocks } = require("./utilities.js")
 
 contract("BatchAuction", async (accounts) => {
   const [owner, user_1, user_2] = accounts
@@ -154,7 +154,7 @@ contract("BatchAuction", async (accounts) => {
       await assertRejects(instance.deposit(token_index, 0, { from: user_1 }))
     })
 
-    it.only("Generic Deposit", async () => {
+    it("Generic Deposit", async () => {
       const instance = await BatchAuction.new()
       const token = await MintableERC20.new()
       const token_index = 1
@@ -169,6 +169,35 @@ contract("BatchAuction", async (accounts) => {
       await instance.deposit(token_index, 10, { from: user_1 })
 
       assert.notEqual((await instance.depositHashes(0)).shaHash, 0)
+    })
+
+    it("Deposits over consecutive slots", async () => {
+      const instance = await BatchAuction.new()
+      const token = await MintableERC20.new()
+      const token_index = 1
+      // Mint 100 tokens to user_1 and approve contract to transfer
+      await token.mint(user_1, 100)
+      await token.approve(instance.address, 100, { from: user_1 })
+
+      await instance.addToken(token.address)
+      await instance.openAccount(token_index, { from: user_1 })
+
+      // First deposit slot is missed (i.e. empty)
+      await waitForNBlocks(20, owner)
+      // First deposit slot is missed (i.e. empty)
+      assert.equal((await instance.depositHashes(0)).shaHash, 0)
+
+      // user 1 deposits 10
+      await instance.deposit(token_index, 10, { from: user_1 })
+      const deposit_slot = Math.floor(await web3.eth.getBlockNumber()/20)
+      assert.notEqual((await instance.depositHashes(deposit_slot)).shaHash, 0)
+      assert.false((await instance.depositHashes(deposit_slot)).applied)
+
+      // wait for another 20 blocks and deposit again
+      await waitForNBlocks(20, owner)
+      await instance.deposit(token_index, 10, { from: user_1 })
+
+      assert.notEqual((await instance.depositHashes(deposit_slot + 1)).shaHash, 0)
     })
   })
 })
