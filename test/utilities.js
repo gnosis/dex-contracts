@@ -96,8 +96,6 @@ const setupEnvironment = async function(contract, token_owner, accounts, numToke
   return tokens
 }
 
-
-
 // Wait for n blocks to pass
 const waitForNBlocks = async function(numBlocks, authority) {
   for (let i = 0; i < numBlocks; i++) {
