@@ -9,14 +9,7 @@ contract BatchAuction is Ownable {
     uint16 public constant MAX_ACCOUNT_ID = 100;
     uint8 public constant MAX_TOKENS = 30;
 
-    // struct PedersenHash {
-    //     bool sign;
-    //     bytes32 x;
-    // }
-
-    // uint stateIndex;
-    bytes32[] public stateRoots;
-    // mapping (uint => PedersenHash) public stateRoots;  // Pedersen hashes
+    bytes32[] public stateRoots;  // Pedersen Hash
 
     mapping (address => uint16) public publicKeyToAccountMap;
     mapping (uint16 => address) public accountToPublicKeyMap;
@@ -30,13 +23,13 @@ contract BatchAuction is Ownable {
         bool applied;
     }
     
+    // Note that this is only updated on successfull applyDeposit
     uint public depositIndex;
     mapping (uint => DepositState) public depositHashes;
 
     event Deposit(uint16 accountId, uint8 tokenIndex, uint amount, uint slot);
     event IncrementDepositIndex(uint index);
     event StateTransistion(string transitionType, bytes32 from, bytes32 to);
-    // event StateTransistion(string transitionType, PedersenHash from, PedersenHash to);
 
     modifier onlyRegistered() {
         require(publicKeyToAccountMap[msg.sender] != 0, "Must have registered account");
@@ -45,7 +38,6 @@ contract BatchAuction is Ownable {
 
     constructor () public {
         stateRoots.push(0);
-        // stateRoots[stateIndex] = PedersenHash({sign: false, x: 0});
     }
 
     function openAccount(uint16 accountId) public {
@@ -75,12 +67,12 @@ contract BatchAuction is Ownable {
 
         address tokenAddress = tokenIdToAddressMap[tokenIndex];
         require(tokenAddress != address(0), "Requested token is not registered");
-
         require(
             ERC20(tokenAddress).transferFrom(msg.sender, address(this), amount), 
             "Unsuccessful transfer"
         );
-        
+
+        // Update deposit index must be accessible or the last deposit can't be processed.
         if (depositIndex != block.number / 20) {
             depositIndex = block.number / 20;
             emit IncrementDepositIndex(depositIndex);
@@ -92,7 +84,6 @@ contract BatchAuction is Ownable {
         );
 
         depositHashes[depositIndex] = DepositState({shaHash: nextDepositHash, applied: false});
-
         emit Deposit(accountId, tokenIndex, amount, depositIndex);
     }
 
@@ -101,25 +92,19 @@ contract BatchAuction is Ownable {
         bytes32 _currDepositHash,
         bytes32 _currStateRoot,
         bytes32 _newStateRoot
-        // PedersenHash memory _currStateRoot,
-        // PedersenHash memory _newStateRoot
     )
         public onlyOwner()
     {   
         // Ensure exitance and inactivity of requested deposit slot
-        require(slot != depositIndex, "Requested slot does not exist");
-        require(slot < depositIndex, "Request deposit slot is still active");
+        require(slot < depositIndex, "Request deposit must exist and be inactive");
 
         require(depositHashes[slot].applied == false, "Deposits have alread been applied");
+        require(depositHashes[slot].shaHash != 0, "Deposit slot is empty");
         require(depositHashes[slot].shaHash == _currDepositHash, "Current deposit hash at slot doesn't agree");
         
         uint stateIndex = stateRoots.length - 1;
         require(stateRoots[stateIndex] == _currStateRoot, "Current stateRoot doesn't agree");
-        // require(stateRoots[stateIndex].sign == _currStateRoot.sign, "Current stateRoot doesn't agree");
-        // require(stateRoots[stateIndex].x == _currStateRoot.x, "Current stateRoot doesn't agree");
 
-        // stateIndex++;
-        // stateRoots[stateIndex] = _newStateRoot;
         stateRoots.push(_newStateRoot);        
         depositHashes[slot].applied == true;
         emit StateTransistion("applyDeposits", _currStateRoot, _newStateRoot);
