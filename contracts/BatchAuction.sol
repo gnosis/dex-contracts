@@ -97,7 +97,6 @@ contract BatchAuction is Ownable {
     {   
         // Ensure exitance and inactivity of requested deposit slot
         require(slot < depositIndex, "Request deposit must exist and be inactive");
-
         require(depositHashes[slot].applied == false, "Deposits have alread been applied");
         require(depositHashes[slot].shaHash != 0, "Deposit slot is empty");
         require(depositHashes[slot].shaHash == _currDepositHash, "Current deposit hash at slot doesn't agree");
