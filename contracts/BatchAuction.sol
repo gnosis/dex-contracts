@@ -23,12 +23,9 @@ contract BatchAuction is Ownable {
         bool applied;
     }
     
-    // Note that this is only updated on successfull applyDeposit
-    uint public depositIndex;
     mapping (uint => DepositState) public depositHashes;
 
     event Deposit(uint16 accountId, uint8 tokenIndex, uint amount, uint slot);
-    event IncrementDepositIndex(uint index);
     event StateTransistion(string transitionType, bytes32 from, bytes32 to);
 
     modifier onlyRegistered() {
@@ -37,6 +34,7 @@ contract BatchAuction is Ownable {
     }
 
     constructor () public {
+        // The initial state should be Pederson hash of an empty balance tree
         stateRoots.push(0);
     }
 
@@ -72,19 +70,22 @@ contract BatchAuction is Ownable {
             "Unsuccessful transfer"
         );
 
-        // Update deposit index must be accessible or the last deposit can't be processed.
-        if (depositIndex != block.number / 20) {
-            depositIndex = block.number / 20;
-            emit IncrementDepositIndex(depositIndex);
-        }
-
+        uint depositSlot = this.depositIndex();
         uint16 accountId = publicKeyToAccountMap[msg.sender];
         bytes32 nextDepositHash = sha256(
-            abi.encodePacked(depositHashes[depositIndex].shaHash, accountId, tokenIndex, amount)
+            abi.encodePacked(depositHashes[depositSlot].shaHash, accountId, tokenIndex, amount)
         );
 
-        depositHashes[depositIndex] = DepositState({shaHash: nextDepositHash, applied: false});
-        emit Deposit(accountId, tokenIndex, amount, depositIndex);
+        depositHashes[depositSlot] = DepositState({shaHash: nextDepositHash, applied: false});
+        emit Deposit(accountId, tokenIndex, amount, depositSlot);
+    }
+
+    function depositIndex() public view returns (uint) {
+        return block.number / 20;
+    }
+
+    function stateIndex() public view returns (uint) {
+        return stateRoots.length - 1;
     }
 
     function applyDeposits(
@@ -95,17 +96,14 @@ contract BatchAuction is Ownable {
     )
         public onlyOwner()
     {   
-        // Ensure exitance and inactivity of requested deposit slot
-        require(slot < depositIndex, "Request deposit must exist and be inactive");
-        require(depositHashes[slot].applied == false, "Deposits have alread been applied");
+        require(slot < this.depositIndex(), "Deposits slot must exist and be inactive");
+        require(depositHashes[slot].applied == false, "Deposits already processed");
         require(depositHashes[slot].shaHash != 0, "Deposit slot is empty");
-        require(depositHashes[slot].shaHash == _currDepositHash, "Current deposit hash at slot doesn't agree");
-        
-        uint stateIndex = stateRoots.length - 1;
-        require(stateRoots[stateIndex] == _currStateRoot, "Current stateRoot doesn't agree");
+        require(depositHashes[slot].shaHash == _currDepositHash, "Incorrect Deposit Hash");
+        require(stateRoots[this.stateIndex()] == _currStateRoot, "Current stateRoot doesn't agree");
 
         stateRoots.push(_newStateRoot);        
-        depositHashes[slot].applied == true;
+        depositHashes[slot].applied = true;
         emit StateTransistion("applyDeposits", _currStateRoot, _newStateRoot);
     }
 }
