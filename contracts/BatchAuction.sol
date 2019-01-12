@@ -96,11 +96,11 @@ contract BatchAuction is Ownable {
     )
         public onlyOwner()
     {   
-        require(slot < this.depositIndex(), "Deposits slot must exist and be inactive");
+        require(slot < this.depositIndex(), "Deposit slot must exist and be inactive");
         require(depositHashes[slot].applied == false, "Deposits already processed");
         require(depositHashes[slot].shaHash != 0, "Deposit slot is empty");
         require(depositHashes[slot].shaHash == _currDepositHash, "Incorrect Deposit Hash");
-        require(stateRoots[this.stateIndex()] == _currStateRoot, "Current stateRoot doesn't agree");
+        require(stateRoots[this.stateIndex()] == _currStateRoot, "Incorrect State Root");
 
         stateRoots.push(_newStateRoot);        
         depositHashes[slot].applied = true;
