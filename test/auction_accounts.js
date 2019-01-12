@@ -1,7 +1,12 @@
 const BatchAuction = artifacts.require("BatchAuction")
 const ERC20 = artifacts.require("ERC20")
+const MintableERC20 = artifacts.require("./ERC20Mintable.sol")
 
-const { assertRejects } = require("./utilities.js")
+const {
+  assertRejects,
+  waitForNBlocks,
+  fundAccounts,
+  approveContract } = require("./utilities.js")
 
 contract("BatchAuction", async (accounts) => {
   const [owner, user_1, user_2] = accounts
@@ -113,6 +118,91 @@ contract("BatchAuction", async (accounts) => {
       // Last token can't be added (exceeds limit)
       await assertRejects(instance.addToken((await ERC20.new()).address))
     })
+  })
 
+  describe("deposit()", () => {
+    it("No deposit by unregistered address", async () => {
+      const instance = await BatchAuction.new()
+      const token = await ERC20.new()
+      await instance.addToken(token.address)
+      const token_index = (await instance.tokenAddresToIdMap.call(token.address)).toNumber()
+      
+      await assertRejects(instance.deposit(token_index, 0))
+    })
+
+    it("No deposit with failed transfer (insufficeint funds)", async () => {
+      const instance = await BatchAuction.new()
+      const token = await ERC20.new()
+      await instance.addToken(token.address)
+      await instance.openAccount(1, { from: user_1 })
+
+      const token_index = (await instance.tokenAddresToIdMap.call(token.address)).toNumber()
+      
+      await assertRejects(instance.deposit(token_index, 1, { from: user_1 }))
+    })
+
+    it("No deposit unregistered token", async () => {
+      const instance = await BatchAuction.new()
+      const num_tokens = (await instance.numTokens.call()).toNumber()
+      await instance.openAccount(1, { from: user_1 })
+      await assertRejects(instance.deposit(num_tokens + 1, 1, { from: user_1 }))
+    })
+
+    it("No deposit 0", async () => {
+      const instance = await BatchAuction.new()
+      const token = await ERC20.new()
+      await instance.addToken(token.address)
+      await instance.openAccount(1, { from: user_1 })
+
+      const token_index = (await instance.tokenAddresToIdMap.call(token.address)).toNumber()
+      await assertRejects(instance.deposit(token_index, 0, { from: user_1 }))
+    })
+
+    it("Generic Deposit", async () => {
+      const instance = await BatchAuction.new()
+      const token = await MintableERC20.new()
+      const token_index = 1
+
+      // fund accounts and approve contract for transfers
+      await fundAccounts(owner, accounts, token, 100)
+      await approveContract(instance, accounts, token, 100)
+
+      await instance.addToken(token.address)
+      await instance.openAccount(token_index, { from: user_1 })
+
+      // user 1 deposits 10
+      await instance.deposit(token_index, 10, { from: user_1 })
+      const deposit_slot = (await instance.depositIndex.call()).toNumber()
+      assert.notEqual((await instance.depositHashes(deposit_slot)).shaHash, 0)
+    })
+
+    it("Deposits over consecutive slots", async () => {
+      const instance = await BatchAuction.new()
+      const token = await MintableERC20.new()
+      const token_index = 1
+      
+      // fund accounts and approve contract for transfers
+      await fundAccounts(owner, accounts, token, 100)
+      await approveContract(instance, accounts, token, 100)
+
+      await instance.addToken(token.address)
+      await instance.openAccount(token_index, { from: user_1 })
+
+      await waitForNBlocks(20, owner)
+      // First deposit slot is missed (i.e. empty)
+      assert.equal((await instance.depositHashes(0)).shaHash, 0)
+
+      // user 1 deposits 10
+      await instance.deposit(token_index, 10, { from: user_1 })
+      const deposit_slot = Math.floor(await web3.eth.getBlockNumber()/20)
+      assert.notEqual((await instance.depositHashes(deposit_slot)).shaHash, 0)
+      assert.equal((await instance.depositHashes(deposit_slot)).applied, false)
+
+      // wait for another 20 blocks and deposit again
+      await waitForNBlocks(20, owner)
+      await instance.deposit(token_index, 10, { from: user_1 })
+
+      assert.notEqual((await instance.depositHashes(deposit_slot + 1)).shaHash, 0)
+    })
   })
 })
