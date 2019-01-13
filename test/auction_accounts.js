@@ -98,7 +98,7 @@ contract("BatchAuction", async (accounts) => {
       assert.equal(await instance.tokenIdToAddressMap.call(2), token_2.address)
     })
 
-    it("Nobody Else can add tokens", async () => {
+    it("Nobody else can add tokens", async () => {
       const instance = await BatchAuction.new()
       const token = await ERC20.new()
 
@@ -266,7 +266,8 @@ contract("BatchAuction", async (accounts) => {
 
       const deposit_hash = (await instance.depositHashes.call(deposit_slot)).shaHash
 
-      await assertRejects(instance.applyDeposits(deposit_slot, deposit_hash, oneHash, zeroHash))
+      await assertRejects(
+        instance.applyDeposits(deposit_slot, deposit_hash, oneHash, zeroHash))
     })
 
     it("successful apply deposit", async () => {
@@ -279,14 +280,11 @@ contract("BatchAuction", async (accounts) => {
       await instance.deposit(2, 10, { from: user_1 })
       await instance.deposit(1, 10, { from: user_2 })
       await instance.deposit(2, 10, { from: user_2 })
-
       const deposit_slot = Math.floor(await web3.eth.getBlockNumber()/20)
 
-      await assertRejects(instance.applyDeposits(deposit_slot, zeroHash, zeroHash, zeroHash, { from: user_1 }))
       // Wait for current depoit index to increment
       await waitForNBlocks(20, owner)
 
-      await assertRejects(instance.applyDeposits(deposit_slot, zeroHash, zeroHash, zeroHash, { from: user_1 }))
       const deposit_hash = (await instance.depositHashes.call(deposit_slot)).shaHash
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
@@ -298,29 +296,23 @@ contract("BatchAuction", async (accounts) => {
 
     it("can't apply deposits twice", async () => {
       const instance = await BatchAuction.new()
-      
       await setupEnvironment(instance, token_owner, accounts, 2)
 
-      // user 1 and 2 both deposit 10 of token 1 and 2
       await instance.deposit(1, 10, { from: user_1 })
-      await instance.deposit(2, 10, { from: user_1 })
-      await instance.deposit(1, 10, { from: user_2 })
-      await instance.deposit(2, 10, { from: user_2 })
-
       const deposit_slot = Math.floor(await web3.eth.getBlockNumber()/20)
 
-      await assertRejects(instance.applyDeposits(deposit_slot, zeroHash, zeroHash, zeroHash, { from: user_1 }))
       // Wait for current depoit index to increment
       await waitForNBlocks(20, owner)
 
-      await assertRejects(instance.applyDeposits(deposit_slot, zeroHash, zeroHash, zeroHash, { from: user_1 }))
       const deposit_hash = (await instance.depositHashes.call(deposit_slot)).shaHash
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
 
       await instance.applyDeposits(deposit_slot, deposit_hash, state_root, zeroHash)
-
-      await assertRejects(instance.applyDeposits(deposit_slot, deposit_hash, state_root, zeroHash))
+      
+      // Fail to apply same deposit twice
+      await assertRejects(
+        instance.applyDeposits(deposit_slot, deposit_hash, state_root, zeroHash))
     })
   })
 })
