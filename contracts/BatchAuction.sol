@@ -11,6 +11,12 @@ contract BatchAuction is Ownable {
 
     bytes32[] public stateRoots;  // Pedersen Hash
 
+    enum TransitionType {
+        Deposit,
+        Withdrawal,
+        Auction
+    }
+
     mapping (address => uint16) public publicKeyToAccountMap;
     mapping (uint16 => address) public accountToPublicKeyMap;
 
@@ -26,7 +32,7 @@ contract BatchAuction is Ownable {
     mapping (uint => DepositState) public depositHashes;
 
     event Deposit(uint16 accountId, uint8 tokenIndex, uint amount, uint slot);
-    event StateTransistion(string transitionType, bytes32 from, bytes32 to);
+    event StateTransistion(TransitionType transitionType, bytes32 from, bytes32 to);
 
     modifier onlyRegistered() {
         require(publicKeyToAccountMap[msg.sender] != 0, "Must have registered account");
@@ -98,12 +104,12 @@ contract BatchAuction is Ownable {
     {   
         require(slot < this.depositIndex(), "Deposit slot must exist and be inactive");
         require(depositHashes[slot].applied == false, "Deposits already processed");
-        require(depositHashes[slot].shaHash != 0, "Deposit slot is empty");
+        require(depositHashes[slot].shaHash != bytes32(0), "Deposit slot is empty");
         require(depositHashes[slot].shaHash == _currDepositHash, "Incorrect Deposit Hash");
         require(stateRoots[this.stateIndex()] == _currStateRoot, "Incorrect State Root");
 
         stateRoots.push(_newStateRoot);        
         depositHashes[slot].applied = true;
-        emit StateTransistion("applyDeposits", _currStateRoot, _newStateRoot);
+        emit StateTransistion(TransitionType.Deposit, _currStateRoot, _newStateRoot);
     }
 }
