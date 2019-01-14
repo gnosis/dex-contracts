@@ -215,14 +215,24 @@ contract("BatchAuction", async (accounts) => {
   describe("applyDeposits()", () => {
     it("Only owner can apply deposits", async () => {
       const instance = await BatchAuction.new()
-      await assertRejects(instance.applyDeposits(0, zeroHash, zeroHash, zeroHash, { from: user_1 }))
+
+      const deposit_index = (await instance.depositIndex.call()).toNumber()
+      const deposit_hash = (await instance.depositHashes.call(deposit_index)).shaHash
+      const state_index = (await instance.stateIndex.call()).toNumber()
+      const state_root = await instance.stateRoots.call(state_index)
+
+      await assertRejects(instance.applyDeposits(0, deposit_hash, state_root, oneHash, { from: user_1 }))
     })
 
     it("No apply deposit on active slot", async () => {
       const instance = await BatchAuction.new()
-      const deposit_index = Math.floor(await web3.eth.getBlockNumber()/20)
       
-      await assertRejects(instance.applyDeposits(deposit_index, zeroHash, zeroHash, zeroHash))
+      const deposit_index = (await instance.depositIndex.call()).toNumber()
+      const deposit_hash = (await instance.depositHashes.call(deposit_index)).shaHash
+      const state_index = (await instance.stateIndex.call()).toNumber()
+      const state_root = await instance.stateRoots.call(state_index)
+      
+      await assertRejects(instance.applyDeposits(deposit_index, deposit_hash, state_root, oneHash))
     })
 
     it("Can't apply on empty slot", async () => {
@@ -230,10 +240,10 @@ contract("BatchAuction", async (accounts) => {
       await setupEnvironment(instance, token_owner, accounts, 1)
 
       await instance.deposit(1, 10, { from: user_1 })
-      const deposit_slot = Math.floor(await web3.eth.getBlockNumber()/20)
+      const deposit_index = (await instance.depositIndex.call()).toNumber()
       await waitForNBlocks(20, owner)
 
-      await assertRejects(instance.applyDeposits(deposit_slot - 1, zeroHash, zeroHash, zeroHash))
+      await assertRejects(instance.applyDeposits(deposit_index, zeroHash, zeroHash, zeroHash))
     })
 
     it("Can't apply with wrong depositHash", async () => {
@@ -242,7 +252,7 @@ contract("BatchAuction", async (accounts) => {
       await setupEnvironment(instance, token_owner, accounts, 2)
 
       await instance.deposit(1, 10, { from: user_1 })
-      const deposit_slot = Math.floor(await web3.eth.getBlockNumber()/20)
+      const deposit_index = (await instance.depositIndex.call()).toNumber()
 
       // Wait for current depoit index to increment
       await waitForNBlocks(20, owner)
@@ -250,7 +260,7 @@ contract("BatchAuction", async (accounts) => {
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
 
-      await assertRejects(instance.applyDeposits(deposit_slot, zeroHash, state_root, zeroHash))
+      await assertRejects(instance.applyDeposits(deposit_index, zeroHash, state_root, zeroHash))
     })
 
     it("Can't apply with wrong stateRoot", async () => {
