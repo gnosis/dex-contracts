@@ -1,7 +1,7 @@
 /*eslint no-undef: "off"*/
 
-const BatchAuction = artifacts.require("./BatchAuction.sol")
+const SnappBase = artifacts.require("./SnappBase.sol")
 
 module.exports = function(deployer) {
-  deployer.deploy(BatchAuction)
+  deployer.deploy(SnappBase)
 }

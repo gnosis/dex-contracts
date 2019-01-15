@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
-contract PlasmaSnappBase is Ownable {
+contract SnappBase is Ownable {
 
     uint16 public constant MAX_ACCOUNT_ID = 100;
     uint8 public constant MAX_TOKENS = 30;
