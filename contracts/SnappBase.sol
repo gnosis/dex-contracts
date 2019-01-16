@@ -31,7 +31,7 @@ contract SnappBase is Ownable {
     
     mapping (uint => DepositState) public depositHashes;
 
-    event Deposit(uint16 accountId, uint8 tokenIndex, uint amount, uint slot);
+    event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot);
     event StateTransition(TransitionType transitionType, bytes32 from, bytes32 to);
 
     modifier onlyRegistered() {
