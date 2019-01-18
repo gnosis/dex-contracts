@@ -178,7 +178,7 @@ contract("SnappBase", async (accounts) => {
 
       // user 1 deposits 10
       await instance.deposit(token_index, 10, { from: user_1 })
-      const deposit_slot = (await instance.depositIndex.call()).toNumber()
+      const deposit_slot = (await instance.depositSlot.call()).toNumber()
       assert.notEqual((await instance.depositHashes(deposit_slot)).shaHash, 0)
     })
 
@@ -216,8 +216,8 @@ contract("SnappBase", async (accounts) => {
     it("Only owner can apply deposits", async () => {
       const instance = await SnappBase.new()
 
-      const deposit_index = (await instance.depositIndex.call()).toNumber()
-      const deposit_hash = (await instance.depositHashes.call(deposit_index)).shaHash
+      const deposit_slot = (await instance.depositSlot.call()).toNumber()
+      const deposit_hash = (await instance.depositHashes.call(deposit_slot)).shaHash
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
 
@@ -227,12 +227,12 @@ contract("SnappBase", async (accounts) => {
     it("No apply deposit on active slot", async () => {
       const instance = await SnappBase.new()
       
-      const deposit_index = (await instance.depositIndex.call()).toNumber()
-      const deposit_hash = (await instance.depositHashes.call(deposit_index)).shaHash
+      const deposit_slot = (await instance.depositSlot.call()).toNumber()
+      const deposit_hash = (await instance.depositHashes.call(deposit_slot)).shaHash
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
       
-      await assertRejects(instance.applyDeposits(deposit_index, deposit_hash, state_root, oneHash))
+      await assertRejects(instance.applyDeposits(deposit_slot, deposit_hash, state_root, oneHash))
     })
 
     it("Can't apply on empty slot", async () => {
@@ -240,7 +240,7 @@ contract("SnappBase", async (accounts) => {
       await setupEnvironment(instance, token_owner, accounts, 1)
 
       await instance.deposit(1, 10, { from: user_1 })
-      const deposit_index = (await instance.depositIndex.call()).toNumber()
+      const deposit_index = (await instance.depositSlot.call()).toNumber()
       await waitForNBlocks(20, owner)
 
       await assertRejects(instance.applyDeposits(deposit_index, zeroHash, zeroHash, zeroHash))
@@ -252,7 +252,7 @@ contract("SnappBase", async (accounts) => {
       await setupEnvironment(instance, token_owner, accounts, 2)
 
       await instance.deposit(1, 10, { from: user_1 })
-      const deposit_index = (await instance.depositIndex.call()).toNumber()
+      const deposit_index = (await instance.depositSlot.call()).toNumber()
 
       // Wait for current depoit index to increment
       await waitForNBlocks(20, owner)

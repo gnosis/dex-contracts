@@ -29,9 +29,10 @@ contract SnappBase is Ownable {
         bool applied;
     }
     
+    uint16 public depositIndex;
     mapping (uint => DepositState) public depositHashes;
 
-    event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot);
+    event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
     event StateTransition(TransitionType transitionType, bytes32 from, bytes32 to);
 
     modifier onlyRegistered() {
@@ -76,17 +77,21 @@ contract SnappBase is Ownable {
             "Unsuccessful transfer"
         );
 
-        uint depositSlot = this.depositIndex();
+        uint depositSlot = this.depositSlot();
+        if (depositHashes[depositSlot].shaHash == bytes32(0)) {
+            depositIndex = 0;
+        }
         uint16 accountId = publicKeyToAccountMap[msg.sender];
         bytes32 nextDepositHash = sha256(
             abi.encodePacked(depositHashes[depositSlot].shaHash, accountId, tokenIndex, amount)
         );
-
         depositHashes[depositSlot] = DepositState({shaHash: nextDepositHash, applied: false});
-        emit Deposit(accountId, tokenIndex, amount, depositSlot);
+        depositIndex++;
+
+        emit Deposit(accountId, tokenIndex, amount, depositSlot, depositIndex);
     }
 
-    function depositIndex() public view returns (uint) {
+    function depositSlot() public view returns (uint) {
         return block.number / 20;
     }
 
@@ -102,7 +107,7 @@ contract SnappBase is Ownable {
     )
         public onlyOwner()
     {   
-        require(slot < this.depositIndex(), "Deposit slot must exist and be inactive");
+        require(slot < this.depositSlot(), "Deposit slot must exist and be inactive");
         require(depositHashes[slot].applied == false, "Deposits already processed");
         require(depositHashes[slot].shaHash != bytes32(0), "Deposit slot is empty");
         require(depositHashes[slot].shaHash == _currDepositHash, "Incorrect Deposit Hash");
