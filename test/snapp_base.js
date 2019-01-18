@@ -207,8 +207,9 @@ contract("SnappBase", async (accounts) => {
       // wait for another 20 blocks and deposit again
       await waitForNBlocks(20, owner)
       await instance.deposit(token_index, 10, { from: user_1 })
+      const new_slot = (await instance.depositSlot.call()).toNumber()
 
-      assert.notEqual((await instance.depositHashes(deposit_slot + 1)).shaHash, 0)
+      assert.notEqual((await instance.depositHashes(new_slot)).shaHash, 0)
     })
   })
 

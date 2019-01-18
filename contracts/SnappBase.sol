@@ -28,8 +28,8 @@ contract SnappBase is Ownable {
         bytes32 shaHash;
         bool applied;
     }
-    
-    uint16 public depositIndex;
+
+    uint16 public slotIndex;
     mapping (uint => DepositState) public depositHashes;
 
     event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
@@ -79,16 +79,16 @@ contract SnappBase is Ownable {
 
         uint depositSlot = this.depositSlot();
         if (depositHashes[depositSlot].shaHash == bytes32(0)) {
-            depositIndex = 0;
+            slotIndex = 0;
         }
         uint16 accountId = publicKeyToAccountMap[msg.sender];
         bytes32 nextDepositHash = sha256(
             abi.encodePacked(depositHashes[depositSlot].shaHash, accountId, tokenIndex, amount)
         );
         depositHashes[depositSlot] = DepositState({shaHash: nextDepositHash, applied: false});
-        depositIndex++;
+        slotIndex++;
 
-        emit Deposit(accountId, tokenIndex, amount, depositSlot, depositIndex);
+        emit Deposit(accountId, tokenIndex, amount, depositSlot, slotIndex);
     }
 
     function depositSlot() public view returns (uint) {
