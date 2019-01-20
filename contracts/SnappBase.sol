@@ -33,7 +33,7 @@ contract SnappBase is Ownable {
     mapping (uint => DepositState) public depositHashes;
 
     event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
-    event StateTransition(TransitionType transitionType, bytes32 from, bytes32 to);
+    event StateTransition(TransitionType transitionType, bytes32 from, bytes32 to, uint slot);
 
     modifier onlyRegistered() {
         require(publicKeyToAccountMap[msg.sender] != 0, "Must have registered account");
@@ -115,6 +115,6 @@ contract SnappBase is Ownable {
 
         stateRoots.push(_newStateRoot);        
         depositHashes[slot].applied = true;
-        emit StateTransition(TransitionType.Deposit, _currStateRoot, _newStateRoot);
+        emit StateTransition(TransitionType.Deposit, _currStateRoot, _newStateRoot, slot);
     }
 }
