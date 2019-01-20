@@ -101,7 +101,6 @@ contract SnappBase is Ownable {
 
     function applyDeposits(
         uint slot,
-        bytes32 _currDepositHash,
         bytes32 _currStateRoot,
         bytes32 _newStateRoot
     )
@@ -110,7 +109,6 @@ contract SnappBase is Ownable {
         require(slot < this.depositSlot(), "Deposit slot must exist and be inactive");
         require(depositHashes[slot].applied == false, "Deposits already processed");
         require(depositHashes[slot].shaHash != bytes32(0), "Deposit slot is empty");
-        require(depositHashes[slot].shaHash == _currDepositHash, "Incorrect Deposit Hash");
         require(stateRoots[this.stateIndex()] == _currStateRoot, "Incorrect State Root");
 
         stateRoots.push(_newStateRoot);        
