@@ -1,5 +1,13 @@
 {
     "rules": {
-        "no-console": "off"
-    }
+        "no-console": "off",
+        "indent": [
+            "error",
+            2
+        ]
+    },
+    "env": {
+        "mocha": true,
+        "node": true
+      }
 }
