@@ -90,9 +90,9 @@ contract SnappBase is Ownable {
             abi.encodePacked(depositHashes[depositSlot].shaHash, accountId, tokenIndex, amount)
         );
         depositHashes[depositSlot] = DepositState({shaHash: nextDepositHash, applied: false});
-        slotIndex++;
 
         emit Deposit(accountId, tokenIndex, amount, depositSlot, slotIndex);
+        slotIndex++;
     }
 
     function depositSlot() public view returns (uint) {
