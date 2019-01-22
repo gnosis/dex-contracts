@@ -88,12 +88,12 @@ const fundAccounts = async function(minter, accounts, token, amount) {
   }
 
 
-module.exports = async function() {
+module.exports = async function(callback) {
     const instance = await SnappBase.deployed()
     const accounts = await web3.eth.getAccounts()
     const token_owner = accounts[1]
 
     await setupEnvironment(instance, token_owner, accounts, 10)
     console.log("Environment setup complete")
-    return "Environment setup complete"
+    callback()
 }
