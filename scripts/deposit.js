@@ -14,10 +14,10 @@ module.exports = async (callback) => {
         console.log("No account registerd at index %s", accountId)
         callback()
     }
-    const slot = (await instance.depositSlot.call()).toNumber()
     const tx = await instance.deposit(tokenId, amount, {from: depositor})
+    const slot = tx.logs[0].args.slot.toNumber()
+    const slot_index =  tx.logs[0].args.slotIndex.toNumber()
 
-    const slot_index = (await instance.slotIndex.call()).toNumber() - 1
     const deposit_hash = (await instance.depositHashes(slot)).shaHash
     console.log("Deposit successful: Slot %s - Index %s - Hash %s", slot, slot_index, deposit_hash)
     callback()
