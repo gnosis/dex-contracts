@@ -10,7 +10,10 @@
     "test": "truffle test",
     "coverage": "./node_modules/.bin/solidity-coverage",
     "lint": "./node_modules/.bin/eslint .",
-    "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\""
+    "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\"",
+    "migrate-setup": "truffle migrate && npx truffle exec scripts/setup_environment.js",
+    "setup": "npx truffle exec scripts/setup_environment.js",
+    "deposit": "npx truffle exec scripts/deposit.js"
   },
   "repository": {
     "type": "git",
