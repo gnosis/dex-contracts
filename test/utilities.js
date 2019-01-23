@@ -1,4 +1,4 @@
-const MintableERC20 = artifacts.require("./ERC20Mintable.sol")
+
 
 /*
  How to avoid using try/catch blocks with promises' that could fail using async/await
@@ -68,6 +68,7 @@ const openAccounts = async function(contract, accounts) {
  */
 const registerTokens = async function(contract, token_owner, numTokens) {
   const res = []
+  const MintableERC20 = artifacts.require("ERC20Mintable.sol")
   const owner = await contract.owner()
   for (let i = 0; i < numTokens; i++) {
     const token = await MintableERC20.new({ from: token_owner })

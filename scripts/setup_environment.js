@@ -1,9 +1,9 @@
 /* eslint-disable indent */
 const SnappBase = artifacts.require("SnappBase")
-const ERC20Mintable = artifacts.require("./ERC20Mintable.sol")
+const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
 
 // I don't understand how to import files. [ReferenceError: artifacts is not defined]
-// const { setupEnvironment } = require("../test/utilities.js")(artifacts)
+ const { setupEnvironment } = require("../test/utilities.js")
 
 /**
  * funds accounts with specified value for Mintable Token
@@ -77,7 +77,7 @@ const fundAccounts = async function(minter, accounts, token, amount) {
    * 4.) number of tokens to be registered
    * @returns {Array} tokens
    */
-  const setupEnvironment = async function(contract, token_owner, accounts, numTokens) {
+  /*const setupEnvironment = async function(contract, token_owner, accounts, numTokens) {
     const tokens = await registerTokens(contract, token_owner, numTokens)
     for (let i = 0; i < tokens.length; i++) {openAccounts
       await fundAccounts(token_owner, accounts, tokens[i], 100)
@@ -85,7 +85,7 @@ const fundAccounts = async function(minter, accounts, token, amount) {
     }
     await openAccounts(contract, accounts)
     return tokens
-  }
+  }*/
 
 
 module.exports = async function(callback) {
