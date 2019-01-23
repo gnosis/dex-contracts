@@ -188,8 +188,8 @@ contract("SnappBase", async (accounts) => {
       const token_index = 1
       
       // fund accounts and approve contract for transfers
-      await fundAccounts(owner, accounts, token, 100)
-      await approveContract(instance, accounts, token, 100)
+      await fundAccounts(owner, accounts.slice(0, 4), token, 100)
+      await approveContract(instance, accounts.slice(0, 4), token, 100)
 
       await instance.addToken(token.address)
       await instance.openAccount(token_index, { from: user_1 })
