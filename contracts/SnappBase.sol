@@ -8,12 +8,27 @@ contract SnappBase is Ownable {
 
     uint16 public constant MAX_ACCOUNT_ID = 100;
     uint8 public constant MAX_TOKENS = 30;
+    uint16 public constant MAX_WITHDRAW_BATCH = 100;
 
     bytes32[] public stateRoots;  // Pedersen Hash
 
+    // TODO - replace stateRoots with AccountState[]
+    // struct AccountState {
+    //     bytes32 pedersenHash;
+    //     bool depositWithdrawDisabled;
+    //     FinalizationStatus status;
+    // }
+
+    // enum FinalizationStatus {
+    //     Proposed, // Inital status after transition
+    //     Challenged, // If challenged within period
+    //     Proven, // After snark submission
+    //     Finalized // If not challenged within period or proven and all prior states are finalized
+    // }
+
     enum TransitionType {
         Deposit,
-        Withdrawal,
+        Withdraw,
         Auction
     }
 
@@ -32,8 +47,25 @@ contract SnappBase is Ownable {
     uint16 public slotIndex;
     mapping (uint => DepositState) public depositHashes;
 
+    struct PendingWithdrawState {
+        uint16 size; //number of withdraws that have been made in this batch
+        bytes32 shaHash; //rolling shaHash of all pending withdraws
+        uint creationBlock; //timestamp of when batch was created
+        uint appliedAccountStateIndex; //accountState index of when batch was applied (needed for rollback)
+    }
+
+    struct ClaimableWithdrawState {
+        bytes32 merkleRoot; // Merkle root of claimable withdraws in this block
+        bool[100] claimedBitmap; // Bitmap signalling which withdraws have been claimed
+        uint appliedAccountStateIndex; //accountState index from which this state was created (needed for rollback)
+    }
+
+    PendingWithdrawState[] public pendingWithdraws;
+    ClaimableWithdrawState[] public claimableWithdraws;
+
+    event WithdrawRequest(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
     event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
-    event StateTransition(TransitionType transitionType, uint from, bytes32 to, uint slot);
+    event StateTransition(TransitionType transitionType, uint stateIndex, bytes32 stateHash, uint slot);
     event SnappInitialization(bytes32 stateHash, uint8 maxTokens, uint16 maxAccounts);
 
     modifier onlyRegistered() {
@@ -45,6 +77,15 @@ contract SnappBase is Ownable {
         // The initial state should be Pederson hash of an empty balance tree
         bytes32 stateInit = bytes32(0);  // TODO
         stateRoots.push(stateInit);
+        pendingWithdraws.push(
+            PendingWithdrawState({
+                size: 0,
+                shaHash: bytes32(0),
+                creationBlock: block.number,
+                appliedAccountStateIndex: 0
+            })
+        );
+
         emit SnappInitialization(stateInit, MAX_TOKENS, MAX_ACCOUNT_ID);
     }
 
@@ -119,4 +160,63 @@ contract SnappBase is Ownable {
         emit StateTransition(TransitionType.Deposit, this.stateIndex(), _newStateRoot, slot);
     }
 
+    function requestWithdrawal(uint8 tokenId, uint amount) public onlyRegistered() {
+        require(amount != 0, "Must request positive amount");
+
+        address tokenAddress = tokenIdToAddressMap[tokenId];
+        require(tokenAddress != address(0), "Requested token is not registered");
+
+        // Determine or construct correct current withdraw state.
+        // This is governed by MAX_WITHDRAW_BATCH and creationBlock
+        uint withdrawIndex = pendingWithdraws.length - 1;
+        PendingWithdrawState memory currWithdrawState = pendingWithdraws[withdrawIndex];
+        if (currWithdrawState.size == MAX_WITHDRAW_BATCH || block.number > currWithdrawState.creationBlock + 20) {
+            currWithdrawState = PendingWithdrawState({
+                size: 0,
+                shaHash: bytes32(0),
+                creationBlock: block.number,
+                appliedAccountStateIndex: 0  // Default 0 implies not applied.
+            });
+            pendingWithdraws.push(currWithdrawState);
+            withdrawIndex++;
+        }
+
+        // Update Withdraw Hash based on request
+        uint16 accountId = publicKeyToAccountMap[msg.sender];
+        bytes32 nextWithdrawHash = sha256(
+            abi.encodePacked(currWithdrawState.shaHash, accountId, tokenId, amount)
+        );
+        currWithdrawState.shaHash = nextWithdrawHash;
+        currWithdrawState.size++;
+
+        emit WithdrawRequest(accountId, tokenId, amount, withdrawIndex, currWithdrawState.size);
+    }
+
+    function applyWithdrawals(
+        uint slot,
+        bool[100] memory includedBitMap,
+        bytes32 _merkleRoot,
+        bytes32 _currStateRoot,
+        bytes32 _newStateRoot
+    )
+        public onlyOwner()
+    {
+        require(slot < pendingWithdraws.length - 1, "Withdraw slot must exist and be inactive");
+        require(pendingWithdraws[slot].appliedAccountStateIndex == 0, "Withdraws already processed");
+        require(pendingWithdraws[slot].shaHash != bytes32(0), "Withdraws slot is empty");
+        require(stateRoots[this.stateIndex()] == _currStateRoot, "Incorrect State Root");
+
+        // Update account states
+        stateRoots.push(_newStateRoot);
+        pendingWithdraws[slot].appliedAccountStateIndex = this.stateIndex();
+        emit StateTransition(TransitionType.Withdraw, this.stateIndex(), _newStateRoot, slot);
+
+        claimableWithdraws.push(
+            ClaimableWithdrawState({
+                merkleRoot: _merkleRoot,
+                claimedBitmap: includedBitMap,
+                appliedAccountStateIndex: this.stateIndex()
+            })
+        );
+    }
 }
