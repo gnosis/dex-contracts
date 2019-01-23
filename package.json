@@ -12,7 +12,8 @@
     "lint": "./node_modules/.bin/eslint .",
     "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\"",
     "setup": "npx truffle exec scripts/setup_environment.js",
-    "deposit": "npx truffle exec scripts/deposit.js"
+    "deposit": "npx truffle exec scripts/deposit.js",
+    "apply-deposits": "npx truffle exec scripts/apply_deposits.js"
   },
   "repository": {
     "type": "git",
