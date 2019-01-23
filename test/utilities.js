@@ -66,12 +66,11 @@ const openAccounts = async function(contract, accounts) {
  * 2.) owner of contract
  * 3.) number of tokens to be registered 
  */
-const registerTokens = async function(contract, token_owner, numTokens) {
+const registerTokens = async function(token_artifact, contract, token_owner, numTokens) {
   const res = []
-  const MintableERC20 = artifacts.require("ERC20Mintable.sol")
   const owner = await contract.owner()
   for (let i = 0; i < numTokens; i++) {
-    const token = await MintableERC20.new({ from: token_owner })
+    const token = await token_artifact.new({ from: token_owner })
     res.push(token)
     await contract.addToken(token.address, { from: owner })
   }
@@ -87,8 +86,8 @@ const registerTokens = async function(contract, token_owner, numTokens) {
  * 4.) number of tokens to be registered
  * @returns {Array} tokens
  */
-const setupEnvironment = async function(contract, token_owner, accounts, numTokens) {
-  const tokens = await registerTokens(contract, token_owner, numTokens)
+const setupEnvironment = async function(token_artifact, contract, token_owner, accounts, numTokens) {
+  const tokens = await registerTokens(token_artifact, contract, token_owner, numTokens)
   for (let i = 0; i < tokens.length; i++) {openAccounts
     await fundAccounts(token_owner, accounts, tokens[i], 100)
     await approveContract(contract, accounts, tokens[i], 100)

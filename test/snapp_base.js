@@ -236,7 +236,7 @@ contract("SnappBase", async (accounts) => {
 
     it("Can't apply on empty slot", async () => {
       const instance = await SnappBase.new()
-      await setupEnvironment(instance, token_owner, accounts, 1)
+      await setupEnvironment(MintableERC20, instance, token_owner, accounts, 1)
 
       await instance.deposit(1, 10, { from: user_1 })
       const deposit_index = (await instance.depositSlot.call()).toNumber()
@@ -248,7 +248,7 @@ contract("SnappBase", async (accounts) => {
     it("Can't apply with wrong stateRoot", async () => {
       const instance = await SnappBase.new()
       
-      await setupEnvironment(instance, token_owner, accounts, 2)
+      await setupEnvironment(MintableERC20, instance, token_owner, accounts, 2)
 
       await instance.deposit(1, 10, { from: user_1 })
       const deposit_slot = Math.floor(await web3.eth.getBlockNumber()/20)
@@ -263,7 +263,7 @@ contract("SnappBase", async (accounts) => {
     it("successful apply deposit", async () => {
       const instance = await SnappBase.new()
       
-      await setupEnvironment(instance, token_owner, accounts, 2)
+      await setupEnvironment(MintableERC20, instance, token_owner, accounts, 2)
 
       // user 1 and 2 both deposit 10 of token 1 and 2
       await instance.deposit(1, 10, { from: user_1 })
@@ -285,7 +285,7 @@ contract("SnappBase", async (accounts) => {
 
     it("can't apply deposits twice", async () => {
       const instance = await SnappBase.new()
-      await setupEnvironment(instance, token_owner, accounts, 2)
+      await setupEnvironment(MintableERC20, instance, token_owner, accounts, 2)
 
       await instance.deposit(1, 10, { from: user_1 })
       const deposit_slot = Math.floor(await web3.eth.getBlockNumber()/20)
