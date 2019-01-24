@@ -119,4 +119,11 @@ contract SnappBase is Ownable {
         emit StateTransition(TransitionType.Deposit, this.stateIndex(), _newStateRoot, slot);
     }
 
+    function hasDepositBeenApplied(uint index) public view returns (bool) {
+        return depositHashes[index].applied;
+    }
+
+    function getCurrentStateRoot() public view returns (bytes32) {
+        return stateRoots[stateIndex()];
+    }
 }
