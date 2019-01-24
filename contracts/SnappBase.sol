@@ -133,7 +133,7 @@ contract SnappBase is Ownable {
     )
         public onlyOwner()
     {   
-        require(slot < depositIndex(), "Requested deposit slot does not exist");
+        require(slot <= depositIndex(), "Requested deposit slot does not exist");
 
         require(slot == 0 || deposits[slot-1].appliedAccountStateIndex != 0, "Must apply deposit slots in order!");
         require(deposits[slot].appliedAccountStateIndex == 0, "Deposits already processed");
