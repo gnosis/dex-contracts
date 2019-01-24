@@ -32,7 +32,7 @@ contract SnappBase is Ownable {
         uint appliedAccountStateIndex; // accountState index when batch applied (for rollback)
     }
 
-    DepositState[] deposits;
+    DepositState[] public deposits;
 
     event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
     event StateTransition(TransitionType transitionType, uint from, bytes32 to, uint slot);
