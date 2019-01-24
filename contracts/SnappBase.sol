@@ -80,7 +80,7 @@ contract SnappBase is Ownable {
             "Unsuccessful transfer"
         );
 
-        uint depositSlot = this.depositSlot();
+        uint depositSlot = depositSlot();
         if (depositHashes[depositSlot].shaHash == bytes32(0)) {
             slotIndex = 0;
         }
@@ -109,13 +109,14 @@ contract SnappBase is Ownable {
     )
         public onlyOwner()
     {   
-        require(slot < this.depositSlot(), "Deposit slot must exist and be inactive");
+        require(slot < depositSlot(), "Deposit slot must exist and be inactive");
         require(depositHashes[slot].applied == false, "Deposits already processed");
         require(depositHashes[slot].shaHash != bytes32(0), "Deposit slot is empty");
-        require(stateRoots[this.stateIndex()] == _currStateRoot, "Incorrect State Root");
+        require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
 
         stateRoots.push(_newStateRoot);        
         depositHashes[slot].applied = true;
+
         emit StateTransition(TransitionType.Deposit, this.stateIndex(), _newStateRoot, slot);
     }
 
