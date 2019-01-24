@@ -10,7 +10,8 @@ module.exports = async (callback) => {
     const state_index = (await instance.stateIndex.call()).toNumber()
     const curr_state = await instance.stateRoots.call(state_index)
 
-    if ((await instance.depositHashes.call(slot)).applied == true) {
+    const deposit_state = await instance.deposits.call(slot)
+    if (deposit_state.appliedAccountStateIndex != 0) {
         console.log("Warning: Requested deposit slot has already been applied")
         callback()
     }
