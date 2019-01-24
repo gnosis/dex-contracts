@@ -20,9 +20,11 @@ contract SnappBase is Ownable {
         Auction
     }
 
+    // Account Mapping
     mapping (address => uint16) public publicKeyToAccountMap;
     mapping (uint16 => address) public accountToPublicKeyMap;
 
+    // Token Mapping
     uint8 public numTokens;
     mapping (address => uint8) public tokenAddresToIdMap;
     mapping (uint8 => address) public tokenIdToAddressMap;
@@ -39,13 +41,13 @@ contract SnappBase is Ownable {
         uint16 size; //number of withdraws that have been made in this batch
         bytes32 shaHash; //rolling shaHash of all pending withdraws
         uint creationBlock; //timestamp of when batch was created
-        uint appliedAccountStateIndex; //accountState index of when batch was applied (needed for rollback)
+        uint appliedAccountStateIndex; //AccountState when this batch was applied (for rollback)
     }
 
     struct ClaimableWithdrawState {
         bytes32 merkleRoot; // Merkle root of claimable withdraws in this block
         bool[100] claimedBitmap; // Bitmap signalling which withdraws have been claimed
-        uint appliedAccountStateIndex; //accountState index from which this state was created (needed for rollback)
+        uint appliedAccountStateIndex; // AccountState when this state was created (for rollback)
     }
 
     PendingWithdrawState[] public pendingWithdraws;
@@ -153,6 +155,10 @@ contract SnappBase is Ownable {
 
         address tokenAddress = tokenIdToAddressMap[tokenId];
         require(tokenAddress != address(0), "Requested token is not registered");
+        require(
+            ERC20(tokenAddress).balanceOf(address(this)) >= amount,
+            "Requested amount exceeds contract's balance"
+        );
 
         // Determine or construct correct current withdraw state.
         // This is governed by MAX_WITHDRAW_BATCH and creationBlock
@@ -176,6 +182,8 @@ contract SnappBase is Ownable {
         );
         currWithdrawState.shaHash = nextWithdrawHash;
         currWithdrawState.size++;
+
+        pendingWithdraws[withdrawIndex] = currWithdrawState;
 
         emit WithdrawRequest(accountId, tokenId, amount, withdrawIndex, currWithdrawState.size);
     }

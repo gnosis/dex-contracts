@@ -306,4 +306,78 @@ contract("SnappBase", async (accounts) => {
         instance.applyDeposits(deposit_slot, state_root, zeroHash))
     })
   })
+  describe("requestWithdrawal()", () => {
+    it("No withdraw unregistered token", async () => {
+      const instance = await SnappBase.new()
+      const num_tokens = (await instance.numTokens.call()).toNumber()
+      await instance.openAccount(1, { from: user_1 })
+      await assertRejects(instance.requestWithdrawal(num_tokens + 1, 1, { from: user_1 }))
+    })
+
+    it("Only registed accounts", async () => {
+      const instance = await SnappBase.new()
+
+      // Ensure user_1 doesn't have account
+      assert.equal((await instance.publicKeyToAccountMap.call(user_1)).toNumber(), 0)
+
+      // Register 1 token
+      const token = await ERC20.new()
+      await instance.addToken(token.address)
+
+      await assertRejects(instance.requestWithdrawal(1, 1, { from: user_1 }))
+    })
+
+    it("No withdraw 0", async () => {
+      const instance = await SnappBase.new()
+
+      // Register 1 token
+      const token = await ERC20.new()
+      await instance.addToken(token.address)
+
+      await instance.openAccount(1, { from: user_1 })
+      await assertRejects(instance.requestWithdrawal(1, 0, { from: user_1 }))
+    })
+
+    it("Generic Withdraw", async () => {
+      const instance = await SnappBase.new()
+
+      // Register 1 token
+      const token = await MintableERC20.new()
+      await instance.addToken(token.address)
+      const token_id = (await instance.tokenAddresToIdMap.call(token.address)).toNumber()
+
+      // Open 1 account
+      const account_id = 1
+      await instance.openAccount(account_id, { from: user_1 })
+
+      const withdraw_amount = 1
+      // Must enusure contract has sufficient balance for withdraw
+      await fundAccounts(owner, [user_1], token, withdraw_amount)
+      await approveContract(instance, [user_1], token, withdraw_amount)
+      await instance.deposit(token_id, withdraw_amount, { from: user_1 })
+
+      const tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
+
+      assert.equal(tx.logs[0].args.accountId.toNumber(), account_id, "Account ID doesn't match event")
+      assert.equal(tx.logs[0].args.tokenId.toNumber(), token_id, "Token ID doesn't match event")
+      assert.equal(tx.logs[0].args.amount.toNumber(), withdraw_amount, "Amount doesn't match event")
+
+      // This was the first withdraw
+      assert.equal(tx.logs[0].args.slotIndex.toNumber(), 1, "Expected slotIndex doesn't match event")
+
+      const slot =  tx.logs[0].args.slot.toNumber()
+
+      assert.notEqual((await instance.pendingWithdraws(slot)).shaHash, 0)
+    })
+
+    it("Withdraw over consecutive slots", async () => {
+      const instance = await SnappBase.new()
+
+      const num_tokens = 2
+      const num_accounts = 3
+      await setupEnvironment(
+        MintableERC20, instance, token_owner, accounts.slice(0, num_accounts), num_tokens)
+      // TODO
+    })
+  })
 })
