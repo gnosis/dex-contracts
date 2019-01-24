@@ -36,6 +36,8 @@
   },
   "homepage": "https://github.com/gnosis/dex-contracts#readme",
   "dependencies": {
+    "ethereumjs-util": "^6.0.0",
+    "merkletreejs": "0.0.22",
     "openzeppelin-solidity": "2.1.1"
   },
   "devDependencies": {

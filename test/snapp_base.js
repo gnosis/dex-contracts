@@ -116,6 +116,8 @@ contract("SnappBase", async (accounts) => {
 
     it("Can't exceed max tokens", async () => {
       const instance = await SnappBase.new()
+
+      SnappBase.ca
       const max_tokens = (await instance.MAX_TOKENS.call()).toNumber()
 
       for (let i = 1; i < max_tokens + 1; i++) {
@@ -177,9 +179,10 @@ contract("SnappBase", async (accounts) => {
       await instance.openAccount(token_index, { from: user_1 })
 
       // user 1 deposits 10
-      await instance.deposit(token_index, 10, { from: user_1 })
-      const deposit_slot = (await instance.depositSlot.call()).toNumber()
-      assert.notEqual((await instance.depositHashes(deposit_slot)).shaHash, 0)
+      const tx = await instance.deposit(token_index, 10, { from: user_1 })
+      const slot = tx.logs[0].args.slot.toNumber()
+      
+      assert.notEqual((await instance.depositHashes(slot)).shaHash, 0)
     })
 
     it("Deposits over consecutive slots", async () => {

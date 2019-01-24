@@ -2,29 +2,17 @@ pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "./Merkle.sol";
 
 
 contract SnappBase is Ownable {
+    using Merkle for bytes32;
 
     uint16 public constant MAX_ACCOUNT_ID = 100;
     uint8 public constant MAX_TOKENS = 30;
     uint16 public constant MAX_WITHDRAW_BATCH = 100;
 
     bytes32[] public stateRoots;  // Pedersen Hash
-
-    // TODO - replace stateRoots with AccountState[]
-    // struct AccountState {
-    //     bytes32 pedersenHash;
-    //     bool depositWithdrawDisabled;
-    //     FinalizationStatus status;
-    // }
-
-    // enum FinalizationStatus {
-    //     Proposed, // Inital status after transition
-    //     Challenged, // If challenged within period
-    //     Proven, // After snark submission
-    //     Finalized // If not challenged within period or proven and all prior states are finalized
-    // }
 
     enum TransitionType {
         Deposit,

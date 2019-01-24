@@ -29,7 +29,7 @@ const assertRejects = async (q, msg) => {
  */
 const fundAccounts = async function(minter, accounts, token, amount) {
   for (let i = 0; i < accounts.length; i++) {
-    await token.mint(accounts[i], amount, { from: minter})
+    await token.mint(accounts[i], amount, { from: minter })
   }
 }
 
@@ -103,6 +103,13 @@ const waitForNBlocks = async function(numBlocks, authority) {
   }
 }
 
+const toHex = function(buffer) {
+  buffer = buffer.toString("hex")
+  if (buffer.substring(0, 2) == "0x")
+    return buffer
+  return "0x" + buffer.toString("hex")
+}
+
 module.exports = {
   assertRejects,
   waitForNBlocks,
@@ -110,5 +117,6 @@ module.exports = {
   approveContract,
   openAccounts,
   registerTokens,
-  setupEnvironment
+  setupEnvironment,
+  toHex
 }
