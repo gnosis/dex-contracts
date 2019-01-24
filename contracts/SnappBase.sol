@@ -6,8 +6,9 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 
 contract SnappBase is Ownable {
 
-    uint16 public constant MAX_ACCOUNT_ID = 100;
+    uint16 public constant MAX_ACCOUNT_ID = 100;     // TODO - make larger or use uint8
     uint8 public constant MAX_TOKENS = 30;
+    uint16 public constant MAX_DEPOSIT_BATCH = 100;  // TODO - make larger or use uint8
 
     bytes32[] public stateRoots;  // Pedersen Hash
 
@@ -25,12 +26,13 @@ contract SnappBase is Ownable {
     mapping (uint8 => address) public tokenIdToAddressMap;
 
     struct DepositState {
-        bytes32 shaHash;
-        bool applied;
+        uint16 size;                   // Number of deposits in this batch
+        bytes32 shaHash;               // Rolling shaHash of all deposits
+        uint creationBlock;            // Timestamp of batch creation
+        uint appliedAccountStateIndex; // accountState index when batch applied (for rollback)
     }
 
-    uint16 public slotIndex;
-    mapping (uint => DepositState) public depositHashes;
+    DepositState[] deposits;
 
     event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
     event StateTransition(TransitionType transitionType, uint from, bytes32 to, uint slot);
@@ -45,6 +47,16 @@ contract SnappBase is Ownable {
         // The initial state should be Pederson hash of an empty balance tree
         bytes32 stateInit = bytes32(0);  // TODO
         stateRoots.push(stateInit);
+        deposits.push(
+            DepositState({
+                size: 0,
+                shaHash: bytes32(0),
+                creationBlock: block.number,
+                appliedAccountStateIndex: 0
+            })
+        );
+
+
         emit SnappInitialization(stateInit, MAX_TOKENS, MAX_ACCOUNT_ID);
     }
 
@@ -80,22 +92,34 @@ contract SnappBase is Ownable {
             "Unsuccessful transfer"
         );
 
-        uint depositSlot = depositSlot();
-        if (depositHashes[depositSlot].shaHash == bytes32(0)) {
-            slotIndex = 0;
+        // uint depositIndex = deposits.length - 1;
+        DepositState memory currDepositState = deposits[depositIndex()];
+        if (currDepositState.size == MAX_DEPOSIT_BATCH || block.number > currDepositState.creationBlock + 20) {
+            currDepositState = DepositState({
+                size: 0,
+                shaHash: bytes32(0),
+                creationBlock: block.number,
+                appliedAccountStateIndex: 0   // Default 0 implies not applied.
+            });
+            deposits.push(currDepositState);
+            // depositIndex++;
         }
+
+        // Update Deposit Hash based on request
         uint16 accountId = publicKeyToAccountMap[msg.sender];
         bytes32 nextDepositHash = sha256(
-            abi.encodePacked(depositHashes[depositSlot].shaHash, accountId, tokenIndex, amount)
+            abi.encodePacked(currDepositState.shaHash, accountId, tokenIndex, amount)
         );
-        depositHashes[depositSlot] = DepositState({shaHash: nextDepositHash, applied: false});
+        currDepositState.shaHash = nextDepositHash;
+        currDepositState.size++;
 
-        emit Deposit(accountId, tokenIndex, amount, depositSlot, slotIndex);
-        slotIndex++;
+        deposits[depositIndex()] = currDepositState;
+
+        emit Deposit(accountId, tokenIndex, amount, depositIndex(), currDepositState.size);
     }
 
-    function depositSlot() public view returns (uint) {
-        return block.number / 20;
+    function depositIndex() public view returns (uint) {
+        return deposits.length - 1;
     }
 
     function stateIndex() public view returns (uint) {
@@ -109,23 +133,30 @@ contract SnappBase is Ownable {
     )
         public onlyOwner()
     {   
-        require(slot < depositSlot(), "Deposit slot must exist and be inactive");
-        require(depositHashes[slot].applied == false, "Deposits already processed");
-        require(depositHashes[slot].shaHash != bytes32(0), "Deposit slot is empty");
+        require(slot < depositIndex(), "Requested deposit slot does not exist");
+
+        require(slot == 0 || deposits[slot-1].appliedAccountStateIndex != 0, "Must apply deposit slots in order!");
+        require(deposits[slot].appliedAccountStateIndex == 0, "Deposits already processed");
+        require(block.number > deposits[slot].creationBlock + 20, "Requested deposit slot is still active");
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
 
+        // Note that the only slot that can ever be empty is the first (at index zero) 
+        // This occurs when no deposits are made within the first 20 blocks of the contract's deployment
+        // This code allows for the processing of the empty block and since it will only happen once
+        // No, additional verificaiton is necessary.  
+
         stateRoots.push(_newStateRoot);        
-        depositHashes[slot].applied = true;
+        deposits[slot].appliedAccountStateIndex = stateIndex();
 
         emit StateTransition(TransitionType.Deposit, stateIndex(), _newStateRoot, slot);
     }
 
     function hasDepositBeenApplied(uint index) public view returns (bool) {
-        return depositHashes[index].applied;
+        return deposits[index].appliedAccountStateIndex != 0;
     }
 
     function isDepositSlotEmpty(uint index) public view returns (bool) {
-        return depositHashes[index].shaHash == bytes32(0);
+        return deposits[index].shaHash == bytes32(0);
     }
 
     function getCurrentStateRoot() public view returns (bytes32) {
