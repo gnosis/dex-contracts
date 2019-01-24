@@ -33,8 +33,7 @@ contract SnappBase is Ownable {
     mapping (uint => DepositState) public depositHashes;
 
     event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
-    event StateTransition(TransitionType transitionType, bytes32 from, bytes32 to, uint slot);
-    event StateTransition(TransitionType transitionType, bytes32 from, bytes32 to);
+    event StateTransition(TransitionType transitionType, uint from, bytes32 to, uint slot);
     event SnappInitialization(bytes32 stateHash, uint8 maxTokens, uint16 maxAccounts);
 
     modifier onlyRegistered() {
@@ -117,6 +116,7 @@ contract SnappBase is Ownable {
 
         stateRoots.push(_newStateRoot);        
         depositHashes[slot].applied = true;
-        emit StateTransition(TransitionType.Deposit, _currStateRoot, _newStateRoot, slot);
+        emit StateTransition(TransitionType.Deposit, this.stateIndex(), _newStateRoot, slot);
     }
+
 }
