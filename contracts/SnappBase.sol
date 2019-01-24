@@ -124,6 +124,10 @@ contract SnappBase is Ownable {
         return depositHashes[index].applied;
     }
 
+    function isDepositSlotEmpty(uint index) public view returns (bool) {
+        return depositHashes[index].shaHash == bytes32(0);
+    }
+
     function getCurrentStateRoot() public view returns (bytes32) {
         return stateRoots[stateIndex()];
     }
