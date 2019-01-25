@@ -32,7 +32,7 @@ contract SnappBase is Ownable {
         uint appliedAccountStateIndex; // accountState index when batch applied (for rollback)
     }
 
-    uint public depositIndex=0;
+    uint public depositIndex;
     mapping (uint => DepositState) public deposits;
     //DepositState[] public deposits;
 
@@ -94,14 +94,13 @@ contract SnappBase is Ownable {
         // uint depositIndex = deposits.length - 1;
         DepositState memory currDepositState = deposits[depositIndex];
         if (currDepositState.size == MAX_DEPOSIT_BATCH || block.number > currDepositState.creationBlock + 20) {
-            currDepositState = DepositState({
+            depositIndex++;
+            deposits[depositIndex] = DepositState({
                 size: 0,
                 shaHash: bytes32(0),
                 creationBlock: block.number,
                 appliedAccountStateIndex: 0   // Default 0 implies not applied.
             });
-            depositIndex++;
-            deposits[depositIndex] = currDepositState;
         }
 
         // Update Deposit Hash based on request
@@ -109,10 +108,8 @@ contract SnappBase is Ownable {
         bytes32 nextDepositHash = sha256(
             abi.encodePacked(currDepositState.shaHash, accountId, tokenIndex, amount)
         );
-        currDepositState.shaHash = nextDepositHash;
-        currDepositState.size++;
-
-        deposits[depositIndex] = currDepositState;
+        deposits[depositIndex].shaHash = nextDepositHash;
+        deposits[depositIndex].size++;
 
         emit Deposit(accountId, tokenIndex, amount, depositIndex, currDepositState.size);
     }
