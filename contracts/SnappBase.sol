@@ -91,8 +91,6 @@ contract SnappBase is Ownable {
             "Unsuccessful transfer"
         );
 
-        // uint depositIndex = deposits.length - 1;
-        DepositState memory currDepositState = deposits[depositIndex];
         if (currDepositState.size == MAX_DEPOSIT_BATCH || block.number > currDepositState.creationBlock + 20) {
             depositIndex++;
             deposits[depositIndex] = DepositState({
