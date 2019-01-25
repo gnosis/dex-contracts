@@ -91,7 +91,7 @@ contract SnappBase is Ownable {
             "Unsuccessful transfer"
         );
 
-        if (currDepositState.size == MAX_DEPOSIT_BATCH || block.number > currDepositState.creationBlock + 20) {
+        if (deposits[depositIndex].size == MAX_DEPOSIT_BATCH || block.number > deposits[depositIndex].creationBlock + 20) {
             depositIndex++;
             deposits[depositIndex] = DepositState({
                 size: 0,
@@ -103,13 +103,20 @@ contract SnappBase is Ownable {
 
         // Update Deposit Hash based on request
         uint16 accountId = publicKeyToAccountMap[msg.sender];
-        bytes32 nextDepositHash = sha256(
-            abi.encodePacked(currDepositState.shaHash, accountId, tokenIndex, amount)
-        );
+        bytes32 nextDepositHash;
+        if (depositIndex == 0) {
+            nextDepositHash = sha256(
+            abi.encodePacked(bytes32(0), accountId, tokenIndex, amount)
+            );
+        } else {
+            nextDepositHash = sha256(
+            abi.encodePacked(deposits[depositIndex - 1].shaHash, accountId, tokenIndex, amount)
+            );
+        } 
         deposits[depositIndex].shaHash = nextDepositHash;
         deposits[depositIndex].size++;
 
-        emit Deposit(accountId, tokenIndex, amount, depositIndex, currDepositState.size);
+        emit Deposit(accountId, tokenIndex, amount, depositIndex, deposits[depositIndex].size);
     }
 
     function stateIndex() public view returns (uint) {
