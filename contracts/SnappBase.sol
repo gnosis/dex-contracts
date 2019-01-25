@@ -32,7 +32,9 @@ contract SnappBase is Ownable {
         uint appliedAccountStateIndex; // accountState index when batch applied (for rollback)
     }
 
-    DepositState[] public deposits;
+    uint public depositIndex=0;
+    mapping (uint => DepositState) public deposits;
+    //DepositState[] public deposits;
 
     event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
     event StateTransition(TransitionType transitionType, uint from, bytes32 to, uint slot);
@@ -47,15 +49,12 @@ contract SnappBase is Ownable {
         // The initial state should be Pederson hash of an empty balance tree
         bytes32 stateInit = bytes32(0);  // TODO
         stateRoots.push(stateInit);
-        deposits.push(
-            DepositState({
-                size: 0,
-                shaHash: bytes32(0),
-                creationBlock: block.number,
-                appliedAccountStateIndex: 0
-            })
-        );
-
+        deposits[depositIndex] = DepositState({
+            size: 0,
+            shaHash: bytes32(0),
+            creationBlock: block.number,
+            appliedAccountStateIndex: 0
+        });
 
         emit SnappInitialization(stateInit, MAX_TOKENS, MAX_ACCOUNT_ID);
     }
@@ -93,7 +92,7 @@ contract SnappBase is Ownable {
         );
 
         // uint depositIndex = deposits.length - 1;
-        DepositState memory currDepositState = deposits[depositIndex()];
+        DepositState memory currDepositState = deposits[depositIndex];
         if (currDepositState.size == MAX_DEPOSIT_BATCH || block.number > currDepositState.creationBlock + 20) {
             currDepositState = DepositState({
                 size: 0,
@@ -101,8 +100,8 @@ contract SnappBase is Ownable {
                 creationBlock: block.number,
                 appliedAccountStateIndex: 0   // Default 0 implies not applied.
             });
-            deposits.push(currDepositState);
-            // depositIndex++;
+            depositIndex++;
+            deposits[depositIndex] = currDepositState;
         }
 
         // Update Deposit Hash based on request
@@ -113,13 +112,9 @@ contract SnappBase is Ownable {
         currDepositState.shaHash = nextDepositHash;
         currDepositState.size++;
 
-        deposits[depositIndex()] = currDepositState;
+        deposits[depositIndex] = currDepositState;
 
-        emit Deposit(accountId, tokenIndex, amount, depositIndex(), currDepositState.size);
-    }
-
-    function depositIndex() public view returns (uint) {
-        return deposits.length - 1;
+        emit Deposit(accountId, tokenIndex, amount, depositIndex, currDepositState.size);
     }
 
     function stateIndex() public view returns (uint) {
@@ -133,7 +128,7 @@ contract SnappBase is Ownable {
     )
         public onlyOwner()
     {   
-        require(slot <= depositIndex(), "Requested deposit slot does not exist");
+        require(slot <= depositIndex, "Requested deposit slot does not exist");
 
         require(slot == 0 || deposits[slot-1].appliedAccountStateIndex != 0, "Must apply deposit slots in order!");
         require(deposits[slot].appliedAccountStateIndex == 0, "Deposits already processed");
