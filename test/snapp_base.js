@@ -344,6 +344,6 @@ contract("SnappBase", async (accounts) => {
       await instance.applyDeposits(slot, state_root, zeroHash)
       
       await instance.deposit(1, 10, { from: user_1 })
-      })
+    })
   })
 })
