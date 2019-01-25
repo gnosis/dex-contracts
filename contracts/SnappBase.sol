@@ -103,16 +103,9 @@ contract SnappBase is Ownable {
 
         // Update Deposit Hash based on request
         uint16 accountId = publicKeyToAccountMap[msg.sender];
-        bytes32 nextDepositHash;
-        if (depositIndex == 0) {
-            nextDepositHash = sha256(
-            abi.encodePacked(bytes32(0), accountId, tokenIndex, amount)
+        bytes32 nextDepositHash = sha256(
+            abi.encodePacked(deposits[depositIndex].shaHash, accountId, tokenIndex, amount)
             );
-        } else {
-            nextDepositHash = sha256(
-            abi.encodePacked(deposits[depositIndex - 1].shaHash, accountId, tokenIndex, amount)
-            );
-        } 
         deposits[depositIndex].shaHash = nextDepositHash;
         deposits[depositIndex].size++;
 
