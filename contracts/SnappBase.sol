@@ -34,7 +34,6 @@ contract SnappBase is Ownable {
 
     uint public depositIndex;
     mapping (uint => DepositState) public deposits;
-    //DepositState[] public deposits;
 
     event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
     event StateTransition(TransitionType transitionType, uint from, bytes32 to, uint slot);
@@ -105,7 +104,7 @@ contract SnappBase is Ownable {
         uint16 accountId = publicKeyToAccountMap[msg.sender];
         bytes32 nextDepositHash = sha256(
             abi.encodePacked(deposits[depositIndex].shaHash, accountId, tokenIndex, amount)
-            );
+        );
         deposits[depositIndex].shaHash = nextDepositHash;
         deposits[depositIndex].size++;
 
