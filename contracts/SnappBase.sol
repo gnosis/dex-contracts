@@ -30,7 +30,7 @@ contract SnappBase is Ownable {
     mapping (address => uint8) public tokenAddresToIdMap;
     mapping (uint8 => address) public tokenIdToAddressMap;
 
-    struct DepositState {
+    struct PendingFlux {
         uint16 size;                   // Number of deposits in this batch
         bytes32 shaHash;               // Rolling shaHash of all deposits
         uint creationBlock;            // Timestamp of batch creation
@@ -38,14 +38,10 @@ contract SnappBase is Ownable {
     }
 
     uint public depositIndex;
-    mapping (uint => DepositState) public deposits;
+    mapping (uint => PendingFlux) public deposits;
 
-    struct PendingWithdrawState {
-        uint16 size; //number of withdraws that have been made in this batch
-        bytes32 shaHash; //rolling shaHash of all pending withdraws
-        uint creationBlock; //timestamp of when batch was created
-        uint appliedAccountStateIndex; //AccountState when this batch was applied (for rollback)
-    }
+    uint public withdrawIndex;
+    mapping (uint => PendingFlux) public pendingWithdraws;
 
     struct ClaimableWithdrawState {
         bytes32 merkleRoot; // Merkle root of claimable withdraws in this block
@@ -53,7 +49,7 @@ contract SnappBase is Ownable {
         uint appliedAccountStateIndex; // AccountState when this state was created (for rollback)
     }
 
-    PendingWithdrawState[] public pendingWithdraws;
+    // PendingWithdrawState[] public pendingWithdraws;
     ClaimableWithdrawState[] public claimableWithdraws;
 
     event WithdrawRequest(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
@@ -65,20 +61,20 @@ contract SnappBase is Ownable {
         // The initial state should be Pederson hash of an empty balance tree
         bytes32 stateInit = bytes32(0);  // TODO
         stateRoots.push(stateInit);
-        deposits[depositIndex] = DepositState({
+
+        deposits[depositIndex] = PendingFlux({
             size: 0,
             shaHash: bytes32(0),
             creationBlock: block.number,
             appliedAccountStateIndex: 0
         });
-        pendingWithdraws.push(
-            PendingWithdrawState({
-                size: 0,
-                shaHash: bytes32(0),
-                creationBlock: block.number,
-                appliedAccountStateIndex: 0
-            })
-        );
+
+        pendingWithdraws[withdrawIndex] = PendingFlux({
+            size: 0,
+            shaHash: bytes32(0),
+            creationBlock: block.number,
+            appliedAccountStateIndex: 0
+        });
 
         emit SnappInitialization(stateInit, MAX_TOKENS, MAX_ACCOUNT_ID);
     }
@@ -140,7 +136,7 @@ contract SnappBase is Ownable {
 
         if (deposits[depositIndex].size == MAX_DEPOSIT_BATCH || block.number > deposits[depositIndex].creationBlock + 20) {
             depositIndex++;
-            deposits[depositIndex] = DepositState({
+            deposits[depositIndex] = PendingFlux({
                 size: 0,
                 shaHash: bytes32(0),
                 creationBlock: block.number,
@@ -196,30 +192,29 @@ contract SnappBase is Ownable {
 
         // Determine or construct correct current withdraw state.
         // This is governed by MAX_WITHDRAW_BATCH and creationBlock
-        uint withdrawIndex = pendingWithdraws.length - 1;
-        PendingWithdrawState memory currWithdrawState = pendingWithdraws[withdrawIndex];
-        if (currWithdrawState.size == MAX_WITHDRAW_BATCH || block.number > currWithdrawState.creationBlock + 20) {
-            currWithdrawState = PendingWithdrawState({
-                size: 0,
-                shaHash: bytes32(0),
-                creationBlock: block.number,
-                appliedAccountStateIndex: 0  // Default 0 implies not applied.
-            });
-            pendingWithdraws.push(currWithdrawState);
-            withdrawIndex++;
-        }
+        if (
+            pendingWithdraws[withdrawIndex].size == MAX_WITHDRAW_BATCH || 
+            block.number > pendingWithdraws[withdrawIndex].creationBlock + 20
+            ) {
+                withdrawIndex++;
+                pendingWithdraws[withdrawIndex] = PendingFlux({
+                    size: 0,
+                    shaHash: bytes32(0),
+                    creationBlock: block.number,
+                    appliedAccountStateIndex: 0
+                });
+            }
 
         // Update Withdraw Hash based on request
         uint16 accountId = publicKeyToAccountMap[msg.sender];
         bytes32 nextWithdrawHash = sha256(
-            abi.encodePacked(currWithdrawState.shaHash, accountId, tokenId, amount)
+            abi.encodePacked(pendingWithdraws[withdrawIndex].shaHash, accountId, tokenId, amount)
         );
-        currWithdrawState.shaHash = nextWithdrawHash;
-        currWithdrawState.size++;
 
-        pendingWithdraws[withdrawIndex] = currWithdrawState;
+        pendingWithdraws[withdrawIndex].shaHash = nextWithdrawHash;
+        pendingWithdraws[withdrawIndex].size++;
 
-        emit WithdrawRequest(accountId, tokenId, amount, withdrawIndex, currWithdrawState.size);
+        emit WithdrawRequest(accountId, tokenId, amount, withdrawIndex, pendingWithdraws[withdrawIndex].size);
     }
 
     function applyWithdrawals(
@@ -231,9 +226,13 @@ contract SnappBase is Ownable {
     )
         public onlyOwner()
     {
-        require(slot < pendingWithdraws.length - 1, "Withdraw slot must exist and be inactive");
+        require(slot <= depositIndex, "Requested withdrawal slot does not exist");
+        require(
+            slot == 0 || pendingWithdraws[slot-1].appliedAccountStateIndex != 0, 
+            "Must apply withdrawal slots in order!"
+        );
         require(pendingWithdraws[slot].appliedAccountStateIndex == 0, "Withdraws already processed");
-        require(pendingWithdraws[slot].shaHash != bytes32(0), "Withdraws slot is empty");
+        require(block.number > pendingWithdraws[slot].creationBlock + 20, "Requested withdraw slot is still active");
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
 
         // Update account states
