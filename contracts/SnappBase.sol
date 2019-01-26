@@ -8,10 +8,11 @@ import "./Merkle.sol";
 contract SnappBase is Ownable {
     using Merkle for bytes32;
 
-    uint16 public constant MAX_ACCOUNT_ID = 100;
+    uint16 public constant MAX_ACCOUNT_ID = 100;     // TODO - make larger or use uint8
     uint8 public constant MAX_TOKENS = 30;
+    uint16 public constant MAX_DEPOSIT_BATCH = 100;  // TODO - make larger or use uint8
     uint16 public constant MAX_WITHDRAW_BATCH = 100;
-
+    
     bytes32[] public stateRoots;  // Pedersen Hash
 
     enum TransitionType {
@@ -30,12 +31,14 @@ contract SnappBase is Ownable {
     mapping (uint8 => address) public tokenIdToAddressMap;
 
     struct DepositState {
-        bytes32 shaHash;
-        bool applied;
+        uint16 size;                   // Number of deposits in this batch
+        bytes32 shaHash;               // Rolling shaHash of all deposits
+        uint creationBlock;            // Timestamp of batch creation
+        uint appliedAccountStateIndex; // accountState index when batch applied (for rollback)
     }
 
-    uint16 public slotIndex;
-    mapping (uint => DepositState) public depositHashes;
+    uint public depositIndex;
+    mapping (uint => DepositState) public deposits;
 
     struct PendingWithdrawState {
         uint16 size; //number of withdraws that have been made in this batch
@@ -58,15 +61,16 @@ contract SnappBase is Ownable {
     event StateTransition(TransitionType transitionType, uint stateIndex, bytes32 stateHash, uint slot);
     event SnappInitialization(bytes32 stateHash, uint8 maxTokens, uint16 maxAccounts);
 
-    modifier onlyRegistered() {
-        require(publicKeyToAccountMap[msg.sender] != 0, "Must have registered account");
-        _;
-    }
-
     constructor () public {
         // The initial state should be Pederson hash of an empty balance tree
         bytes32 stateInit = bytes32(0);  // TODO
         stateRoots.push(stateInit);
+        deposits[depositIndex] = DepositState({
+            size: 0,
+            shaHash: bytes32(0),
+            creationBlock: block.number,
+            appliedAccountStateIndex: 0
+        });
         pendingWithdraws.push(
             PendingWithdrawState({
                 size: 0,
@@ -77,6 +81,29 @@ contract SnappBase is Ownable {
         );
 
         emit SnappInitialization(stateInit, MAX_TOKENS, MAX_ACCOUNT_ID);
+    }
+
+    // Public View 
+    function stateIndex() public view returns (uint) {
+        return stateRoots.length - 1;
+    }
+
+    function hasDepositBeenApplied(uint index) public view returns (bool) {
+        return deposits[index].appliedAccountStateIndex != 0;
+    }
+
+    function isDepositSlotEmpty(uint index) public view returns (bool) {
+        return deposits[index].shaHash == bytes32(0);
+    }
+
+    function getCurrentStateRoot() public view returns (bytes32) {
+        return stateRoots[stateIndex()];
+    }
+
+    // Modifiers
+    modifier onlyRegistered() {
+        require(publicKeyToAccountMap[msg.sender] != 0, "Must have registered account");
+        _;
     }
 
     function openAccount(uint16 accountId) public {
@@ -111,26 +138,25 @@ contract SnappBase is Ownable {
             "Unsuccessful transfer"
         );
 
-        uint depositSlot = this.depositSlot();
-        if (depositHashes[depositSlot].shaHash == bytes32(0)) {
-            slotIndex = 0;
+        if (deposits[depositIndex].size == MAX_DEPOSIT_BATCH || block.number > deposits[depositIndex].creationBlock + 20) {
+            depositIndex++;
+            deposits[depositIndex] = DepositState({
+                size: 0,
+                shaHash: bytes32(0),
+                creationBlock: block.number,
+                appliedAccountStateIndex: 0   // Default 0 implies not applied.
+            });
         }
+
+        // Update Deposit Hash based on request
         uint16 accountId = publicKeyToAccountMap[msg.sender];
         bytes32 nextDepositHash = sha256(
-            abi.encodePacked(depositHashes[depositSlot].shaHash, accountId, tokenIndex, amount)
+            abi.encodePacked(deposits[depositIndex].shaHash, accountId, tokenIndex, amount)
         );
-        depositHashes[depositSlot] = DepositState({shaHash: nextDepositHash, applied: false});
+        deposits[depositIndex].shaHash = nextDepositHash;
+        deposits[depositIndex].size++;
 
-        emit Deposit(accountId, tokenIndex, amount, depositSlot, slotIndex);
-        slotIndex++;
-    }
-
-    function depositSlot() public view returns (uint) {
-        return block.number / 20;
-    }
-
-    function stateIndex() public view returns (uint) {
-        return stateRoots.length - 1;
+        emit Deposit(accountId, tokenIndex, amount, depositIndex, deposits[depositIndex].size);
     }
 
     function applyDeposits(
@@ -140,14 +166,22 @@ contract SnappBase is Ownable {
     )
         public onlyOwner()
     {   
-        require(slot < this.depositSlot(), "Deposit slot must exist and be inactive");
-        require(depositHashes[slot].applied == false, "Deposits already processed");
-        require(depositHashes[slot].shaHash != bytes32(0), "Deposit slot is empty");
-        require(stateRoots[this.stateIndex()] == _currStateRoot, "Incorrect State Root");
+        require(slot <= depositIndex, "Requested deposit slot does not exist");
+
+        require(slot == 0 || deposits[slot-1].appliedAccountStateIndex != 0, "Must apply deposit slots in order!");
+        require(deposits[slot].appliedAccountStateIndex == 0, "Deposits already processed");
+        require(block.number > deposits[slot].creationBlock + 20, "Requested deposit slot is still active");
+        require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
+
+        // Note that the only slot that can ever be empty is the first (at index zero) 
+        // This occurs when no deposits are made within the first 20 blocks of the contract's deployment
+        // This code allows for the processing of the empty block and since it will only happen once
+        // No, additional verificaiton is necessary.  
 
         stateRoots.push(_newStateRoot);        
-        depositHashes[slot].applied = true;
-        emit StateTransition(TransitionType.Deposit, this.stateIndex(), _newStateRoot, slot);
+        deposits[slot].appliedAccountStateIndex = stateIndex();
+
+        emit StateTransition(TransitionType.Deposit, stateIndex(), _newStateRoot, slot);
     }
 
     function requestWithdrawal(uint8 tokenId, uint amount) public onlyRegistered() {
@@ -200,19 +234,21 @@ contract SnappBase is Ownable {
         require(slot < pendingWithdraws.length - 1, "Withdraw slot must exist and be inactive");
         require(pendingWithdraws[slot].appliedAccountStateIndex == 0, "Withdraws already processed");
         require(pendingWithdraws[slot].shaHash != bytes32(0), "Withdraws slot is empty");
-        require(stateRoots[this.stateIndex()] == _currStateRoot, "Incorrect State Root");
+        require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
 
         // Update account states
         stateRoots.push(_newStateRoot);
-        pendingWithdraws[slot].appliedAccountStateIndex = this.stateIndex();
-        emit StateTransition(TransitionType.Withdraw, this.stateIndex(), _newStateRoot, slot);
-
+        pendingWithdraws[slot].appliedAccountStateIndex = stateIndex();
+        
         claimableWithdraws.push(
             ClaimableWithdrawState({
                 merkleRoot: _merkleRoot,
                 claimedBitmap: includedBitMap,
-                appliedAccountStateIndex: this.stateIndex()
+                appliedAccountStateIndex: stateIndex()
             })
         );
+
+        emit StateTransition(TransitionType.Withdraw, stateIndex(), _newStateRoot, slot);
     }
+
 }
