@@ -151,4 +151,12 @@ contract SnappBase is Ownable {
     function getCurrentStateRoot() public view returns (bytes32) {
         return stateRoots[stateIndex()];
     }
+
+    function getDepositCreationBlock(uint slot) public view returns (uint) {
+        return deposits[slot].creationBlock;
+    }
+
+    function getDepositHash(uint slot) public view returns (bytes32) {
+        return deposits[slot].shaHash;
+    }
 }
