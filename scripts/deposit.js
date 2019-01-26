@@ -30,9 +30,9 @@ module.exports = async (callback) => {
 
     const tx = await instance.deposit(tokenId, amount, {from: depositor})
     const slot = tx.logs[0].args.slot.toNumber()
-    const slot_index =  tx.logs[0].args.slotIndex.toNumber()
+    const slot_index = tx.logs[0].args.slotIndex.toNumber()
 
-    const deposit_hash = (await instance.depositHashes(slot)).shaHash
+    const deposit_hash = (await instance.deposits(slot)).shaHash
     console.log("Deposit successful: Slot %s - Index %s - Hash %s", slot, slot_index, deposit_hash)
     callback()
 }
