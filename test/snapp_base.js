@@ -25,6 +25,40 @@ const {
 
 contract("SnappBase", async (accounts) => {
   const [owner, token_owner, user_1, user_2] = accounts
+
+  describe("public view functions", () => {
+    it("getCurrentStateRoot()", async () => {
+      const instance = await SnappBase.new()
+      // TODO - substitute this with correct initStateHash
+      const state_init = "0x0000000000000000000000000000000000000000000000000000000000000000"
+      assert.equal(await instance.getCurrentStateRoot.call(), state_init)
+    })
+
+    it("hasDepositBeenApplied(slot) == false", async () => {
+      const instance = await SnappBase.new()
+      assert.equal(await instance.hasDepositBeenApplied.call(0), false)
+    })
+
+    it("isDepositSlotEmpty(slot)", async () => {
+      const instance = await SnappBase.new()
+      assert.equal(await instance.isDepositSlotEmpty.call(0), true)
+    })
+
+    it("getDepositCreationBlock(slot)", async () => {
+      const instance = await SnappBase.new()
+      const tx = await web3.eth.getTransaction(instance.transactionHash)
+
+      assert.equal((await instance.getDepositCreationBlock.call(0)).toNumber(), tx.blockNumber)
+    })
+
+    it("getDepositHash(slot)", async () => {
+      const instance = await SnappBase.new()
+      const deposit_init = "0x0000000000000000000000000000000000000000000000000000000000000000"
+      assert.equal(await instance.getDepositHash.call(0), deposit_init)
+    })
+
+
+  })
   
   describe("openAccount()", () => {
     it("Account index default is 0", async () => {
@@ -287,6 +321,8 @@ contract("SnappBase", async (accounts) => {
 
       const state_index = (await instance.stateIndex.call()).toNumber()
       assert.equal((await instance.deposits.call(slot)).appliedAccountStateIndex, state_index)
+
+      assert.equal(await instance.hasDepositBeenApplied.call(slot), true)
     })
 
     it("Can't apply deposits twice", async () => {
@@ -309,6 +345,7 @@ contract("SnappBase", async (accounts) => {
       await assertRejects(
         instance.applyDeposits(slot, state_root, zeroHash, deposit_state.shaHash))
     })
+
     it("Can't apply deposits non-ordered", async () => {
       const instance = await SnappBase.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
@@ -665,6 +702,5 @@ contract("SnappBase", async (accounts) => {
 
     })
   })
-
 
 })
