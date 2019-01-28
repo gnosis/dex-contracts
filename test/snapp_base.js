@@ -18,6 +18,11 @@ const {
   // registerTokens,
   setupEnvironment } = require("./utilities.js")
 
+const {
+  falseArray,
+  isActive,
+  stateHash }  = require("./snapp_utils.js")
+
 contract("SnappBase", async (accounts) => {
   const [owner, token_owner, user_1, user_2] = accounts
   
@@ -275,13 +280,13 @@ contract("SnappBase", async (accounts) => {
       // Wait for current depoit index to increment
       await waitForNBlocks(20, owner)
 
-      const state_index = (await instance.stateIndex.call()).toNumber()
-      const state_root = await instance.stateRoots.call(state_index)
+      const state_root = stateHash(instance)
       const deposit_state = await instance.deposits.call(slot)
 
       await instance.applyDeposits(slot, state_root, zeroHash, deposit_state.shaHash)
-      
-      assert.equal((await instance.deposits.call(slot)).appliedAccountStateIndex, state_index + 1)
+
+      const state_index = (await instance.stateIndex.call()).toNumber()
+      assert.equal((await instance.deposits.call(slot)).appliedAccountStateIndex, state_index)
     })
 
     it("Can't apply deposits twice", async () => {
@@ -381,6 +386,16 @@ contract("SnappBase", async (accounts) => {
       await assertRejects(instance.requestWithdrawal(1, 0, { from: user_1 }))
     })
 
+    it("No withdraw amount greater than contract balance of requested token", async () => {
+      const instance = await SnappBase.new()
+
+      const token = await ERC20.new()
+      await instance.addToken(token.address)
+      await instance.openAccount(1, { from: user_1 })
+
+      await assertRejects(instance.requestWithdrawal(1, 1, { from: user_1 }))
+    })
+
     it("Generic Withdraw", async () => {
       const instance = await SnappBase.new()
 
@@ -447,4 +462,168 @@ contract("SnappBase", async (accounts) => {
     })
 
   })
+
+  describe("applyWithdrawals()", () => {
+    it("Only owner", async () => {
+      const instance = await SnappBase.new()
+
+      const slot = (await instance.withdrawIndex.call()).toNumber()
+      const state_index = (await instance.stateIndex.call()).toNumber()
+      const state_root = await instance.stateRoots.call(state_index)
+      const withdraw_state = await instance.pendingWithdraws.call(slot)
+
+      const new_state = oneHash
+      const bit_map = falseArray(100)
+      const merkle_root = zeroHash
+
+      await assertRejects(
+        instance.applyWithdrawals(
+          slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash, { from: user_1 }))
+    })
+
+    it("No apply withdraw on active slot", async () => {
+      const instance = await SnappBase.new()
+      
+      const state_root = await stateHash(instance)
+
+      const slot = (await instance.withdrawIndex.call()).toNumber()
+      const withdraw_state = await instance.pendingWithdraws.call(slot)
+      const new_state = oneHash
+      const bit_map = falseArray(100)
+      const merkle_root = zeroHash
+
+      assert.equal(await isActive(withdraw_state), true)
+
+      await assertRejects(
+        instance.applyWithdrawals(
+          slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash))
+    })
+
+    it("Can't apply with wrong state root", async () => {
+      const instance = await SnappBase.new()
+      
+      await setupEnvironment(MintableERC20, instance, token_owner, accounts, 2)
+
+      await instance.deposit(1, 1, { from: user_1 })
+      const tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const slot = tx.logs[0].args.slot.toNumber()
+      const withdraw_state = await instance.pendingWithdraws(slot)
+      const new_state = oneHash
+      const bit_map = falseArray(100, [])
+      const merkle_root = zeroHash
+
+      // Wait for current withdraw slot to be inactive
+      await waitForNBlocks(21, owner)
+
+      // ensure withdraw state is inactive
+      assert.equal(await isActive(withdraw_state), false)
+
+      const wrong_state_root = oneHash
+
+      assert.notEqual(wrong_state_root, await stateHash(instance))
+
+      await assertRejects(
+        instance.applyWithdrawals(
+          slot, bit_map, merkle_root, wrong_state_root, new_state, withdraw_state.shaHash))
+    })
+
+    it("Can't apply with incorrect withdraw hash", async () => {
+      const instance = await SnappBase.new()
+      
+      await setupEnvironment(MintableERC20, instance, token_owner, accounts, 2)
+
+      await instance.deposit(1, 1, { from: user_1 })
+      const tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const slot = tx.logs[0].args.slot.toNumber()
+      const withdraw_state = await instance.pendingWithdraws(slot)
+      const new_state = oneHash
+      const bit_map = falseArray(100, [])
+      const merkle_root = zeroHash
+
+      // Wait for current withdraw slot to be inactive
+      await waitForNBlocks(21, owner)
+
+      // ensure withdraw state is inactive
+      assert.equal(await isActive(withdraw_state), false)
+
+      const state_root = await stateHash(instance)
+      const wrong_withdraw_hash = oneHash
+
+      assert.notEqual(wrong_withdraw_hash, withdraw_state.shaHash)
+
+      await assertRejects(
+        instance.applyWithdrawals(
+          slot, bit_map, merkle_root, state_root, new_state, wrong_withdraw_hash))
+    })
+
+    it("Can't apply with on out-of-range slot", async () => {
+      const instance = await SnappBase.new()
+      
+      await setupEnvironment(MintableERC20, instance, token_owner, accounts, 2)
+
+      await instance.deposit(1, 1, { from: user_1 })
+      const tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const slot = tx.logs[0].args.slot.toNumber()
+      const withdraw_state = await instance.pendingWithdraws(slot)
+      const new_state = oneHash
+      const bit_map = falseArray(100)
+      const merkle_root = zeroHash
+
+      // Wait for current withdraw slot to be inactive
+      await waitForNBlocks(21, owner)
+
+      // ensure withdraw state is inactive
+      assert.equal(await isActive(withdraw_state), false)
+
+      const state_root = await stateHash(instance)
+
+      const too_large_slot = (await instance.depositIndex.call()).toNumber() + 1
+      await assertRejects(
+        instance.applyWithdrawals(
+          too_large_slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash))
+
+    })
+
+    it.only("Successful apply withdraws", async () => {
+      const instance = await SnappBase.new()
+      
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+
+      await instance.deposit(1, 10, { from: user_1 })
+      const tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const slot = tx.logs[0].args.slot.toNumber()
+      const withdraw_state = await instance.pendingWithdraws(slot)
+      const new_state = oneHash
+      const bit_map = falseArray(100, [0])
+      const merkle_root = zeroHash
+
+      // Wait for current depoit index to increment
+      await waitForNBlocks(21, owner)
+
+      const state_root = await stateHash(instance)
+      await instance.applyWithdrawals(
+        slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash)
+
+      const state_index = (await instance.stateIndex.call()).toNumber()
+      const applied_index = ((await instance.pendingWithdraws(slot)).appliedAccountStateIndex).toNumber()
+
+      assert.equal(applied_index, state_index)
+    })
+
+    // it("Can't apply withdraws twice", async () => {
+    //   assert.equal(1, 0)
+    // })
+    // it("Can't apply withdraws non-ordered", async () => {
+    //   // const instance = await SnappBase.new()
+    //   // await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+    //   assert.equal(1, 0)
+    // })
+    // it("There is no race condition: withdraws are not stopped from applyWithdrawals", async () => {
+    //   // const instance = await SnappBase.new()
+    //   // await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+    //   assert.equal(1, 0)
+    // })
+  })
+
+
 })

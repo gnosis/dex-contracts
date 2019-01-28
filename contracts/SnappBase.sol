@@ -222,7 +222,8 @@ contract SnappBase is Ownable {
         bool[100] memory includedBitMap,
         bytes32 _merkleRoot,
         bytes32 _currStateRoot,
-        bytes32 _newStateRoot
+        bytes32 _newStateRoot,
+        bytes32 _withdrawHash
     )
         public onlyOwner()
     {
@@ -231,6 +232,7 @@ contract SnappBase is Ownable {
             slot == 0 || pendingWithdraws[slot-1].appliedAccountStateIndex != 0, 
             "Previous withdraw slot no processed!"
         );
+        require(pendingWithdraws[slot].shaHash == _withdrawHash, "Withdraws have been reorged");
         require(pendingWithdraws[slot].appliedAccountStateIndex == 0, "Withdraws already processed");
         require(block.number > pendingWithdraws[slot].creationBlock + 20, "Requested withdraw slot is still active");
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
@@ -281,4 +283,7 @@ contract SnappBase is Ownable {
         return deposits[slot].shaHash;
     }
 
+    function isActive(uint _creationBlock) public view returns (bool) {
+        return block.number <= _creationBlock + 20; 
+    }
 }
