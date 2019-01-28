@@ -15,6 +15,9 @@ module.exports = async (callback) => {
         console.log("Warning: Requested deposit slot has already been applied")
         callback()
     }
+    console.log("Current slot for :", slot , " with curr_state", curr_state, " and new_state", new_state)
     const tx = await instance.applyDeposits(slot, curr_state, new_state)
+    const deposit_state2 = await instance.deposits.call(slot)
+    console.log("New appliedAccountStateIndex is:",deposit_state2.appliedAccountStateIndex )
     callback()
 }
