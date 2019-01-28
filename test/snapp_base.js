@@ -597,7 +597,6 @@ contract("SnappBase", async (accounts) => {
       const bit_map = falseArray(100, [0])
       const merkle_root = zeroHash
 
-      // Wait for current depoit index to increment
       await waitForNBlocks(21, owner)
 
       const state_root = await stateHash(instance)
@@ -610,19 +609,61 @@ contract("SnappBase", async (accounts) => {
       assert.equal(applied_index, state_index)
     })
 
-    // it("Can't apply withdraws twice", async () => {
-    //   assert.equal(1, 0)
-    // })
-    // it("Can't apply withdraws non-ordered", async () => {
-    //   // const instance = await SnappBase.new()
-    //   // await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
-    //   assert.equal(1, 0)
-    // })
-    // it("There is no race condition: withdraws are not stopped from applyWithdrawals", async () => {
-    //   // const instance = await SnappBase.new()
-    //   // await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
-    //   assert.equal(1, 0)
-    // })
+    it("Can't apply withdraw slots twice", async () => {
+      const instance = await SnappBase.new()
+      
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+
+      await instance.deposit(1, 10, { from: user_1 })
+      const tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const slot = tx.logs[0].args.slot.toNumber()
+      const withdraw_state = await instance.pendingWithdraws(slot)
+      const new_state = oneHash
+      const bit_map = falseArray(100, [0])
+      const merkle_root = zeroHash
+
+      await waitForNBlocks(21, owner)
+
+      const state_root = await stateHash(instance)
+      await instance.applyWithdrawals(
+        slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash)
+      
+      await assertRejects(
+        instance.applyWithdrawals(
+          slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash)
+      )
+    })
+    it("Must apply withdraw slots sequentially", async () => {
+      const instance = await SnappBase.new()
+      
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+
+      await instance.deposit(1, 10, { from: user_1 })
+      const first_tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const first_slot = first_tx.logs[0].args.slot.toNumber()
+      const first_withdraw_state = await instance.pendingWithdraws(first_slot)
+      const new_state = oneHash
+      const bit_map = falseArray(100, [0])
+      const merkle_root = zeroHash
+      await waitForNBlocks(21, owner)
+
+      const second_tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const second_slot = second_tx.logs[0].args.slot.toNumber()
+      const second_withdraw_state = await instance.pendingWithdraws(second_slot)
+      await waitForNBlocks(21, owner)
+
+      const state_root = await stateHash(instance)
+      await assertRejects(instance.applyWithdrawals(
+        second_slot, bit_map, merkle_root, state_root, new_state, second_withdraw_state.shaHash))
+
+      await instance.applyWithdrawals(
+        first_slot, bit_map, merkle_root, state_root, new_state, first_withdraw_state.shaHash)
+      
+      const new_new_state = "0x2"
+      await instance.applyWithdrawals(
+        second_slot, bit_map, merkle_root, new_state, new_new_state, second_withdraw_state.shaHash)
+
+    })
   })
 
 

@@ -61,19 +61,8 @@ contract SnappBase is Ownable {
         bytes32 stateInit = bytes32(0);  // TODO
         stateRoots.push(stateInit);
 
-        deposits[depositIndex] = PendingFlux({
-            size: 0,
-            shaHash: bytes32(0),
-            creationBlock: block.number,
-            appliedAccountStateIndex: 0
-        });
-
-        pendingWithdraws[withdrawIndex] = PendingFlux({
-            size: 0,
-            shaHash: bytes32(0),
-            creationBlock: block.number,
-            appliedAccountStateIndex: 0
-        });
+        deposits[depositIndex].creationBlock = block.number;
+        pendingWithdraws[withdrawIndex].creationBlock = block.number;
 
         emit SnappInitialization(stateInit, MAX_TOKENS, MAX_ACCOUNT_ID);
     }
@@ -227,7 +216,7 @@ contract SnappBase is Ownable {
     )
         public onlyOwner()
     {
-        require(slot <= depositIndex, "Requested withdrawal slot does not exist");
+        require(slot <= withdrawIndex, "Requested withdrawal slot does not exist");
         require(
             slot == 0 || pendingWithdraws[slot-1].appliedAccountStateIndex != 0, 
             "Previous withdraw slot no processed!"
