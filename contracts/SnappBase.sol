@@ -283,7 +283,4 @@ contract SnappBase is Ownable {
         return deposits[slot].shaHash;
     }
 
-    function isActive(uint _creationBlock) public view returns (bool) {
-        return block.number <= _creationBlock + 20; 
-    }
 }

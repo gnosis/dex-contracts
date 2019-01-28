@@ -280,7 +280,7 @@ contract("SnappBase", async (accounts) => {
       // Wait for current depoit index to increment
       await waitForNBlocks(20, owner)
 
-      const state_root = stateHash(instance)
+      const state_root = await stateHash(instance)
       const deposit_state = await instance.deposits.call(slot)
 
       await instance.applyDeposits(slot, state_root, zeroHash, deposit_state.shaHash)
@@ -584,7 +584,7 @@ contract("SnappBase", async (accounts) => {
 
     })
 
-    it.only("Successful apply withdraws", async () => {
+    it("Successful apply withdraws", async () => {
       const instance = await SnappBase.new()
       
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
