@@ -44,13 +44,12 @@ contract SnappBase is Ownable {
     mapping (uint => PendingFlux) public pendingWithdraws;
 
     struct ClaimableWithdrawState {
-        bytes32 merkleRoot; // Merkle root of claimable withdraws in this block
-        bool[100] claimedBitmap; // Bitmap signalling which withdraws have been claimed
+        bytes32 merkleRoot;            // Merkle root of claimable withdraws in this block
+        bool[100] claimedBitmap;       // Bitmap signalling which withdraws have been claimed
         uint appliedAccountStateIndex; // AccountState when this state was created (for rollback)
     }
 
-    // PendingWithdrawState[] public pendingWithdraws;
-    ClaimableWithdrawState[] public claimableWithdraws;
+    mapping (uint => ClaimableWithdrawState) public claimableWithdraws;
 
     event WithdrawRequest(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
     event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
@@ -124,10 +123,10 @@ contract SnappBase is Ownable {
         numTokens++;
     }
 
-    function deposit(uint8 tokenIndex, uint amount) public onlyRegistered() {
+    function deposit(uint8 tokenId, uint amount) public onlyRegistered() {
         require(amount != 0, "Must deposit positive amount");
 
-        address tokenAddress = tokenIdToAddressMap[tokenIndex];
+        address tokenAddress = tokenIdToAddressMap[tokenId];
         require(tokenAddress != address(0), "Requested token is not registered");
         require(
             ERC20(tokenAddress).transferFrom(msg.sender, address(this), amount), 
@@ -147,12 +146,12 @@ contract SnappBase is Ownable {
         // Update Deposit Hash based on request
         uint16 accountId = publicKeyToAccountMap[msg.sender];
         bytes32 nextDepositHash = sha256(
-            abi.encodePacked(deposits[depositIndex].shaHash, accountId, tokenIndex, amount)
+            abi.encodePacked(deposits[depositIndex].shaHash, accountId, tokenId, amount)
         );
         deposits[depositIndex].shaHash = nextDepositHash;
         deposits[depositIndex].size++;
 
-        emit Deposit(accountId, tokenIndex, amount, depositIndex, deposits[depositIndex].size);
+        emit Deposit(accountId, tokenId, amount, depositIndex, deposits[depositIndex].size);
     }
 
     function applyDeposits(
@@ -229,7 +228,7 @@ contract SnappBase is Ownable {
         require(slot <= depositIndex, "Requested withdrawal slot does not exist");
         require(
             slot == 0 || pendingWithdraws[slot-1].appliedAccountStateIndex != 0, 
-            "Must apply withdrawal slots in order!"
+            "Previous withdraw slot no processed!"
         );
         require(pendingWithdraws[slot].appliedAccountStateIndex == 0, "Withdraws already processed");
         require(block.number > pendingWithdraws[slot].creationBlock + 20, "Requested withdraw slot is still active");
@@ -239,15 +238,37 @@ contract SnappBase is Ownable {
         stateRoots.push(_newStateRoot);
         pendingWithdraws[slot].appliedAccountStateIndex = stateIndex();
         
-        claimableWithdraws.push(
-            ClaimableWithdrawState({
-                merkleRoot: _merkleRoot,
-                claimedBitmap: includedBitMap,
-                appliedAccountStateIndex: stateIndex()
-            })
-        );
+        claimableWithdraws[slot] = ClaimableWithdrawState({
+            merkleRoot: _merkleRoot,
+            claimedBitmap: includedBitMap,
+            appliedAccountStateIndex: stateIndex()
+        });
 
         emit StateTransition(TransitionType.Withdraw, stateIndex(), _newStateRoot, slot);
+    }
+
+    function claimWithdrawal(
+        uint withdrawSlot,
+        uint16 inclusionIndex,
+        uint8 tokenId,
+        uint amount,
+        bytes memory proof
+    ) public onlyRegistered() {
+        require(
+            claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex - 1] == true, 
+            "Already claimed, or insufficient balance"
+        );
+        
+        bytes32 leaf = sha256(abi.encodePacked(publicKeyToAccountMap[msg.sender], tokenId, amount));
+        require(
+            leaf.checkMembership(inclusionIndex - 1, claimableWithdraws[withdrawSlot].merkleRoot, proof, 7), 
+            "Failed Merkle membership check."
+        );
+        
+        // Set claim bitmap to zero (indicates that funds have been claimed).
+        claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex - 1] = false;
+        // There is no situation where contract balance can't afford the upcomming transfer.
+        ERC20(tokenIdToAddressMap[tokenId]).transfer(msg.sender, amount);
     }
 
 }
