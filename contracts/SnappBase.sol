@@ -194,15 +194,15 @@ contract SnappBase is Ownable {
         if (
             pendingWithdraws[withdrawIndex].size == MAX_WITHDRAW_BATCH || 
             block.number > pendingWithdraws[withdrawIndex].creationBlock + 20
-            ) {
-                withdrawIndex++;
-                pendingWithdraws[withdrawIndex] = PendingFlux({
-                    size: 0,
-                    shaHash: bytes32(0),
-                    creationBlock: block.number,
-                    appliedAccountStateIndex: 0
-                });
-            }
+        ) {
+            withdrawIndex++;
+            pendingWithdraws[withdrawIndex] = PendingFlux({
+                size: 0,
+                shaHash: bytes32(0),
+                creationBlock: block.number,
+                appliedAccountStateIndex: 0
+            });
+        }
 
         // Update Withdraw Hash based on request
         uint16 accountId = publicKeyToAccountMap[msg.sender];
@@ -254,6 +254,7 @@ contract SnappBase is Ownable {
         uint amount,
         bytes memory proof
     ) public onlyRegistered() {
+        require(tokenIdToAddressMap[tokenId] != address(0), "Requested token is not registered");
         require(
             claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex - 1] == true, 
             "Already claimed, or insufficient balance"
