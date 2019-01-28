@@ -119,13 +119,13 @@ contract SnappBase is Ownable {
         uint slot,
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
-        bytes32 _depositHash,
+        bytes32 _depositHash
     )
         public onlyOwner()
     {   
         require(slot <= depositIndex, "Requested deposit slot does not exist");
         require(slot == 0 || deposits[slot-1].appliedAccountStateIndex != 0, "Must apply deposit slots in order!");
-        require(deposits[slot].depositHash == depositHash, "Deposits have been reorged");
+        require(deposits[slot].shaHash == _depositHash, "Deposits have been reorged");
         require(deposits[slot].appliedAccountStateIndex == 0, "Deposits already processed");
         require(block.number > deposits[slot].creationBlock + 20, "Requested deposit slot is still active");
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
