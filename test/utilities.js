@@ -110,6 +110,11 @@ const toHex = function(buffer) {
   return "0x" + buffer.toString("hex")
 }
 
+const countDuplicates = function(obj, num){
+  obj[num] = (++obj[num] || 1)
+  return obj
+}
+
 module.exports = {
   assertRejects,
   waitForNBlocks,
@@ -118,5 +123,6 @@ module.exports = {
   openAccounts,
   registerTokens,
   setupEnvironment,
-  toHex
+  toHex,
+  countDuplicates
 }

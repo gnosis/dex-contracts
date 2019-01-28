@@ -5,11 +5,15 @@ const MintableERC20 = artifacts.require("./ERC20Mintable.sol")
 const zeroHash = "0x0"
 const oneHash = "0x1"
 
+
+const Promise = require("es6-promise").Promise
+
 const {
   assertRejects,
   waitForNBlocks,
   fundAccounts,
   approveContract,
+  countDuplicates,
   // openAccounts,
   // registerTokens,
   setupEnvironment } = require("./utilities.js")
@@ -266,7 +270,7 @@ contract("SnappBase", async (accounts) => {
         instance.applyDeposits(slot, oneHash, zeroHash))
     })
 
-    it("successful apply deposit", async () => {
+    it("Successful apply deposit", async () => {
       const instance = await SnappBase.new()
       
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1, user_2], 2)
@@ -289,7 +293,7 @@ contract("SnappBase", async (accounts) => {
       assert.equal((await instance.deposits.call(slot)).appliedAccountStateIndex, state_index + 1)
     })
 
-    it("can't apply deposits twice", async () => {
+    it("Can't apply deposits twice", async () => {
       const instance = await SnappBase.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
@@ -308,7 +312,7 @@ contract("SnappBase", async (accounts) => {
       await assertRejects(
         instance.applyDeposits(slot, state_root, zeroHash))
     })
-    it("can't apply deposits non-ordered", async () => {
+    it("Can't apply deposits non-ordered", async () => {
       const instance = await SnappBase.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
@@ -331,7 +335,7 @@ contract("SnappBase", async (accounts) => {
       await instance.applyDeposits(slot - 1, state_root, zeroHash)
       await instance.applyDeposits(slot, state_root, zeroHash)
     })
-    it("there is no race condition: deposits are not stopped from applyDeposits", async () => {
+    it("There is no race condition: deposits are not stopped from applyDeposits", async () => {
       const instance = await SnappBase.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
@@ -409,7 +413,8 @@ contract("SnappBase", async (accounts) => {
 
       const slot =  tx.logs[0].args.slot.toNumber()
 
-      assert.notEqual((await instance.pendingWithdraws(slot)).shaHash, 0)
+      assert.notEqual(
+        (await instance.pendingWithdraws(slot)).shaHash, 0, "pendingWithdraw hash expected to be non-zero")
     })
 
     it("Withdraw over consecutive slots", async () => {
@@ -419,7 +424,31 @@ contract("SnappBase", async (accounts) => {
       const num_accounts = 3
       await setupEnvironment(
         MintableERC20, instance, token_owner, accounts.slice(0, num_accounts), num_tokens)
-      // TODO
+            
+      // Notice that contract can only check against its own balance of any given token
+      // (i.e. the sum total of requested withdraws could exceed the balance)
+      await instance.deposit(1, 1, { from: user_1 })
+      
+      const txs = await Promise.all(
+        Array(100).fill().map(() => instance.requestWithdrawal(1, 1, { from: user_1 }))
+      )
+      
+      const request_slots = txs.map(tx => tx.logs[0].args.slot.toNumber())
+
+      const slot_frequency = request_slots.reduce(countDuplicates, {})
+      
+      const slots = []
+      for(const k in slot_frequency) {
+        slots.push(parseInt(k))
+        // each slot respects the block time limit for expiry
+        assert.equal(slot_frequency[k] <= 21, true)
+      }
+
+      slots.sort()
+      for (let i = 0; i < slots.length - 1; i++) {
+        assert.equal(slots[i] + 1, slots[i+1], "Slot index not consecutive")
+      }
+
     })
   })
 })
