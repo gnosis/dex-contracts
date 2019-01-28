@@ -120,8 +120,6 @@ contract("SnappBase", async (accounts) => {
 
     it("Can't exceed max tokens", async () => {
       const instance = await SnappBase.new()
-
-      SnappBase.ca
       const max_tokens = (await instance.MAX_TOKENS.call()).toNumber()
 
       for (let i = 1; i < max_tokens + 1; i++) {
@@ -434,7 +432,6 @@ contract("SnappBase", async (accounts) => {
       )
       
       const request_slots = txs.map(tx => tx.logs[0].args.slot.toNumber())
-
       const slot_frequency = request_slots.reduce(countDuplicates, {})
       
       const slots = []
@@ -448,7 +445,7 @@ contract("SnappBase", async (accounts) => {
       for (let i = 0; i < slots.length - 1; i++) {
         assert.equal(slots[i] + 1, slots[i+1], "Slot index not consecutive")
       }
-
     })
+
   })
 })
