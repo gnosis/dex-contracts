@@ -224,8 +224,9 @@ contract("SnappBase", async (accounts) => {
       const slot = (await instance.depositIndex.call()).toNumber()
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
+      const deposit_state = await instance.deposits.call(slot)
 
-      await assertRejects(instance.applyDeposits(slot, state_root, oneHash, { from: user_1 }))
+      await assertRejects(instance.applyDeposits(slot, state_root, oneHash, deposit_state.shaHash, { from: user_1 }))
     })
 
     it("No apply deposit on active slot", async () => {
@@ -234,19 +235,9 @@ contract("SnappBase", async (accounts) => {
       const slot = (await instance.depositIndex.call()).toNumber()
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
-      
-      await assertRejects(instance.applyDeposits(slot, state_root, oneHash))
-    })
+      const deposit_state = await instance.deposits.call(slot)
 
-    it("Can't apply on empty slot", async () => {
-      const instance = await SnappBase.new()
-      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
-
-      await instance.deposit(1, 10, { from: user_1 })
-      const deposit_index = (await instance.depositIndex.call()).toNumber()
-      await waitForNBlocks(20, owner)
-
-      await assertRejects(instance.applyDeposits(deposit_index, zeroHash, zeroHash, zeroHash))
+      await assertRejects(instance.applyDeposits(slot, state_root, oneHash, deposit_state.shaHash))
     })
 
     it("Can't apply with wrong stateRoot", async () => {
@@ -259,9 +250,10 @@ contract("SnappBase", async (accounts) => {
 
       // Wait for current depoit index to increment
       await waitForNBlocks(20, owner)
+      const deposit_state = await instance.deposits.call(slot)
 
       await assertRejects(
-        instance.applyDeposits(slot, oneHash, zeroHash))
+        instance.applyDeposits(slot, oneHash, zeroHash, deposit_state.shaHash))
     })
 
     it("successful apply deposit", async () => {
@@ -281,8 +273,9 @@ contract("SnappBase", async (accounts) => {
 
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
+      const deposit_state = await instance.deposits.call(slot)
 
-      await instance.applyDeposits(slot, state_root, zeroHash)
+      await instance.applyDeposits(slot, state_root, zeroHash, deposit_state.shaHash)
       
       assert.equal((await instance.deposits.call(slot)).appliedAccountStateIndex, state_index + 1)
     })
@@ -299,12 +292,13 @@ contract("SnappBase", async (accounts) => {
 
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
+      const deposit_state = await instance.deposits.call(slot)
 
-      await instance.applyDeposits(slot, state_root, zeroHash)
+      await instance.applyDeposits(slot, state_root, zeroHash, deposit_state.shaHash)
       
       // Fail to apply same deposit twice
       await assertRejects(
-        instance.applyDeposits(slot, state_root, zeroHash))
+        instance.applyDeposits(slot, state_root, zeroHash, deposit_state.shaHash))
     })
     it("can't apply deposits non-ordered", async () => {
       const instance = await SnappBase.new()
@@ -321,13 +315,16 @@ contract("SnappBase", async (accounts) => {
       
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
+      let deposit_state = await instance.deposits.call(slot)
 
       
       // Fail to apply deposit without previous
       await assertRejects(
-        instance.applyDeposits(slot, state_root, zeroHash))
-      await instance.applyDeposits(slot - 1, state_root, zeroHash)
-      await instance.applyDeposits(slot, state_root, zeroHash)
+        instance.applyDeposits(slot, state_root, zeroHash, deposit_state.shaHash))
+      deposit_state = await instance.deposits.call(slot - 1)
+      await instance.applyDeposits(slot - 1, state_root, zeroHash, deposit_state.shaHash)
+      deposit_state = await instance.deposits.call(slot)
+      await instance.applyDeposits(slot, state_root, zeroHash, deposit_state.shaHash)
     })
     it("there is no race condition: deposits are not stopped from applyDeposits", async () => {
       const instance = await SnappBase.new()
@@ -341,7 +338,9 @@ contract("SnappBase", async (accounts) => {
 
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
-      await instance.applyDeposits(slot, state_root, zeroHash)
+      const deposit_state = await instance.deposits.call(slot)
+
+      await instance.applyDeposits(slot, state_root, zeroHash, deposit_state.shaHash)
       
       await instance.deposit(1, 10, { from: user_1 })
     })
