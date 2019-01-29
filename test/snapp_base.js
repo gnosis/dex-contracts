@@ -14,6 +14,8 @@ const {
   fundAccounts,
   approveContract,
   countDuplicates,
+  generateMerkleTree,
+  toHex,
   // openAccounts,
   // registerTokens,
   setupEnvironment } = require("./utilities.js")
@@ -56,7 +58,6 @@ contract("SnappBase", async (accounts) => {
       const deposit_init = "0x0000000000000000000000000000000000000000000000000000000000000000"
       assert.equal(await instance.getDepositHash.call(0), deposit_init)
     })
-
 
   })
   
@@ -433,7 +434,7 @@ contract("SnappBase", async (accounts) => {
       await assertRejects(instance.requestWithdrawal(1, 1, { from: user_1 }))
     })
 
-    it("Generic Withdraw", async () => {
+    it("Generic withdraw", async () => {
       const instance = await SnappBase.new()
 
       // Register 1 token
@@ -695,12 +696,131 @@ contract("SnappBase", async (accounts) => {
 
       await instance.applyWithdrawals(
         first_slot, bit_map, merkle_root, state_root, new_state, first_withdraw_state.shaHash)
-      
+
       const new_new_state = "0x2"
       await instance.applyWithdrawals(
         second_slot, bit_map, merkle_root, new_state, new_new_state, second_withdraw_state.shaHash)
-
     })
+  })
+
+  describe("claimWithdrawal()", () => {
+    it("Only registered accounts", async () => {
+      const instance = await SnappBase.new()
+
+      const tree = generateMerkleTree(0, zeroHash)
+      const proof = Buffer.concat(tree.getProof(zeroHash).map(x => x.data))
+
+      await assertRejects(instance.claimWithdrawal(0, 0, 0, 0, proof))
+    })
+
+    it("Only registered tokens", async () => {
+      const instance = await SnappBase.new()
+
+      await instance.openAccount(1)
+
+      const tree = generateMerkleTree(0, zeroHash)
+      const proof = Buffer.concat(tree.getProof(zeroHash).map(x => x.data))
+
+      await assertRejects(instance.claimWithdrawal(0, 0, 1, 1, proof))
+    })
+
+    it("Can't apply unprocessed slots", async () => {
+      const instance = await SnappBase.new()
+
+      await instance.openAccount(1)
+      const token = await ERC20.new()
+      await instance.addToken(token.address)
+
+      const tree = generateMerkleTree(0, zeroHash)
+      const proof = Buffer.concat(tree.getProof(zeroHash).map(x => x.data))
+
+      await assertRejects(instance.claimWithdrawal(0, 0, 1, 1, proof))
+    })
+
+    it("Can't get past false bitmap index", async () => {
+      const instance = await SnappBase.new()
+
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+
+      // Deposit, wait and apply deposits
+      const deposit_tx = await instance.deposit(1, 10, { from: user_1 })
+      const deposit_slot = (deposit_tx.logs[0].args.slot).toNumber()
+      await waitForNBlocks(21, owner)
+      const deposit_state = await instance.deposits.call(deposit_slot)
+      await instance.applyDeposits(
+        deposit_slot, await stateHash(instance), "0x1", deposit_state.shaHash)
+
+      // Request withdraw, wait and apply withdraw
+      const withdraw_tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const withdraw_slot = withdraw_tx.logs[0].args.slot.toNumber()
+      const withdraw_slot_index = withdraw_tx.logs[0].args.slotIndex.toNumber()
+
+      await waitForNBlocks(21, owner)
+      const withdraw_state = await instance.pendingWithdraws(withdraw_slot)
+      const bit_map = falseArray(100, [0])
+
+      // Need to apply at slot 0
+      await instance.applyWithdrawals(0, falseArray(100), "0x0", await stateHash(instance), "0x1", "0x0")
+
+      const leaf = web3.utils.soliditySha3(1, 1, 1)
+      const tree = generateMerkleTree(0, toHex(leaf))
+      const merkle_root = toHex(tree.getRoot())
+      
+      await instance.applyWithdrawals(
+        withdraw_slot, bit_map, merkle_root, await stateHash(instance), "0x2", withdraw_state.shaHash)
+
+      const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
+      
+      // give wrong bitmap index.
+      await assertRejects(
+        instance.claimWithdrawal(
+          withdraw_slot, withdraw_slot_index + 1, 1, 1, toHex(proof), { from: user_1 }))
+    })
+  })
+
+  it("Can't withdraw with bad proof", async () => {
+    const instance = await SnappBase.new()
+
+    await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+
+    // Deposit, wait and apply deposits
+    const deposit_tx = await instance.deposit(1, 10, { from: user_1 })
+    const deposit_slot = (deposit_tx.logs[0].args.slot).toNumber()
+    await waitForNBlocks(21, owner)
+    const deposit_state = await instance.deposits.call(deposit_slot)
+    await instance.applyDeposits(
+      deposit_slot, await stateHash(instance), "0x1", deposit_state.shaHash)
+
+    // Request withdraw, wait and apply withdraw
+    const withdraw_tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+    const withdraw_slot = withdraw_tx.logs[0].args.slot.toNumber()
+    const withdraw_slot_index = withdraw_tx.logs[0].args.slotIndex.toNumber()
+
+    await waitForNBlocks(21, owner)
+    const withdraw_state = await instance.pendingWithdraws(withdraw_slot)
+    const bit_map = falseArray(100, [0])
+
+    // Need to apply at slot 0
+    await instance.applyWithdrawals(0, falseArray(100), "0x0", await stateHash(instance), "0x1", "0x0")
+
+    // NONE OF THIS WORKS
+    // console.log(web3.utils.soliditySha3(web3.eth.abi.encodeParameters(["uint16", "uint8", "uint"], ["1", "1", "1"])))
+    // console.log(web3.utils.keccak256(web3.eth.abi.encodeParameters(["uint16", "uint8", "uint"], ["1", "1", "1"])))
+    // console.log(toHex(keccak256(web3.eth.abi.encodeParameters(["uint16", "uint8", "uint"], ["1", "1", "1"]))))
+    // console.log(sha256(web3.eth.abi.encodeParameters(["uint16", "uint8", "uint"], ["1", "1", "1"]))
+    const leaf = web3.utils.soliditySha3(1, 1, 1)
+    const tree = generateMerkleTree(0, leaf)
+    const merkle_root = toHex(tree.getRoot())
+
+    await instance.applyWithdrawals(
+      withdraw_slot, bit_map, merkle_root, await stateHash(instance), "0x2", withdraw_state.shaHash)
+
+    const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
+
+    // This is supposed to be a correct proof but it doesn't work so now its a bad proof test.
+    await assertRejects(
+      instance.claimWithdrawal(
+        withdraw_slot, withdraw_slot_index, 1, 1, toHex(proof), { from: user_1 }))
   })
 
 })

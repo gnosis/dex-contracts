@@ -247,12 +247,14 @@ contract SnappBase is Ownable {
         bytes memory proof
     ) public onlyRegistered() {
         require(tokenIdToAddressMap[tokenId] != address(0), "Requested token is not registered");
+        require(pendingWithdraws[withdrawSlot].appliedAccountStateIndex > 0, "Requested slot has not been processed");
         require(
             claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex - 1] == true, 
-            "Already claimed, or insufficient balance"
+            "Already claimed or insufficient balance"
         );
         
-        bytes32 leaf = sha256(abi.encodePacked(publicKeyToAccountMap[msg.sender], tokenId, amount));
+        // TODO - make this sha256(abi.encodePacked(...)
+        bytes32 leaf = keccak256(abi.encode(publicKeyToAccountMap[msg.sender], tokenId, amount));
         require(
             leaf.checkMembership(inclusionIndex - 1, claimableWithdraws[withdrawSlot].merkleRoot, proof, 7), 
             "Failed Merkle membership check."
