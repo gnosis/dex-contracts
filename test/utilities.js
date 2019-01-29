@@ -118,7 +118,6 @@ const countDuplicates = function(obj, num) {
   return obj
 }
 
-
 /**
  * Given a sequence of index1, elements1, ..., indexN elementN this function returns 
  * the corresponding MerkleTree of height 7.
@@ -134,18 +133,6 @@ const generateMerkleTree = memoize(_generateMerkleTree, {
   strategy: memoize.strategies.variadic
 })
 
-// returns byte string of hexed-sliced-padded int
-const encode_as_uint8 = function(num) {
-  assert(num < 2**8)
-  return web3.utils.toHex(num).slice(2).padStart(2, "0")
-}
-
-// returns byte string of hexed-sliced-padded int
-const encode_as_uint16 = function(num) {
-  assert(num < 2**16)
-  return web3.utils.toHex(num).slice(2).padStart(4, "0")
-}
-
 module.exports = {
   assertRejects,
   waitForNBlocks,
@@ -157,6 +144,4 @@ module.exports = {
   toHex,
   countDuplicates,
   generateMerkleTree,
-  encode_as_uint8,
-  encode_as_uint16,
 }

@@ -1,7 +1,7 @@
 const MerkleWrapper = artifacts.require("MerkleWrapper")
 
 const MerkleTree = require("merkletreejs")
-const { keccak256 } = require("ethereumjs-util")
+const { sha256 } = require("ethereumjs-util")
 
 const {
   assertRejects,
@@ -12,8 +12,8 @@ const {
 contract("Merkle", () => {
 
   describe("Height 2 \"all\" permutations", function () {
-    const leaves = ["0", "1", "2", "3"].map(x => keccak256(x))
-    const tree = new MerkleTree(leaves, keccak256)
+    const leaves = ["0", "1", "2", "3"].map(x => sha256(x))
+    const tree = new MerkleTree(leaves, sha256)
     const proofs = leaves.map(x => tree.getProof(x))
     
     const concatenated_proofs = proofs.map(pf => Buffer.concat(pf.map(x => x.data)))

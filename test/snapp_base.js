@@ -5,7 +5,6 @@ const MintableERC20 = artifacts.require("./ERC20Mintable.sol")
 const zeroHash = "0x0"
 const oneHash = "0x1"
 
-
 const Promise = require("es6-promise").Promise
 
 const {
@@ -21,7 +20,10 @@ const {
 const {
   falseArray,
   isActive,
-  stateHash }  = require("./snapp_utils.js")
+  stateHash,
+  encodePacked_16_8_128 }  = require("./snapp_utils.js")
+
+const { sha256 } = require("ethereumjs-util")
 
 contract("SnappBase", async (accounts) => {
   const [owner, token_owner, user_1, user_2] = accounts
@@ -776,10 +778,10 @@ contract("SnappBase", async (accounts) => {
     })
   })
 
-  it("Can't withdraw with bad proof", async () => {
+  it("Generic Claim", async () => {
     const instance = await SnappBase.new()
 
-    await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+    const tokens = await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
 
     // Deposit, wait and apply deposits
     const deposit_tx = await instance.deposit(1, 10, { from: user_1 })
@@ -801,7 +803,7 @@ contract("SnappBase", async (accounts) => {
     // Need to apply at slot 0
     await instance.applyWithdrawals(0, falseArray(100), "0x0", await stateHash(instance), "0x1", "0x0")
 
-    const leaf = web3.utils.soliditySha3(1, 1, 1)
+    const leaf = sha256(encodePacked_16_8_128(1, 1, 1))
     const tree = generateMerkleTree(0, leaf)
     const merkle_root = toHex(tree.getRoot())
 
@@ -809,11 +811,14 @@ contract("SnappBase", async (accounts) => {
       withdraw_slot, bit_map, merkle_root, await stateHash(instance), "0x2", withdraw_state.shaHash)
 
     const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
+  
+    const prev_balance = (await tokens[0].balanceOf.call(user_1)).toNumber()
 
-    // This is supposed to be a correct proof but it doesn't work so now its a bad proof test.
-    await assertRejects(
-      instance.claimWithdrawal(
-        withdraw_slot, withdraw_slot_index, 1, 1, 1, toHex(proof), { from: user_1 }))
+    await instance.claimWithdrawal(
+      withdraw_slot, withdraw_slot_index, 1, 1, 1, proof, { from: user_1 })
+    
+    const after_balance = (await tokens[0].balanceOf.call(user_1)).toNumber()
+    assert.equal(prev_balance + 1, after_balance)
   })
 
 })

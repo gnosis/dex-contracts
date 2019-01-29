@@ -30,9 +30,9 @@ library Merkle {
             }
             /* solhint-enable no-inline-assembly */
             if (index % 2 == 0) {
-                computedHash = keccak256(abi.encodePacked(computedHash, proofElement));
+                computedHash = sha256(abi.encodePacked(computedHash, proofElement));
             } else {
-                computedHash = keccak256(abi.encodePacked(proofElement, computedHash));
+                computedHash = sha256(abi.encodePacked(proofElement, computedHash));
             }
             index = index / 2;
         }
