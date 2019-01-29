@@ -1,4 +1,7 @@
 
+const { keccak256 } = require("ethereumjs-util")
+const memoize = require("fast-memoize")
+const MerkleTree = require("merkletreejs")
 
 /*
  How to avoid using try/catch blocks with promises' that could fail using async/await
@@ -115,6 +118,34 @@ const countDuplicates = function(obj, num) {
   return obj
 }
 
+
+/**
+ * Given a sequence of index1, elements1, ..., indexN elementN this function returns 
+ * the corresponding MerkleTree of height 7.
+ */
+const _generateMerkleTree = function(...args) {
+  const txs = Array(2**7).fill(keccak256(0x0))
+  for (let i=0; i<args.length; i+=2) {
+    txs[args[i]] = args[i+1]
+  }
+  return new MerkleTree(txs, keccak256)
+}
+const generateMerkleTree = memoize(_generateMerkleTree, {
+  strategy: memoize.strategies.variadic
+})
+
+// returns byte string of hexed-sliced-padded int
+const encode_as_uint8 = function(num) {
+  assert(num < 2**8)
+  return web3.utils.toHex(num).slice(2).padStart(2, "0")
+}
+
+// returns byte string of hexed-sliced-padded int
+const encode_as_uint16 = function(num) {
+  assert(num < 2**16)
+  return web3.utils.toHex(num).slice(2).padStart(4, "0")
+}
+
 module.exports = {
   assertRejects,
   waitForNBlocks,
@@ -125,4 +156,7 @@ module.exports = {
   setupEnvironment,
   toHex,
   countDuplicates,
+  generateMerkleTree,
+  encode_as_uint8,
+  encode_as_uint16,
 }
