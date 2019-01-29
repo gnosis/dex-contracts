@@ -18,7 +18,7 @@ library Merkle {
         pure
         returns (bool)
     {   
-        require(proof.length == height * 32, "Proof length does not agree with height provided");
+        require(proof.length == height * 32, "Proof length does not agree with heigh provided");
         bytes32 proofElement;
         bytes32 computedHash = leaf;
         uint index = _index;
