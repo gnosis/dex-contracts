@@ -138,9 +138,10 @@ contract SnappBase is Ownable {
             abi.encodePacked(deposits[depositIndex].shaHash, accountId, tokenId, amount)
         );
         deposits[depositIndex].shaHash = nextDepositHash;
-        deposits[depositIndex].size++;
 
         emit Deposit(accountId, tokenId, amount, depositIndex, deposits[depositIndex].size);
+        // Only increment size after event (so it is emitted as an index)
+        deposits[depositIndex].size++;
     }
 
     function applyDeposits(
@@ -201,9 +202,10 @@ contract SnappBase is Ownable {
         );
 
         pendingWithdraws[withdrawIndex].shaHash = nextWithdrawHash;
-        pendingWithdraws[withdrawIndex].size++;
 
         emit WithdrawRequest(accountId, tokenId, amount, withdrawIndex, pendingWithdraws[withdrawIndex].size);
+        // Only increment size after event (so it is emitted as an index)
+        pendingWithdraws[withdrawIndex].size++;
     }
 
     function applyWithdrawals(
@@ -242,6 +244,7 @@ contract SnappBase is Ownable {
     function claimWithdrawal(
         uint withdrawSlot,
         uint16 inclusionIndex,
+        uint16 accountId,
         uint8 tokenId,
         uint amount,
         bytes memory proof
@@ -249,21 +252,21 @@ contract SnappBase is Ownable {
         require(tokenIdToAddressMap[tokenId] != address(0), "Requested token is not registered");
         require(pendingWithdraws[withdrawSlot].appliedAccountStateIndex > 0, "Requested slot has not been processed");
         require(
-            claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex - 1] == true, 
+            claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex] == true,
             "Already claimed or insufficient balance"
         );
         
-        // TODO - make this sha256(abi.encodePacked(...)
-        bytes32 leaf = keccak256(abi.encode(publicKeyToAccountMap[msg.sender], tokenId, amount));
+        bytes32 leaf = sha256(abi.encodePacked(accountId, tokenId, amount));
+
         require(
-            leaf.checkMembership(inclusionIndex - 1, claimableWithdraws[withdrawSlot].merkleRoot, proof, 7), 
+            leaf.checkMembership(inclusionIndex, claimableWithdraws[withdrawSlot].merkleRoot, proof, 7),
             "Failed Merkle membership check."
         );
         
         // Set claim bitmap to zero (indicates that funds have been claimed).
-        claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex - 1] = false;
+        claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex] = false;
         // There is no situation where contract balance can't afford the upcomming transfer.
-        ERC20(tokenIdToAddressMap[tokenId]).transfer(msg.sender, amount);
+        ERC20(tokenIdToAddressMap[tokenId]).transfer(accountToPublicKeyMap[accountId], amount);
     }
 
     function getDepositCreationBlock(uint slot) public view returns (uint) {
