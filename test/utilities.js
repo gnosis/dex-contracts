@@ -1,5 +1,5 @@
 
-const { keccak256 } = require("ethereumjs-util")
+const { sha256 } = require("ethereumjs-util")
 const memoize = require("fast-memoize")
 const MerkleTree = require("merkletreejs")
 
@@ -124,11 +124,11 @@ const countDuplicates = function(obj, num) {
  * the corresponding MerkleTree of height 7.
  */
 const _generateMerkleTree = function(...args) {
-  const txs = Array(2**7).fill(keccak256(0x0))
+  const txs = Array(2**7).fill(sha256(0x0))
   for (let i=0; i<args.length; i+=2) {
     txs[args[i]] = args[i+1]
   }
-  return new MerkleTree(txs, keccak256)
+  return new MerkleTree(txs, sha256)
 }
 const generateMerkleTree = memoize(_generateMerkleTree, {
   strategy: memoize.strategies.variadic

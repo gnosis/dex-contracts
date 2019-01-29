@@ -16,8 +16,6 @@ const {
   countDuplicates,
   generateMerkleTree,
   toHex,
-  // openAccounts,
-  // registerTokens,
   setupEnvironment } = require("./utilities.js")
 
 const {
@@ -459,7 +457,7 @@ contract("SnappBase", async (accounts) => {
       assert.equal(tx.logs[0].args.amount.toNumber(), withdraw_amount, "Amount doesn't match event")
 
       // This was the first withdraw
-      assert.equal(tx.logs[0].args.slotIndex.toNumber(), 1, "Expected slotIndex doesn't match event")
+      assert.equal(tx.logs[0].args.slotIndex.toNumber(), 0, "Expected slotIndex doesn't match event")
 
       const slot =  tx.logs[0].args.slot.toNumber()
 
@@ -710,7 +708,7 @@ contract("SnappBase", async (accounts) => {
       const tree = generateMerkleTree(0, zeroHash)
       const proof = Buffer.concat(tree.getProof(zeroHash).map(x => x.data))
 
-      await assertRejects(instance.claimWithdrawal(0, 0, 0, 0, proof))
+      await assertRejects(instance.claimWithdrawal(0, 0, 0, 0, 0, proof))
     })
 
     it("Only registered tokens", async () => {
@@ -721,7 +719,7 @@ contract("SnappBase", async (accounts) => {
       const tree = generateMerkleTree(0, zeroHash)
       const proof = Buffer.concat(tree.getProof(zeroHash).map(x => x.data))
 
-      await assertRejects(instance.claimWithdrawal(0, 0, 1, 1, proof))
+      await assertRejects(instance.claimWithdrawal(0, 0, 1, 1, 1, proof))
     })
 
     it("Can't apply unprocessed slots", async () => {
@@ -734,7 +732,7 @@ contract("SnappBase", async (accounts) => {
       const tree = generateMerkleTree(0, zeroHash)
       const proof = Buffer.concat(tree.getProof(zeroHash).map(x => x.data))
 
-      await assertRejects(instance.claimWithdrawal(0, 0, 1, 1, proof))
+      await assertRejects(instance.claimWithdrawal(0, 0, 1, 1, 1, proof))
     })
 
     it("Can't get past false bitmap index", async () => {
@@ -774,7 +772,7 @@ contract("SnappBase", async (accounts) => {
       // give wrong bitmap index.
       await assertRejects(
         instance.claimWithdrawal(
-          withdraw_slot, withdraw_slot_index + 1, 1, 1, toHex(proof), { from: user_1 }))
+          withdraw_slot, withdraw_slot_index + 1, 1, 1, 1, toHex(proof), { from: user_1 }))
     })
   })
 
@@ -803,11 +801,6 @@ contract("SnappBase", async (accounts) => {
     // Need to apply at slot 0
     await instance.applyWithdrawals(0, falseArray(100), "0x0", await stateHash(instance), "0x1", "0x0")
 
-    // NONE OF THIS WORKS
-    // console.log(web3.utils.soliditySha3(web3.eth.abi.encodeParameters(["uint16", "uint8", "uint"], ["1", "1", "1"])))
-    // console.log(web3.utils.keccak256(web3.eth.abi.encodeParameters(["uint16", "uint8", "uint"], ["1", "1", "1"])))
-    // console.log(toHex(keccak256(web3.eth.abi.encodeParameters(["uint16", "uint8", "uint"], ["1", "1", "1"]))))
-    // console.log(sha256(web3.eth.abi.encodeParameters(["uint16", "uint8", "uint"], ["1", "1", "1"]))
     const leaf = web3.utils.soliditySha3(1, 1, 1)
     const tree = generateMerkleTree(0, leaf)
     const merkle_root = toHex(tree.getRoot())
@@ -820,7 +813,7 @@ contract("SnappBase", async (accounts) => {
     // This is supposed to be a correct proof but it doesn't work so now its a bad proof test.
     await assertRejects(
       instance.claimWithdrawal(
-        withdraw_slot, withdraw_slot_index, 1, 1, toHex(proof), { from: user_1 }))
+        withdraw_slot, withdraw_slot_index, 1, 1, 1, toHex(proof), { from: user_1 }))
   })
 
 })

@@ -51,14 +51,14 @@ contract SnappBase is Ownable {
 
     mapping (uint => ClaimableWithdrawState) public claimableWithdraws;
 
-    event WithdrawRequest(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
-    event Deposit(uint16 accountId, uint8 tokenId, uint amount, uint slot, uint16 slotIndex);
+    event WithdrawRequest(uint16 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
+    event Deposit(uint16 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
     event StateTransition(TransitionType transitionType, uint stateIndex, bytes32 stateHash, uint slot);
     event SnappInitialization(bytes32 stateHash, uint8 maxTokens, uint16 maxAccounts);
 
     constructor () public {
         // The initial state should be Pederson hash of an empty balance tree
-        bytes32 stateInit = bytes32(0);  // TODO
+        bytes32 stateInit = bytes32(0);
         stateRoots.push(stateInit);
 
         deposits[depositIndex].creationBlock = block.number;
@@ -112,7 +112,7 @@ contract SnappBase is Ownable {
         numTokens++;
     }
 
-    function deposit(uint8 tokenId, uint amount) public onlyRegistered() {
+    function deposit(uint8 tokenId, uint128 amount) public onlyRegistered() {
         require(amount != 0, "Must deposit positive amount");
 
         address tokenAddress = tokenIdToAddressMap[tokenId];
@@ -170,7 +170,7 @@ contract SnappBase is Ownable {
         emit StateTransition(TransitionType.Deposit, stateIndex(), _newStateRoot, slot);
     }
 
-    function requestWithdrawal(uint8 tokenId, uint amount) public onlyRegistered() {
+    function requestWithdrawal(uint8 tokenId, uint128 amount) public onlyRegistered() {
         require(amount != 0, "Must request positive amount");
 
         address tokenAddress = tokenIdToAddressMap[tokenId];
@@ -246,7 +246,7 @@ contract SnappBase is Ownable {
         uint16 inclusionIndex,
         uint16 accountId,
         uint8 tokenId,
-        uint amount,
+        uint128 amount,
         bytes memory proof
     ) public onlyRegistered() {
         require(tokenIdToAddressMap[tokenId] != address(0), "Requested token is not registered");
