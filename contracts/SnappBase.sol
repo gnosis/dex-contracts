@@ -249,9 +249,7 @@ contract SnappBase is Ownable {
         uint128 amount,
         bytes memory proof
     ) public {
-        // No need to check token because wouldn't pass Merkle proof if unregistered
-        // require(tokenIdToAddressMap[tokenId] != address(0), "Requested token is not registered");
-
+        // No need to check tokenId or accountId (wouldn't pass merkle proof if unregistered).
         require(
             pendingWithdraws[withdrawSlot].appliedAccountStateIndex > 0,
             "Requested slot has not been processed"
