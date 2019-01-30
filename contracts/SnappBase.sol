@@ -248,22 +248,26 @@ contract SnappBase is Ownable {
         uint8 tokenId,
         uint128 amount,
         bytes memory proof
-    ) public onlyRegistered() {
-        require(tokenIdToAddressMap[tokenId] != address(0), "Requested token is not registered");
-        require(pendingWithdraws[withdrawSlot].appliedAccountStateIndex > 0, "Requested slot has not been processed");
+    ) public {
+        // No need to check token because wouldn't pass Merkle proof if unregistered
+        // require(tokenIdToAddressMap[tokenId] != address(0), "Requested token is not registered");
+
+        require(
+            pendingWithdraws[withdrawSlot].appliedAccountStateIndex > 0,
+            "Requested slot has not been processed"
+        );
         require(
             claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex] == true,
             "Already claimed or insufficient balance"
         );
         
         bytes32 leaf = sha256(abi.encodePacked(accountId, tokenId, amount));
-
         require(
             leaf.checkMembership(inclusionIndex, claimableWithdraws[withdrawSlot].merkleRoot, proof, 7),
             "Failed Merkle membership check."
         );
         
-        // Set claim bitmap to zero (indicates that funds have been claimed).
+        // Set claim bitmap to false (indicating that funds have been claimed).
         claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex] = false;
         // There is no situation where contract balance can't afford the upcomming transfer.
         ERC20(tokenIdToAddressMap[tokenId]).transfer(accountToPublicKeyMap[accountId], amount);
