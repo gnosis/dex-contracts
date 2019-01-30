@@ -25,8 +25,33 @@ const stateHash = async function(contract) {
   return state_root
 }
 
+// returns byte string of hexed-sliced-padded int
+const uint8 = function(num) {
+  assert(num < 2**8)
+  return web3.utils.toHex(num).slice(2).padStart(2, "0")
+
+}
+
+// returns byte string of hexed-sliced-padded int
+const uint16 = function(num) {
+  assert(num < 2**16)
+  return web3.utils.toHex(num).slice(2).padStart(4, "0")
+}
+
+// returns byte string of hexed-sliced-padded int
+const uint128 = function(num) {
+  assert(num < 2**128)
+  return web3.utils.toHex(num).slice(2).padStart(32, "0")
+}
+
+// returns equivalent to Soliditiy's abi.encodePacked(uint16 a, uint8 b, uint128 c)
+const encodePacked_16_8_128 = function(a, b, c) {
+  return "0x" + uint16(a) + uint8(b) + uint128(c)
+}
+
 module.exports = {
   falseArray,
   isActive,
-  stateHash
+  stateHash,
+  encodePacked_16_8_128
 }
