@@ -53,10 +53,9 @@ contract("SnappBase", async (accounts) => {
       assert.equal((await instance.getDepositCreationBlock.call(0)).toNumber(), tx.blockNumber)
     })
 
-    it("getDepositHash(slot)", async () => {
+    it.only("getDepositHash(slot)", async () => {
       const instance = await SnappBase.new()
-      const deposit_init = "0x0000000000000000000000000000000000000000000000000000000000000000"
-      assert.equal(await instance.getDepositHash.call(0), deposit_init)
+      assert.equal(await instance.getDepositHash.call(0), 0x0)
     })
 
   })
