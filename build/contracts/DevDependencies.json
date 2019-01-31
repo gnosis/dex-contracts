@@ -1,0 +1,125 @@
+{
+  "contractName": "DevDependencies",
+  "abi": [],
+  "bytecode": "0x6080604052348015600f57600080fd5b50603580601d6000396000f3fe6080604052600080fdfea165627a7a723058202906be7ec322955cb0506f435f8b461bedd255204c596e2899a5adba45b5d3380029",
+  "deployedBytecode": "0x6080604052600080fdfea165627a7a723058202906be7ec322955cb0506f435f8b461bedd255204c596e2899a5adba45b5d3380029",
+  "sourceMap": "301:63:0:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;301:63:0;;;;;;;",
+  "deployedSourceMap": "301:63:0:-;;;;;",
+  "source": "pragma solidity ^0.5.0;\n\n// NOTE:\n//  This file purpose is just to make sure truffle compiles all of depending\n//  contracts during development.\n// \n//  For other environments, only use compiled contracts from the NPM package.\nimport \"openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol\";\n\n\ncontract DevDependencies { // solhint-disable no-empty-blocks\n}",
+  "sourcePath": "/home/josojo/gnosis/dex-contracts/contracts/DevDependencies.sol",
+  "ast": {
+    "absolutePath": "/home/josojo/gnosis/dex-contracts/contracts/DevDependencies.sol",
+    "exportedSymbols": {
+      "DevDependencies": [
+        3
+      ]
+    },
+    "id": 4,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1,
+        "literals": [
+          "solidity",
+          "^",
+          "0.5",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:0"
+      },
+      {
+        "absolutePath": "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol",
+        "file": "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol",
+        "id": 2,
+        "nodeType": "ImportDirective",
+        "scope": 4,
+        "sourceUnit": 2082,
+        "src": "227:71:0",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 3,
+        "linearizedBaseContracts": [
+          3
+        ],
+        "name": "DevDependencies",
+        "nodeType": "ContractDefinition",
+        "nodes": [],
+        "scope": 4,
+        "src": "301:63:0"
+      }
+    ],
+    "src": "0:364:0"
+  },
+  "legacyAST": {
+    "absolutePath": "/home/josojo/gnosis/dex-contracts/contracts/DevDependencies.sol",
+    "exportedSymbols": {
+      "DevDependencies": [
+        3
+      ]
+    },
+    "id": 4,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1,
+        "literals": [
+          "solidity",
+          "^",
+          "0.5",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:0"
+      },
+      {
+        "absolutePath": "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol",
+        "file": "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol",
+        "id": 2,
+        "nodeType": "ImportDirective",
+        "scope": 4,
+        "sourceUnit": 2082,
+        "src": "227:71:0",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 3,
+        "linearizedBaseContracts": [
+          3
+        ],
+        "name": "DevDependencies",
+        "nodeType": "ContractDefinition",
+        "nodes": [],
+        "scope": 4,
+        "src": "301:63:0"
+      }
+    ],
+    "src": "0:364:0"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.0+commit.1d4f565a.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.0.1",
+  "updatedAt": "2019-01-30T21:27:19.469Z",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  }
+}
