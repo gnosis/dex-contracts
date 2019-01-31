@@ -1,7 +1,7 @@
 const SnappBase = artifacts.require("SnappBase")
 const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
 
-const zero_address = "0x0000000000000000000000000000000000000000"
+const zero_address = 0x0
 
 module.exports = async (callback) => {
   try {
