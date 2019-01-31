@@ -8,10 +8,10 @@ import "./Merkle.sol";
 contract SnappBase is Ownable {
     using Merkle for bytes32;
 
-    uint16 public constant MAX_ACCOUNT_ID = 100;     // TODO - make larger or use uint8
+    uint8 public constant MAX_ACCOUNT_ID = 100;
     uint8 public constant MAX_TOKENS = 30;
-    uint16 public constant MAX_DEPOSIT_BATCH = 100;  // TODO - make larger or use uint8
-    uint16 public constant MAX_WITHDRAW_BATCH = 100;
+    uint8 public constant MAX_DEPOSIT_BATCH_SIZE = 100;
+    uint8 public constant MAX_WITHDRAW_BATCH_SIZE = 100;
     
     bytes32[] public stateRoots;  // Pedersen Hash
 
@@ -34,7 +34,7 @@ contract SnappBase is Ownable {
         uint16 size;                   // Number of deposits in this batch
         bytes32 shaHash;               // Rolling shaHash of all deposits
         uint creationBlock;            // Timestamp of batch creation
-        uint appliedAccountStateIndex; // accountState index when batch applied (for rollback)
+        uint appliedAccountStateIndex; // accountState index when batch applied (for rollback), 0 implies not applied.
     }
 
     uint public depositIndex;
@@ -67,7 +67,9 @@ contract SnappBase is Ownable {
         emit SnappInitialization(stateInit, MAX_TOKENS, MAX_ACCOUNT_ID);
     }
 
-    // Public View 
+    /**
+     * Public View Methods
+     */
     function stateIndex() public view returns (uint) {
         return stateRoots.length - 1;
     }
@@ -76,20 +78,29 @@ contract SnappBase is Ownable {
         return deposits[index].appliedAccountStateIndex != 0;
     }
 
-    function isDepositSlotEmpty(uint index) public view returns (bool) {
-        return deposits[index].shaHash == bytes32(0);
-    }
-
     function getCurrentStateRoot() public view returns (bytes32) {
         return stateRoots[stateIndex()];
     }
 
-    // Modifiers
+    function getDepositCreationBlock(uint slot) public view returns (uint) {
+        return deposits[slot].creationBlock;
+    }
+
+    function getDepositHash(uint slot) public view returns (bytes32) {
+        return deposits[slot].shaHash;
+    }
+
+    /**
+     * Modifiers
+     */
     modifier onlyRegistered() {
         require(publicKeyToAccountMap[msg.sender] != 0, "Must have registered account");
         _;
     }
 
+    /**
+     * General Snapp Functionality
+     */
     function openAccount(uint16 accountId) public {
         require(accountId != 0, "Account index must be positive!");
         require(accountId <= MAX_ACCOUNT_ID, "Account index exceeds max");
@@ -112,6 +123,9 @@ contract SnappBase is Ownable {
         numTokens++;
     }
 
+    /**
+     * Deposits
+     */
     function deposit(uint8 tokenId, uint128 amount) public onlyRegistered() {
         require(amount != 0, "Must deposit positive amount");
 
@@ -122,13 +136,13 @@ contract SnappBase is Ownable {
             "Unsuccessful transfer"
         );
 
-        if (deposits[depositIndex].size == MAX_DEPOSIT_BATCH || block.number > deposits[depositIndex].creationBlock + 20) {
+        if (deposits[depositIndex].size == MAX_DEPOSIT_BATCH_SIZE || block.number > deposits[depositIndex].creationBlock + 20) {
             depositIndex++;
             deposits[depositIndex] = PendingFlux({
                 size: 0,
                 shaHash: bytes32(0),
                 creationBlock: block.number,
-                appliedAccountStateIndex: 0   // Default 0 implies not applied.
+                appliedAccountStateIndex: 0
             });
         }
 
@@ -170,6 +184,9 @@ contract SnappBase is Ownable {
         emit StateTransition(TransitionType.Deposit, stateIndex(), _newStateRoot, slot);
     }
 
+    /**
+     * Withdraws
+     */
     function requestWithdrawal(uint8 tokenId, uint128 amount) public onlyRegistered() {
         require(amount != 0, "Must request positive amount");
 
@@ -181,9 +198,9 @@ contract SnappBase is Ownable {
         );
 
         // Determine or construct correct current withdraw state.
-        // This is governed by MAX_WITHDRAW_BATCH and creationBlock
+        // This is governed by MAX_WITHDRAW_BATCH_SIZE and creationBlock
         if (
-            pendingWithdraws[withdrawIndex].size == MAX_WITHDRAW_BATCH || 
+            pendingWithdraws[withdrawIndex].size == MAX_WITHDRAW_BATCH_SIZE || 
             block.number > pendingWithdraws[withdrawIndex].creationBlock + 20
         ) {
             withdrawIndex++;
@@ -270,13 +287,4 @@ contract SnappBase is Ownable {
         // There is no situation where contract balance can't afford the upcomming transfer.
         ERC20(tokenIdToAddressMap[tokenId]).transfer(accountToPublicKeyMap[accountId], amount);
     }
-
-    function getDepositCreationBlock(uint slot) public view returns (uint) {
-        return deposits[slot].creationBlock;
-    }
-
-    function getDepositHash(uint slot) public view returns (bytes32) {
-        return deposits[slot].shaHash;
-    }
-
 }
