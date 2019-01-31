@@ -13,7 +13,8 @@
     "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\"",
     "setup": "npx truffle exec scripts/setup_environment.js",
     "deposit": "npx truffle exec scripts/deposit.js",
-    "apply-deposits": "npx truffle exec scripts/apply_deposits.js"
+    "apply-deposits": "npx truffle exec scripts/apply_deposits.js",
+    "mine-blocks": "npx truffle exec scripts/mine_blocks.js"
   },
   "repository": {
     "type": "git",
