@@ -2,7 +2,7 @@
 const SnappBase = artifacts.require("SnappBase")
 const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
 
- const { setupEnvironment } = require("../test/utilities.js")
+const { setupEnvironment } = require("../test/utilities.js")
 
 
 module.exports = async function(callback) {

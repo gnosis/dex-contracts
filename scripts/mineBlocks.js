@@ -1,11 +1,11 @@
 const { waitForNBlocks } = require("../test/utilities.js")
 module.exports = async (callback) => {
   try {
-    let sliceBy = 4;
+    let sliceBy = 4
     if(process.argv.length == 7) {
-        sliceBy = 6
+      sliceBy = 6
     }
-    let arguments = await process.argv.slice(sliceBy)
+    const arguments = await process.argv.slice(sliceBy)
     if (arguments.length < 1) {
       callback("Error: This script requires arguments - <numberOfBlocks>")
     }
