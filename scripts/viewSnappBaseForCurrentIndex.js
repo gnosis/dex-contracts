@@ -5,9 +5,13 @@ const SnappBase = artifacts.require("SnappBase")
 
 module.exports = async (callback) => {
   try {
-    const arguments = await process.argv.slice(4)
-    if (arguments.length != 1) {
-      callback("Error: This script requires arguments - <targetStateHash>")
+    let sliceBy = 4;
+    if(process.argv.length == 7) {
+        sliceBy = 6
+    }
+    const arguments = await process.argv.slice(sliceBy)
+    if (arguments.length < 1) {
+      callback("Error: This script requires arguments - <functionName>")
     }
     const [functionName] = arguments
     

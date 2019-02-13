@@ -1,15 +1,20 @@
-module.exports = async () => {
-  const [times] = await process.argv.slice(4)
-
-  const mineOneBlock = async (id) => web3.currentProvider.send({
-    jsonrpc: "2.0",
-    method: "evm_mine",
-    params: [],
-    id,
-  }, (err, res) => !err ? console.log(res) : err )
-
-  for (let i = 0; i < times; ++i) {
-    await mineOneBlock(i)
+const { waitForNBlocks } = require("../test/utilities.js")
+module.exports = async (callback) => {
+  try {
+    let sliceBy = 4;
+    if(process.argv.length == 7) {
+        sliceBy = 6
+    }
+    let arguments = await process.argv.slice(sliceBy)
+    if (arguments.length < 1) {
+      callback("Error: This script requires arguments - <numberOfBlocks>")
+    }
+    const [times] = arguments
+    const accounts = await web3.eth.getAccounts()
+    await waitForNBlocks(times, accounts[0], web3)
+    console.log("mined", times, "blocks")
+    callback()
+  } catch(error) {
+    callback(error)
   }
-  console.log("mined", times, "blocks")
 }
