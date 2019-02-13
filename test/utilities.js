@@ -100,9 +100,9 @@ const setupEnvironment = async function(token_artifact, contract, token_owner, a
 }
 
 // Wait for n blocks to pass
-const waitForNBlocks = async function(numBlocks, authority) {
+const waitForNBlocks = async function(numBlocks, authority, web3Provider=web3) {
   for (let i = 0; i < numBlocks; i++) {
-    await web3.eth.sendTransaction({from: authority, "to": authority, value: 10})
+    await web3Provider.eth.sendTransaction({from: authority, to: authority, value: 1})
   }
 }
 

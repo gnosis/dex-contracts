@@ -41,11 +41,6 @@ contract("SnappBase", async (accounts) => {
       assert.equal(await instance.hasDepositBeenApplied.call(0), false)
     })
 
-    it("isDepositSlotEmpty(slot)", async () => {
-      const instance = await SnappBase.new()
-      assert.equal(await instance.isDepositSlotEmpty.call(0), true)
-    })
-
     it("getDepositCreationBlock(slot)", async () => {
       const instance = await SnappBase.new()
       const tx = await web3.eth.getTransaction(instance.transactionHash)
