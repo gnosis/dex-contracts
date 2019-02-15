@@ -6,7 +6,7 @@ const zero_address = 0x0
 module.exports = async (callback) => {
   try {
     const arguments = await process.argv.slice(4)
-    let index = arguments.indexOf("--network")
+    const index = arguments.indexOf("--network")
     if (index > -1) {
       arguments.splice(index, 2)
     }
