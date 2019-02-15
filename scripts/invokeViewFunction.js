@@ -6,9 +6,9 @@ const SnappBase = artifacts.require("SnappBase")
 module.exports = async (callback) => {
   try {
     const arguments = await process.argv.slice(4)
-    var index = arguments.indexOf("--network");
+    let index = arguments.indexOf("--network")
     if (index > -1) {
-      arguments.splice(index, 2);
+      arguments.splice(index, 2)
     }
     if (arguments.length < 1) {
       callback("Error: This script requires arguments - <functionName>")
