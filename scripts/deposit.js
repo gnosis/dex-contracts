@@ -5,11 +5,11 @@ const zero_address = 0x0
 
 module.exports = async (callback) => {
   try {
-    let sliceBy = 4
-    if(process.argv.length == 9) {
-      sliceBy = 6
+    const arguments = await process.argv.slice(4)
+    var index = arguments.indexOf("--network");
+    if (index > -1) {
+      arguments.splice(index, 2);
     }
-    const arguments = await process.argv.slice(sliceBy)
     if (arguments.length != 3) {
       callback("Error: This script requires arguments - <accountId> <tokenId> <depositAmount>")
     }
