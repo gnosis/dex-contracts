@@ -1,16 +1,8 @@
 const SnappBase = artifacts.require("SnappBase")
-
+const getArgumentsHelper = require("./script_utilities.js")
 module.exports = async (callback) => {
   try {
-    const arguments = await process.argv.slice(4)
-    const index = arguments.indexOf("--network")
-    if (index > -1) {
-      arguments.splice(index, 2)
-    }
-    if (arguments.length != 2) {
-      callback("Error: This script requires arguments - <slot> <new state root>")
-    }
-    const [slot, new_state] = arguments
+    const [slot, new_state] = getArgumentsHelper(2);
     
     const instance = await SnappBase.deployed()
     const state_index = (await instance.stateIndex.call()).toNumber()
