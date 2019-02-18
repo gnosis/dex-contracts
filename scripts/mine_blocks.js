@@ -1,9 +1,11 @@
 const { waitForNBlocks } = require("../test/utilities.js")
+const getArgumentsHelper = require("./script_utilities.js")
+
 module.exports = async (callback) => {
   try {
-    const arguments = await process.argv.slice(4)
+    const arguments = getArgumentsHelper()
     if (arguments.length != 1) {
-      callback("Error: This script requires arguments - <number of blocks>")
+      callback("Error: This script requires arguments - <numberOfBlocks>")
     }
     const [times] = arguments
     const accounts = await web3.eth.getAccounts()
