@@ -21,7 +21,7 @@ module.exports = async (callback) => {
     console.log("Current slot for: %d with curr_state %s and new_state %s", slot, curr_state, new_state)
     await instance.applyDeposits(slot, curr_state, new_state, deposit_state.shaHash)
     const updated_state = await instance.deposits.call(slot)
-    console.log("New appliedAccountStateIndex is:", updated_state.appliedAccountStateIndex )
+    console.log("New appliedAccountStateIndex is:", updated_state.appliedAccountStateIndex.toNumber())
     callback()
   } catch (error) {
     callback(error)
