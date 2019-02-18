@@ -1,13 +1,14 @@
 const SnappBase = artifacts.require("SnappBase")
 const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
+const getArgumentsHelper = require("./script_utilities.js")
 
 const zero_address = 0x0
 
 module.exports = async (callback) => {
   try {
-    const arguments = await process.argv.slice(4)
+    const arguments = getArgumentsHelper()
     if (arguments.length != 3) {
-      callback("Error: This script requires arguments - <accountId> <tokenId> <deposit amount>")
+      callback("Error: This script requires arguments - <accountId> <tokenId> <depositAmount>")
     }
     const [accountId, tokenId, amount] = arguments
     

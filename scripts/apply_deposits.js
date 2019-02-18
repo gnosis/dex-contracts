@@ -1,8 +1,9 @@
 const SnappBase = artifacts.require("SnappBase")
+const getArgumentsHelper = require("./script_utilities.js")
 
 module.exports = async (callback) => {
   try {
-    const arguments = await process.argv.slice(4)
+    const arguments = getArgumentsHelper()
     if (arguments.length != 2) {
       callback("Error: This script requires arguments - <slot> <new state root>")
     }
