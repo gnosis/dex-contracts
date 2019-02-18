@@ -4,8 +4,8 @@ const getArgumentsHelper = function() {
     const index = arguments.indexOf("--network")
     if (index > -1) {
       arguments.splice(index, 2)
-	}
-	return arguments
+  }
+  return arguments
 }
 
 module.exports = getArgumentsHelper
