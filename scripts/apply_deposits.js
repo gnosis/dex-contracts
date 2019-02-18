@@ -7,7 +7,7 @@ module.exports = async (callback) => {
     if (arguments.length != 2) {
       callback("Error: This script requires arguments - <slot> <new state root>")
     }
-    const [slot, new_state] = arguments;
+    const [slot, new_state] = arguments
     
     const instance = await SnappBase.deployed()
     const state_index = (await instance.stateIndex.call()).toNumber()
