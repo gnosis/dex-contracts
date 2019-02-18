@@ -6,9 +6,12 @@ const zero_address = 0x0
 
 module.exports = async (callback) => {
   try {
-    const [accountId, tokenId, amount] = getArgumentsHelper(3)
+    const arguments = getArgumentsHelper()
+    if (arguments.length != 3) {
+      callback("Error: This script requires arguments - <accountId> <tokenId> <depositAmount>")
+    }
+    const [accountId, tokenId, amount] = arguments
     
-    console.log(tokenId)
     const instance = await SnappBase.deployed()
     const depositor = await instance.accountToPublicKeyMap.call(accountId)
     if (depositor == zero_address) {

@@ -6,8 +6,11 @@ const getArgumentsHelper = require("./script_utilities.js")
 
 module.exports = async (callback) => {
   try {
-    
-    const [functionName] = getArgumentsHelper(1)
+    const arguments = getArgumentsHelper()
+    if (arguments.length != 1) {
+      callback("Error: This script requires arguments - <functionName>")
+    }
+    const [functionName] = arguments
     
     const instance = await SnappBase.deployed()
     const info = await instance[functionName].call()

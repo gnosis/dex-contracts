@@ -3,7 +3,11 @@ const getArgumentsHelper = require("./script_utilities.js")
 
 module.exports = async (callback) => {
   try {
-    const [times] = getArgumentsHelper(1)
+    const arguments = getArgumentsHelper()
+    if (arguments.length != 1) {
+      callback("Error: This script requires arguments - <numberOfBlocks>")
+    }
+    const [times] = arguments
     const accounts = await web3.eth.getAccounts()
     await waitForNBlocks(times, accounts[0], web3)
     console.log("mined", times, "blocks")
