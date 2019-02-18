@@ -18,10 +18,10 @@ module.exports = async (callback) => {
       callback("Error: Requested deposit slot has already been applied")
     }
 
-    console.log("Current slot for :", slot , " with curr_state", curr_state, " and new_state", new_state)
+    console.log("Current slot for: %d with curr_state %s and new_state %s", slot, curr_state, new_state)
     await instance.applyDeposits(slot, curr_state, new_state, deposit_state.shaHash)
-    const deposit_state2 = await instance.deposits.call(slot)
-    console.log("New appliedAccountStateIndex is:",deposit_state2.appliedAccountStateIndex )
+    const updated_state = await instance.deposits.call(slot)
+    console.log("New appliedAccountStateIndex is:", updated_state.appliedAccountStateIndex )
     callback()
   } catch (error) {
     callback(error)
