@@ -10,6 +10,14 @@ module.exports = async (callback) => {
     const [slot, bitmap, merkle_root, new_state] = arguments
     
     const instance = await SnappBase.deployed()
+
+    // Check bitMap is of correct length
+    const expectedBitmapLength = (await instance.MAX_WITHDRAW_BATCH_SIZE.call()).toNumber()
+    if (bitmap.length != expectedBitmapLength) {
+      const msg = "Error: Bitmap must be boolean array of length " + expectedBitmapLength
+      callback(msg)
+    }
+
     const state_index = (await instance.stateIndex.call()).toNumber()
     const curr_state = await instance.stateRoots.call(state_index)
 
