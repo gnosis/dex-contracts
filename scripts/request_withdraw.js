@@ -1,11 +1,12 @@
 const SnappBase = artifacts.require("SnappBase")
 const zero_address = 0x0
+const getArgumentsHelper = require("./script_utilities.js")
 
 module.exports = async (callback) => {
   try {
-    const arguments = await process.argv.slice(4)
+    const arguments = getArgumentsHelper()
     if (arguments.length != 3) {
-      callback("Error: This script requires arguments - <accountId> <tokenId> <withdraw amount>")
+      callback("Error: This script requires arguments - <accountId> <tokenId> <withdrawAmount>")
     }
     const [accountId, tokenId, amount] = arguments
     
