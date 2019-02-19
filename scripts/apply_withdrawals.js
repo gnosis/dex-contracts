@@ -1,13 +1,11 @@
 const SnappBase = artifacts.require("SnappBase")
-
-// TODO - may adjust inclusion bitmap to expect shorter input
-// const { falseArray }  = require("../test/snapp_utils.js")
+const getArgumentsHelper = require("./script_utilities.js")
 
 module.exports = async (callback) => {
   try {
-    const arguments = await process.argv.slice(4)
+    const arguments = getArgumentsHelper()
     if (arguments.length != 4) {
-      callback("Error: This script requires arguments - <slot> <inclusion bitMap> <merkle root> <new state root>")
+      callback("Error: This script requires arguments - <slot> <inclusionBitmap> <merkleRoot> <newStateRoot>")
     }
     const [slot, bitmap, merkle_root, new_state] = arguments
     
