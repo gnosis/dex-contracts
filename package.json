@@ -15,7 +15,8 @@
     "deposit": "npx truffle exec scripts/deposit.js",
     "apply-deposits": "npx truffle exec scripts/apply_deposits.js",
     "mine-blocks": "npx truffle exec scripts/mine_blocks.js",
-    "request-withdraw": "npx truffle exec scripts/request_withdraw.js"
+    "request-withdraw": "npx truffle exec scripts/request_withdraw.js",
+    "apply-withdrawals": "npx truffle exec scripts/apply_withdrawals.js"
   },
   "repository": {
     "type": "git",
