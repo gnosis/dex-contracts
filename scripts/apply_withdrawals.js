@@ -7,7 +7,7 @@ module.exports = async (callback) => {
     if (arguments.length != 3) {
       callback("Error: This script requires arguments - <slot> <merkleRoot> <newStateRoot>")
     }
-    const [slot, bitmap, merkle_root, new_state] = arguments
+    const [slot, merkle_root, new_state] = arguments
     
     const instance = await SnappBase.deployed()
 
@@ -20,7 +20,7 @@ module.exports = async (callback) => {
     }
 
     console.log("Current slot for: %d with curr_state %s and new_state %s", slot, curr_state, new_state)
-    await instance.applyWithdrawals(slot, bitmap, merkle_root, curr_state, new_state, withdraw_state.shaHash)
+    await instance.applyWithdrawals(slot, merkle_root, curr_state, new_state, withdraw_state.shaHash)
     const updated_state = await instance.pendingWithdraws.call(slot)
     console.log("Successfully applied Withdrawals!")
     console.log("New appliedAccountStateIndex is:", updated_state.appliedAccountStateIndex.toNumber())
