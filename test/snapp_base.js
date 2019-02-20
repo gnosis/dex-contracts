@@ -18,7 +18,6 @@ const {
   setupEnvironment } = require("./utilities.js")
 
 const {
-  falseArray,
   isActive,
   stateHash,
   encodePacked_16_8_128 }  = require("./snapp_utils.js")
@@ -506,12 +505,11 @@ contract("SnappBase", async (accounts) => {
       const withdraw_state = await instance.pendingWithdraws.call(slot)
 
       const new_state = oneHash
-      const bit_map = falseArray(100)
       const merkle_root = zeroHash
 
       await assertRejects(
         instance.applyWithdrawals(
-          slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash, { from: user_1 }))
+          slot, merkle_root, state_root, new_state, withdraw_state.shaHash, { from: user_1 }))
     })
 
     it("No apply on active slot", async () => {
@@ -522,14 +520,13 @@ contract("SnappBase", async (accounts) => {
       const slot = (await instance.withdrawIndex.call()).toNumber()
       const withdraw_state = await instance.pendingWithdraws.call(slot)
       const new_state = oneHash
-      const bit_map = falseArray(100)
       const merkle_root = zeroHash
 
       assert.equal(await isActive(withdraw_state), true)
 
       await assertRejects(
         instance.applyWithdrawals(
-          slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash))
+          slot, merkle_root, state_root, new_state, withdraw_state.shaHash))
     })
 
     it("No apply with wrong state root", async () => {
@@ -542,7 +539,6 @@ contract("SnappBase", async (accounts) => {
       const slot = tx.logs[0].args.slot.toNumber()
       const withdraw_state = await instance.pendingWithdraws(slot)
       const new_state = oneHash
-      const bit_map = falseArray(100, [])
       const merkle_root = zeroHash
 
       // Wait for current withdraw slot to be inactive
@@ -557,7 +553,7 @@ contract("SnappBase", async (accounts) => {
 
       await assertRejects(
         instance.applyWithdrawals(
-          slot, bit_map, merkle_root, wrong_state_root, new_state, withdraw_state.shaHash))
+          slot, merkle_root, wrong_state_root, new_state, withdraw_state.shaHash))
     })
 
     it("No apply with incorrect withdraw hash", async () => {
@@ -570,7 +566,6 @@ contract("SnappBase", async (accounts) => {
       const slot = tx.logs[0].args.slot.toNumber()
       const withdraw_state = await instance.pendingWithdraws(slot)
       const new_state = oneHash
-      const bit_map = falseArray(100, [])
       const merkle_root = zeroHash
 
       // Wait for current withdraw slot to be inactive
@@ -586,7 +581,7 @@ contract("SnappBase", async (accounts) => {
 
       await assertRejects(
         instance.applyWithdrawals(
-          slot, bit_map, merkle_root, state_root, new_state, wrong_withdraw_hash))
+          slot, merkle_root, state_root, new_state, wrong_withdraw_hash))
     })
 
     it("No apply out-of-range slot", async () => {
@@ -599,7 +594,6 @@ contract("SnappBase", async (accounts) => {
       const slot = tx.logs[0].args.slot.toNumber()
       const withdraw_state = await instance.pendingWithdraws(slot)
       const new_state = oneHash
-      const bit_map = falseArray(100)
       const merkle_root = zeroHash
 
       // Wait for current withdraw slot to be inactive
@@ -613,7 +607,7 @@ contract("SnappBase", async (accounts) => {
       const bad_slot = (await instance.depositIndex.call()).toNumber() + 1
       await assertRejects(
         instance.applyWithdrawals(
-          bad_slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash))
+          bad_slot, merkle_root, state_root, new_state, withdraw_state.shaHash))
 
     })
 
@@ -627,14 +621,13 @@ contract("SnappBase", async (accounts) => {
       const slot = tx.logs[0].args.slot.toNumber()
       const withdraw_state = await instance.pendingWithdraws(slot)
       const new_state = oneHash
-      const bit_map = falseArray(100, [0])
       const merkle_root = zeroHash
 
       await waitForNBlocks(21, owner)
 
       const state_root = await stateHash(instance)
       await instance.applyWithdrawals(
-        slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash)
+        slot, merkle_root, state_root, new_state, withdraw_state.shaHash)
 
       const state_index = (await instance.stateIndex.call()).toNumber()
       const applied_index = ((await instance.pendingWithdraws(slot)).appliedAccountStateIndex).toNumber()
@@ -652,18 +645,17 @@ contract("SnappBase", async (accounts) => {
       const slot = tx.logs[0].args.slot.toNumber()
       const withdraw_state = await instance.pendingWithdraws(slot)
       const new_state = oneHash
-      const bit_map = falseArray(100, [0])
       const merkle_root = zeroHash
 
       await waitForNBlocks(21, owner)
 
       const state_root = await stateHash(instance)
       await instance.applyWithdrawals(
-        slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash)
+        slot, merkle_root, state_root, new_state, withdraw_state.shaHash)
       
       await assertRejects(
         instance.applyWithdrawals(
-          slot, bit_map, merkle_root, state_root, new_state, withdraw_state.shaHash)
+          slot, merkle_root, state_root, new_state, withdraw_state.shaHash)
       )
     })
     it("Must apply slots sequentially", async () => {
@@ -676,7 +668,6 @@ contract("SnappBase", async (accounts) => {
       const first_slot = first_tx.logs[0].args.slot.toNumber()
       const first_withdraw_state = await instance.pendingWithdraws(first_slot)
       const new_state = oneHash
-      const bit_map = falseArray(100, [0])
       const merkle_root = zeroHash
       await waitForNBlocks(21, owner)
 
@@ -687,14 +678,14 @@ contract("SnappBase", async (accounts) => {
 
       const state_root = await stateHash(instance)
       await assertRejects(instance.applyWithdrawals(
-        second_slot, bit_map, merkle_root, state_root, new_state, second_withdraw_state.shaHash))
+        second_slot, merkle_root, state_root, new_state, second_withdraw_state.shaHash))
 
       await instance.applyWithdrawals(
-        first_slot, bit_map, merkle_root, state_root, new_state, first_withdraw_state.shaHash)
+        first_slot, merkle_root, state_root, new_state, first_withdraw_state.shaHash)
 
       const new_new_state = "0x2"
       await instance.applyWithdrawals(
-        second_slot, bit_map, merkle_root, new_state, new_new_state, second_withdraw_state.shaHash)
+        second_slot, merkle_root, new_state, new_new_state, second_withdraw_state.shaHash)
     })
   })
 
@@ -733,10 +724,9 @@ contract("SnappBase", async (accounts) => {
 
       await waitForNBlocks(21, owner)
       const withdraw_state = await instance.pendingWithdraws(withdraw_slot)
-      const bit_map = falseArray(100, [0])
 
       // Need to apply at slot 0
-      await instance.applyWithdrawals(0, falseArray(100), "0x0", await stateHash(instance), "0x1", "0x0")
+      await instance.applyWithdrawals(0, "0x0", await stateHash(instance), "0x1", "0x0")
 
       const leaf = sha256(encodePacked_16_8_128(1, 1, 1))
       const tree = generateMerkleTree(0, leaf)
@@ -744,7 +734,7 @@ contract("SnappBase", async (accounts) => {
       const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
       
       await instance.applyWithdrawals(
-        withdraw_slot, bit_map, merkle_root, await stateHash(instance), "0x2", withdraw_state.shaHash)
+        withdraw_slot, merkle_root, await stateHash(instance), "0x2", withdraw_state.shaHash)
       
       // give wrong bitmap/inclusion index.
       await assertRejects(
@@ -773,10 +763,9 @@ contract("SnappBase", async (accounts) => {
 
       await waitForNBlocks(21, owner)
       const withdraw_state = await instance.pendingWithdraws(withdraw_slot)
-      const bit_map = falseArray(100, [0])
 
       // Need to apply at slot 0 (empty transition)
-      await instance.applyWithdrawals(0, falseArray(100), "0x0", await stateHash(instance), "0x1", "0x0")
+      await instance.applyWithdrawals(0, "0x0", await stateHash(instance), "0x1", "0x0")
 
       const leaf = sha256(encodePacked_16_8_128(1, 1, 1))
       const tree = generateMerkleTree(0, leaf)
@@ -784,7 +773,7 @@ contract("SnappBase", async (accounts) => {
       const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
 
       await instance.applyWithdrawals(
-        withdraw_slot, bit_map, merkle_root, await stateHash(instance), "0x2", withdraw_state.shaHash)
+        withdraw_slot, merkle_root, await stateHash(instance), "0x2", withdraw_state.shaHash)
       
       const prev_balance = (await tokens[0].balanceOf.call(user_1)).toNumber()
       await instance.claimWithdrawal(
