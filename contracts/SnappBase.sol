@@ -45,7 +45,7 @@ contract SnappBase is Ownable {
 
     struct ClaimableWithdrawState {
         bytes32 merkleRoot;            // Merkle root of claimable withdraws in this block
-        bool[100] claimedBitmap;       // Bitmap signalling which withdraws have been claimed
+        bool[] claimedBitmap;          // Bitmap signalling which withdraws have been claimed
         uint appliedAccountStateIndex; // AccountState when this state was created (for rollback)
     }
 
@@ -247,12 +247,10 @@ contract SnappBase is Ownable {
         // Update account states
         stateRoots.push(_newStateRoot);
         pendingWithdraws[slot].appliedAccountStateIndex = stateIndex();
-        
-        bool[MAX_WITHDRAW_BATCH_SIZE] memory nullArray;
 
         claimableWithdraws[slot] = ClaimableWithdrawState({
             merkleRoot: _merkleRoot,
-            claimedBitmap: nullArray,
+            claimedBitmap: new bool[](MAX_WITHDRAW_BATCH_SIZE),
             appliedAccountStateIndex: stateIndex()
         });
 
