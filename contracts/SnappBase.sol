@@ -43,8 +43,6 @@ contract SnappBase is Ownable {
     uint public withdrawIndex;
     mapping (uint => PendingFlux) public pendingWithdraws;
 
-    bool[100] private nullArray;
-
     struct ClaimableWithdrawState {
         bytes32 merkleRoot;            // Merkle root of claimable withdraws in this block
         bool[100] claimedBitmap;       // Bitmap signalling which withdraws have been claimed
@@ -250,6 +248,8 @@ contract SnappBase is Ownable {
         stateRoots.push(_newStateRoot);
         pendingWithdraws[slot].appliedAccountStateIndex = stateIndex();
         
+        bool[MAX_WITHDRAW_BATCH_SIZE] memory nullArray;
+
         claimableWithdraws[slot] = ClaimableWithdrawState({
             merkleRoot: _merkleRoot,
             claimedBitmap: nullArray,
