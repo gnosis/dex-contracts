@@ -27,7 +27,7 @@ module.exports = async (callback) => {
     }
 
     console.log("Current slot for: %d with curr_state %s and new_state %s", slot, curr_state, new_state)
-    await instance.applyWithdrawals(slot, bitmap, merkle_root, curr_state, new_state, withdraw_state.shaHash)
+    await instance.applyWithdrawals(slot, Array.from(bitmap).map(b => b == "0"), merkle_root, curr_state, new_state, withdraw_state.shaHash)
     const updated_state = await instance.pendingWithdraws.call(slot)
     console.log("Successfully applied Withdrawals!")
     console.log("New appliedAccountStateIndex is:", updated_state.appliedAccountStateIndex.toNumber())
