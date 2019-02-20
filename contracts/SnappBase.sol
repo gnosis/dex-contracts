@@ -43,6 +43,8 @@ contract SnappBase is Ownable {
     uint public withdrawIndex;
     mapping (uint => PendingFlux) public pendingWithdraws;
 
+    bool[100] private nullArray;
+
     struct ClaimableWithdrawState {
         bytes32 merkleRoot;            // Merkle root of claimable withdraws in this block
         bool[100] claimedBitmap;       // Bitmap signalling which withdraws have been claimed
@@ -227,7 +229,6 @@ contract SnappBase is Ownable {
 
     function applyWithdrawals(
         uint slot,
-        bool[100] memory includedBitMap,
         bytes32 _merkleRoot,
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
@@ -251,7 +252,7 @@ contract SnappBase is Ownable {
         
         claimableWithdraws[slot] = ClaimableWithdrawState({
             merkleRoot: _merkleRoot,
-            claimedBitmap: includedBitMap,
+            claimedBitmap: nullArray,
             appliedAccountStateIndex: stateIndex()
         });
 
@@ -259,7 +260,7 @@ contract SnappBase is Ownable {
     }
 
     function claimWithdrawal(
-        uint withdrawSlot,
+        uint slot,
         uint16 inclusionIndex,
         uint16 accountId,
         uint8 tokenId,
@@ -267,23 +268,16 @@ contract SnappBase is Ownable {
         bytes memory proof
     ) public {
         // No need to check tokenId or accountId (wouldn't pass merkle proof if unregistered).
-        require(
-            pendingWithdraws[withdrawSlot].appliedAccountStateIndex > 0,
-            "Requested slot has not been processed"
-        );
-        require(
-            claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex] == true,
-            "Already claimed or insufficient balance"
-        );
+        require(pendingWithdraws[slot].appliedAccountStateIndex > 0, "Requested slot has not been processed");
+        require(claimableWithdraws[slot].claimedBitmap[inclusionIndex] == false, "Already claimed");
         
         bytes32 leaf = sha256(abi.encodePacked(accountId, tokenId, amount));
         require(
-            leaf.checkMembership(inclusionIndex, claimableWithdraws[withdrawSlot].merkleRoot, proof, 7),
+            leaf.checkMembership(inclusionIndex, claimableWithdraws[slot].merkleRoot, proof, 7),
             "Failed Merkle membership check."
         );
-        
-        // Set claim bitmap to false (indicating that funds have been claimed).
-        claimableWithdraws[withdrawSlot].claimedBitmap[inclusionIndex] = false;
+        // Set claim bitmap to true (indicating that funds have been claimed).
+        claimableWithdraws[slot].claimedBitmap[inclusionIndex] = true;
         // There is no situation where contract balance can't afford the upcomming transfer.
         ERC20(tokenIdToAddressMap[tokenId]).transfer(accountToPublicKeyMap[accountId], amount);
     }

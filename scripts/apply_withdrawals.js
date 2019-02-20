@@ -4,19 +4,12 @@ const getArgumentsHelper = require("./script_utilities.js")
 module.exports = async (callback) => {
   try {
     const arguments = getArgumentsHelper()
-    if (arguments.length != 4) {
-      callback("Error: This script requires arguments - <slot> <inclusionBitmap> <merkleRoot> <newStateRoot>")
+    if (arguments.length != 3) {
+      callback("Error: This script requires arguments - <slot> <merkleRoot> <newStateRoot>")
     }
     const [slot, bitmap, merkle_root, new_state] = arguments
     
     const instance = await SnappBase.deployed()
-
-    // Check bitMap is of correct length
-    const expectedBitmapLength = (await instance.MAX_WITHDRAW_BATCH_SIZE.call()).toNumber()
-    if (bitmap.length != expectedBitmapLength) {
-      const msg = "Error: Bitmap must be boolean array of length " + expectedBitmapLength
-      callback(msg)
-    }
 
     const state_index = (await instance.stateIndex.call()).toNumber()
     const curr_state = await instance.stateRoots.call(state_index)
