@@ -8,8 +8,10 @@ const {
   toHex
 } = require("../test/utilities.js")
 
+// TODO - make this more general
 const MongoClient = require("mongodb").MongoClient
 const url = "mongodb://localhost:27017/"
+const dbName = "test_db"
 
 const withdraw_search = async function(db_name, _slot, valid=null, a_id=null, t_id=null) {
   const db = await MongoClient.connect(url)
@@ -55,13 +57,13 @@ module.exports = async (callback) => {
       callback(`Error: Requested slot ${slot} not been processed!`)
     }
 
-    const valid_withdrawals = await withdraw_search("test_db", slot, true, accountId, tokenId)
+    const valid_withdrawals = await withdraw_search(dbName, slot, true, accountId, tokenId)
     if (!valid_withdrawals) {
       callback(`Error: No valid withdraw found in slot ${slot}`)
     }
 
     // Reconstruct Merkle Tree from leaf nodes
-    const all_withdraws = await withdraw_search("test_db", slot)
+    const all_withdraws = await withdraw_search(dbName, slot)
     const withdraw_hashes = []
     all_withdraws.forEach(function (withdraw) {
       // TODO - no need to encode-pack zeroes (can use 0x0)
