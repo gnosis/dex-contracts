@@ -14,7 +14,6 @@ const {
   approveContract,
   countDuplicates,
   generateMerkleTree,
-  // toHex,
   setupEnvironment } = require("./utilities.js")
 
 const {
