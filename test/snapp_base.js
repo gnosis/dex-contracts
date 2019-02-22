@@ -31,7 +31,7 @@ contract("SnappBase", async (accounts) => {
     it("getCurrentStateRoot()", async () => {
       const instance = await SnappBase.new()
       // TODO - substitute this with correct initStateHash
-      const state_init = "0x0000000000000000000000000000000000000000000000000000000000000000"
+      const state_init = 0x0
       assert.equal(await instance.getCurrentStateRoot.call(), state_init)
     })
 
