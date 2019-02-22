@@ -20,9 +20,9 @@ const withdraw_search = async function(db_name, _slot, valid=null, a_id=null, t_
   const query = { 
     slot: parseInt(_slot)
   }
-  if (valid) query["valid"] = true
   if (a_id) query["accountId"] = parseInt(a_id)
   if (t_id) query["tokenId"] = parseInt(t_id)
+  if (valid) query.valid = true
 
   console.log(`Querying ${collectionName} with`, query)
   const res = await dbo.collection(collectionName).find(query).toArray()
@@ -62,7 +62,7 @@ module.exports = async (callback) => {
       callback(`Error: No valid withdraw found in slot ${slot}`)
     }
 
-    // Reconstruct Merkle Tree from leaf nodes
+    console.log("Reconstructing Merkle Tree from leaf nodes")
     const all_withdraws = await withdraw_search(dbName, slot)
     const withdraw_hashes = []
     all_withdraws.forEach(function (withdraw) {
