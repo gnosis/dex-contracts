@@ -74,12 +74,12 @@ contract SnappBase is Ownable {
         return stateRoots.length - 1;
     }
 
-    function hasDepositBeenApplied(uint index) public view returns (bool) {
-        return deposits[index].appliedAccountStateIndex != 0;
-    }
-
     function getCurrentStateRoot() public view returns (bytes32) {
         return stateRoots[stateIndex()];
+    }
+
+    function hasDepositBeenApplied(uint index) public view returns (bool) {
+        return deposits[index].appliedAccountStateIndex != 0;
     }
 
     function getDepositCreationBlock(uint slot) public view returns (uint) {
@@ -88,6 +88,18 @@ contract SnappBase is Ownable {
 
     function getDepositHash(uint slot) public view returns (bytes32) {
         return deposits[slot].shaHash;
+    }
+
+    function hasWithdrawBeenApplied(uint index) public view returns (bool) {
+        return pendingWithdraws[index].appliedAccountStateIndex != 0;
+    }
+
+    function getWithdrawCreationBlock(uint slot) public view returns (uint) {
+        return pendingWithdraws[slot].creationBlock;
+    }
+
+    function getWithdrawHash(uint slot) public view returns (bytes32) {
+        return pendingWithdraws[slot].shaHash;
     }
 
     /**
