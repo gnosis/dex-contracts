@@ -27,12 +27,14 @@ module.exports = async function(callback) {
     const tree = generateMerkleTree(withdraw_hashes)
     const root = toHex(tree.getRoot())
     await processWithdrawals(1, root, 0x0)
+
     await claimWithdraw(1, 1, 1)
 
-    // Shoudl fail
+    // Should fail
     await claimWithdraw(1, 1, 1)
     // Should also fail
     await claimWithdraw(1, 1, 2)
+
   } catch (error) {
     callback(error)
   }

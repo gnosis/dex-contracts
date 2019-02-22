@@ -8,10 +8,9 @@ const {
   toHex
 } = require("../test/utilities.js")
 
-// TODO - make this more general
 const MongoClient = require("mongodb").MongoClient
-const url = "mongodb://localhost:27017/"
-const dbName = "test_db"
+const url = process.env.MONGO_URL ||  "mongodb://localhost:27017/"
+const dbName = process.env.DB_NAME || "test_db"
 
 const withdraw_search = async function(db_name, _slot, valid=null, a_id=null, t_id=null) {
   const db = await MongoClient.connect(url)
