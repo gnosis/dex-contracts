@@ -2,6 +2,7 @@ const SnappBase = artifacts.require("SnappBase")
 const zero_address = 0x0
 const getArgumentsHelper = require("./script_utilities.js")
 
+const { sha256 } = require("ethereumjs-util")
 const { encodePacked_16_8_128 }  = require("../test/snapp_utils.js")
 const {
   generateMerkleTree,
@@ -64,14 +65,15 @@ module.exports = async (callback) => {
     console.log("Reconstructing Merkle Tree from leaf nodes")
     const all_withdraws = await withdraw_search(dbName, slot)
     const withdraw_hashes = []
-    all_withdraws.forEach(function (withdraw) {
+    for (let i = 0; i < all_withdraws.length; i++) {
       // TODO - no need to encode-pack zeroes (can use 0x0)
-      let hash = encodePacked_16_8_128(0, 0, 0)
+      let hash = sha256(encodePacked_16_8_128(0, 0, 0))
+      const withdraw = all_withdraws[i]
       if (withdraw.valid) {
-        hash = encodePacked_16_8_128(withdraw.accountId, withdraw.tokenId, withdraw.amount)
+        hash = sha256(encodePacked_16_8_128(withdraw.accountId, withdraw.tokenId, withdraw.amount))
       }
-      withdraw_hashes.push(hash)
-    })
+      withdraw_hashes.push(i, hash)
+    }
     const tree = generateMerkleTree(withdraw_hashes)
     // Verify merkle roots agree
     if (claimableState.merkleRoot != toHex(tree.getRoot())) {
@@ -81,16 +83,16 @@ module.exports = async (callback) => {
     const bitMap = claimableState.claimedBitmap
     for (let i = 0; i < valid_withdrawals.length; i++){
       const toClaim = valid_withdrawals[i]
-      if (bitMap[i]) {
+      if (bitMap && bitMap[i]) {
         console.log("Already claimed:", toClaim)
       } else {
         console.log("Attempting to claim:", toClaim)
-        const leaf = encodePacked_16_8_128(accountId, tokenId, toClaim.amount)
+        const leaf = sha256(encodePacked_16_8_128(accountId, tokenId, toClaim.amount))
         const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
 
         // Could also check if leaf if contained in withdraw_hashes
         if (!proof.length) {
-          callback(`Proof for ${toClaim} not found [likely invalid]`)
+          callback("Proof for not found [likely invalid]")
         }
         await instance.claimWithdrawal(slot, toClaim.slotIndex, accountId, tokenId, toClaim.amount, proof)
         console.log("Success!")
