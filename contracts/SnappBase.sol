@@ -10,8 +10,8 @@ contract SnappBase is Ownable {
 
     uint8 public constant MAX_ACCOUNT_ID = 100;
     uint8 public constant MAX_TOKENS = 30;
-    uint8 public constant MAX_DEPOSIT_BATCH_SIZE = 100;
-    uint8 public constant MAX_WITHDRAW_BATCH_SIZE = 100;
+    uint8 public constant DEPOSIT_BATCH_SIZE = 100;
+    uint8 public constant WITHDRAW_BATCH_SIZE = 100;
     
     bytes32[] public stateRoots;  // Pedersen Hash
 
@@ -44,9 +44,9 @@ contract SnappBase is Ownable {
     mapping (uint => PendingFlux) public pendingWithdraws;
 
     struct ClaimableWithdrawState {
-        bytes32 merkleRoot;            // Merkle root of claimable withdraws in this block
-        bool[] claimedBitmap;          // Bitmap signalling which withdraws have been claimed
-        uint appliedAccountStateIndex; // AccountState when this state was created (for rollback)
+        bytes32 merkleRoot;                      // Merkle root of claimable withdraws in this block
+        bool[WITHDRAW_BATCH_SIZE] claimedBitmap; // Bitmap signalling which withdraws have been claimed
+        uint appliedAccountStateIndex;           // AccountState when this state was created (for rollback)
     }
 
     mapping (uint => ClaimableWithdrawState) public claimableWithdraws;
@@ -102,6 +102,10 @@ contract SnappBase is Ownable {
         return pendingWithdraws[slot].shaHash;
     }
 
+    function hasWithdrawBeenClaimed(uint slot, uint16 index) public view returns (bool) {
+        return claimableWithdraws[slot].claimedBitmap[index];
+    }
+
     /**
      * Modifiers
      */
@@ -148,7 +152,7 @@ contract SnappBase is Ownable {
             "Unsuccessful transfer"
         );
 
-        if (deposits[depositIndex].size == MAX_DEPOSIT_BATCH_SIZE || block.number > deposits[depositIndex].creationBlock + 20) {
+        if (deposits[depositIndex].size == DEPOSIT_BATCH_SIZE || block.number > deposits[depositIndex].creationBlock + 20) {
             depositIndex++;
             deposits[depositIndex] = PendingFlux({
                 size: 0,
@@ -210,9 +214,9 @@ contract SnappBase is Ownable {
         );
 
         // Determine or construct correct current withdraw state.
-        // This is governed by MAX_WITHDRAW_BATCH_SIZE and creationBlock
+        // This is governed by WITHDRAW_BATCH_SIZE and creationBlock
         if (
-            pendingWithdraws[withdrawIndex].size == MAX_WITHDRAW_BATCH_SIZE || 
+            pendingWithdraws[withdrawIndex].size == WITHDRAW_BATCH_SIZE || 
             block.number > pendingWithdraws[withdrawIndex].creationBlock + 20
         ) {
             withdrawIndex++;
@@ -260,9 +264,10 @@ contract SnappBase is Ownable {
         stateRoots.push(_newStateRoot);
         pendingWithdraws[slot].appliedAccountStateIndex = stateIndex();
 
+        bool[WITHDRAW_BATCH_SIZE] memory nullArray;
         claimableWithdraws[slot] = ClaimableWithdrawState({
             merkleRoot: _merkleRoot,
-            claimedBitmap: new bool[](MAX_WITHDRAW_BATCH_SIZE),
+            claimedBitmap: nullArray,
             appliedAccountStateIndex: stateIndex()
         });
 
