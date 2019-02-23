@@ -45,7 +45,8 @@
     "fast-memoize": "^2.5.1",
     "merkletreejs": "0.0.22",
     "mongodb": "^3.1.13",
-    "openzeppelin-solidity": "2.1.1"
+    "openzeppelin-solidity": "2.1.1",
+    "truffle-assertions": "^0.8.0"
   },
   "devDependencies": {
     "es6-promise": "^4.2.5",
