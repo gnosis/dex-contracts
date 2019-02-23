@@ -51,6 +51,22 @@ contract("SnappBase", async (accounts) => {
       assert.equal(await instance.getDepositHash.call(0), 0x0)
     })
 
+    it("hasWithdrawBeenApplied(slot) == false", async () => {
+      const instance = await SnappBase.new()
+      assert.equal(await instance.hasWithdrawBeenApplied.call(0), false)
+    })
+
+    it("getWithdrawCreationBlock(slot)", async () => {
+      const instance = await SnappBase.new()
+      const tx = await web3.eth.getTransaction(instance.transactionHash)
+
+      assert.equal((await instance.getWithdrawCreationBlock.call(0)).toNumber(), tx.blockNumber)
+    })
+
+    it("getWithdrawHash(slot)", async () => {
+      const instance = await SnappBase.new()
+      assert.equal(await instance.getWithdrawHash.call(0), 0x0)
+    })
   })
   
   describe("openAccount()", () => {
