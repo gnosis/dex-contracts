@@ -2,12 +2,11 @@ const SnappBase = artifacts.require("SnappBase")
 const zero_address = 0x0
 const getArgumentsHelper = require("./script_utilities.js")
 
+// Merkle Requirements
 const { sha256 } = require("ethereumjs-util")
-const { encodePacked_16_8_128 }  = require("../test/snapp_utils.js")
-const {
-  generateMerkleTree,
-  toHex
-} = require("../test/utilities.js")
+const { encodePacked_16_8_128 } = require("../test/snapp_utils.js")
+const MerkleTree = require("merkletreejs")
+const { toHex } = require("../test/utilities.js")
 
 const MongoClient = require("mongodb").MongoClient
 const url = process.env.MONGO_URL ||  "mongodb://localhost:27017/"
@@ -64,17 +63,15 @@ module.exports = async (callback) => {
 
     console.log("Reconstructing Merkle Tree from leaf nodes")
     const all_withdraws = await withdraw_search(dbName, slot)
-    const withdraw_hashes = []
+    const withdraw_hashes = Array(2**7).fill(sha256(0x0))
     for (let i = 0; i < all_withdraws.length; i++) {
-      // TODO - no need to encode-pack zeroes (can use 0x0)
-      let hash = sha256(encodePacked_16_8_128(0, 0, 0))
       const withdraw = all_withdraws[i]
       if (withdraw.valid) {
-        hash = sha256(encodePacked_16_8_128(withdraw.accountId, withdraw.tokenId, withdraw.amount))
+        withdraw_hashes[i] = sha256(
+          encodePacked_16_8_128(withdraw.accountId, withdraw.tokenId, withdraw.amount))
       }
-      withdraw_hashes.push(i, hash)
     }
-    const tree = generateMerkleTree(withdraw_hashes)
+    const tree = new MerkleTree(withdraw_hashes, sha256)
     // Verify merkle roots agree
     if (claimableState.merkleRoot != toHex(tree.getRoot())) {
       callback(`Merkle Roots disagree: ${claimableState.merkleRoot} != ${toHex(tree.getRoot())}`)
