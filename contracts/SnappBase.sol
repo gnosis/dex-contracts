@@ -253,7 +253,7 @@ contract SnappBase is Ownable {
         require(slot <= withdrawIndex, "Requested withdrawal slot does not exist");
         require(
             slot == 0 || pendingWithdraws[slot-1].appliedAccountStateIndex != 0, 
-            "Previous withdraw slot no processed!"
+            "Previous withdraw slot not processed!"
         );
         require(pendingWithdraws[slot].shaHash == _withdrawHash, "Withdraws have been reorged");
         require(pendingWithdraws[slot].appliedAccountStateIndex == 0, "Withdraws already processed");
