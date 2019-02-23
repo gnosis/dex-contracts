@@ -57,7 +57,7 @@ module.exports = async (callback) => {
     }
 
     const valid_withdrawals = await withdraw_search(dbName, slot, true, accountId, tokenId)
-    if (!valid_withdrawals) {
+    if (valid_withdrawals.length == 0) {
       callback(`Error: No valid withdraw found in slot ${slot}`)
     }
 
@@ -77,10 +77,10 @@ module.exports = async (callback) => {
       callback(`Merkle Roots disagree: ${claimableState.merkleRoot} != ${toHex(tree.getRoot())}`)
     }
 
-    const bitMap = claimableState.claimedBitmap
-    for (let i = 0; i < valid_withdrawals.length; i++){
+    for (let i = 0; i < valid_withdrawals.length; i++) {
       const toClaim = valid_withdrawals[i]
-      if (bitMap && bitMap[i]) {
+      console.log(toClaim.slotIndex)
+      if (await instance.hasWithdrawBeenClaimed.call(slot, toClaim.slotIndex)) {
         console.log("Already claimed:", toClaim)
       } else {
         console.log("Attempting to claim:", toClaim)
