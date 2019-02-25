@@ -53,6 +53,7 @@
     "eslint-plugin-react": "^7.12.3",
     "solhint": "^1.5.0",
     "solidity-coverage": "^0.5.11",
-    "truffle": "^5.0.0-next.26"
+    "truffle": "^5.0.0-next.26",
+    "truffle-assertions": "^0.8.0"
   }
 }
