@@ -14,7 +14,6 @@ const {
   approveContract,
   countDuplicates,
   generateMerkleTree,
-  // toHex,
   setupEnvironment } = require("./utilities.js")
 
 const {
@@ -31,7 +30,7 @@ contract("SnappBase", async (accounts) => {
     it("getCurrentStateRoot()", async () => {
       const instance = await SnappBase.new()
       // TODO - substitute this with correct initStateHash
-      const state_init = "0x0000000000000000000000000000000000000000000000000000000000000000"
+      const state_init = 0x0
       assert.equal(await instance.getCurrentStateRoot.call(), state_init)
     })
 
@@ -68,6 +67,12 @@ contract("SnappBase", async (accounts) => {
       const instance = await SnappBase.new()
       assert.equal(await instance.getWithdrawHash.call(0), 0x0)
     })
+
+    it("hasWithdrawBeenClaimed(slot, index)", async () => {
+      const instance = await SnappBase.new()
+      assert.equal(await instance.hasWithdrawBeenClaimed.call(0, 0), false)
+    })
+    
   })
   
   describe("openAccount()", () => {
