@@ -286,9 +286,9 @@ contract SnappBase is Ownable {
         require(pendingWithdraws[slot].appliedAccountStateIndex > 0, "Requested slot has not been processed");
         require(claimableWithdraws[slot].claimedBitmap[inclusionIndex] == false, "Already claimed");
         
-        bytes32 leaf = sha256(abi.encodePacked(accountId, tokenId, amount));
+        uint leaf = uint(amount) + (uint(tokenId) << 128) + (uint(accountId) << 136);
         require(
-            leaf.checkMembership(inclusionIndex, claimableWithdraws[slot].merkleRoot, proof, 7),
+            bytes32(leaf).checkMembership(inclusionIndex, claimableWithdraws[slot].merkleRoot, proof, 7),
             "Failed Merkle membership check."
         );
         // Set claim bitmap to true (indicating that funds have been claimed).

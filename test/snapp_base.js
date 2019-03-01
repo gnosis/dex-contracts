@@ -22,8 +22,6 @@ const {
   stateHash,
   encodePacked_16_8_128 }  = require("./snapp_utils.js")
 
-const { sha256 } = require("ethereumjs-util")
-
 contract("SnappBase", async (accounts) => {
   const [owner, token_owner, user_1, user_2] = accounts
 
@@ -814,7 +812,7 @@ contract("SnappBase", async (accounts) => {
       // Need to apply at slot 0 (empty transition)
       await instance.applyWithdrawals(0, "0x0", await stateHash(instance), "0x1", "0x0")
 
-      const leaf = sha256(encodePacked_16_8_128(1, 1, 1))
+      const leaf = encodePacked_16_8_128(1, 1, 1)
       const tree = generateMerkleTree(0, leaf)
       const merkle_root = tree.getRoot()
       const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
@@ -855,7 +853,7 @@ contract("SnappBase", async (accounts) => {
       // Need to apply at slot 0 (empty transition)
       await instance.applyWithdrawals(0, "0x0", await stateHash(instance), "0x1", "0x0")
 
-      const leaf = sha256(encodePacked_16_8_128(1, 1, 1))
+      const leaf = encodePacked_16_8_128(1, 1, 1)
       const tree = generateMerkleTree(0, leaf)
       const merkle_root = tree.getRoot()
       const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
@@ -896,7 +894,7 @@ contract("SnappBase", async (accounts) => {
       // Need to apply at slot 0 (empty transition)
       await instance.applyWithdrawals(0, "0x0", await stateHash(instance), "0x1", "0x0")
 
-      const leaf = sha256(encodePacked_16_8_128(1, 1, 1))
+      const leaf = encodePacked_16_8_128(1, 1, 1)
       const tree = generateMerkleTree(0, leaf)
       const merkle_root = tree.getRoot()
       const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
