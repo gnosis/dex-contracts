@@ -48,7 +48,10 @@ const uint128 = function(num) {
 
 // returns equivalent to Soliditiy's abi.encodePacked(uint16 a, uint8 b, uint128 c)
 const encodePacked_16_8_128 = function(a, b, c) {
-  return "0x" + uint16(a) + uint8(b) + uint128(c)
+  return Buffer.alloc(13)
+    + Buffer.from(uint16(a), "hex")
+    + Buffer.from(uint8(b), "hex")
+    + Buffer.from(uint128(c), "hex")
 }
 
 module.exports = {

@@ -1,4 +1,5 @@
 const SnappBase = artifacts.require("SnappBase")
+const ERC20 = artifacts.require("ERC20")
 const zero_address = 0x0
 const getArgumentsHelper = require("./script_utilities.js")
 
@@ -10,7 +11,7 @@ const { toHex } = require("../test/utilities.js")
 
 const MongoClient = require("mongodb").MongoClient
 const url = process.env.MONGO_URL ||  "mongodb://localhost:27017/"
-const dbName = process.env.DB_NAME || "test_db"
+const dbName = process.env.DB_NAME || "dfusion2"
 
 const withdraw_search = async function(db_name, _slot, valid=null, a_id=null, t_id=null) {
   const db = await MongoClient.connect(url)
@@ -60,15 +61,14 @@ module.exports = async (callback) => {
     if (valid_withdrawals.length == 0) {
       callback(`Error: No valid withdraw found in slot ${slot}`)
     }
-
+    
     console.log("Reconstructing Merkle Tree from leaf nodes")
     const all_withdraws = await withdraw_search(dbName, slot)
-    const withdraw_hashes = Array(2**7).fill(sha256(0x0))
+    const withdraw_hashes = Array(2**7).fill(Buffer.alloc(32))
     for (let i = 0; i < all_withdraws.length; i++) {
       const withdraw = all_withdraws[i]
       if (withdraw.valid) {
-        withdraw_hashes[i] = sha256(
-          encodePacked_16_8_128(withdraw.accountId, withdraw.tokenId, withdraw.amount))
+        withdraw_hashes[i] = encodePacked_16_8_128(withdraw.accountId, withdraw.tokenId, withdraw.amount)
       }
     }
     const tree = new MerkleTree(withdraw_hashes, sha256)
@@ -79,20 +79,25 @@ module.exports = async (callback) => {
 
     for (let i = 0; i < valid_withdrawals.length; i++) {
       const toClaim = valid_withdrawals[i]
-      console.log(toClaim.slotIndex)
       if (await instance.hasWithdrawBeenClaimed.call(slot, toClaim.slotIndex)) {
         console.log("Already claimed:", toClaim)
       } else {
         console.log("Attempting to claim:", toClaim)
-        const leaf = sha256(encodePacked_16_8_128(accountId, tokenId, toClaim.amount))
+        const leaf = encodePacked_16_8_128(accountId, tokenId, toClaim.amount)
         const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
 
         // Could also check if leaf if contained in withdraw_hashes
         if (!proof.length) {
-          callback("Proof for not found [likely invalid]")
+          callback("Proof not found [likely invalid]")
         }
+
+        const token = await ERC20.at(token_address)
+        const balance_before = await token.balanceOf(depositor)
+        
         await instance.claimWithdrawal(slot, toClaim.slotIndex, accountId, tokenId, toClaim.amount, proof)
-        console.log("Success!")
+        
+        const balance_after = await token.balanceOf(depositor)
+        console.log(`Success! Balance of token ${tokenId} before claim: ${balance_before}, after claim: ${balance_after}`)
       }
     }
     callback()
