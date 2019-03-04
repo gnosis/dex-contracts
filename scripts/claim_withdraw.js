@@ -97,7 +97,7 @@ module.exports = async (callback) => {
         await instance.claimWithdrawal(slot, toClaim.slotIndex, accountId, tokenId, toClaim.amount, proof)
         
         const balance_after = await token.balanceOf(depositor)
-        console.log(`Success! Token balance before ${balance_before}, after ${balance_after}`)
+        console.log(`Success! Balance of token ${tokenId} before claim: ${balance_before}, after claim: ${balance_after}`)
       }
     }
     callback()
