@@ -165,7 +165,7 @@ contract SnappBase is Ownable {
         // Update Deposit Hash based on request
         uint16 accountId = publicKeyToAccountMap[msg.sender];
         bytes32 nextDepositHash = sha256(
-            abi.encodePacked(deposits[depositIndex].shaHash, accountId, tokenId, amount)
+            abi.encodePacked(deposits[depositIndex].shaHash, encodeFlux(accountId, tokenId, amount))
         );
         deposits[depositIndex].shaHash = nextDepositHash;
 
@@ -231,7 +231,7 @@ contract SnappBase is Ownable {
         // Update Withdraw Hash based on request
         uint16 accountId = publicKeyToAccountMap[msg.sender];
         bytes32 nextWithdrawHash = sha256(
-            abi.encodePacked(pendingWithdraws[withdrawIndex].shaHash, accountId, tokenId, amount)
+            abi.encodePacked(pendingWithdraws[withdrawIndex].shaHash, encodeFlux(accountId, tokenId, amount))
         );
 
         pendingWithdraws[withdrawIndex].shaHash = nextWithdrawHash;
@@ -286,14 +286,18 @@ contract SnappBase is Ownable {
         require(pendingWithdraws[slot].appliedAccountStateIndex > 0, "Requested slot has not been processed");
         require(claimableWithdraws[slot].claimedBitmap[inclusionIndex] == false, "Already claimed");
         
-        uint leaf = uint(amount) + (uint(tokenId) << 128) + (uint(accountId) << 136);
+        bytes32 leaf = encodeFlux(accountId, tokenId, amount);
         require(
-            bytes32(leaf).checkMembership(inclusionIndex, claimableWithdraws[slot].merkleRoot, proof, 7),
+            leaf.checkMembership(inclusionIndex, claimableWithdraws[slot].merkleRoot, proof, 7),
             "Failed Merkle membership check."
         );
         // Set claim bitmap to true (indicating that funds have been claimed).
         claimableWithdraws[slot].claimedBitmap[inclusionIndex] = true;
         // There is no situation where contract balance can't afford the upcomming transfer.
         ERC20(tokenIdToAddressMap[tokenId]).transfer(accountToPublicKeyMap[accountId], amount);
+    }
+
+    function encodeFlux(uint16 accountId, uint8 tokenId, uint128 amount) internal pure returns (bytes32) {
+        return bytes32(uint(amount) + (uint(tokenId) << 128) + (uint(accountId) << 136));
     }
 }
