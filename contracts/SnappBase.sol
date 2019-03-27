@@ -30,7 +30,7 @@ contract SnappBase is Ownable {
     mapping (address => uint8) public tokenAddresToIdMap;
     mapping (uint8 => address) public tokenIdToAddressMap;
 
-    struct PendingFlux {
+    struct PendingBatch {
         uint16 size;                   // Number of deposits in this batch
         bytes32 shaHash;               // Rolling shaHash of all deposits
         uint creationBlock;            // Timestamp of batch creation
@@ -38,10 +38,10 @@ contract SnappBase is Ownable {
     }
 
     uint public depositIndex;
-    mapping (uint => PendingFlux) public deposits;
+    mapping (uint => PendingBatch) public deposits;
 
     uint public withdrawIndex;
-    mapping (uint => PendingFlux) public pendingWithdraws;
+    mapping (uint => PendingBatch) public pendingWithdraws;
 
     struct ClaimableWithdrawState {
         bytes32 merkleRoot;                      // Merkle root of claimable withdraws in this block
@@ -154,7 +154,7 @@ contract SnappBase is Ownable {
 
         if (deposits[depositIndex].size == DEPOSIT_BATCH_SIZE || block.number > deposits[depositIndex].creationBlock + 20) {
             depositIndex++;
-            deposits[depositIndex] = PendingFlux({
+            deposits[depositIndex] = PendingBatch({
                 size: 0,
                 shaHash: bytes32(0),
                 creationBlock: block.number,
@@ -220,7 +220,7 @@ contract SnappBase is Ownable {
             block.number > pendingWithdraws[withdrawIndex].creationBlock + 20
         ) {
             withdrawIndex++;
-            pendingWithdraws[withdrawIndex] = PendingFlux({
+            pendingWithdraws[withdrawIndex] = PendingBatch({
                 size: 0,
                 shaHash: bytes32(0),
                 creationBlock: block.number,
