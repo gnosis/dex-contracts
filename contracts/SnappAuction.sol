@@ -40,9 +40,10 @@ contract SnappAuction is SnappBase {
             auctions[auctionIndex].size == AUCTION_BATCH_SIZE || 
             block.number > auctions[auctionIndex].creationBlock + 20
         ) {
-            if (auctionIndex > 1) {
-                require(auctions[auctionIndex - 2].appliedAccountStateIndex != 0, "Too many pending auctions");
-            }
+            require(
+                auctionIndex < 2 ||
+                auctions[auctionIndex - 2].appliedAccountStateIndex != 0, "Too many pending auctions"
+            );
             auctionIndex++;
             auctions[auctionIndex] = PendingBatch({
                 size: 0,
