@@ -21,16 +21,6 @@ contract("SnappBase", async (accounts) => {
       )
     })
 
-    it("Reject: buyToken = sellToken", async () => {
-      const instance = await SnappAuction.new()
-      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
-
-      await truffleAssert.reverts(
-        instance.placeSellOrder(1, 1, 1, 1, { from: user_1 }),
-        "Buy and Sell tokens must differ!"
-      )
-    })
-
     it("Reject: unregistered buyToken", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)

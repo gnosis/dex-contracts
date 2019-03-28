@@ -30,11 +30,11 @@ contract SnappAuction is SnappBase {
         uint128 minBuyAmount,
         uint128 maxSellAmount
     ) public onlyRegistered() {
-        require(buyToken != sellToken, "Buy and Sell tokens must differ!");
-
         // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
         require(tokenIdToAddressMap[buyToken] != address(0), "Buy token is not registered");
         require(tokenIdToAddressMap[sellToken] != address(0), "Sell token is not registered");
+
+        // Could also enforce that buyToken != sellToken, but not technically illegal.
 
         if (
             auctions[auctionIndex].size == AUCTION_BATCH_SIZE || 
