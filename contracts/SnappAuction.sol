@@ -30,10 +30,6 @@ contract SnappAuction is SnappBase {
         uint128 minBuyAmount,
         uint128 maxSellAmount
     ) public onlyRegistered() {
-        if (auctionIndex > 1) {
-            require(auctions[auctionIndex - 2].appliedAccountStateIndex != 0, "To many pending auctions");
-        }
-
         require(buyToken != sellToken, "Buy and Sell tokens must differ!");
 
         // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
@@ -44,6 +40,9 @@ contract SnappAuction is SnappBase {
             auctions[auctionIndex].size == AUCTION_BATCH_SIZE || 
             block.number > auctions[auctionIndex].creationBlock + 20
         ) {
+            if (auctionIndex > 1) {
+                require(auctions[auctionIndex - 2].appliedAccountStateIndex != 0, "Too many pending auctions");
+            }
             auctionIndex++;
             auctions[auctionIndex] = PendingBatch({
                 size: 0,

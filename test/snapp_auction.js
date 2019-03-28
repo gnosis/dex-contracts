@@ -70,6 +70,24 @@ contract("SnappBase", async (accounts) => {
       )
     })
 
+    it("Reject: Third batch with two unapplied", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await instance.placeSellOrder(1, 2, 1, 1, { from: user_1 })
+
+      await waitForNBlocks(21, owner)
+      await instance.placeSellOrder(1, 2, 1, 1, { from: user_1 })
+
+      await waitForNBlocks(21, owner)
+      await instance.placeSellOrder(1, 2, 1, 1, { from: user_1 })
+
+      await waitForNBlocks(21, owner)
+      await truffleAssert.reverts(
+        await instance.placeSellOrder(1, 2, 1, 1, { from: user_1 }),
+        "Too many pending auctions"
+      )
+    })
+
     it("Generic sell order", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
