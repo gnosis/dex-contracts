@@ -17,7 +17,8 @@
     "mine-blocks": "npx truffle exec scripts/mine_blocks.js",
     "request-withdraw": "npx truffle exec scripts/request_withdraw.js",
     "apply-withdrawals": "npx truffle exec scripts/apply_withdrawals.js",
-    "claim-withdraw": "npx truffle exec scripts/claim_withdraw.js"
+    "claim-withdraw": "npx truffle exec scripts/claim_withdraw.js",
+    "sell-order": "npx truffle exec scripts/sell_order.js"
   },
   "repository": {
     "type": "git",

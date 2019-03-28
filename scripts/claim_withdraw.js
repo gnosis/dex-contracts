@@ -1,4 +1,4 @@
-const SnappBase = artifacts.require("SnappBase")
+const SnappAuction = artifacts.require("SnappAuction")
 const ERC20 = artifacts.require("ERC20")
 const zero_address = 0x0
 const getArgumentsHelper = require("./script_utilities.js")
@@ -39,7 +39,7 @@ module.exports = async (callback) => {
     }
     const [slot, accountId, tokenId] = arguments
     
-    const instance = await SnappBase.deployed()
+    const instance = await SnappAuction.deployed()
 
     // Verify account and token
     const depositor = await instance.accountToPublicKeyMap.call(accountId)
