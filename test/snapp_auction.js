@@ -83,7 +83,7 @@ contract("SnappBase", async (accounts) => {
 
       await waitForNBlocks(21, owner)
       await truffleAssert.reverts(
-        await instance.placeSellOrder(1, 2, 1, 1, { from: user_1 }),
+        instance.placeSellOrder(1, 2, 1, 1, { from: user_1 }),
         "Too many pending auctions"
       )
     })
