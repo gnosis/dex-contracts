@@ -1,7 +1,7 @@
-const SnappBase = artifacts.require("SnappBase")
+const SnappAuction = artifacts.require("SnappAuction")
 const getArgumentsHelper = require("./script_utilities.js")
 
-// This script allows to view data from the SnappBase contract
+// This script allows to view data from the SnappAuction contract
 // example for viewing the current stateRoots: truffle exec scripts/viewSnappBaseForCurrentIndex.js 'stateRoots'
 
 module.exports = async (callback) => {
@@ -12,7 +12,7 @@ module.exports = async (callback) => {
     }
     const [functionName] = arguments
     
-    const instance = await SnappBase.deployed()
+    const instance = await SnappAuction.deployed()
     const info = await instance[functionName].call()
     
     console.log(info)

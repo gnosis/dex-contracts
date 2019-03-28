@@ -1,4 +1,4 @@
-const SnappBase = artifacts.require("SnappBase")
+const SnappAuction = artifacts.require("SnappAuction")
 const zero_address = 0x0
 const getArgumentsHelper = require("./script_utilities.js")
 
@@ -10,7 +10,7 @@ module.exports = async (callback) => {
     }
     const [accountId, tokenId, amount] = arguments
     
-    const instance = await SnappBase.deployed()
+    const instance = await SnappAuction.deployed()
     const depositor = await instance.accountToPublicKeyMap.call(accountId)
     if (depositor == zero_address) {
       callback(`Error: No account registerd at index ${accountId}`)
