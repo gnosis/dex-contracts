@@ -7,7 +7,7 @@ const {
   waitForNBlocks,
   setupEnvironment } = require("./utilities.js")
 
-contract("SnappBase", async (accounts) => {
+contract("SnappAuction", async (accounts) => {
   const [owner, token_owner, user_1, user_2] = accounts
 
   describe("placeSellOrder()", () => {

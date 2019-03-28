@@ -27,8 +27,8 @@ contract SnappAuction is SnappBase {
     function placeSellOrder(
         uint8 buyToken,
         uint8 sellToken,
-        uint128 minBuyAmount,
-        uint128 maxSellAmount
+        uint128 buyAmount,
+        uint128 sellAmount
     ) public onlyRegistered() {
         // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
         require(tokenIdToAddressMap[buyToken] != address(0), "Buy token is not registered");
@@ -57,12 +57,12 @@ contract SnappAuction is SnappBase {
         bytes32 nextAuctionHash = sha256(
             abi.encodePacked(
                 auctions[auctionIndex].shaHash,
-                encodeOrder(accountId, buyToken, sellToken, minBuyAmount, maxSellAmount)
+                encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
             )
         );
         auctions[auctionIndex].shaHash = nextAuctionHash;
 
-        emit SellOrder(auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, minBuyAmount, maxSellAmount);
+        emit SellOrder(auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount);
         // Only increment size after event (so it is emitted as an index)
         auctions[auctionIndex].size++;
     }
