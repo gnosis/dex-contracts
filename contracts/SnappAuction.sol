@@ -20,6 +20,8 @@ contract SnappAuction is SnappBase {
         uint128 sellAmount
     );
 
+    event AuctionSolution(uint auctionId, uint128[MAX_TOKENS] prices, uint128[2*AUCTION_BATCH_SIZE] volumes);
+
     constructor () public {
         auctions[auctionIndex].creationBlock = block.number;
     }
@@ -68,13 +70,39 @@ contract SnappAuction is SnappBase {
         auctions[auctionIndex].size++;
     }
 
+    function applyAuction(
+        uint slot,
+        bytes32 _currStateRoot,
+        bytes32 _newStateRoot,
+        bytes32 _orderHash,
+        uint128[MAX_TOKENS] prices,
+        uint128[2*AUCTION_BATCH_SIZE] volumes
+    )
+        public onlyOwner()
+    {   
+        require(slot <= auctionIndex, "Requested order slot does not exist");
+        require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
+        require(auctions[slot].shaHash == _orderHash, "OrderHash doesn't agree");
+        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already processed");
+        require(block.number > auctions[slot].creationBlock + 20, "Requested order slot is still active");
+        require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
+
+        stateRoots.push(_newStateRoot);        
+        auctions[slot].appliedAccountStateIndex = stateIndex();
+        
+        emit AuctionSolution(slot, prices, volumes);
+        emit StateTransition(TransitionType.Auction, stateIndex(), _newStateRoot, slot);
+    }
+
     function encodeOrder(
         uint16 accountId, 
         uint8 buyToken, 
         uint8 sellToken, 
         uint128 buyAmount, 
         uint128 sellAmount
-    ) internal pure returns (bytes32) {
+    ) 
+        internal pure returns (bytes32) 
+    {
         // Restrict buy and sell amount to occupy at most 100 bits.
         require(buyAmount < 0x10000000000000000000000000, "Buy amount too large!");
         require(sellAmount < 0x10000000000000000000000000, "Sell amount too large!");
