@@ -75,17 +75,17 @@ contract SnappAuction is SnappBase {
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
         bytes32 _orderHash,
-        uint128[MAX_TOKENS] prices,
-        uint128[2*AUCTION_BATCH_SIZE] volumes
+        uint128[MAX_TOKENS] memory prices,
+        uint128[2*AUCTION_BATCH_SIZE] memory volumes
     )
         public onlyOwner()
     {   
         require(slot <= auctionIndex, "Requested order slot does not exist");
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
-        require(auctions[slot].shaHash == _orderHash, "OrderHash doesn't agree");
-        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already processed");
+        require(auctions[slot].shaHash == _orderHash, "Order hash doesn't agree");
+        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(block.number > auctions[slot].creationBlock + 20, "Requested order slot is still active");
-        require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
+        require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
 
         stateRoots.push(_newStateRoot);        
         auctions[slot].appliedAccountStateIndex = stateIndex();
