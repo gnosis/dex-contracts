@@ -108,6 +108,10 @@ contract("SnappAuction", async (accounts) => {
   })
 
   describe("applyAuction()", () => {
+    const new_state = "0x1"
+    const prices = "0x00"
+    const volumes = "0x00"
+
     it("Only owner", async () => {
       const instance = await SnappAuction.new()
 
@@ -115,14 +119,6 @@ contract("SnappAuction", async (accounts) => {
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
       const auction_state = await instance.auctions.call(slot)
-
-      const new_state = "0x1"
-
-      const MAX_TOKENS = (await instance.MAX_TOKENS.call()).toNumber()
-      const prices = Array(MAX_TOKENS).fill(0)
-
-      const AUCTION_BATCH_SIZE = (await instance.AUCTION_BATCH_SIZE.call()).toNumber()
-      const volumes = Array(2*AUCTION_BATCH_SIZE).fill(0)
 
       await truffleAssert.reverts(
         instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, prices, volumes, { from: user_1 })
@@ -137,14 +133,6 @@ contract("SnappAuction", async (accounts) => {
       const state_root = await instance.stateRoots.call(state_index)
       const auction_state = await instance.auctions.call(slot)
 
-      const new_state = "0x1"
-
-      const MAX_TOKENS = (await instance.MAX_TOKENS.call()).toNumber()
-      const prices = Array(MAX_TOKENS).fill(0)
-
-      const AUCTION_BATCH_SIZE = (await instance.AUCTION_BATCH_SIZE.call()).toNumber()
-      const volumes = Array(2*AUCTION_BATCH_SIZE).fill(0)
-
       assert.equal(await isActive(auction_state), true)
 
       await truffleAssert.reverts(
@@ -158,14 +146,6 @@ contract("SnappAuction", async (accounts) => {
 
       const slot = (await instance.auctionIndex.call()).toNumber()
       const auction_state = await instance.auctions.call(slot)
-
-      const new_state = "0x1"
-
-      const MAX_TOKENS = (await instance.MAX_TOKENS.call()).toNumber()
-      const prices = Array(MAX_TOKENS).fill(0)
-
-      const AUCTION_BATCH_SIZE = (await instance.AUCTION_BATCH_SIZE.call()).toNumber()
-      const volumes = Array(2*AUCTION_BATCH_SIZE).fill(0)
 
       // Wait for current order slot to be inactive
       await waitForNBlocks(21, owner)
@@ -187,14 +167,6 @@ contract("SnappAuction", async (accounts) => {
 
       const slot = (await instance.auctionIndex.call()).toNumber()
       const auction_state = await instance.auctions.call(slot)
-
-      const new_state = "0x1"
-
-      const MAX_TOKENS = (await instance.MAX_TOKENS.call()).toNumber()
-      const prices = Array(MAX_TOKENS).fill(0)
-
-      const AUCTION_BATCH_SIZE = (await instance.AUCTION_BATCH_SIZE.call()).toNumber()
-      const volumes = Array(2*AUCTION_BATCH_SIZE).fill(0)
 
       // Wait for current order slot to be inactive
       await waitForNBlocks(21, owner)
@@ -219,23 +191,13 @@ contract("SnappAuction", async (accounts) => {
       const slot = (await instance.auctionIndex.call()).toNumber()
       const auction_state = await instance.auctions.call(slot)
 
-      const new_state = "0x1"
-
-      const MAX_TOKENS = (await instance.MAX_TOKENS.call()).toNumber()
-      const prices = Array(MAX_TOKENS).fill(0)
-
-      const AUCTION_BATCH_SIZE = (await instance.AUCTION_BATCH_SIZE.call()).toNumber()
-      const volumes = Array(2*AUCTION_BATCH_SIZE).fill(0)
-
       // Wait for current order slot to be inactive
       await waitForNBlocks(21, owner)
 
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
 
-
       const state_root = await stateHash(instance)
-
       const curr_slot = (await instance.auctionIndex.call()).toNumber()
 
       await truffleAssert.reverts(
@@ -250,14 +212,6 @@ contract("SnappAuction", async (accounts) => {
 
       const slot = (await instance.auctionIndex.call()).toNumber()
       const auction_state = await instance.auctions.call(slot)
-
-      const new_state = "0x1"
-
-      const MAX_TOKENS = (await instance.MAX_TOKENS.call()).toNumber()
-      const prices = Array(MAX_TOKENS).fill(0)
-
-      const AUCTION_BATCH_SIZE = (await instance.AUCTION_BATCH_SIZE.call()).toNumber()
-      const volumes = Array(2*AUCTION_BATCH_SIZE).fill(0)
 
       // Wait for current order slot to be inactive
       await waitForNBlocks(21, owner)
@@ -280,14 +234,6 @@ contract("SnappAuction", async (accounts) => {
 
       const slot = (await instance.auctionIndex.call()).toNumber()
       const auction_state = await instance.auctions.call(slot)
-
-      const new_state = "0x1"
-
-      const MAX_TOKENS = (await instance.MAX_TOKENS.call()).toNumber()
-      const prices = Array(MAX_TOKENS).fill(0)
-
-      const AUCTION_BATCH_SIZE = (await instance.AUCTION_BATCH_SIZE.call()).toNumber()
-      const volumes = Array(2*AUCTION_BATCH_SIZE).fill(0)
 
       // Wait for current order slot to be inactive
       await waitForNBlocks(21, owner)
@@ -313,14 +259,6 @@ contract("SnappAuction", async (accounts) => {
 
       const first_slot = (await instance.auctionIndex.call()).toNumber()
       const first_auction_state = await instance.auctions.call(first_slot)
-
-      const new_state = "0x1"
-
-      const MAX_TOKENS = (await instance.MAX_TOKENS.call()).toNumber()
-      const prices = Array(MAX_TOKENS).fill(0)
-
-      const AUCTION_BATCH_SIZE = (await instance.AUCTION_BATCH_SIZE.call()).toNumber()
-      const volumes = Array(2*AUCTION_BATCH_SIZE).fill(0)
 
       // Wait for current order slot to be inactive
       await waitForNBlocks(21, owner)

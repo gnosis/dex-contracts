@@ -20,7 +20,13 @@ contract SnappAuction is SnappBase {
         uint128 sellAmount
     );
 
-    event AuctionSolution(uint auctionId, uint128[MAX_TOKENS] prices, uint128[2*AUCTION_BATCH_SIZE] volumes);
+    event AuctionSettlement(
+        uint auctionId,
+        uint stateIndex,
+        bytes32 stateHash,
+        bytes prices,
+        bytes volumes
+    );
 
     constructor () public {
         auctions[auctionIndex].creationBlock = block.number;
@@ -75,8 +81,8 @@ contract SnappAuction is SnappBase {
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
         bytes32 _orderHash,
-        uint128[MAX_TOKENS] memory prices,
-        uint128[2*AUCTION_BATCH_SIZE] memory volumes
+        bytes memory prices,
+        bytes memory volumes
     )
         public onlyOwner()
     {   
@@ -90,8 +96,9 @@ contract SnappAuction is SnappBase {
         stateRoots.push(_newStateRoot);        
         auctions[slot].appliedAccountStateIndex = stateIndex();
         
-        emit AuctionSolution(slot, prices, volumes);
-        emit StateTransition(TransitionType.Auction, stateIndex(), _newStateRoot, slot);
+        // emit AuctionSolution(slot, prices, volumes);
+        emit AuctionSettlement(slot, stateIndex(), _newStateRoot, prices, volumes);
+        // emit StateTransition(TransitionType.Auction, stateIndex(), _newStateRoot, slot);
     }
 
     function encodeOrder(
