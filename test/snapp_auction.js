@@ -109,8 +109,9 @@ contract("SnappAuction", async (accounts) => {
 
   describe("applyAuction()", () => {
     const new_state = "0x1"
-    const prices = "0x00"
-    const volumes = "0x00"
+
+    const prices = "0x" + "00"*16*30 // represents 30 uint128 (token prices)
+    const volumes = "0x" + "00"*32*1000 // represents 1000 * 2 uint128 (numerator, denominator)
 
     it("Only owner", async () => {
       const instance = await SnappAuction.new()
