@@ -20,6 +20,14 @@ contract SnappAuction is SnappBase {
         uint128 sellAmount
     );
 
+    event AuctionSettlement(
+        uint auctionId,
+        uint stateIndex,
+        bytes32 stateHash,
+        bytes prices,
+        bytes volumes
+    );
+
     constructor () public {
         auctions[auctionIndex].creationBlock = block.number;
     }
@@ -68,13 +76,44 @@ contract SnappAuction is SnappBase {
         auctions[auctionIndex].size++;
     }
 
+    function applyAuction(
+        uint slot,
+        bytes32 _currStateRoot,
+        bytes32 _newStateRoot,
+        bytes32 _orderHash,
+        bytes memory prices,
+        bytes memory volumes
+    )
+        public onlyOwner()
+    {   
+        require(slot <= auctionIndex, "Requested order slot does not exist");
+        require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
+        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
+        require(auctions[slot].shaHash == _orderHash, "Order hash doesn't agree");
+        require(
+            block.number > auctions[slot].creationBlock + 20 || auctions[slot].size == AUCTION_BATCH_SIZE, 
+            "Requested order slot is still active"
+        );
+        require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
+
+        stateRoots.push(_newStateRoot);        
+        auctions[slot].appliedAccountStateIndex = stateIndex();
+
+        // Store solution information in shaHash of pendingBatch (required for snark proof)
+        auctions[slot].shaHash = sha256(abi.encodePacked(prices, volumes));
+
+        emit AuctionSettlement(slot, stateIndex(), _newStateRoot, prices, volumes);
+    }
+
     function encodeOrder(
         uint16 accountId, 
         uint8 buyToken, 
         uint8 sellToken, 
         uint128 buyAmount, 
         uint128 sellAmount
-    ) internal pure returns (bytes32) {
+    ) 
+        internal pure returns (bytes32) 
+    {
         // Restrict buy and sell amount to occupy at most 100 bits.
         require(buyAmount < 0x10000000000000000000000000, "Buy amount too large!");
         require(sellAmount < 0x10000000000000000000000000, "Sell amount too large!");

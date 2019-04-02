@@ -17,8 +17,7 @@ contract SnappBase is Ownable {
 
     enum TransitionType {
         Deposit,
-        Withdraw,
-        Auction
+        Withdraw
     }
 
     // Account Mapping
