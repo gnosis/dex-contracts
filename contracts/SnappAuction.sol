@@ -90,15 +90,16 @@ contract SnappAuction is SnappBase {
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
         require(auctions[slot].shaHash == _orderHash, "Order hash doesn't agree");
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
-        require(block.number > auctions[slot].creationBlock + 20, "Requested order slot is still active");
+        require(
+            block.number > auctions[slot].creationBlock + 20 || auctions[slot].size == AUCTION_BATCH_SIZE, 
+            "Requested order slot is still active"
+        );
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
 
         stateRoots.push(_newStateRoot);        
         auctions[slot].appliedAccountStateIndex = stateIndex();
-        
-        // emit AuctionSolution(slot, prices, volumes);
+
         emit AuctionSettlement(slot, stateIndex(), _newStateRoot, prices, volumes);
-        // emit StateTransition(TransitionType.Auction, stateIndex(), _newStateRoot, slot);
     }
 
     function encodeOrder(
