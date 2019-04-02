@@ -1,4 +1,4 @@
-const SnappBase = artifacts.require("SnappBase")
+const SnappAuction = artifacts.require("SnappAuction")
 const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
 const getArgumentsHelper = require("./script_utilities.js")
 
@@ -12,7 +12,7 @@ module.exports = async (callback) => {
     }
     const [accountId, tokenId, amount] = arguments
     
-    const instance = await SnappBase.deployed()
+    const instance = await SnappAuction.deployed()
     const depositor = await instance.accountToPublicKeyMap.call(accountId)
     if (depositor == zero_address) {
       callback(`Error: No account registerd at index ${accountId}`)

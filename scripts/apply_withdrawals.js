@@ -1,4 +1,4 @@
-const SnappBase = artifacts.require("SnappBase")
+const SnappAuction = artifacts.require("SnappAuction")
 const getArgumentsHelper = require("./script_utilities.js")
 
 module.exports = async (callback) => {
@@ -9,7 +9,7 @@ module.exports = async (callback) => {
     }
     const [slot, merkle_root, new_state] = arguments
     
-    const instance = await SnappBase.deployed()
+    const instance = await SnappAuction.deployed()
 
     const state_index = (await instance.stateIndex.call()).toNumber()
     const curr_state = await instance.stateRoots.call(state_index)
