@@ -14,6 +14,25 @@ const {
 contract("SnappAuction", async (accounts) => {
   const [owner, token_owner, user_1, user_2] = accounts
 
+  describe("public view functions", () => {
+    it("hasAuctionBeenApplied(slot) == false", async () => {
+      const instance = await SnappAuction.new()
+      assert.equal(await instance.hasAuctionBeenApplied.call(0), false)
+    })
+  
+    it("getAuctionCreationBlock(slot)", async () => {
+      const instance = await SnappAuction.new()
+      const tx = await web3.eth.getTransaction(instance.transactionHash)
+  
+      assert.equal((await instance.getAuctionCreationBlock.call(0)).toNumber(), tx.blockNumber)
+    })
+  
+    it("getOrderHash(slot)", async () => {
+      const instance = await SnappAuction.new()
+      assert.equal(await instance.getOrderHash.call(0), 0x0)
+    })
+  })
+
   describe("placeSellOrder()", () => {
     it("Reject: unregisterd account", async () => {
       const instance = await SnappAuction.new()

@@ -32,6 +32,24 @@ contract SnappAuction is SnappBase {
         auctions[auctionIndex].creationBlock = block.number;
     }
 
+    /**
+     * Public View Methods
+     */
+    function getAuctionCreationBlock(uint slot) public view returns (uint) {
+        return auctions[slot].creationBlock;
+    }
+
+    function getOrderHash(uint slot) public view returns (bytes32) {
+        return auctions[slot].shaHash;
+    }
+
+    function hasAuctionBeenApplied(uint slot) public view returns (bool) {
+        return auctions[slot].appliedAccountStateIndex != 0;
+    }
+
+    /**
+     * Auction Functionality
+     */
     function placeSellOrder(
         uint8 buyToken,
         uint8 sellToken,
