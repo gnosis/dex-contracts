@@ -132,11 +132,11 @@ contract SnappAuction is SnappBase {
     ) 
         internal pure returns (bytes32) 
     {
-        // Restrict buy and sell amount to occupy at most 100 bits.
-        require(buyAmount < 0x10000000000000000000000000, "Buy amount too large!");
-        require(sellAmount < 0x10000000000000000000000000, "Sell amount too large!");
+        // Restrict buy and sell amount to occupy at most 96 bits.
+        require(buyAmount < 0x1000000000000000000000000, "Buy amount too large!");
+        require(sellAmount < 0x1000000000000000000000000, "Sell amount too large!");
 
         // solhint-disable-next-line max-line-length
-        return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 132));
+        return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
     }
 }
