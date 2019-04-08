@@ -24,8 +24,7 @@ contract SnappAuction is SnappBase {
         uint auctionId,
         uint stateIndex,
         bytes32 stateHash,
-        bytes prices,
-        bytes volumes
+        bytes solution  // represents (bytes prices, bytes volumes)
     );
 
     constructor () public {
@@ -81,8 +80,7 @@ contract SnappAuction is SnappBase {
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
         bytes32 _orderHash,
-        bytes memory prices,
-        bytes memory volumes
+        bytes memory solution  // represents (bytes prices, bytes volumes)
     )
         public onlyOwner()
     {   
@@ -100,9 +98,9 @@ contract SnappAuction is SnappBase {
         auctions[slot].appliedAccountStateIndex = stateIndex();
 
         // Store solution information in shaHash of pendingBatch (required for snark proof)
-        auctions[slot].shaHash = sha256(abi.encodePacked(prices, volumes));
+        auctions[slot].shaHash = sha256(solution);
 
-        emit AuctionSettlement(slot, stateIndex(), _newStateRoot, prices, volumes);
+        emit AuctionSettlement(slot, stateIndex(), _newStateRoot, solution);
     }
 
     function encodeOrder(
