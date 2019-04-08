@@ -14,6 +14,25 @@ const {
 contract("SnappAuction", async (accounts) => {
   const [owner, token_owner, user_1, user_2] = accounts
 
+  describe("public view functions", () => {
+    it("hasAuctionBeenApplied(slot) == false", async () => {
+      const instance = await SnappAuction.new()
+      assert.equal(await instance.hasAuctionBeenApplied.call(0), false)
+    })
+  
+    it("getAuctionCreationBlock(slot)", async () => {
+      const instance = await SnappAuction.new()
+      const tx = await web3.eth.getTransaction(instance.transactionHash)
+  
+      assert.equal((await instance.getAuctionCreationBlock.call(0)).toNumber(), tx.blockNumber)
+    })
+  
+    it("getOrderHash(slot)", async () => {
+      const instance = await SnappAuction.new()
+      assert.equal(await instance.getOrderHash.call(0), 0x0)
+    })
+  })
+
   describe("placeSellOrder()", () => {
     it("Reject: unregisterd account", async () => {
       const instance = await SnappAuction.new()
@@ -114,6 +133,7 @@ contract("SnappAuction", async (accounts) => {
     const volumes = "0x" + "".padEnd(32*1000*2, "0") // represents 1000 * 2 uint128 (numerator, denominator)
     const auctionSolution = prices + volumes.slice(2)
 
+
     it("Only owner", async () => {
       const instance = await SnappAuction.new()
 
@@ -208,7 +228,7 @@ contract("SnappAuction", async (accounts) => {
       )
     })
 
-    it.only("Successfully apply auction", async () => {
+    it("Successfully apply auction", async () => {
       const instance = await SnappAuction.new()
 
       const slot = (await instance.auctionIndex.call()).toNumber()
