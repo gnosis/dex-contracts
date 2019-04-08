@@ -11,7 +11,7 @@ module.exports = async (callback) => {
       callback("Error: This script requires arguments - <accountId> <tokenId> <depositAmount>")
     }
     const [accountId, tokenId, amount_arg] = arguments
-    const amount = web3.utils.toWei(amount_arg)
+    const amount = new web3.utils.BN(web3.utils.toWei(amount_arg))
 
     const instance = await SnappAuction.deployed()
     const depositor = await instance.accountToPublicKeyMap.call(accountId)
@@ -26,11 +26,10 @@ module.exports = async (callback) => {
   
     const token = await ERC20Mintable.at(token_address)
     const depositor_balance = (await token.balanceOf.call(depositor))
-    if (depositor_balance.lt(new web3.utils.BN(amount))) {
-      console.log(`Deposit request of ${amount} < `)
-      callback(`Error: Depositor has insufficient balance ${depositor_balance}.`)
+    if (depositor_balance.lt(amount)) {
+      callback(`Error: Depositor has insufficient balance ${depositor_balance} < ${amount}.`)
     }
-  
+
     const tx = await instance.deposit(tokenId, new web3.utils.BN(amount), {from: depositor})
     const slot = tx.logs[0].args.slot.toNumber()
     const slot_index = tx.logs[0].args.slotIndex.toNumber()
