@@ -787,7 +787,7 @@ contract("SnappBase", async (accounts) => {
       )
     })
 
-    it("Generic claim", async () => {
+    it.only("Generic claim", async () => {
       const instance = await SnappBase.new()
 
       const tokens = await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
@@ -820,12 +820,11 @@ contract("SnappBase", async (accounts) => {
       await instance.applyWithdrawals(
         withdraw_slot, merkle_root, await stateHash(instance), "0x2", withdraw_state.shaHash)
       
-      const prev_balance = (await tokens[0].balanceOf.call(user_1)).toNumber()
+      const prev_balance = (await tokens[0].balanceOf.call(user_1))
       await instance.claimWithdrawal(
         withdraw_slot, withdraw_slot_index, 1, 1, 1, proof, { from: user_1 })
-      const after_balance = (await tokens[0].balanceOf.call(user_1)).toNumber()
-      
-      assert.equal(prev_balance + 1, after_balance)
+      const after_balance = (await tokens[0].balanceOf.call(user_1))
+      assert.equal(after_balance.sub(prev_balance).toNumber(), 1)
     })
 
     it("Reject: Double claim", async () => {
