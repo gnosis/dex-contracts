@@ -7,7 +7,9 @@ module.exports = async (callback) => {
     if (arguments.length != 5) {
       callback("Error: This script requires arguments - <accountId> <buyToken> <sellToken> <minBuy> <maxSell>")
     }
-    const [accountId, buyToken, sellToken, minBuy, maxSell] = arguments
+    const [accountId, buyToken, sellToken, minBuy_arg, maxSell_arg] = arguments
+    const minBuy = web3.utils.toWei(minBuy_arg)
+    const maxSell = web3.utils.toWei(maxSell_arg)
     
     const instance = await SnappAuction.deployed()
     const sender = await instance.accountToPublicKeyMap.call(accountId)
