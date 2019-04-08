@@ -787,7 +787,7 @@ contract("SnappBase", async (accounts) => {
       )
     })
 
-    it.only("Generic claim", async () => {
+    it("Generic claim", async () => {
       const instance = await SnappBase.new()
 
       const tokens = await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
