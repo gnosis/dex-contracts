@@ -51,6 +51,7 @@
   "devDependencies": {
     "es6-promise": "^4.2.5",
     "eslint": "^5.12.0",
+    "eslint-plugin-no-only-tests": "^2.3.0",
     "eslint-plugin-react": "^7.12.3",
     "solhint": "^1.5.0",
     "solidity-coverage": "^0.5.11",
