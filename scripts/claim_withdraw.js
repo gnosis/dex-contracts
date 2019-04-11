@@ -83,7 +83,7 @@ module.exports = async (callback) => {
         console.log("Already claimed:", toClaim)
       } else {
         console.log("Attempting to claim:", toClaim)
-        const leaf = encodePacked_16_8_128(accountId, tokenId, toClaim.amount)
+        const leaf = encodePacked_16_8_128(accountId, tokenId, parseInt(toClaim.amount))
         const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
 
         // Could also check if leaf if contained in withdraw_hashes
