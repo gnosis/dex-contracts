@@ -42,7 +42,7 @@ const uint16 = function(num) {
 
 // returns byte string of hexed-sliced-padded int
 const uint128 = function(num) {
-  // assert(num < 2**128)
+  assert(num < 2**128)
   return num.toString(16).padStart(32, "0")
 }
 
