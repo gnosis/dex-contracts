@@ -191,7 +191,7 @@ contract SnappBase is Ownable {
         // Note that the only slot that can ever be empty is the first (at index zero) 
         // This occurs when no deposits are made within the first 20 blocks of the contract's deployment
         // This code allows for the processing of the empty block and since it will only happen once
-        // No, additional verificaiton is necessary.  
+        // No, additional verification is necessary.
 
         stateRoots.push(_newStateRoot);        
         deposits[slot].appliedAccountStateIndex = stateIndex();
@@ -292,7 +292,7 @@ contract SnappBase is Ownable {
         );
         // Set claim bitmap to true (indicating that funds have been claimed).
         claimableWithdraws[slot].claimedBitmap[inclusionIndex] = true;
-        // There is no situation where contract balance can't afford the upcomming transfer.
+        // There is no situation where contract balance can't afford the upcoming transfer.
         ERC20(tokenIdToAddressMap[tokenId]).transfer(accountToPublicKeyMap[accountId], amount);
     }
 

@@ -68,7 +68,7 @@ module.exports = async (callback) => {
     for (let i = 0; i < all_withdraws.length; i++) {
       const withdraw = all_withdraws[i]
       if (withdraw.valid) {
-        withdraw_hashes[i] = encodePacked_16_8_128(withdraw.accountId, withdraw.tokenId, withdraw.amount)
+        withdraw_hashes[i] = encodePacked_16_8_128(withdraw.accountId, withdraw.tokenId, parseInt(withdraw.amount))
       }
     }
     const tree = new MerkleTree(withdraw_hashes, sha256)
