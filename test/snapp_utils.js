@@ -42,16 +42,13 @@ const uint16 = function(num) {
 
 // returns byte string of hexed-sliced-padded int
 const uint128 = function(num) {
-  assert(num < 2**128)
+  // assert(num < 2**128)
   return num.toString(16).padStart(32, "0")
 }
 
 // returns equivalent to Soliditiy's abi.encodePacked(uint16 a, uint8 b, uint128 c)
 const encodePacked_16_8_128 = function(a, b, c) {
-  return Buffer.alloc(13)
-    + Buffer.from(uint16(a), "hex")
-    + Buffer.from(uint8(b), "hex")
-    + Buffer.from(uint128(c), "hex")
+  return Buffer.from("00000000000000000000000000" + uint16(a) + uint8(b) + uint128(c), "hex")
 }
 
 module.exports = {
