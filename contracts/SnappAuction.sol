@@ -64,6 +64,7 @@ contract SnappAuction is SnappBase {
         // Could also enforce that buyToken != sellToken, but not technically illegal.
 
         if (
+            auctionIndex == MAX_UINT ||
             auctions[auctionIndex].size == AUCTION_BATCH_SIZE || 
             block.number > auctions[auctionIndex].creationBlock + 20
         ) {

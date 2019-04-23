@@ -149,7 +149,10 @@ contract SnappBase is Ownable {
             "Unsuccessful transfer"
         );
 
-        if (deposits[depositIndex].size == DEPOSIT_BATCH_SIZE || block.number > deposits[depositIndex].creationBlock + 20) {
+        if (withdrawIndex == MAX_UINT ||
+            deposits[depositIndex].size == DEPOSIT_BATCH_SIZE || 
+            block.number > deposits[depositIndex].creationBlock + 20
+        ) {
             depositIndex++;
             deposits[depositIndex] = PendingBatch({
                 size: 0,
@@ -213,6 +216,7 @@ contract SnappBase is Ownable {
         // Determine or construct correct current withdraw state.
         // This is governed by WITHDRAW_BATCH_SIZE and creationBlock
         if (
+            withdrawIndex == MAX_UINT ||
             pendingWithdraws[withdrawIndex].size == WITHDRAW_BATCH_SIZE || 
             block.number > pendingWithdraws[withdrawIndex].creationBlock + 20
         ) {
