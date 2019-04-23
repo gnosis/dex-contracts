@@ -149,7 +149,7 @@ contract SnappBase is Ownable {
             "Unsuccessful transfer"
         );
 
-        if (withdrawIndex == MAX_UINT ||
+        if (depositIndex == MAX_UINT ||
             deposits[depositIndex].size == DEPOSIT_BATCH_SIZE || 
             block.number > deposits[depositIndex].creationBlock + 20
         ) {
