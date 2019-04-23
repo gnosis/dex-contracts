@@ -27,8 +27,11 @@ contract SnappAuction is SnappBase {
         bytes pricesAndVolumes
     );
 
+    event AuctionInitialization(uint16 maxOrders);
+    
     constructor () public {
         auctions[auctionIndex].creationBlock = block.number;
+        emit AuctionInitialization(AUCTION_BATCH_SIZE);
     }
 
     /**
