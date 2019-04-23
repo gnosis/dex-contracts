@@ -522,8 +522,8 @@ contract("SnappBase", async (accounts) => {
 
       const tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
 
-      assert.equal(tx.logs[0].args.accountId.toNumber(), account_id, "Account ID doesn't match event")
-      assert.equal(tx.logs[0].args.tokenId.toNumber(), token_id, "Token ID doesn't match event")
+      assert.equal(tx.logs[0].args.accountIndex.toNumber(), account_id - 1, "Account ID doesn't match event")
+      assert.equal(tx.logs[0].args.tokenIndex.toNumber(), token_id - 1, "Token ID doesn't match event")
       assert.equal(tx.logs[0].args.amount.toNumber(), withdraw_amount, "Amount doesn't match event")
 
       // This was the first withdraw

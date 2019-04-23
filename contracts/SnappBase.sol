@@ -50,8 +50,9 @@ contract SnappBase is Ownable {
 
     mapping (uint => ClaimableWithdrawState) public claimableWithdraws;
 
-    event WithdrawRequest(uint16 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
-    event Deposit(uint16 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
+    // Note that account and token Index are one less than account and token ID (respectively).
+    event WithdrawRequest(uint16 accountIndex, uint8 tokenIndex, uint128 amount, uint slot, uint16 slotIndex);
+    event Deposit(uint16 accountIndex, uint8 tokenIndex, uint128 amount, uint slot, uint16 slotIndex);
     event StateTransition(TransitionType transitionType, uint stateIndex, bytes32 stateHash, uint slot);
     event SnappInitialization(bytes32 stateHash, uint8 maxTokens, uint16 maxAccounts);
 
@@ -168,7 +169,7 @@ contract SnappBase is Ownable {
         );
         deposits[depositIndex].shaHash = nextDepositHash;
 
-        emit Deposit(accountId, tokenId, amount, depositIndex, deposits[depositIndex].size);
+        emit Deposit(accountId - 1, tokenId - 1, amount, depositIndex, deposits[depositIndex].size);
         // Only increment size after event (so it is emitted as an index)
         deposits[depositIndex].size++;
     }
@@ -235,7 +236,7 @@ contract SnappBase is Ownable {
 
         pendingWithdraws[withdrawIndex].shaHash = nextWithdrawHash;
 
-        emit WithdrawRequest(accountId, tokenId, amount, withdrawIndex, pendingWithdraws[withdrawIndex].size);
+        emit WithdrawRequest(accountId - 1, tokenId - 1, amount, withdrawIndex, pendingWithdraws[withdrawIndex].size);
         // Only increment size after event (so it is emitted as an index)
         pendingWithdraws[withdrawIndex].size++;
     }
