@@ -7,7 +7,7 @@ contract SnappAuction is SnappBase {
   
     uint16 public constant AUCTION_BATCH_SIZE = 1000;
 
-    uint public auctionIndex;
+    uint public auctionIndex = MAX_UINT;
     mapping (uint => PendingBatch) public auctions;
 
     event SellOrder(
@@ -30,7 +30,6 @@ contract SnappAuction is SnappBase {
     event AuctionInitialization(uint16 maxOrders);
     
     constructor () public {
-        auctions[auctionIndex].creationBlock = block.number;
         emit AuctionInitialization(AUCTION_BATCH_SIZE);
     }
 
@@ -69,7 +68,7 @@ contract SnappAuction is SnappBase {
             block.number > auctions[auctionIndex].creationBlock + 20
         ) {
             require(
-                auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
+                auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
                 "Too many pending auctions"
             );
             auctionIndex++;
@@ -105,7 +104,7 @@ contract SnappAuction is SnappBase {
     )
         public onlyOwner()
     {   
-        require(slot <= auctionIndex, "Requested order slot does not exist");
+        require(slot != MAX_UINT && slot <= auctionIndex, "Requested order slot does not exist");
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(auctions[slot].shaHash == _orderHash, "Order hash doesn't agree");

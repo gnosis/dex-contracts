@@ -8,6 +8,7 @@ import "./Merkle.sol";
 contract SnappBase is Ownable {
     using Merkle for bytes32;
 
+    uint public constant MAX_UINT = 2**256 - 1;
     uint8 public constant MAX_ACCOUNT_ID = 100;
     uint8 public constant MAX_TOKENS = 30;
     uint8 public constant DEPOSIT_BATCH_SIZE = 100;
@@ -36,10 +37,10 @@ contract SnappBase is Ownable {
         uint appliedAccountStateIndex; // accountState index when batch applied (for rollback), 0 implies not applied.
     }
 
-    uint public depositIndex;
+    uint public depositIndex = MAX_UINT;
     mapping (uint => PendingBatch) public deposits;
 
-    uint public withdrawIndex;
+    uint public withdrawIndex = MAX_UINT;
     mapping (uint => PendingBatch) public pendingWithdraws;
 
     struct ClaimableWithdrawState {
@@ -59,9 +60,6 @@ contract SnappBase is Ownable {
         // The initial state should be Pederson hash of an empty balance tree
         bytes32 stateInit = bytes32(0);
         stateRoots.push(stateInit);
-
-        deposits[depositIndex].creationBlock = block.number;
-        pendingWithdraws[withdrawIndex].creationBlock = block.number;
 
         emit SnappInitialization(stateInit, MAX_TOKENS, MAX_ACCOUNT_ID);
     }
@@ -181,7 +179,7 @@ contract SnappBase is Ownable {
     )
         public onlyOwner()
     {   
-        require(slot <= depositIndex, "Requested deposit slot does not exist");
+        require(slot != MAX_UINT && slot <= depositIndex, "Requested deposit slot does not exist");
         require(slot == 0 || deposits[slot-1].appliedAccountStateIndex != 0, "Must apply deposit slots in order!");
         require(deposits[slot].shaHash == _depositHash, "Deposits have been reorged");
         require(deposits[slot].appliedAccountStateIndex == 0, "Deposits already processed");
@@ -249,7 +247,7 @@ contract SnappBase is Ownable {
     )
         public onlyOwner()
     {
-        require(slot <= withdrawIndex, "Requested withdrawal slot does not exist");
+        require(slot != MAX_UINT && slot <= withdrawIndex, "Requested withdrawal slot does not exist");
         require(
             slot == 0 || pendingWithdraws[slot-1].appliedAccountStateIndex != 0, 
             "Previous withdraw slot not processed!"
