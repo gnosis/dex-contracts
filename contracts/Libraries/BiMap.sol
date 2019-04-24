@@ -27,7 +27,7 @@ library BiMap {
 
     function insert(Data storage self, uint16 id, address addr) public returns (bool) {
         // Ensure bijectivity of the mappings
-        if (self.AddressToId[addr] != 0 || self.idToAddress[id + 1] != address(0)) {
+        if (self.addressToId[addr] != 0 || self.idToAddress[id + 1] != address(0)) {
             return false;
         }
         self.idToAddress[id + 1] = addr;
