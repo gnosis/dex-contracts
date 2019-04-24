@@ -90,7 +90,8 @@
     "env": {
       "jest/globals": true,
       "browser": true,
-      "mocha": true
+      "mocha": true,
+      "es6": true
     },
     "globals": {
       "assert": true,

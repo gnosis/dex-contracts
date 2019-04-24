@@ -36,8 +36,8 @@ contract SnappAuction is SnappBase {
     /**
      * Public View Methods
      */
-    function getAuctionCreationBlock(uint slot) public view returns (uint) {
-        return auctions[slot].creationBlock;
+    function getAuctionCreationTimestamp(uint slot) public view returns (uint) {
+        return auctions[slot].creationTimestamp;
     }
 
     function getOrderHash(uint slot) public view returns (bytes32) {
@@ -66,7 +66,7 @@ contract SnappAuction is SnappBase {
         if (
             auctionIndex == MAX_UINT ||
             auctions[auctionIndex].size == AUCTION_BATCH_SIZE || 
-            block.number > auctions[auctionIndex].creationBlock + 20
+            block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
         ) {
             require(
                 auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
@@ -76,7 +76,7 @@ contract SnappAuction is SnappBase {
             auctions[auctionIndex] = PendingBatch({
                 size: 0,
                 shaHash: bytes32(0),
-                creationBlock: block.number,
+                creationTimestamp: block.timestamp,
                 appliedAccountStateIndex: 0
             });
         }
@@ -110,7 +110,7 @@ contract SnappAuction is SnappBase {
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(auctions[slot].shaHash == _orderHash, "Order hash doesn't agree");
         require(
-            block.number > auctions[slot].creationBlock + 20 || auctions[slot].size == AUCTION_BATCH_SIZE, 
+            block.timestamp > auctions[slot].creationTimestamp + 3 minutes || auctions[slot].size == AUCTION_BATCH_SIZE, 
             "Requested order slot is still active"
         );
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");

@@ -100,11 +100,24 @@ const setupEnvironment = async function(token_artifact, contract, token_owner, a
   return tokens
 }
 
+const jsonrpc = "2.0"
+const id = 0
+const send = function (method, params, web3Provider) {
+  return new Promise(function(resolve, reject) {
+    web3Provider.currentProvider.send({ id, jsonrpc, method, params }, (error, result) => {
+      if (error) {
+        reject(error)
+      } else {
+        resolve(result)
+      }
+    })
+  })
+}
+
 // Wait for n blocks to pass
-const waitForNBlocks = async function(numBlocks, authority, web3Provider=web3) {
-  for (let i = 0; i < numBlocks; i++) {
-    await web3Provider.eth.sendTransaction({from: authority, to: authority, value: 1})
-  }
+const waitForNSeconds = async function(seconds, authority, web3Provider=web3) {
+  await send("evm_increaseTime", [seconds], web3Provider)
+  await send("evm_mine", [], web3Provider)
 }
 
 const toHex = function(buffer) {
@@ -136,7 +149,7 @@ const generateMerkleTree = memoize(_generateMerkleTree, {
 
 module.exports = {
   assertRejects,
-  waitForNBlocks,
+  waitForNSeconds,
   fundAccounts,
   approveContract,
   openAccounts,
