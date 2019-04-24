@@ -56,8 +56,8 @@ contract SnappAuction is SnappBase {
         uint128 sellAmount
     ) public onlyRegistered() {
         // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
-        require(BiMap.hasId(registeredTokens, buyToken), "Buy token is not registered");
-        require(BiMap.hasId(registeredTokens, sellToken), "Sell token is not registered");
+        require(buyToken < numTokens, "Buy token is not registered");
+        require(sellToken < numTokens, "Sell token is not registered");
 
         // Could also enforce that buyToken != sellToken, but not technically illegal.
 
@@ -79,7 +79,7 @@ contract SnappAuction is SnappBase {
         }
 
         // Update Auction Hash based on request
-        uint16 accountId = BiMap.getId(registeredAccounts, msg.sender);
+        uint16 accountId = publicKeyToAccountMap(msg.sender);
         bytes32 nextAuctionHash = sha256(
             abi.encodePacked(
                 auctions[auctionIndex].shaHash,
