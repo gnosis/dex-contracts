@@ -1,12 +1,17 @@
 const BiMapWrapper = artifacts.require("BiMapWrapper")
+const BiMap = artifacts.require("BiMap")
 
 const truffleAssert = require("truffle-assertions")
+
+
 
 contract("BiMap", async (accounts) => {
 
   describe("All BiMap Functions", () => {
     
     it("bijectivity properties", async () => {
+      const lib = await BiMap.new()
+      await BiMapWrapper.link(BiMap, lib.address)
       const map = await BiMapWrapper.new()
 
       // 0 and accounts[0] not assigned.

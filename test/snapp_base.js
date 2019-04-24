@@ -1,4 +1,5 @@
 const SnappBase = artifacts.require("SnappBase")
+const BiMap = artifacts.require("BiMap")
 const ERC20 = artifacts.require("ERC20")
 const MintableERC20 = artifacts.require("./ERC20Mintable.sol")
 
@@ -24,6 +25,11 @@ const {
 
 contract("SnappBase", async (accounts) => {
   const [owner, token_owner, user_1, user_2] = accounts
+
+  beforeEach(async () => {
+    const lib = await BiMap.new()
+    await SnappBase.link(BiMap, lib.address)
+  })
 
   describe("public view functions", () => {
     it("getCurrentStateRoot()", async () => {
