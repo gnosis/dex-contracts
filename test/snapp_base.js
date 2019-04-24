@@ -75,28 +75,21 @@ contract("SnappBase", async (accounts) => {
   })
   
   describe("openAccount()", () => {
-    it("Account index default is 0", async () => {
-      const instance = await SnappBase.new()
-      const account_index = (await instance.publicKeyToAccountMap.call(owner)).toNumber()
-      assert.equal(account_index, 0)
-    })
-
-    it("Don't allow open account at 0", async () => {
-      const instance = await SnappBase.new()
-      await truffleAssert.reverts(instance.openAccount(0), "Account index must be positive!")
-    })
-
-    it("Do not allow open account at index > maxAccountNumber", async () => {
+    it("Do not allow open account at index >= maxAccountNumber", async () => {
       const instance = await SnappBase.new()
       const max_account_id = (await instance.MAX_ACCOUNT_ID.call()).toNumber()
+      await truffleAssert.reverts(instance.openAccount(max_account_id), "Account index exceeds max")
       await truffleAssert.reverts(instance.openAccount(max_account_id + 1), "Account index exceeds max")
     })
 
-    it("Do allow open account at index = maxAccountNumber", async () => {
+    it("Do allow open account at 0 <= index < maxAccountNumber", async () => {
       const instance = await SnappBase.new()
       const max_account_id = (await instance.MAX_ACCOUNT_ID.call()).toNumber()
-      await instance.openAccount(max_account_id)
-      assert.equal(max_account_id, (await instance.publicKeyToAccountMap.call(owner)).toNumber())
+      await instance.openAccount(max_account_id - 1)
+      await instance.openAccount(0, { from: user_1 })
+
+      assert.equal((await instance.publicKeyToAccountMap.call(owner)).toNumber(), max_account_id - 1)
+      assert.equal((await instance.publicKeyToAccountMap.call(user_1)).toNumber(), 0)
     })
 
     it("Open Account at index 1", async () => {
@@ -120,10 +113,10 @@ contract("SnappBase", async (accounts) => {
       await instance.openAccount(account_index)
 
       // Account owner can't open another
-      await truffleAssert.reverts(instance.openAccount(account_index), "Address occupies account slot")
+      await truffleAssert.reverts(instance.openAccount(account_index), "Address occupies slot or requested slot already taken")
 
       // Others can't open another
-      await truffleAssert.reverts(instance.openAccount(account_index, { from: user_1 }), "Account slot occupied")
+      await truffleAssert.reverts(instance.openAccount(account_index, { from: user_1 }), "Address occupies slot or requested slot already taken")
     })
 
     it("Open multiple accounts", async () => {
@@ -145,14 +138,14 @@ contract("SnappBase", async (accounts) => {
       const token_1 = await ERC20.new()
       await instance.addToken(token_1.address)
 
-      assert.equal((await instance.tokenAddresToIdMap.call(token_1.address)).toNumber(), 1)
-      assert.equal(await instance.tokenIdToAddressMap.call(1), token_1.address)
+      assert.equal((await instance.tokenAddresToIdMap.call(token_1.address)).toNumber(), 0)
+      assert.equal(await instance.tokenIdToAddressMap.call(0), token_1.address)
 
       const token_2 = await ERC20.new()
       await instance.addToken(token_2.address)
 
-      assert.equal((await instance.tokenAddresToIdMap.call(token_2.address)).toNumber(), 2)
-      assert.equal(await instance.tokenIdToAddressMap.call(2), token_2.address)
+      assert.equal((await instance.tokenAddresToIdMap.call(token_2.address)).toNumber(), 1)
+      assert.equal(await instance.tokenIdToAddressMap.call(1), token_2.address)
     })
 
     it("Only owner", async () => {
@@ -167,7 +160,7 @@ contract("SnappBase", async (accounts) => {
       const token = await ERC20.new()
 
       await instance.addToken(token.address)
-      await truffleAssert.reverts(instance.addToken(token.address), "Token already registered!")
+      await truffleAssert.reverts(instance.addToken(token.address), "Token already registered")
     })
 
     it("No exceed max tokens", async () => {
@@ -178,7 +171,7 @@ contract("SnappBase", async (accounts) => {
         await instance.addToken((await ERC20.new()).address)
       }
       // Last token can't be added (exceeds limit)
-      await truffleAssert.reverts(instance.addToken((await ERC20.new()).address), "Token id exceeds max tokens")
+      await truffleAssert.reverts(instance.addToken((await ERC20.new()).address), "Max tokens reached")
     })
   })
 
@@ -228,13 +221,13 @@ contract("SnappBase", async (accounts) => {
     it("Generic deposit", async () => {
       const instance = await SnappBase.new()
       const token = await MintableERC20.new()
-      const token_index = 1
 
       // fund accounts and approve contract for transfers
       await fundAccounts(owner, [user_1], token, 100)
       await approveContract(instance, [user_1], token, 100)
 
       await instance.addToken(token.address)
+      const token_index = (await instance.tokenAddresToIdMap.call(token.address)).toNumber()
       await instance.openAccount(token_index, { from: user_1 })
 
       // user 1 deposits 10
@@ -246,13 +239,13 @@ contract("SnappBase", async (accounts) => {
     it("Deposits over consecutive slots", async () => {
       const instance = await SnappBase.new()
       const token = await MintableERC20.new()
-      const token_index = 1
       
       // fund accounts and approve contract for transfers
       await fundAccounts(owner, [user_1], token, 100)
       await approveContract(instance, [user_1], token, 100)
 
       await instance.addToken(token.address)
+      const token_index = (await instance.tokenAddresToIdMap.call(token.address)).toNumber()
       await instance.openAccount(token_index, { from: user_1 })
 
       await waitForNBlocks(21, owner)
@@ -321,7 +314,7 @@ contract("SnappBase", async (accounts) => {
       
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
 
-      await instance.deposit(1, 10, { from: user_1 })
+      await instance.deposit(0, 10, { from: user_1 })
       const slot = (await instance.depositIndex.call()).toNumber()
 
       // Wait for current depoit index to increment
@@ -339,7 +332,7 @@ contract("SnappBase", async (accounts) => {
       
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
 
-      await instance.deposit(1, 10, { from: user_1 })
+      await instance.deposit(0, 10, { from: user_1 })
       const slot = (await instance.depositIndex.call()).toNumber()
 
       // Wait for current depoit index to increment
@@ -355,11 +348,11 @@ contract("SnappBase", async (accounts) => {
       
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1, user_2], 2)
 
-      // user 1 and 2 both deposit 10 of token 1 and 2
+      // user 1 and 2 both deposit 10 of token 0 and 1
+      await instance.deposit(0, 10, { from: user_1 })
       await instance.deposit(1, 10, { from: user_1 })
-      await instance.deposit(2, 10, { from: user_1 })
+      await instance.deposit(0, 10, { from: user_2 })
       await instance.deposit(1, 10, { from: user_2 })
-      await instance.deposit(2, 10, { from: user_2 })
       const slot = (await instance.depositIndex.call()).toNumber()
 
       // Wait for current depoit index to increment
@@ -380,7 +373,7 @@ contract("SnappBase", async (accounts) => {
       const instance = await SnappBase.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
 
-      await instance.deposit(1, 10, { from: user_1 })
+      await instance.deposit(0, 10, { from: user_1 })
       const slot = (await instance.depositIndex.call()).toNumber()
 
       // Wait for current depoit index to increment
@@ -401,13 +394,13 @@ contract("SnappBase", async (accounts) => {
 
     it("Must apply slots sequentially", async () => {
       const instance = await SnappBase.new()
-      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
 
-      await instance.deposit(1, 10, { from: user_1 })
+      await instance.deposit(0, 10, { from: user_1 })
       // Wait for current depoit index to increment
       await waitForNBlocks(21, owner)
 
-      await instance.deposit(1, 10, { from: user_1 })
+      await instance.deposit(0, 10, { from: user_1 })
       const slot = (await instance.depositIndex.call()).toNumber()
 
       await waitForNBlocks(21, owner)
@@ -430,9 +423,9 @@ contract("SnappBase", async (accounts) => {
 
     it("No race condition: New deposits not prevented by applyDeposits", async () => {
       const instance = await SnappBase.new()
-      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
 
-      await instance.deposit(1, 10, { from: user_1 })
+      await instance.deposit(0, 10, { from: user_1 })
       const slot = (await instance.depositIndex.call()).toNumber()
 
       // Wait for current depoit index to increment
@@ -444,7 +437,7 @@ contract("SnappBase", async (accounts) => {
 
       await instance.applyDeposits(slot, state_root, zeroHash, deposit_state.shaHash)
       
-      await instance.deposit(1, 10, { from: user_1 })
+      await instance.deposit(0, 10, { from: user_1 })
     })
   })
 
@@ -452,15 +445,12 @@ contract("SnappBase", async (accounts) => {
     it("Reject: unregistered accounts", async () => {
       const instance = await SnappBase.new()
 
-      // Ensure user_1 doesn't have account
-      assert.equal((await instance.publicKeyToAccountMap.call(user_1)).toNumber(), 0)
-
       // Register 1 token
       const token = await ERC20.new()
       await instance.addToken(token.address)
 
       await truffleAssert.reverts(
-        instance.requestWithdrawal(1, 1, { from: user_1 }),
+        instance.requestWithdrawal(0, 1, { from: user_1 }),
         "Must have registered account"
       )
     })
@@ -474,7 +464,7 @@ contract("SnappBase", async (accounts) => {
 
       await instance.openAccount(1, { from: user_1 })
       await truffleAssert.reverts(
-        instance.requestWithdrawal(1, 0, { from: user_1 }),
+        instance.requestWithdrawal(0, 0, { from: user_1 }),
         "Must request positive amount"
       )
     })
@@ -497,7 +487,7 @@ contract("SnappBase", async (accounts) => {
       await instance.openAccount(1, { from: user_1 })
 
       await truffleAssert.reverts(
-        instance.requestWithdrawal(1, 1, { from: user_1 }),
+        instance.requestWithdrawal(0, 1, { from: user_1 }),
         "Requested amount exceeds contract's balance"
       )
     })
@@ -522,8 +512,8 @@ contract("SnappBase", async (accounts) => {
 
       const tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
 
-      assert.equal(tx.logs[0].args.accountIndex.toNumber(), account_id - 1, "Account ID doesn't match event")
-      assert.equal(tx.logs[0].args.tokenIndex.toNumber(), token_id - 1, "Token ID doesn't match event")
+      assert.equal(tx.logs[0].args.accountId.toNumber(), account_id, "Account ID doesn't match event")
+      assert.equal(tx.logs[0].args.tokenId.toNumber(), token_id, "Token ID doesn't match event")
       assert.equal(tx.logs[0].args.amount.toNumber(), withdraw_amount, "Amount doesn't match event")
 
       // This was the first withdraw
@@ -545,10 +535,10 @@ contract("SnappBase", async (accounts) => {
             
       // Notice that contract can only check against its own balance of any given token
       // (i.e. the sum total of requested withdraws could exceed the balance)
-      await instance.deposit(1, 1, { from: user_1 })
+      await instance.deposit(0, 1, { from: user_1 })
       
       const txs = await Promise.all(
-        Array(100).fill().map(() => instance.requestWithdrawal(1, 1, { from: user_1 }))
+        Array(100).fill().map(() => instance.requestWithdrawal(0, 1, { from: user_1 }))
       )
       
       const request_slots = txs.map(tx => tx.logs[0].args.slot.toNumber())
@@ -608,9 +598,12 @@ contract("SnappBase", async (accounts) => {
       const instance = await SnappBase.new()
       
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+      const token_id = 0
+      const deposit_amount = 1
+      const withdraw_amount = 1
 
-      await instance.deposit(1, 1, { from: user_1 })
-      const tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      await instance.deposit(token_id, deposit_amount, { from: user_1 })
+      const tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
       const slot = tx.logs[0].args.slot.toNumber()
       assert.equal(slot, 0)  // Note that slot should be 0
 
@@ -635,9 +628,12 @@ contract("SnappBase", async (accounts) => {
       const instance = await SnappBase.new()
       
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+      const token_id = 0
+      const deposit_amount = 1
+      const withdraw_amount = 1
 
-      await instance.deposit(1, 1, { from: user_1 })
-      const tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      await instance.deposit(token_id, deposit_amount, { from: user_1 })
+      const tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
       const slot = tx.logs[0].args.slot.toNumber()
       const withdraw_state = await instance.pendingWithdraws(slot)
       const new_state = oneHash
@@ -663,10 +659,13 @@ contract("SnappBase", async (accounts) => {
     it("Reject: out-of-range slot", async () => {
       const instance = await SnappBase.new()
       
-      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+      const token_id = 0
+      const deposit_amount = 10
+      const withdraw_amount = 1
 
-      await instance.deposit(1, 1, { from: user_1 })
-      const tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      await instance.deposit(token_id, deposit_amount, { from: user_1 })
+      const tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
       const slot = tx.logs[0].args.slot.toNumber()
       const withdraw_state = await instance.pendingWithdraws(slot)
       const new_state = oneHash
@@ -692,9 +691,12 @@ contract("SnappBase", async (accounts) => {
       const instance = await SnappBase.new()
       
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+      const token_id = 0
+      const deposit_amount = 10
+      const withdraw_amount = 1
 
-      await instance.deposit(1, 10, { from: user_1 })
-      const tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      await instance.deposit(token_id, deposit_amount, { from: user_1 })
+      const tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
       const slot = tx.logs[0].args.slot.toNumber()
       const withdraw_state = await instance.pendingWithdraws(slot)
       const new_state = oneHash
@@ -716,9 +718,12 @@ contract("SnappBase", async (accounts) => {
       const instance = await SnappBase.new()
       
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+      const token_id = 0
+      const deposit_amount = 10
+      const withdraw_amount = 1
 
-      await instance.deposit(1, 10, { from: user_1 })
-      const tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      await instance.deposit(token_id, deposit_amount, { from: user_1 })
+      const tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
       const slot = tx.logs[0].args.slot.toNumber()
       const withdraw_state = await instance.pendingWithdraws(slot)
       const new_state = oneHash
@@ -741,15 +746,19 @@ contract("SnappBase", async (accounts) => {
       
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
 
-      await instance.deposit(1, 10, { from: user_1 })
-      const first_tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const token_id = 0
+      const deposit_amount = 10
+      const withdraw_amount = 2
+
+      await instance.deposit(token_id, deposit_amount, { from: user_1 })
+      const first_tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
       const first_slot = first_tx.logs[0].args.slot.toNumber()
       const first_withdraw_state = await instance.pendingWithdraws(first_slot)
       const new_state = oneHash
       const merkle_root = zeroHash
       await waitForNBlocks(21, owner)
 
-      const second_tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const second_tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
       const second_slot = second_tx.logs[0].args.slot.toNumber()
       const second_withdraw_state = await instance.pendingWithdraws(second_slot)
       await waitForNBlocks(21, owner)
@@ -791,9 +800,13 @@ contract("SnappBase", async (accounts) => {
       const instance = await SnappBase.new()
 
       const tokens = await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+      const token_id = 0
+      const account_id = 0
+      const deposit_amount = 10
+      const withdraw_amount = 1
 
       // Deposit, wait and apply deposits
-      const deposit_tx = await instance.deposit(1, 10, { from: user_1 })
+      const deposit_tx = await instance.deposit(token_id, deposit_amount, { from: user_1 })
       const deposit_slot = (deposit_tx.logs[0].args.slot).toNumber()
       
       await waitForNBlocks(21, owner)
@@ -802,7 +815,7 @@ contract("SnappBase", async (accounts) => {
         deposit_slot, await stateHash(instance), "0x1", deposit_state.shaHash)
 
       // Request withdraw, wait and apply withdraw
-      const withdraw_tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const withdraw_tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
       const withdraw_slot = withdraw_tx.logs[0].args.slot.toNumber()
       const withdraw_slot_index = withdraw_tx.logs[0].args.slotIndex.toNumber()
 
@@ -812,7 +825,7 @@ contract("SnappBase", async (accounts) => {
       // Need to apply at slot 0 (empty transition)
       await instance.applyWithdrawals(0, "0x0", await stateHash(instance), "0x1", "0x0")
 
-      const leaf = encodePacked_16_8_128(1, 1, 1)
+      const leaf = encodePacked_16_8_128(account_id, token_id, withdraw_amount)
       const tree = generateMerkleTree(0, leaf)
       const merkle_root = tree.getRoot()
       const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
@@ -822,7 +835,7 @@ contract("SnappBase", async (accounts) => {
       
       const prev_balance = (await tokens[0].balanceOf.call(user_1))
       await instance.claimWithdrawal(
-        withdraw_slot, withdraw_slot_index, 1, 1, 1, proof, { from: user_1 })
+        withdraw_slot, withdraw_slot_index, account_id, token_id, withdraw_amount, proof, { from: user_1 })
       const after_balance = (await tokens[0].balanceOf.call(user_1))
       assert.equal(after_balance.sub(prev_balance).toNumber(), 1)
     })
@@ -831,9 +844,13 @@ contract("SnappBase", async (accounts) => {
       const instance = await SnappBase.new()
 
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+      const token_id = 0
+      const account_id = 0
+      const deposit_amount = 10
+      const withdraw_amount = 2
 
       // Deposit, wait and apply deposits
-      const deposit_tx = await instance.deposit(1, 10, { from: user_1 })
+      const deposit_tx = await instance.deposit(account_id, deposit_amount, { from: user_1 })
       const deposit_slot = (deposit_tx.logs[0].args.slot).toNumber()
       
       await waitForNBlocks(21, owner)
@@ -842,7 +859,7 @@ contract("SnappBase", async (accounts) => {
         deposit_slot, await stateHash(instance), "0x1", deposit_state.shaHash)
 
       // Request withdraw, wait and apply withdraw
-      const withdraw_tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const withdraw_tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
       const withdraw_slot = withdraw_tx.logs[0].args.slot.toNumber()
       const withdraw_slot_index = withdraw_tx.logs[0].args.slotIndex.toNumber()
 
@@ -852,7 +869,7 @@ contract("SnappBase", async (accounts) => {
       // Need to apply at slot 0 (empty transition)
       await instance.applyWithdrawals(0, "0x0", await stateHash(instance), "0x1", "0x0")
 
-      const leaf = encodePacked_16_8_128(1, 1, 1)
+      const leaf = encodePacked_16_8_128(account_id, token_id, withdraw_amount)
       const tree = generateMerkleTree(0, leaf)
       const merkle_root = tree.getRoot()
       const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
@@ -861,9 +878,11 @@ contract("SnappBase", async (accounts) => {
         withdraw_slot, merkle_root, await stateHash(instance), "0x2", withdraw_state.shaHash)
       
       await instance.claimWithdrawal(
-        withdraw_slot, withdraw_slot_index, 1, 1, 1, proof, { from: user_1 })
+        withdraw_slot, withdraw_slot_index, account_id, token_id, withdraw_amount, proof, { from: user_1 })
+
       await truffleAssert.reverts(
-        instance.claimWithdrawal(withdraw_slot, withdraw_slot_index, 1, 1, 1, proof, { from: user_1 }),
+        instance.claimWithdrawal(
+          withdraw_slot, withdraw_slot_index, account_id, token_id, withdraw_amount, proof, { from: user_1 }),
         "Already claimed"
       )
     })
@@ -872,9 +891,13 @@ contract("SnappBase", async (accounts) => {
       const instance = await SnappBase.new()
 
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
+      const token_id = 0
+      const account_id = 0
+      const deposit_amount = 10
+      const withdraw_amount = 2
 
       // Deposit, wait and apply deposits
-      const deposit_tx = await instance.deposit(1, 10, { from: user_1 })
+      const deposit_tx = await instance.deposit(token_id, deposit_amount, { from: user_1 })
       const deposit_slot = (deposit_tx.logs[0].args.slot).toNumber()
       
       await waitForNBlocks(21, owner)
@@ -883,7 +906,7 @@ contract("SnappBase", async (accounts) => {
         deposit_slot, await stateHash(instance), "0x1", deposit_state.shaHash)
 
       // Request withdraw, wait and apply withdraw
-      const withdraw_tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const withdraw_tx = await instance.requestWithdrawal(token_id, withdraw_amount, { from: user_1 })
       const withdraw_slot = withdraw_tx.logs[0].args.slot.toNumber()
       const withdraw_slot_index = withdraw_tx.logs[0].args.slotIndex.toNumber()
 
@@ -893,7 +916,7 @@ contract("SnappBase", async (accounts) => {
       // Need to apply at slot 0 (empty transition)
       await instance.applyWithdrawals(0, "0x0", await stateHash(instance), "0x1", "0x0")
 
-      const leaf = encodePacked_16_8_128(1, 1, 1)
+      const leaf = encodePacked_16_8_128(account_id, token_id, withdraw_amount)
       const tree = generateMerkleTree(0, leaf)
       const merkle_root = tree.getRoot()
       const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
@@ -902,7 +925,8 @@ contract("SnappBase", async (accounts) => {
         withdraw_slot, merkle_root, await stateHash(instance), "0x2", withdraw_state.shaHash)
       
       await truffleAssert.reverts(
-        instance.claimWithdrawal(withdraw_slot, withdraw_slot_index + 1, 1, 1, 1, proof, { from: user_1 }),
+        instance.claimWithdrawal(
+          withdraw_slot, withdraw_slot_index + 1, account_id, token_id, withdraw_amount, proof, { from: user_1 }),
         "Failed Merkle membership check."
       )
     })
