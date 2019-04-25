@@ -29,7 +29,7 @@ contract SnappAuction is SnappBase {
 
     event AuctionInitialization(uint16 maxOrders);
     
-    constructor () public SnappBase() {
+    constructor () public {
         emit AuctionInitialization(AUCTION_BATCH_SIZE);
     }
 
