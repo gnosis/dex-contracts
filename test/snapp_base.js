@@ -47,17 +47,10 @@ contract("SnappBase", async (accounts) => {
     it("getDepositCreationTimestamp(slot)", async () => {
       const instance = await SnappBase.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 1)
-<<<<<<< HEAD
       
-      const tx = await instance.deposit(1, 1, { from: user_1 })
+      const tx = await instance.deposit(0, 1, { from: user_1 })
       const timestamp = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
       assert.equal((await instance.getDepositCreationTimestamp.call(0)).toNumber(), timestamp)
-=======
-      const token_id = 0
-      const deposit_amount = 1
-      const tx = await instance.deposit(token_id, deposit_amount, { from: user_1 })
-      assert.equal((await instance.getDepositCreationBlock.call(0)).toNumber(), tx.receipt.blockNumber)
->>>>>>> origin/master
     })
 
     it("getDepositHash(slot)", async () => {
