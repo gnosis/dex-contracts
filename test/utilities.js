@@ -58,7 +58,7 @@ const approveContract = async function(contract, accounts, token, value) {
  */
 const openAccounts = async function(contract, accounts) {
   for (let i = 0; i < accounts.length; i++) {
-    await contract.openAccount(i + 1, { from: accounts[i] })
+    await contract.openAccount(i, { from: accounts[i] })
   }
 }
 
