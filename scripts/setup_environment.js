@@ -15,7 +15,7 @@ module.exports = async function(callback) {
     const accounts = await web3.eth.getAccounts()
     const token_owner = accounts[1]
     console.log(`Beginning environment setup with ${numAccounts} accounts and ${numTokens} tokens`)
-    await setupEnvironment(ERC20Mintable, instance, token_owner, accounts.slice(numAccounts), numTokens)
+    await setupEnvironment(ERC20Mintable, instance, token_owner, accounts.slice(0, numAccounts), numTokens)
     console.log("Environment setup complete")
     callback()
   } catch (error) {

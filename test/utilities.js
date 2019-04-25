@@ -92,7 +92,7 @@ const registerTokens = async function(token_artifact, contract, token_owner, num
 const setupEnvironment = async function(token_artifact, contract, token_owner, accounts, numTokens) {
   const tokens = await registerTokens(token_artifact, contract, token_owner, numTokens)
   const amount = "300000000000000000000"
-  for (let i = 0; i < tokens.length; i++) {openAccounts
+  for (let i = 0; i < tokens.length; i++) {
     await fundAccounts(token_owner, accounts, tokens[i], amount)
     await approveContract(contract, accounts, tokens[i], amount)
   }
