@@ -29,7 +29,7 @@ contract SnappBase is Ownable {
     struct PendingBatch {
         uint16 size;                   // Number of deposits in this batch
         bytes32 shaHash;               // Rolling shaHash of all deposits
-        uint creationBlock;            // Timestamp of batch creation
+        uint creationTimestamp;        // Timestamp of batch creation
         uint appliedAccountStateIndex; // accountState index when batch applied (for rollback), 0 implies not applied.
     }
 
@@ -75,8 +75,8 @@ contract SnappBase is Ownable {
         return deposits[index].appliedAccountStateIndex != 0;
     }
 
-    function getDepositCreationBlock(uint slot) public view returns (uint) {
-        return deposits[slot].creationBlock;
+    function getDepositCreationTimestamp(uint slot) public view returns (uint) {
+        return deposits[slot].creationTimestamp;
     }
 
     function getDepositHash(uint slot) public view returns (bytes32) {
@@ -87,8 +87,8 @@ contract SnappBase is Ownable {
         return pendingWithdraws[index].appliedAccountStateIndex != 0;
     }
 
-    function getWithdrawCreationBlock(uint slot) public view returns (uint) {
-        return pendingWithdraws[slot].creationBlock;
+    function getWithdrawCreationTimestamp(uint slot) public view returns (uint) {
+        return pendingWithdraws[slot].creationTimestamp;
     }
 
     function getWithdrawHash(uint slot) public view returns (bytes32) {
@@ -156,13 +156,13 @@ contract SnappBase is Ownable {
 
         if (depositIndex == MAX_UINT ||
             deposits[depositIndex].size == DEPOSIT_BATCH_SIZE || 
-            block.number > deposits[depositIndex].creationBlock + 20
+            block.timestamp > deposits[depositIndex].creationTimestamp + 3 minutes
         ) {
             depositIndex++;
             deposits[depositIndex] = PendingBatch({
                 size: 0,
                 shaHash: bytes32(0),
-                creationBlock: block.number,
+                creationTimestamp: block.timestamp,
                 appliedAccountStateIndex: 0
             });
         }
@@ -191,7 +191,7 @@ contract SnappBase is Ownable {
         require(slot == 0 || deposits[slot-1].appliedAccountStateIndex != 0, "Must apply deposit slots in order!");
         require(deposits[slot].shaHash == _depositHash, "Deposits have been reorged");
         require(deposits[slot].appliedAccountStateIndex == 0, "Deposits already processed");
-        require(block.number > deposits[slot].creationBlock + 20, "Requested deposit slot is still active");
+        require(block.timestamp > deposits[slot].creationTimestamp + 3 minutes, "Requested deposit slot is still active");
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
 
         // Note that the only slot that can ever be empty is the first (at index zero) 
@@ -217,17 +217,17 @@ contract SnappBase is Ownable {
         );
 
         // Determine or construct correct current withdraw state.
-        // This is governed by WITHDRAW_BATCH_SIZE and creationBlock
+        // This is governed by WITHDRAW_BATCH_SIZE and creationTimestamp
         if (
             withdrawIndex == MAX_UINT ||
             pendingWithdraws[withdrawIndex].size == WITHDRAW_BATCH_SIZE || 
-            block.number > pendingWithdraws[withdrawIndex].creationBlock + 20
+            block.timestamp > pendingWithdraws[withdrawIndex].creationTimestamp + 3 minutes
         ) {
             withdrawIndex++;
             pendingWithdraws[withdrawIndex] = PendingBatch({
                 size: 0,
                 shaHash: bytes32(0),
-                creationBlock: block.number,
+                creationTimestamp: block.timestamp,
                 appliedAccountStateIndex: 0
             });
         }
@@ -261,7 +261,9 @@ contract SnappBase is Ownable {
         );
         require(pendingWithdraws[slot].shaHash == _withdrawHash, "Withdraws have been reorged");
         require(pendingWithdraws[slot].appliedAccountStateIndex == 0, "Withdraws already processed");
-        require(block.number > pendingWithdraws[slot].creationBlock + 20, "Requested withdraw slot is still active");
+        require(
+            block.timestamp > pendingWithdraws[slot].creationTimestamp + 3 minutes, 
+            "Requested withdraw slot is still active");
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
 
         // Update account states

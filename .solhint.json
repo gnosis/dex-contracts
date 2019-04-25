@@ -1,12 +1,13 @@
 {
-    "extends": "default",                      
-    "rules": {                                 
-        "indent": ["error", 4],                
-        "quotes": ["error", "double"],         
+    "extends": "default",
+    "rules": {
+        "indent": ["error", 4],
+        "quotes": ["error", "double"],
         "max-line-length": ["error", 129],
         "function-max-lines": ["error", 55],
         "max-states-count": ["error", 18],
         "compiler-fixed": true,
-        "no-simple-event-func-name": true
-    }                     
+        "no-simple-event-func-name": true,
+        "not-rely-on-time": false
+    }
 }

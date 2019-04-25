@@ -18,7 +18,8 @@ const falseArray = function(num, true_list) {
 // Returns boolean representing whether deposit or withdraw state (of type PendingFlux) is active
 const isActive = async function(object) {
   const block = await web3.eth.getBlockNumber()
-  return block <= object.creationBlock.toNumber() + 20
+  const timestamp = (await web3.eth.getBlock(block)).timestamp
+  return timestamp <= object.creationTimestamp.toNumber() + 180
 }
 
 const stateHash = async function(contract) {
