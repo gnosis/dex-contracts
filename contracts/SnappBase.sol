@@ -3,7 +3,7 @@ pragma solidity ^0.5.0;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./libraries/Merkle.sol";
-import "./libraries/BiMap.sol";
+import "./libraries/IdToAddressBiMap.sol";
 
 
 contract SnappBase is Ownable {
@@ -22,8 +22,8 @@ contract SnappBase is Ownable {
         Withdraw
     }
 
-    BiMap.Data private registeredAccounts;
-    BiMap.Data private registeredTokens;
+    IdToAddressBiMap.Data private registeredAccounts;
+    IdToAddressBiMap.Data private registeredTokens;
     uint8 public numTokens;
 
     struct PendingBatch {
@@ -100,26 +100,26 @@ contract SnappBase is Ownable {
     }
 
     function publicKeyToAccountMap(address addr) public view returns (uint16) {
-        return BiMap.getId(registeredAccounts, addr);
+        return IdToAddressBiMap.getId(registeredAccounts, addr);
     }
 
     function accountToPublicKeyMap(uint16 id) public view returns (address) {
-        return BiMap.getAddressAt(registeredAccounts, id);
+        return IdToAddressBiMap.getAddressAt(registeredAccounts, id);
     }
 
     function tokenAddresToIdMap(address addr) public view returns (uint16) {
-        return BiMap.getId(registeredTokens, addr);
+        return IdToAddressBiMap.getId(registeredTokens, addr);
     }
 
     function tokenIdToAddressMap(uint16 id) public view returns (address) {
-        return BiMap.getAddressAt(registeredTokens, id);
+        return IdToAddressBiMap.getAddressAt(registeredTokens, id);
     }
 
     /**
      * Modifiers
      */
     modifier onlyRegistered() {
-        require(BiMap.hasAddress(registeredAccounts, msg.sender), "Must have registered account");
+        require(IdToAddressBiMap.hasAddress(registeredAccounts, msg.sender), "Must have registered account");
         _;
     }
 
@@ -129,7 +129,7 @@ contract SnappBase is Ownable {
     function openAccount(uint16 accountId) public {
         require(accountId < MAX_ACCOUNT_ID, "Account index exceeds max");
         require(
-            BiMap.insert(registeredAccounts, accountId, msg.sender),
+            IdToAddressBiMap.insert(registeredAccounts, accountId, msg.sender),
             "Address occupies slot or requested slot already taken"
         );
     }
@@ -137,7 +137,7 @@ contract SnappBase is Ownable {
     function addToken(address _tokenAddress) public onlyOwner() {
         require(numTokens + 1 <= MAX_TOKENS, "Max tokens reached");
         require(
-            BiMap.insert(registeredTokens, numTokens, _tokenAddress),
+            IdToAddressBiMap.insert(registeredTokens, numTokens, _tokenAddress),
             "Token already registered"
         );
         numTokens++;
@@ -148,7 +148,7 @@ contract SnappBase is Ownable {
      */
     function deposit(uint8 tokenId, uint128 amount) public onlyRegistered() {
         require(amount != 0, "Must deposit positive amount");
-        require(BiMap.hasId(registeredTokens, tokenId), "Requested token is not registered");
+        require(IdToAddressBiMap.hasId(registeredTokens, tokenId), "Requested token is not registered");
         require(
             ERC20(tokenIdToAddressMap(tokenId)).transferFrom(msg.sender, address(this), amount),
             "Unsuccessful transfer"
@@ -210,7 +210,7 @@ contract SnappBase is Ownable {
      */
     function requestWithdrawal(uint8 tokenId, uint128 amount) public onlyRegistered() {
         require(amount != 0, "Must request positive amount");
-        require(BiMap.hasId(registeredTokens, tokenId), "Requested token is not registered");
+        require(IdToAddressBiMap.hasId(registeredTokens, tokenId), "Requested token is not registered");
         require(
             ERC20(tokenIdToAddressMap(tokenId)).balanceOf(address(this)) >= amount,
             "Requested amount exceeds contract's balance"

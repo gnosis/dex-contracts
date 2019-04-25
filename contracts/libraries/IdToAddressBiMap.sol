@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 
-library BiMap {
+library IdToAddressBiMap {
     struct Data { 
         mapping(uint16 => address) idToAddress;
         mapping(address => uint16) addressToId;
