@@ -261,7 +261,7 @@ contract("SnappBase", async (accounts) => {
       await instance.addToken(token.address)
       await instance.openAccount(token_index, { from: user_1 })
 
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
       // First deposit slot is missed (i.e. empty)
       assert.equal((await instance.deposits(0)).shaHash, 0)
 
@@ -275,7 +275,7 @@ contract("SnappBase", async (accounts) => {
       assert.equal(deposit_state.size, 1)
 
       // wait for another 20 blocks and deposit again
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
       await instance.deposit(token_index, 10, { from: user_1 })
       const next_slot = (await instance.depositIndex.call()).toNumber()
 
@@ -341,7 +341,7 @@ contract("SnappBase", async (accounts) => {
       const slot = (await instance.depositIndex.call()).toNumber()
 
       // Wait for current depoit index to increment
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
       const deposit_state = await instance.deposits.call(slot)
 
       await truffleAssert.reverts(
@@ -359,7 +359,7 @@ contract("SnappBase", async (accounts) => {
       const slot = (await instance.depositIndex.call()).toNumber()
 
       // Wait for current depoit index to increment
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
       await truffleAssert.reverts(
         instance.applyDeposits(slot, oneHash, zeroHash, "0x2"),
         "Deposits have been reorged"
@@ -379,7 +379,7 @@ contract("SnappBase", async (accounts) => {
       const slot = (await instance.depositIndex.call()).toNumber()
 
       // Wait for current depoit index to increment
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
 
       const state_root = await stateHash(instance)
       const deposit_state = await instance.deposits.call(slot)
@@ -400,7 +400,7 @@ contract("SnappBase", async (accounts) => {
       const slot = (await instance.depositIndex.call()).toNumber()
 
       // Wait for current depoit index to increment
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
 
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
@@ -421,12 +421,12 @@ contract("SnappBase", async (accounts) => {
 
       await instance.deposit(1, 10, { from: user_1 })
       // Wait for current depoit index to increment
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
 
       await instance.deposit(1, 10, { from: user_1 })
       const slot = (await instance.depositIndex.call()).toNumber()
 
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
       
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
@@ -452,7 +452,7 @@ contract("SnappBase", async (accounts) => {
       const slot = (await instance.depositIndex.call()).toNumber()
 
       // Wait for current depoit index to increment
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
 
       const state_index = (await instance.stateIndex.call()).toNumber()
       const state_root = await instance.stateRoots.call(state_index)
@@ -584,7 +584,7 @@ contract("SnappBase", async (accounts) => {
       for(const k in slot_frequency) {
         slots.push(parseInt(k))
         // each slot respects the block time limit for expiry
-        assert.equal(slot_frequency[k] <= 601, true)
+        assert.equal(slot_frequency[k] <= 181, true)
       }
 
       slots.sort()
@@ -651,7 +651,7 @@ contract("SnappBase", async (accounts) => {
       const withdraw_state = await instance.pendingWithdraws(slot)
 
       // Wait for current withdraw slot to be inactive
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
 
       // ensure withdraw state is inactive
       assert.equal(await isActive(withdraw_state), false)
@@ -678,7 +678,7 @@ contract("SnappBase", async (accounts) => {
       const merkle_root = zeroHash
 
       // Wait for current withdraw slot to be inactive
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
 
       // ensure withdraw state is inactive
       assert.equal(await isActive(withdraw_state), false)
@@ -707,7 +707,7 @@ contract("SnappBase", async (accounts) => {
       const merkle_root = zeroHash
 
       // Wait for current withdraw slot to be inactive
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
 
       // ensure withdraw state is inactive
       assert.equal(await isActive(withdraw_state), false)
@@ -733,7 +733,7 @@ contract("SnappBase", async (accounts) => {
       const new_state = oneHash
       const merkle_root = zeroHash
 
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
 
       const state_root = await stateHash(instance)
       await instance.applyWithdrawals(
@@ -757,7 +757,7 @@ contract("SnappBase", async (accounts) => {
       const new_state = oneHash
       const merkle_root = zeroHash
 
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
 
       const state_root = await stateHash(instance)
       await instance.applyWithdrawals(
@@ -780,12 +780,12 @@ contract("SnappBase", async (accounts) => {
       const first_withdraw_state = await instance.pendingWithdraws(first_slot)
       const new_state = oneHash
       const merkle_root = zeroHash
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
 
       const second_tx = await instance.requestWithdrawal(1, 1, { from: user_1 })
       const second_slot = second_tx.logs[0].args.slot.toNumber()
       const second_withdraw_state = await instance.pendingWithdraws(second_slot)
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
 
       const state_root = await stateHash(instance)
       await truffleAssert.reverts(
@@ -839,7 +839,7 @@ contract("SnappBase", async (accounts) => {
       const deposit_tx = await instance.deposit(1, 10, { from: user_1 })
       const deposit_slot = (deposit_tx.logs[0].args.slot).toNumber()
       
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
       const deposit_state = await instance.deposits.call(deposit_slot)
       await instance.applyDeposits(
         deposit_slot, await stateHash(instance), "0x1", deposit_state.shaHash)
@@ -849,7 +849,7 @@ contract("SnappBase", async (accounts) => {
       const withdraw_slot = withdraw_tx.logs[0].args.slot.toNumber()
       const withdraw_slot_index = withdraw_tx.logs[0].args.slotIndex.toNumber()
 
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
       const withdraw_state = await instance.pendingWithdraws(withdraw_slot)
 
       const leaf = encodePacked_16_8_128(1, 1, 1)
@@ -876,7 +876,7 @@ contract("SnappBase", async (accounts) => {
       const deposit_tx = await instance.deposit(1, 10, { from: user_1 })
       const deposit_slot = (deposit_tx.logs[0].args.slot).toNumber()
       
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
       const deposit_state = await instance.deposits.call(deposit_slot)
       await instance.applyDeposits(
         deposit_slot, await stateHash(instance), "0x1", deposit_state.shaHash)
@@ -886,7 +886,7 @@ contract("SnappBase", async (accounts) => {
       const withdraw_slot = withdraw_tx.logs[0].args.slot.toNumber()
       const withdraw_slot_index = withdraw_tx.logs[0].args.slotIndex.toNumber()
 
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
       const withdraw_state = await instance.pendingWithdraws(withdraw_slot)
 
       const leaf = encodePacked_16_8_128(1, 1, 1)
@@ -914,7 +914,7 @@ contract("SnappBase", async (accounts) => {
       const deposit_tx = await instance.deposit(1, 10, { from: user_1 })
       const deposit_slot = (deposit_tx.logs[0].args.slot).toNumber()
       
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
       const deposit_state = await instance.deposits.call(deposit_slot)
       await instance.applyDeposits(
         deposit_slot, await stateHash(instance), "0x1", deposit_state.shaHash)
@@ -924,7 +924,7 @@ contract("SnappBase", async (accounts) => {
       const withdraw_slot = withdraw_tx.logs[0].args.slot.toNumber()
       const withdraw_slot_index = withdraw_tx.logs[0].args.slotIndex.toNumber()
 
-      await waitForNSeconds(601)
+      await waitForNSeconds(181)
       const withdraw_state = await instance.pendingWithdraws(withdraw_slot)
 
       const leaf = encodePacked_16_8_128(1, 1, 1)

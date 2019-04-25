@@ -12,7 +12,7 @@ const {
   stateHash }  = require("./snapp_utils.js")
 
 contract("SnappAuction", async (accounts) => {
-  const [owner, token_owner, user_1, user_2] = accounts
+  const [token_owner, user_1, user_2] = accounts
 
   describe("public view functions", () => {
     it("hasAuctionBeenApplied(slot) == false", async () => {
@@ -90,13 +90,13 @@ contract("SnappAuction", async (accounts) => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       await instance.placeSellOrder(1, 2, 1, 1, { from: user_1 })
 
-      await waitForNSeconds(601, owner)
+      await waitForNSeconds(181)
       await instance.placeSellOrder(1, 2, 1, 1, { from: user_1 })
 
-      await waitForNSeconds(601, owner)
+      await waitForNSeconds(181)
       await instance.placeSellOrder(1, 2, 1, 1, { from: user_1 })
 
-      await waitForNSeconds(601, owner)
+      await waitForNSeconds(181)
       await truffleAssert.reverts(
         instance.placeSellOrder(1, 2, 1, 1, { from: user_1 }),
         "Too many pending auctions"
@@ -120,7 +120,7 @@ contract("SnappAuction", async (accounts) => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       await instance.placeSellOrder(1, 2, 1, 1, { from: user_1 })
 
-      await waitForNSeconds(601, owner)
+      await waitForNSeconds(181)
       await instance.placeSellOrder(1, 2, 1, 1, { from: user_1 })
 
       const auctionIndex = (await instance.auctionIndex.call()).toNumber()
@@ -178,7 +178,7 @@ contract("SnappAuction", async (accounts) => {
       const auction_state = await instance.auctions.call(slot)
 
       // Wait for current order slot to be inactive
-      await waitForNSeconds(601, owner)
+      await waitForNSeconds(181)
 
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
@@ -201,7 +201,7 @@ contract("SnappAuction", async (accounts) => {
       const auction_state = await instance.auctions.call(slot)
 
       // Wait for current order slot to be inactive
-      await waitForNSeconds(601, owner)
+      await waitForNSeconds(181)
 
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
@@ -226,7 +226,7 @@ contract("SnappAuction", async (accounts) => {
       const auction_state = await instance.auctions.call(slot)
 
       // Wait for current order slot to be inactive
-      await waitForNSeconds(601, owner)
+      await waitForNSeconds(181)
 
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
@@ -249,7 +249,7 @@ contract("SnappAuction", async (accounts) => {
       const auction_state = await instance.auctions.call(slot)
 
       // Wait for current order slot to be inactive
-      await waitForNSeconds(601, owner)
+      await waitForNSeconds(181)
 
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
@@ -273,7 +273,7 @@ contract("SnappAuction", async (accounts) => {
       const auction_state = await instance.auctions.call(slot)
 
       // Wait for current order slot to be inactive
-      await waitForNSeconds(601, owner)
+      await waitForNSeconds(181)
 
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
@@ -299,7 +299,7 @@ contract("SnappAuction", async (accounts) => {
       const first_auction_state = await instance.auctions.call(first_slot)
 
       // Wait for current order slot to be inactive
-      await waitForNSeconds(601, owner)
+      await waitForNSeconds(181)
 
       // Place an order to ensure second order slot is created.
       const order_tx = await instance.placeSellOrder(1, 2, 1, 1, { from: user_1 })
@@ -307,7 +307,7 @@ contract("SnappAuction", async (accounts) => {
       const second_auction_state = await instance.auctions(second_slot)
 
       // Wait for second order slot to be inactive
-      await waitForNSeconds(601, owner)
+      await waitForNSeconds(181)
 
       const state_root = await stateHash(instance)
 

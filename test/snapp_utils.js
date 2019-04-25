@@ -19,7 +19,7 @@ const falseArray = function(num, true_list) {
 const isActive = async function(object) {
   const block = await web3.eth.getBlockNumber()
   const timestamp = (await web3.eth.getBlock(block)).timestamp
-  return timestamp <= object.creationTimestamp.toNumber() + 600
+  return timestamp <= object.creationTimestamp.toNumber() + 180
 }
 
 const stateHash = async function(contract) {
