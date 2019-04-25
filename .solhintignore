@@ -1,3 +1,5 @@
 contracts/Migrations.sol
+.solhint.json
+.solhintignore
 
 node_modules/

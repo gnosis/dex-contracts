@@ -14,7 +14,7 @@
     "setup": "npx truffle exec scripts/setup_environment.js",
     "deposit": "npx truffle exec scripts/deposit.js",
     "apply-deposits": "npx truffle exec scripts/apply_deposits.js",
-    "mine-blocks": "npx truffle exec scripts/mine_blocks.js",
+    "wait-seconds": "npx truffle exec scripts/wait_seconds.js",
     "request-withdraw": "npx truffle exec scripts/request_withdraw.js",
     "apply-withdrawals": "npx truffle exec scripts/apply_withdrawals.js",
     "claim-withdraw": "npx truffle exec scripts/claim_withdraw.js",
