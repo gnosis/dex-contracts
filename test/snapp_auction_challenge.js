@@ -9,7 +9,7 @@ contract.only("SnappAuctionChallenge", () => {
       const pricesAndVolumes = "0x" + "ff".repeat(4 * 2032)
       const orders = "0x" + "ff".repeat(32 * 1000)
       const tx = await instance.proveSpecificPriceNonUniform(pricesAndVolumes, orders, 0)
-      console.log(`proveSpecificPriceNonUniform used ${gas(tx)} gas`)
+      console.log(`proveSpecificPriceNonUniform used ${gas(tx)} gas`)  // eslint-disable-line no-console
     })
   })
 })
