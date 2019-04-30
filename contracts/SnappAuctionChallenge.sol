@@ -1,12 +1,13 @@
 pragma solidity ^0.5.0;
 
-contract SnappAuctionChallenge {
-    uint constant EPSILON = 1;
-    uint constant NUM_ORDERS = 1;
-    uint constant NUM_TOKENS = 32;
 
-    bytes32 priceAndVolumeHash;
-    bytes32 committedOrderHash;
+contract SnappAuctionChallenge {
+    uint public constant EPSILON = 1;
+    uint public constant NUM_ORDERS = 1;
+    uint public constant NUM_TOKENS = 32;
+
+    bytes32 public priceAndVolumeHash;
+    bytes32 public committedOrderHash;
 
     struct Order {
         uint24 account;
@@ -45,6 +46,7 @@ contract SnappAuctionChallenge {
         bytes32 orderHash = 0x0;
         bytes32 order = 0x0;
         for (uint256 i = 32; i <= NUM_ORDERS * 32; i += 32) {
+            /* solhint-disable no-inline-assembly */
             assembly {
                 order := mload(add(orders, i))
             }
@@ -68,6 +70,7 @@ contract SnappAuctionChallenge {
     ) internal pure returns (Order memory) {
         Order memory o;
         uint256 offset = index * 32 + 32;
+        /* solhint-disable no-inline-assembly */
         assembly {
             o := mload(add(orders, offset))
         }
@@ -81,6 +84,7 @@ contract SnappAuctionChallenge {
         uint buyVolume;
         uint sellVolume;
         uint256 offset = (4 * 32) + (index * 8);
+        /* solhint-disable no-inline-assembly */
         assembly {
             buyVolume := mload(add(pricesAndVolumes, offset))
             sellVolume := mload(add(pricesAndVolumes, add(offset, 4)))
@@ -94,6 +98,7 @@ contract SnappAuctionChallenge {
     ) internal pure returns (uint) {
         uint price;
         uint256 offset = (4 * index);
+        /* solhint-disable no-inline-assembly */
         assembly {
             price := mload(add(pricesAndVolumes, offset))
         }
