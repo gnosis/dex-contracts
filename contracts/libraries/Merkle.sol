@@ -18,6 +18,19 @@ library Merkle {
         pure
         returns (bool)
     {   
+        return computeRoot(leaf, _index, proof, height) == rootHash;
+    }
+
+    function computeRoot(
+        bytes32 leaf,
+        uint _index,
+        bytes memory proof,
+        uint height
+    ) 
+        internal
+        pure 
+        returns (bytes32)
+    {
         require(proof.length == height * 32, "Proof length does not agree with height provided");
         bytes32 proofElement;
         bytes32 computedHash = leaf;
@@ -36,6 +49,6 @@ library Merkle {
             }
             index = index / 2;
         }
-        return computedHash == rootHash;
+        return computedHash;
     }
 }

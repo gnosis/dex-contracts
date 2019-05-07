@@ -5,6 +5,8 @@ contract.only("SnappAuctionChallenge", () => {
   const MAX_FLOAT = new web3.utils.BN("1342177270000000000000000000000000000000")
   const MAX_PRICE_AND_VOLUME_DATA = "0x" + "aabbcc00".repeat(32) + "eeff112233445566".repeat(1000)
   const MAX_ORDER_DATA = "0x" + "00112233445566778899aabbccddeeff".repeat(1000)
+  const MAX_MERKLE_PATHS = "0x" + "aa".repeat(32 * 5 * (24 + 6 + 6))
+  const MAX_STATE_ROOTS = "0x" + "ff".repeat(32 * 200)
 
   const gas = (tx) => { return (tx.receipt.gasUsed / 1e6).toFixed(2) + "M" }
   const floatToInt = (float) => { return Math.floor(float / (2**5)) * 10 ** (float & ((2**5) - 1))}
@@ -14,6 +16,20 @@ contract.only("SnappAuctionChallenge", () => {
       const instance = await SnappAuctionChallenge.new()
       const tx = await instance.proveSpecificPriceNonUniform(MAX_PRICE_AND_VOLUME_DATA, MAX_ORDER_DATA, 0)
       console.log(`proveSpecificPriceNonUniform used ${gas(tx)} gas`)  // eslint-disable-line no-console
+    })
+
+    it("challengeSurplus", async () => {
+      const instance = await SnappAuctionChallenge.new()
+      const tx1 = await instance.challengeSurplus(MAX_PRICE_AND_VOLUME_DATA, MAX_ORDER_DATA)
+      
+      const tx2 = await instance.challengeSurplus(MAX_PRICE_AND_VOLUME_DATA, MAX_ORDER_DATA)
+      console.log(`challengeSurplus used ${gas(tx1)} and ${gas(tx2)} gas`)  // eslint-disable-line no-console
+    })
+
+    it("challengeStateTransition", async () => {
+      const instance = await SnappAuctionChallenge.new()
+      const tx = await instance.challengeStateTransition(MAX_PRICE_AND_VOLUME_DATA, MAX_ORDER_DATA, MAX_STATE_ROOTS, MAX_MERKLE_PATHS, 0)
+      console.log(`challengeStateTransition used ${gas(tx)} gas`)  // eslint-disable-line no-console
     })
   })
 
@@ -70,6 +86,16 @@ contract.only("SnappAuctionChallenge", () => {
       assert.equal(last.buyAmount, parseInt("0x55667788"))
       assert.equal(last.sellAmount, parseInt("0x99aabbcc"))
       assert.equal(last.rolloverCount, parseInt("0xddeeff"))
+    })
+  })
+
+  describe("getBuyBalanceAndProof", () => {
+    it("extracts the correct buy balance and proof", async () =>  {
+      const instance = await SnappAuctionChallenge.new()
+
+      const result = await instance.getBuyBalanceAndProof(MAX_MERKLE_PATHS, 0)
+      assert.equal(result.leaf.toJSON(), "aa".repeat(32))
+      assert.equal(result.proof, "0x" + "aa".repeat(32 * 29))
     })
   })
 })
