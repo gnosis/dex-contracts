@@ -10,7 +10,7 @@ It uses a batch auction for arbitrage-free exchanges while maximizing trader sur
 
 
 # Documentation
-Checkout the [Formal Specification](https://github.com/gnosis/dex-research/blob/master/dFusion/dFusionSpec.md).
+Checkout the [Formal Specification](https://github.com/gnosis/dex-research/blob/master/dFusion/dFusion.rst).
 
 # CLI Examples
 
