@@ -28,6 +28,10 @@
 // const fs = require('fs');
 // const mnemonic = fs.readFileSync(".secret").toString().trim();
 
+const {
+  gas: gasLog,
+} = require('minimist')(process.argv.slice(2), { alias: { gas: 'g' } })
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -89,7 +93,12 @@ module.exports = {
 
   // Set default mocha options here, use special reporters etc.
   mocha: {
-    // timeout: 100000
+    reporter: gasLog ? 'eth-gas-reporter' : 'spec',
+    reporterOptions : {
+      currency: 'USD',
+      gasPrice: 20,
+      showTimeSpent: true
+    }
   },
 
   // Configure your compilers
