@@ -161,6 +161,17 @@ contract SnappAuctionChallenge {
         return stateRoot == getStateRoot(stateRoots, stateRootIndex + 1);
     }
 
+    function challengeNegativeBalance(
+        bytes memory proof,
+        uint index,
+        int value
+    ) public returns (bool) {
+        bool valid = Merkle.checkMembership(
+            bytes32(value), index, committedStateRootHash, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
+        );
+        return valid && value < 0;
+    }
+
     function challengeOrderHash(
         bytes memory openOrders,
         bytes memory openOrdersCancelled

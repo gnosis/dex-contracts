@@ -38,6 +38,11 @@ contract("SnappAuctionChallenge", () => {
       console.log(`challengeStateTransition used ${gas(tx)} gas`)  // eslint-disable-line no-console
     })
 
+    it("challengeNegativeBalance", async () => {
+      const instance = await SnappAuctionChallenge.new()
+      await instance.challengeNegativeBalance("0x" + "aa".repeat(32 * 29), 10, -5)
+    })
+
     it("challengeOrderHash", async () => {
       const instance = await SnappAuctionChallenge.new()
 
