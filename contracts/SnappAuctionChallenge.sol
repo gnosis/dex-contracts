@@ -56,6 +56,19 @@ contract SnappAuctionChallenge {
         return true;
     }
 
+    function challengeLimitPrice(
+        bytes memory pricesAndVolumes,
+        bytes memory orders,
+        uint16 badOrder
+    ) public returns (bool) {
+        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
+        require(!checkOrderData(orders), "Wrong order data");
+
+        Order memory order = getOrder(orders, badOrder);
+        (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, badOrder);
+        return ((buyVolume * floatToUint(order.sellAmount)) - (sellVolume * floatToUint(order.buyAmount))) ** 2 < EPSILON ** 2;
+    }
+
     function challengeSurplus(
         bytes memory pricesAndVolumes,
         bytes memory orders

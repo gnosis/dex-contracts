@@ -18,6 +18,12 @@ contract("SnappAuctionChallenge", () => {
       console.log(`proveSpecificPriceNonUniform used ${gas(tx)} gas`)  // eslint-disable-line no-console
     })
 
+    it("challengeLimitPrice", async () => {
+      const instance = await SnappAuctionChallenge.new()
+      const tx = await instance.challengeLimitPrice(MAX_PRICE_AND_VOLUME_DATA, MAX_ORDER_DATA, 0)
+      console.log(`challengeLimitPrice used ${gas(tx)} gas`)  // eslint-disable-line no-console
+    })
+
     it("challengeSurplus", async () => {
       const instance = await SnappAuctionChallenge.new()
       const tx1 = await instance.challengeSurplus(MAX_PRICE_AND_VOLUME_DATA, MAX_ORDER_DATA)
