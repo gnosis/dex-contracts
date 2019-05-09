@@ -11,11 +11,11 @@ contract("SnappAuctionChallenge", () => {
   const gas = (tx) => { return (tx.receipt.gasUsed / 1e6).toFixed(2) + "M" }
   const floatToInt = (float) => { return Math.floor(float / (2**5)) * 10 ** (float & ((2**5) - 1))}
 
-  describe("Gas Usage", () => {
-    it("proveSpecificPriceNonUniform", async () => {
+  describe.only("Gas Usage", () => {
+    it("challengePriceNonUniform", async () => {
       const instance = await SnappAuctionChallenge.new()
-      const tx = await instance.proveSpecificPriceNonUniform(MAX_PRICE_AND_VOLUME_DATA, MAX_ORDER_DATA, 0)
-      console.log(`proveSpecificPriceNonUniform used ${gas(tx)} gas`)  // eslint-disable-line no-console
+      const tx = await instance.challengePriceNonUniform(MAX_PRICE_AND_VOLUME_DATA, MAX_ORDER_DATA, 0)
+      console.log(`challengePriceNonUniform used ${gas(tx)} gas`)  // eslint-disable-line no-console
     })
 
     it("challengeLimitPrice", async () => {
