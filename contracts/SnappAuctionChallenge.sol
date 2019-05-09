@@ -125,6 +125,54 @@ contract SnappAuctionChallenge {
         return stateRoot == getStateRoot(stateRoots, stateRootIndex + 1);
     }
 
+    function challengeOrderHash(
+        bytes memory openOrders,
+        bytes memory openOrdersCancelled
+        //bytes memory accountOrders
+    ) public returns (bool) {
+        require(!checkOrderData(openOrders), "Wrong open order data");
+        require(rollingHash(
+            openOrdersCancelled, 0x0, 0, openOrdersCancelled.length, 5
+        ) != committedOrderHash, "Wrong cancellation data");
+
+        for (uint16 i = 0; i < openOrdersCancelled.length / 5; i++) {
+            (uint24 account, uint16 slot) = getCancelledOrder(openOrdersCancelled, i);
+            Order memory o = getOrder(openOrders, slot);
+            if (true) {
+                openOrders[i*16] = 0;
+                openOrders[i*16 + 1] = 0;
+                openOrders[i*16 + 2] = 0;
+                openOrders[i*16 + 3] = 0;
+                openOrders[i*16 + 4] = 0;
+                openOrders[i*16 + 5] = 0;
+                openOrders[i*16 + 6] = 0;
+                openOrders[i*16 + 7] = 0;
+                openOrders[i*16 + 8] = 0;
+                openOrders[i*16 + 9] = 0;
+                openOrders[i*16 + 10] = 0;
+                openOrders[i*16 + 11] = 0;
+                openOrders[i*16 + 12] = 0;
+                openOrders[i*16 + 13] = 0;
+                openOrders[i*16 + 14] = 0;
+                openOrders[i*16 + 15] = 0;
+            }
+        }
+        bytes32 finalHash = rollingHash(
+            openOrders, 0x0, 0, openOrders.length, 16
+        );
+        /*
+        for (uint i = 0; i < 50; i++) {
+            require(committedOrderHash != rollingHash(
+                accountOrders, 0x0, i * 10 * 16, 10 * 16, 16
+            ), "Wrong account order data");
+        }
+        finalHash = rollingHash(
+            accountOrders, finalHash, 0, accountOrders.length, 16
+        );
+        */
+        return finalHash == committedOrderHash;
+    }
+
     /**
      * Helper functions
      */
@@ -146,6 +194,19 @@ contract SnappAuctionChallenge {
         o.sellAmount = uint32(order / (2 ** 152));
         o.rolloverCount = uint24(order / 2 ** 128);
         return o;
+    }
+
+    function getCancelledOrder(
+        bytes memory cancelledOrders,
+        uint16 index
+    ) public pure returns (uint24 account, uint16 slotIndex) {
+        uint256 offset = 32 + (index * 5);
+        uint value;
+        /* solhint-disable no-inline-assembly */
+        assembly {
+            value := mload(add(cancelledOrders, offset))
+        }
+        return (uint24(value / 2 ** 232), uint16(value / 2 ** 216));
     }
 
     function getVolumes(
@@ -247,16 +308,28 @@ contract SnappAuctionChallenge {
     function checkOrderData(
         bytes memory orders
     ) internal view returns (bool) {
-        bytes32 orderHash = 0x0;
-        bytes32 order = 0x0;
-        for (uint256 i = 32; i <= NUM_ORDERS * 32; i += 32) {
+        return committedOrderHash == rollingHash(
+            orders, 0x0, 0, orders.length, 16
+        );
+    }
+
+    function rollingHash(
+        bytes memory data,
+        bytes32 startingHash,
+        uint offset,
+        uint length,
+        uint width
+    ) internal view returns (bytes32) {
+        bytes16 order = 0x0;
+        bytes32 rollingHash = startingHash;
+        for (uint256 i = 32 + offset; i <= 32 + offset + length; i += width) {
             /* solhint-disable no-inline-assembly */
             assembly {
-                order := mload(add(orders, i))
+                order := mload(add(data, i))
             }
-            orderHash = sha256(abi.encodePacked(orderHash, order));
+            rollingHash = sha256(abi.encodePacked(rollingHash, order));
         }
-        return orderHash == committedOrderHash;
+        return rollingHash;
     }
 
     function proveSpecificPriceNonUniform(

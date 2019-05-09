@@ -8,7 +8,16 @@ contract SnappAuction is SnappBase {
     uint16 public constant AUCTION_BATCH_SIZE = 1000;
 
     uint public auctionIndex = MAX_UINT;
-    mapping (uint => PendingBatch) public auctions;
+    mapping (uint => PendingOrderBatch) public auctions;
+
+    struct PendingOrderBatch {
+        uint16 size;                   // Number of deposits in this batch
+        bytes32 shaHash;               // Rolling shaHash of all deposits
+        bytes32[50] reservedOrderHashes; // HACK used for accounts
+        bytes32 checkpointHash;        // HACK, this is only to estimate gas
+        uint creationTimestamp;        // Timestamp of batch creation
+        uint appliedAccountStateIndex; // accountState index when batch applied (for rollback), 0 implies not applied.
+    }
 
     event SellOrder(
         uint auctionId, 
@@ -20,11 +29,18 @@ contract SnappAuction is SnappBase {
         uint128 sellAmount
     );
 
+    event SellOrderBatch(
+        uint auctionId,
+        uint16 accountId,
+        bytes orderData
+    );
+
     event AuctionSettlement(
         uint auctionId,
         uint stateIndex,
         bytes32 stateHash,
-        bytes pricesAndVolumes
+        bytes pricesAndVolumes,
+        bytes checkpoints
     );
 
     event AuctionInitialization(uint16 maxOrders);
@@ -73,9 +89,11 @@ contract SnappAuction is SnappBase {
                 "Too many pending auctions"
             );
             auctionIndex++;
-            auctions[auctionIndex] = PendingBatch({
+            auctions[auctionIndex] = PendingOrderBatch({
                 size: 0,
                 shaHash: bytes32(0),
+                reservedOrderHashes: auctions[auctionIndex-1].reservedOrderHashes,
+                checkpointHash: bytes32(0),
                 creationTimestamp: block.timestamp,
                 appliedAccountStateIndex: 0
             });
@@ -96,12 +114,41 @@ contract SnappAuction is SnappBase {
         auctions[auctionIndex].size++;
     }
 
+    function placeSellOrderBatch(
+        bytes memory orderData
+    ) public onlyRegistered() {
+        if (
+            auctionIndex == MAX_UINT ||
+            auctions[auctionIndex].size == AUCTION_BATCH_SIZE || 
+            block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
+        ) {
+            require(
+                auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
+                "Too many pending auctions"
+            );
+            auctionIndex++;
+            auctions[auctionIndex] = PendingOrderBatch({
+                size: 0,
+                shaHash: bytes32(0),
+                reservedOrderHashes: auctions[auctionIndex-1].reservedOrderHashes,
+                checkpointHash: bytes32(0),
+                creationTimestamp: block.timestamp,
+                appliedAccountStateIndex: 0
+            });
+        }
+
+        uint16 accountId = publicKeyToAccountMap(msg.sender);
+        auctions[auctionIndex].reservedOrderHashes[accountId] = sha256(orderData);
+        emit SellOrderBatch(auctionIndex, accountId, orderData);
+    }
+
     function applyAuction(
         uint slot,
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
         bytes32 _orderHash,
-        bytes memory pricesAndVolumes
+        bytes memory pricesAndVolumes,
+        bytes memory checkpoints
     )
         public onlyOwner()
     {   
@@ -120,8 +167,9 @@ contract SnappAuction is SnappBase {
 
         // Store solution information in shaHash of pendingBatch (required for snark proof)
         auctions[slot].shaHash = sha256(pricesAndVolumes);
+        auctions[slot].shaHash = sha256(checkpoints);
 
-        emit AuctionSettlement(slot, stateIndex(), _newStateRoot, pricesAndVolumes);
+        emit AuctionSettlement(slot, stateIndex(), _newStateRoot, pricesAndVolumes, checkpoints);
     }
 
     function encodeOrder(

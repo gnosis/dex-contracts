@@ -126,13 +126,22 @@ contract("SnappAuction", async (accounts) => {
       const auctionIndex = (await instance.auctionIndex.call()).toNumber()
       assert.equal(auctionIndex, 1)
     })
+
+    it("Generic sell order batch", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
+      await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
+      await instance.placeSellOrderBatch("0x" + "ff".repeat(16 * 10), { from: user_1 })
+      await instance.placeSellOrderBatch("0x" + "ff".repeat(16 * 10), { from: user_1 })
+    })
   })
 
   describe("applyAuction()", () => {
     const new_state = "0x1"
 
-    const prices = "0x" + "".padEnd(16*30 *2, "0") // represents 30 uint128 (token prices)
-    const volumes = "0x" + "".padEnd(32*1000*2, "0") // represents 1000 * 2 uint128 (numerator, denominator)
+    const prices = "0x" + "".padEnd(8*30, "f") // represents 30 uint128 (token prices)
+    const volumes = "0x" + "".padEnd(8*1000*2, "f") // represents 1000 * 2 uint128 (numerator, denominator)
     const auctionSolution = prices + volumes.slice(2)
 
     it("Cannot apply auction before first order", async () => {
@@ -265,7 +274,8 @@ contract("SnappAuction", async (accounts) => {
 
       const state_root = await stateHash(instance)
       
-      await instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution)
+      const checkpoints  = "0x" + "ff".repeat(200 * 32)
+      await instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution, checkpoints)
 
       const state_index = (await instance.stateIndex.call()).toNumber()
       const applied_index = ((await instance.auctions(slot)).appliedAccountStateIndex).toNumber()

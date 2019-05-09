@@ -1,6 +1,6 @@
 const SnappAuctionChallenge = artifacts.require("SnappAuctionChallenge")
 
-contract.only("SnappAuctionChallenge", () => {
+contract("SnappAuctionChallenge", () => {
 
   const MAX_FLOAT = new web3.utils.BN("1342177270000000000000000000000000000000")
   const MAX_PRICE_AND_VOLUME_DATA = "0x" + "aabbcc00".repeat(32) + "eeff112233445566".repeat(1000)
@@ -30,6 +30,16 @@ contract.only("SnappAuctionChallenge", () => {
       const instance = await SnappAuctionChallenge.new()
       const tx = await instance.challengeStateTransition(MAX_PRICE_AND_VOLUME_DATA, MAX_ORDER_DATA, MAX_STATE_ROOTS, MAX_MERKLE_PATHS, 0)
       console.log(`challengeStateTransition used ${gas(tx)} gas`)  // eslint-disable-line no-console
+    })
+
+    it("challengeOrderHash", async () => {
+      const instance = await SnappAuctionChallenge.new()
+
+      const MAX_OPEN_ORDER_DATA = "0x" + "00112233445566778899aabbccddeeff".repeat(500)
+      const MAX_OPEN_CANCELLATION_DATA = "0x" + "1122334455".repeat(500)
+
+      const tx = await instance.challengeOrderHash(MAX_OPEN_ORDER_DATA, MAX_OPEN_CANCELLATION_DATA)
+      console.log(`challengeOrderHash used ${gas(tx)} gas`)  // eslint-disable-line no-console
     })
   })
 
