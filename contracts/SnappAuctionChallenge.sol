@@ -66,7 +66,7 @@ contract SnappAuctionChallenge {
 
         Order memory order = getOrder(orders, badOrder);
         (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, badOrder);
-        return ((buyVolume * floatToUint(order.sellAmount)) - (sellVolume * floatToUint(order.buyAmount))) ** 2 < EPSILON ** 2;
+        return buyVolume * floatToUint(order.sellAmount) >= sellVolume * floatToUint(order.buyAmount);
     }
 
     function challengeSurplus(
