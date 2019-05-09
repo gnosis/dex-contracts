@@ -101,6 +101,29 @@ contract SnappAuctionChallenge {
         }
     }
 
+    function challengeValueConservation(
+        bytes memory pricesAndVolumes,
+        bytes memory orders,
+        uint8 token
+    ) public returns (bool) {
+        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
+        require(!checkOrderData(orders), "Wrong order data");
+
+        uint totalBuyVolume = 0;
+        uint totalSellVolume = 0;
+        for (uint16 i = 0; i < 1000; i++) {
+            Order memory order = getOrder(orders, i);
+            (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, i);
+            if (order.buyToken == token) {
+                totalBuyVolume = totalBuyVolume.add(buyVolume);
+            }
+            if (order.sellToken == token) {
+                totalSellVolume = totalSellVolume.add(sellVolume);
+            }
+        }
+        return totalSellVolume.sub(totalBuyVolume) > EPSILON;
+    }
+
     function challengeStateTransition(
         bytes memory pricesAndVolumes,
         bytes memory orders,
