@@ -191,7 +191,7 @@ contract("SnappAuction", async (accounts) => {
 
       await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
 
-      const userId = await instance.publicKeyToAccountMap.call(user_1);
+      const userId = await instance.publicKeyToAccountMap.call(user_1)
       const nonce = await instance.standingOrderNonce.call(userId)
       //const orderHash = await instance.getStandingOrderHash(userId, nonce)
       assert.equal(nonce, 1)
