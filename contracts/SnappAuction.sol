@@ -97,8 +97,6 @@ contract SnappAuction is SnappBase {
         uint128[] memory sellAmount
     ) public onlyRegistered() {
         
-        require(auctionIndex < MAX_UINT, "Standing order collection has not yet started");
-
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
         require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Accout is not a rented account");
@@ -107,6 +105,23 @@ contract SnappAuction is SnappBase {
         uint nrOrder = buyToken.length;
         require(nrOrder <= AUCTION_RESERVED_ACCOUNT_BATCH_SIZE, "Too many orders");
         
+        if (
+            auctionIndex == MAX_UINT ||
+            block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
+        ) {
+            require(
+                auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
+                "Too many pending auctions"
+            );
+            auctionIndex++;
+            auctions[auctionIndex] = PendingBatch({
+                size: 0,
+                shaHash: bytes32(0),
+                creationTimestamp: block.timestamp,
+                appliedAccountStateIndex: 0
+            });
+        }
+
         for (uint i = 0; i < nrOrder; i++) {
             // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
             require(buyToken[i] < numTokens, "Buy token is not registered");
