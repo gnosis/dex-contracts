@@ -181,15 +181,15 @@ contract SnappAuction is SnappBase {
     }
 
     function placeMultiSellOrder(
-        uint8[] buyTokens,
-        uint8[] sellTokens,
-        uint128[] buyAmounts,
-        uint128[] sellAmounts
+        uint8[] memory buyTokens,
+        uint8[] memory sellTokens,
+        uint128[] memory buyAmounts,
+        uint128[] memory sellAmounts
     ) public {
-        uint numOrders = buyTokens.length();
-        require(numOrders == sellTokens.length(), "numOrders != sellTokens length");
-        require(numOrders == buyAmounts.length(), "numOrders != buyAmounts length");
-        require(numOrders == sellAmounts.length(), "numOrders != sellAmounts length");
+        uint numOrders = buyTokens.length;
+        require(numOrders == sellTokens.length, "numOrders != sellTokens length");
+        require(numOrders == buyAmounts.length, "numOrders != buyAmounts length");
+        require(numOrders == sellAmounts.length, "numOrders != sellAmounts length");
 
         for (uint i = 0; i < numOrders; i++) {
             // onlyRegistered() enforced by this function call
