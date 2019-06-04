@@ -36,10 +36,6 @@ const fundAccounts = async function(minter, accounts, token, amount) {
   }
 }
 
-const openFirstAuction = async function(instance, accounts) {
-  await instance.placeSellOrder(0, 1, 1, 1, { from: accounts[0] })
-}
-
 /**
  * approves contract for spending on behalf of accounts for specific token
  * The object consists of:
@@ -163,5 +159,4 @@ module.exports = {
   toHex,
   countDuplicates,
   generateMerkleTree,
-  openFirstAuction,
 }

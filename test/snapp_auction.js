@@ -5,8 +5,7 @@ const truffleAssert = require("truffle-assertions")
 
 const {
   waitForNSeconds,
-  setupEnvironment,
-  openFirstAuction } = require("./utilities.js")
+  setupEnvironment } = require("./utilities.js")
 
 const {
   isActive,
