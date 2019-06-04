@@ -79,11 +79,11 @@ contract SnappAuction is SnappBase {
         return reservedAccountOrders[userId][nonce].orderHash;
     }
     
-    function getStandingOrdervalidFrom(uint16 userId, uint128 nonce) public view returns (uint) {
+    function getStandingOrderValidFrom(uint16 userId, uint128 nonce) public view returns (uint) {
         return reservedAccountOrders[userId][nonce].validFrom;
     }
 
-    function getStandingOrderValidityTo(uint16 userId, uint128 nonce) public view returns (uint) {
+    function getStandingOrderValidTo(uint16 userId, uint128 nonce) public view returns (uint) {
         return reservedAccountOrders[userId][nonce].validTo;
     }
 
@@ -102,8 +102,8 @@ contract SnappAuction is SnappBase {
         require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Accout is not a reserved account");
 
         bytes32 orderHash;
-        uint numOrders = buyToken.length;
-        require(numOrders <= AUCTION_RESERVED_ACCOUNT_BATCH_SIZE, "Too many orders");
+        uint numOrders = buyTokens.length;
+        require(numOrders <= AUCTION_RESERVED_ACCOUNT_BATCH_SIZE, "AUCTION_RESERVED_ACCOUNT_BATCH_SIZE not considered");
         
         if (
             auctionIndex == MAX_UINT ||
@@ -125,14 +125,15 @@ contract SnappAuction is SnappBase {
             emit StandingSellOrder(auctionIndex, accountId, buyTokens[i], sellTokens[i], buyAmounts[i], sellAmounts[i]);
         }
         uint128 currentNonce = standingOrderNonce[accountId];
-        if (auctionIndex > 0) {
+        uint128 newNonce = currentNonce;
+        
+        if (auctionIndex > reservedAccountOrders[accountId][currentNonce].validFrom) {
             reservedAccountOrders[accountId][currentNonce].validTo = auctionIndex - 1;
-        } else {
-            delete reservedAccountOrders[accountId][currentNonce];
+            newNonce += 1;
+            standingOrderNonce[accountId] = newNonce;
+            reservedAccountOrders[accountId][newNonce].validFrom = auctionIndex;
         }
-        reservedAccountOrders[accountId][currentNonce+1].orderHash = orderHash;
-        reservedAccountOrders[accountId][currentNonce+1].validFrom = auctionIndex;
-        standingOrderNonce[accountId] = currentNonce + 1;
+        reservedAccountOrders[accountId][newNonce].orderHash = orderHash;
     }
 
     function placeSellOrder(

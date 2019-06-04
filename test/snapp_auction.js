@@ -178,7 +178,17 @@ contract("SnappAuction", async (accounts) => {
       )
     })
 
-    it("Generic sell order", async () => {
+    it("Reject: More than AUCTION_RESERVED_ACCOUNT_BATCH_SIZE=10 orders", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+
+      await truffleAssert.reverts(
+        instance.placeStandingSellOrder([0,0,0,1,1,1,1,1,1,1,2,0,1], [1], [1], ["0x10000000000000000000000000"], { from: user_1 }),
+        "AUCTION_RESERVED_ACCOUNT_BATCH_SIZE not considered"
+      )
+    })
+
+    it("Generic standing sell order as replacement of current batch", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
@@ -186,7 +196,31 @@ contract("SnappAuction", async (accounts) => {
 
       const userId = await instance.publicKeyToAccountMap.call(user_1)
       const nonce = await instance.standingOrderNonce.call(userId)
+      assert.equal(nonce, 0)
+      const validFrom = await instance.getStandingOrderValidFrom(userId, nonce)
+      assert.equal(validFrom, 0)
+    })
+    
+    it("Generic standing sell order as new submission ", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
+      
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
+
+      const userId = await instance.publicKeyToAccountMap.call(user_1)
+      const nonce = await instance.standingOrderNonce.call(userId)
       assert.equal(nonce, 1)
+
+      const validFrom = await instance.getStandingOrderValidFrom(userId, nonce)
+      assert.equal(validFrom, 1)
+
+      const validTo = await instance.getStandingOrderValidFrom(userId, nonce - 1)
+      assert.equal(validTo, 0)
     })
   })
   describe("applyAuction()", () => {
