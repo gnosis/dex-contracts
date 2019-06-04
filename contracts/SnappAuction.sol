@@ -104,6 +104,23 @@ contract SnappAuction is SnappBase {
         auctions[auctionIndex].size++;
     }
 
+    function placeMultiSellOrder(
+        uint8[] buyTokens,
+        uint8[] sellTokens,
+        uint128[] buyAmounts,
+        uint128[] sellAmounts
+    ) public {
+        uint numOrders = buyTokens.length();
+        require(numOrders == sellTokens.length(), "numOrders != sellTokens length");
+        require(numOrders == buyAmounts.length(), "numOrders != buyAmounts length");
+        require(numOrders == sellAmounts.length(), "numOrders != sellAmounts length");
+
+        for (uint i = 0; i < numOrders; i++) {
+            // onlyRegistered() enforced by this function call
+            placeSellOrder(buyTokens[i], sellTokens[i], buyAmounts[i], sellAmounts[i]);
+        }
+    }
+
     function applyAuction(
         uint slot,
         bytes32 _currStateRoot,
