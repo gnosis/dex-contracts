@@ -7,14 +7,14 @@ contract SnappAuction is SnappBase {
   
     uint16 public constant AUCTION_BATCH_SIZE = 1000;
     
-    struct standingOrders {
+    struct StandingOrders {
         bytes32 orderHash;
         uint validityFrom;
         uint validityTo;
     }
 
     // mapping from accountId to nounce to StandingOrders
-    mapping (uint16 => mapping(uint128 => standingOrders)) public ordersReservedAccounts;
+    mapping (uint16 => mapping(uint128 => StandingOrders)) public reservedAccountOrders;
     mapping (uint16 => uint128) public standingOrderNonce;
 
     uint public auctionIndex = MAX_UINT;
@@ -29,6 +29,7 @@ contract SnappAuction is SnappBase {
         uint128 buyAmount,
         uint128 sellAmount
     );
+
     event StandingSellOrder(
         uint validityFrom, 
         uint16 accountId, 
@@ -66,16 +67,16 @@ contract SnappAuction is SnappBase {
         return auctions[slot].appliedAccountStateIndex != 0;
     }
 
-    function getStandingOrderHash(uint16 userId, uint128 nonce) public view returns (bytes32){
-        return ordersReservedAccounts[userId][nonce].orderHash;
+    function getStandingOrderHash(uint16 userId, uint128 nonce) public view returns (bytes32) {
+        return reservedAccountOrders[userId][nonce].orderHash;
     }
     
-    function getStandingOrderValidityFrom(uint16 userId, uint128 nonce) public view returns (uint){
-        return ordersReservedAccounts[userId][nonce].validityFrom;
+    function getStandingOrderValidityFrom(uint16 userId, uint128 nonce) public view returns (uint) {
+        return reservedAccountOrders[userId][nonce].validityFrom;
     }
 
-    function getStandingOrderValidityTo(uint16 userId, uint128 nonce) public view returns (uint){
-        return ordersReservedAccounts[userId][nonce].validityTo;
+    function getStandingOrderValidityTo(uint16 userId, uint128 nonce) public view returns (uint) {
+        return reservedAccountOrders[userId][nonce].validityTo;
     }
 
     /**
@@ -98,7 +99,7 @@ contract SnappAuction is SnappBase {
         uint nrOrder = buyToken.length;
         require(nrOrder <= 10, "Too many orders");
         
-        for(uint i = 0; i < nrOrder; i++) {
+        for (uint i = 0; i < nrOrder; i++) {
             // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
             require(buyToken[i] < numTokens, "Buy token is not registered");
             require(sellToken[i] < numTokens, "Sell token is not registered");
@@ -108,20 +109,17 @@ contract SnappAuction is SnappBase {
                     encodeOrder(accountId, buyToken[i], sellToken[i], buyAmount[i], sellAmount[i])
                 )
             );
-             emit StandingSellOrder(auctionIndex, accountId, buyToken[i], sellToken[i], buyAmount[i], sellAmount[i]);
+            emit StandingSellOrder(auctionIndex, accountId, buyToken[i], sellToken[i], buyAmount[i], sellAmount[i]);
         }
         uint128 currentNonce = standingOrderNonce[accountId];
-        if(auctionIndex > 0){
-            ordersReservedAccounts[accountId][currentNonce].validityTo = auctionIndex - 1;
+        if (auctionIndex > 0) {
+            reservedAccountOrders[accountId][currentNonce].validityTo = auctionIndex - 1;
         } else {
-            delete ordersReservedAccounts[accountId][currentNonce];
+            delete reservedAccountOrders[accountId][currentNonce];
         }
-        ordersReservedAccounts[accountId][currentNonce+1].orderHash = orderHash;
-        ordersReservedAccounts[accountId][currentNonce+1].validityFrom = auctionIndex;
+        reservedAccountOrders[accountId][currentNonce+1].orderHash = orderHash;
+        reservedAccountOrders[accountId][currentNonce+1].validityFrom = auctionIndex;
         standingOrderNonce[accountId] = currentNonce + 1;
-
-        // Only increment size after event (so it is emitted as an index)
-        auctions[auctionIndex].size++;
     }
 
     function placeSellOrder(
