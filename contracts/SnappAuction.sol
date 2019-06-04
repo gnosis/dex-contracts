@@ -91,19 +91,19 @@ contract SnappAuction is SnappBase {
      * Auction Functionality
      */
     function placeStandingSellOrder(
-        uint8[] memory buyToken,
-        uint8[] memory sellToken,
-        uint128[] memory buyAmount,
-        uint128[] memory sellAmount
+        uint8[] memory buyTokens,
+        uint8[] memory sellTokens,
+        uint128[] memory buyAmounts,
+        uint128[] memory sellAmounts
     ) public onlyRegistered() {
         
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
-        require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Accout is not a rented account");
+        require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Accout is not a reserved account");
 
         bytes32 orderHash;
-        uint nrOrder = buyToken.length;
-        require(nrOrder <= AUCTION_RESERVED_ACCOUNT_BATCH_SIZE, "Too many orders");
+        uint numOrders = buyToken.length;
+        require(numOrders <= AUCTION_RESERVED_ACCOUNT_BATCH_SIZE, "Too many orders");
         
         if (
             auctionIndex == MAX_UINT ||
@@ -112,17 +112,17 @@ contract SnappAuction is SnappBase {
             createNewAuctionBatch();
         }
 
-        for (uint i = 0; i < nrOrder; i++) {
+        for (uint i = 0; i < numOrders; i++) {
             // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
-            require(buyToken[i] < numTokens, "Buy token is not registered");
-            require(sellToken[i] < numTokens, "Sell token is not registered");
+            require(buyTokens[i] < numTokens, "Buy token is not registered");
+            require(sellTokens[i] < numTokens, "Sell token is not registered");
             orderHash = sha256(
                 abi.encodePacked(
                     orderHash,
-                    encodeOrder(accountId, buyToken[i], sellToken[i], buyAmount[i], sellAmount[i])
+                    encodeOrder(accountId, buyTokens[i], sellTokens[i], buyAmounts[i], sellAmounts[i])
                 )
             );
-            emit StandingSellOrder(auctionIndex, accountId, buyToken[i], sellToken[i], buyAmount[i], sellAmount[i]);
+            emit StandingSellOrder(auctionIndex, accountId, buyTokens[i], sellTokens[i], buyAmounts[i], sellAmounts[i]);
         }
         uint128 currentNonce = standingOrderNonce[accountId];
         if (auctionIndex > 0) {
