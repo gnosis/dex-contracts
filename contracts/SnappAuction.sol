@@ -4,8 +4,10 @@ import "./SnappBase.sol";
 
 
 contract SnappAuction is SnappBase {
-  
+
     uint16 public constant AUCTION_BATCH_SIZE = 1000;
+    uint8 public constant AUCTION_RESERVED_ACCOUNTS = 50;
+    uint8 public constant AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = 10;
 
     uint public auctionIndex = MAX_UINT;
     mapping (uint => PendingBatch) public auctions;
@@ -27,10 +29,16 @@ contract SnappAuction is SnappBase {
         bytes pricesAndVolumes
     );
 
-    event AuctionInitialization(uint16 maxOrders);
+    event AuctionInitialization(
+        uint16 maxOrders,
+        uint8 numReservedAccounts,
+        uint8 ordersPerReservedAccount
+    );
     
     constructor () public {
-        emit AuctionInitialization(AUCTION_BATCH_SIZE);
+        emit AuctionInitialization(
+            AUCTION_BATCH_SIZE, AUCTION_RESERVED_ACCOUNTS, AUCTION_RESERVED_ACCOUNT_BATCH_SIZE
+        );
     }
 
     /**
@@ -65,7 +73,7 @@ contract SnappAuction is SnappBase {
 
         if (
             auctionIndex == MAX_UINT ||
-            auctions[auctionIndex].size == AUCTION_BATCH_SIZE || 
+            auctions[auctionIndex].size == maxUnreservedOrderCount() || 
             block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
         ) {
             require(
@@ -110,7 +118,8 @@ contract SnappAuction is SnappBase {
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(auctions[slot].shaHash == _orderHash, "Order hash doesn't agree");
         require(
-            block.timestamp > auctions[slot].creationTimestamp + 3 minutes || auctions[slot].size == AUCTION_BATCH_SIZE, 
+            block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
+                auctions[slot].size == maxUnreservedOrderCount(), 
             "Requested order slot is still active"
         );
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
@@ -139,5 +148,9 @@ contract SnappAuction is SnappBase {
 
         // solhint-disable-next-line max-line-length
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
+    }
+
+    function maxUnreservedOrderCount() internal pure returns (uint16) {
+        return AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE);
     }
 }
