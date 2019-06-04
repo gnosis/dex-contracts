@@ -6,6 +6,16 @@ import "./SnappBase.sol";
 contract SnappAuction is SnappBase {
   
     uint16 public constant AUCTION_BATCH_SIZE = 1000;
+    
+    struct standingOrders {
+        bytes32 orderHash;
+        uint validityFrom;
+        uint validityTo;
+    }
+
+    // mapping from accountId to nounce to StandingOrders
+    mapping (uint16 => mapping(uint128 => standingOrders)) public ordersReservedAccounts;
+    mapping (uint16 => uint128) public standingOrderNonce;
 
     uint public auctionIndex = MAX_UINT;
     mapping (uint => PendingBatch) public auctions;
@@ -13,6 +23,14 @@ contract SnappAuction is SnappBase {
     event SellOrder(
         uint auctionId, 
         uint16 slotIndex,
+        uint16 accountId, 
+        uint8 buyToken, 
+        uint8 sellToken, 
+        uint128 buyAmount,
+        uint128 sellAmount
+    );
+    event StandingSellOrder(
+        uint validityFrom, 
         uint16 accountId, 
         uint8 buyToken, 
         uint8 sellToken, 
@@ -48,9 +66,64 @@ contract SnappAuction is SnappBase {
         return auctions[slot].appliedAccountStateIndex != 0;
     }
 
+    function getStandingOrderHash(uint16 userId, uint128 nonce) public view returns (bytes32){
+        return ordersReservedAccounts[userId][nonce].orderHash;
+    }
+    
+    function getStandingOrderValidityFrom(uint16 userId, uint128 nonce) public view returns (uint){
+        return ordersReservedAccounts[userId][nonce].validityFrom;
+    }
+
+    function getStandingOrderValidityTo(uint16 userId, uint128 nonce) public view returns (uint){
+        return ordersReservedAccounts[userId][nonce].validityTo;
+    }
+
     /**
      * Auction Functionality
      */
+    function placeStandingSellOrder(
+        uint8[] memory buyToken,
+        uint8[] memory sellToken,
+        uint128[] memory buyAmount,
+        uint128[] memory sellAmount
+    ) public onlyRegistered() {
+        
+        require(auctionIndex < MAX_UINT, "Standing order collection has not yet started");
+
+        // Update Auction Hash based on request
+        uint16 accountId = publicKeyToAccountMap(msg.sender);
+        require(accountId <= 50, "Accout is not a rented account");
+
+        bytes32 orderHash;
+        uint nrOrder = buyToken.length;
+        require(nrOrder <= 10, "Too many orders");
+        
+        for(uint i = 0; i < nrOrder; i++) {
+            // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
+            require(buyToken[i] < numTokens, "Buy token is not registered");
+            require(sellToken[i] < numTokens, "Sell token is not registered");
+            orderHash = sha256(
+                abi.encodePacked(
+                    orderHash,
+                    encodeOrder(accountId, buyToken[i], sellToken[i], buyAmount[i], sellAmount[i])
+                )
+            );
+             emit StandingSellOrder(auctionIndex, accountId, buyToken[i], sellToken[i], buyAmount[i], sellAmount[i]);
+        }
+        uint128 currentNonce = standingOrderNonce[accountId];
+        if(auctionIndex > 0){
+            ordersReservedAccounts[accountId][currentNonce].validityTo = auctionIndex - 1;
+        } else {
+            delete ordersReservedAccounts[accountId][currentNonce];
+        }
+        ordersReservedAccounts[accountId][currentNonce+1].orderHash = orderHash;
+        ordersReservedAccounts[accountId][currentNonce+1].validityFrom = auctionIndex;
+        standingOrderNonce[accountId] = currentNonce + 1;
+
+        // Only increment size after event (so it is emitted as an index)
+        auctions[auctionIndex].size++;
+    }
+
     function placeSellOrder(
         uint8 buyToken,
         uint8 sellToken,

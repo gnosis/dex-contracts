@@ -5,7 +5,8 @@ const truffleAssert = require("truffle-assertions")
 
 const {
   waitForNSeconds,
-  setupEnvironment } = require("./utilities.js")
+  setupEnvironment,
+  openFirstAuction } = require("./utilities.js")
 
 const {
   isActive,
@@ -128,6 +129,75 @@ contract("SnappAuction", async (accounts) => {
     })
   })
 
+  describe("placeStandingSellOrder()", () => {
+    it("Reject: unregisterd account", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await openFirstAuction(instance, [user_1]);
+
+      await truffleAssert.reverts(
+        instance.placeStandingSellOrder([0], [1], [1], [1], { from: user_2 }),
+        "Must have registered account"
+      )
+    })
+
+    it("Reject: unregistered buyToken", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await openFirstAuction(instance, [user_1]);
+
+      await truffleAssert.reverts(
+        instance.placeStandingSellOrder([3], [1], [1], [1], { from: user_1 }),
+        "Buy token is not registered"
+      )
+    })
+
+    it("Reject: unregistered sellToken", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await openFirstAuction(instance, [user_1]);
+      await truffleAssert.reverts(
+        instance.placeStandingSellOrder([1], [3], [1], [1], { from: user_1 }),
+        "Sell token is not registered"
+      )
+    })
+
+    it("Reject: Buy Amount >= 2^100", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await openFirstAuction(instance, [user_1]);
+
+      await truffleAssert.reverts(
+        instance.placeStandingSellOrder([0], [1], ["0x10000000000000000000000000"], [1], { from: user_1 }),
+        "Buy amount too large!"
+      )
+    })
+
+    it("Reject: Sell Amount >= 2^100", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await openFirstAuction(instance, [user_1]);
+
+      await truffleAssert.reverts(
+        instance.placeStandingSellOrder([0], [1], [1], ["0x10000000000000000000000000"], { from: user_1 }),
+        "Sell amount too large!"
+      )
+    })
+
+    it("Generic sell order", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await openFirstAuction(instance, [user_1]);
+
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
+
+      const userId = await instance.publicKeyToAccountMap.call(user_1);
+      const nonce = await instance.standingOrderNonce.call(userId)
+      const orderHash = await instance.getStandingOrderHash(userId, nonce)
+      assert.equal(nonce, 1)
+      //assert.notEqual(currentAuction.shaHash, 0)
+    })
+  })
   describe("applyAuction()", () => {
     const new_state = "0x1"
 
