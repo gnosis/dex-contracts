@@ -11,11 +11,11 @@ contract SnappAuction is SnappBase {
     
     struct StandingOrders {
         bytes32 orderHash;
-        uint validityFrom;
-        uint validityTo;
+        uint validFrom;
+        uint validTo;
     }
 
-    // mapping from accountId to nounce to StandingOrders
+    //mapping from accountId to nonce to StandingOrders
     mapping (uint16 => mapping(uint128 => StandingOrders)) public reservedAccountOrders;
     mapping (uint16 => uint128) public standingOrderNonce;
 
@@ -33,7 +33,7 @@ contract SnappAuction is SnappBase {
     );
 
     event StandingSellOrder(
-        uint validityFrom, 
+        uint validFrom, 
         uint16 accountId, 
         uint8 buyToken, 
         uint8 sellToken, 
@@ -79,12 +79,12 @@ contract SnappAuction is SnappBase {
         return reservedAccountOrders[userId][nonce].orderHash;
     }
     
-    function getStandingOrderValidityFrom(uint16 userId, uint128 nonce) public view returns (uint) {
-        return reservedAccountOrders[userId][nonce].validityFrom;
+    function getStandingOrdervalidFrom(uint16 userId, uint128 nonce) public view returns (uint) {
+        return reservedAccountOrders[userId][nonce].validFrom;
     }
 
     function getStandingOrderValidityTo(uint16 userId, uint128 nonce) public view returns (uint) {
-        return reservedAccountOrders[userId][nonce].validityTo;
+        return reservedAccountOrders[userId][nonce].validTo;
     }
 
     /**
@@ -136,12 +136,12 @@ contract SnappAuction is SnappBase {
         }
         uint128 currentNonce = standingOrderNonce[accountId];
         if (auctionIndex > 0) {
-            reservedAccountOrders[accountId][currentNonce].validityTo = auctionIndex - 1;
+            reservedAccountOrders[accountId][currentNonce].validTo = auctionIndex - 1;
         } else {
             delete reservedAccountOrders[accountId][currentNonce];
         }
         reservedAccountOrders[accountId][currentNonce+1].orderHash = orderHash;
-        reservedAccountOrders[accountId][currentNonce+1].validityFrom = auctionIndex;
+        reservedAccountOrders[accountId][currentNonce+1].validFrom = auctionIndex;
         standingOrderNonce[accountId] = currentNonce + 1;
     }
 
