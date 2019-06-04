@@ -329,4 +329,39 @@ contract("SnappAuction", async (accounts) => {
       await instance.applyAuction(second_slot, new_state, "0x2", second_auction_state.shaHash, auctionSolution)
     })
   })
+
+
+  describe("placeMultiSellOrder()", () => {
+    it("Generic multi-sell order", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await instance.placeMultiSellOrder([0, 0], [1, 1], [1, 1], [1, 1], { from: user_1 })
+      const auctionIndex = (await instance.auctionIndex.call()).toNumber()
+      const currentAuction = await instance.auctions(auctionIndex)
+
+      assert.equal(currentAuction.size, 2)
+    })
+
+    it("Reject: ill-defined multi sell-orders", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+
+      await truffleAssert.reverts(
+        instance.placeMultiSellOrder([0], [1, 1], [1, 1], [1, 1], { from: user_1 }),
+        "numOrders != sellTokens length"
+      )
+      await truffleAssert.reverts(
+        instance.placeMultiSellOrder([0, 0], [1], [1, 1], [1, 1], { from: user_1 }),
+        "numOrders != sellTokens length"
+      )
+      await truffleAssert.reverts(
+        instance.placeMultiSellOrder([0, 0], [1, 1], [1], [1, 1], { from: user_1 }),
+        "numOrders != buyAmounts length"
+      )
+      await truffleAssert.reverts(
+        instance.placeMultiSellOrder([0, 0], [1, 1], [1, 1], [1], { from: user_1 }),
+        "numOrders != sellAmounts length"
+      )
+    })
+  })
 })
