@@ -109,17 +109,7 @@ contract SnappAuction is SnappBase {
             auctionIndex == MAX_UINT ||
             block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
         ) {
-            require(
-                auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
-                "Too many pending auctions"
-            );
-            auctionIndex++;
-            auctions[auctionIndex] = PendingBatch({
-                size: 0,
-                shaHash: bytes32(0),
-                creationTimestamp: block.timestamp,
-                appliedAccountStateIndex: 0
-            });
+            createNewAuctionBatch();
         }
 
         for (uint i = 0; i < nrOrder; i++) {
@@ -162,17 +152,7 @@ contract SnappAuction is SnappBase {
             auctions[auctionIndex].size == maxUnreservedOrderCount() || 
             block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
         ) {
-            require(
-                auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
-                "Too many pending auctions"
-            );
-            auctionIndex++;
-            auctions[auctionIndex] = PendingBatch({
-                size: 0,
-                shaHash: bytes32(0),
-                creationTimestamp: block.timestamp,
-                appliedAccountStateIndex: 0
-            });
+            createNewAuctionBatch();
         }
 
         // Update Auction Hash based on request
@@ -238,5 +218,19 @@ contract SnappAuction is SnappBase {
 
     function maxUnreservedOrderCount() internal pure returns (uint16) {
         return AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE);
+    }
+
+    function createNewAuctionBatch() internal {
+        require(
+                auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
+                "Too many pending auctions"
+            );
+        auctionIndex++;
+        auctions[auctionIndex] = PendingBatch({
+            size: 0,
+            shaHash: bytes32(0),
+            creationTimestamp: block.timestamp,
+            appliedAccountStateIndex: 0
+        });
     }
 }
