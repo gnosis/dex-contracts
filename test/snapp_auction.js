@@ -188,7 +188,7 @@ contract("SnappAuction", async (accounts) => {
       )
     })
 
-    it("Generic standing sell order as replacement of current batch", async () => {
+    it("Generic standing sell order as replacement of current batch (1 TX)", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
@@ -201,6 +201,25 @@ contract("SnappAuction", async (accounts) => {
       assert.equal(validFromAuctionIndex, 0)
     })
 
+    it("Generic standing sell order as replacement of current batch(2 TX)", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
+      
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,0], { from: user_1 })
+
+      const userId = await instance.publicKeyToAccountMap.call(user_1)
+      const nonce = await instance.getStandingOrderNonce.call(userId)
+      assert.equal(nonce, 0)
+
+      const validFromAuctionIndex = await instance.getStandingOrderValidFrom(userId, nonce)
+      assert.equal(validFromAuctionIndex, 0)
+
+      const validToAuctionIndex = await instance.getStandingOrderValidFrom(userId, nonce - 1)
+      assert.equal(validToAuctionIndex, 0)
+    })
+    
     it("Generic standing sell order as new submission ", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
