@@ -112,7 +112,7 @@ contract SnappAuction is SnappBase {
 
         bytes32 orderHash;
         uint numOrders = buyTokens.length;
-        require(numOrders <= AUCTION_RESERVED_ACCOUNT_BATCH_SIZE, "AUCTION_RESERVED_ACCOUNT_BATCH_SIZE not considered");
+        require(numOrders <= AUCTION_RESERVED_ACCOUNT_BATCH_SIZE, "Too many orders for reserved batch");
         
         if (
             auctionIndex == MAX_UINT ||
