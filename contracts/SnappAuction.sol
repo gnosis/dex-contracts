@@ -27,11 +27,11 @@ contract SnappAuction is SnappBase {
     mapping (uint => PendingBatch) public auctions;
 
     event SellOrder(
-        uint auctionId, 
+        uint auctionId,
         uint16 slotIndex,
-        uint16 accountId, 
-        uint8 buyToken, 
-        uint8 sellToken, 
+        uint16 accountId,
+        uint8 buyToken,
+        uint8 sellToken,
         uint128 buyAmount,
         uint128 sellAmount
     );
@@ -151,7 +151,7 @@ contract SnappAuction is SnappBase {
 
         if (
             auctionIndex == MAX_UINT ||
-            auctions[auctionIndex].size == maxUnreservedOrderCount() || 
+            auctions[auctionIndex].size == maxUnreservedOrderCount() ||
             block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
         ) {
             createNewPendingBatch();
@@ -180,19 +180,19 @@ contract SnappAuction is SnappBase {
         bytes memory pricesAndVolumes
     )
         public onlyOwner()
-    {   
+    {
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested order slot does not exist");
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(auctions[slot].shaHash == _orderHash, "Order hash doesn't agree");
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
-                auctions[slot].size == maxUnreservedOrderCount(), 
+                auctions[slot].size == maxUnreservedOrderCount(),
             "Requested order slot is still active"
         );
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
 
-        stateRoots.push(_newStateRoot);        
+        stateRoots.push(_newStateRoot);
         auctions[slot].appliedAccountStateIndex = stateIndex();
 
         // Store solution information in shaHash of pendingBatch (required for snark proof)
@@ -202,10 +202,10 @@ contract SnappAuction is SnappBase {
     }
 
     function encodeOrder(
-        uint16 accountId, 
-        uint8 buyToken, 
-        uint8 sellToken, 
-        uint128 buyAmount, 
+        uint16 accountId,
+        uint8 buyToken,
+        uint8 sellToken,
+        uint128 buyAmount,
         uint128 sellAmount
     ) 
         internal view returns (bytes32) 
