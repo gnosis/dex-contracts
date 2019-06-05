@@ -15,7 +15,7 @@ contract SnappAuction is SnappBase {
         uint validToAuctionIndex;
     }
 
-    struct StandingOrderData{
+    struct StandingOrderData {
         mapping(uint => StandingOrderBatch) reservedAccountOrders;
         uint standingOrderNonce;
     }
@@ -122,9 +122,6 @@ contract SnappAuction is SnappBase {
         }
 
         for (uint i = 0; i < numOrders; i++) {
-            // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
-            require(buyTokens[i] < numTokens, "Buy token is not registered");
-            require(sellTokens[i] < numTokens, "Sell token is not registered");
             orderHash = sha256(
                 abi.encodePacked(
                     orderHash,
@@ -152,11 +149,6 @@ contract SnappAuction is SnappBase {
         uint128 buyAmount,
         uint128 sellAmount
     ) public onlyRegistered() {
-        // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
-        require(buyToken < numTokens, "Buy token is not registered");
-        require(sellToken < numTokens, "Sell token is not registered");
-
-        // Could also enforce that buyToken != sellToken, but not technically illegal.
 
         if (
             auctionIndex == MAX_UINT ||
@@ -217,11 +209,17 @@ contract SnappAuction is SnappBase {
         uint128 buyAmount, 
         uint128 sellAmount
     ) 
-        internal pure returns (bytes32) 
+        internal view returns (bytes32) 
     {
         // Restrict buy and sell amount to occupy at most 96 bits.
         require(buyAmount < 0x1000000000000000000000000, "Buy amount too large!");
         require(sellAmount < 0x1000000000000000000000000, "Sell amount too large!");
+
+        // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
+        require(buyToken < numTokens, "Buy token is not registered");
+        require(sellToken < numTokens, "Sell token is not registered");
+
+        // Could also enforce that buyToken != sellToken, but not technically illegal.
 
         // solhint-disable-next-line max-line-length
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
