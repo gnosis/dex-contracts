@@ -184,7 +184,7 @@ contract("SnappAuction", async (accounts) => {
 
       await truffleAssert.reverts(
         instance.placeStandingSellOrder([0,0,0,1,1,1,1,1,1,1,2,0,1], [1], [1], ["0x10000000000000000000000000"], { from: user_1 }),
-        "Too many orders for reserved batch not considered"
+        "Too many orders for reserved batch"
       )
     })
 
