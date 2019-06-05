@@ -11,8 +11,8 @@ contract SnappAuction is SnappBase {
     
     struct StandingOrderBatch {
         bytes32 orderHash;
-        uint validFromAuctionIndex;
-        uint validToAuctionIndex;
+        uint validFromAuctionIndex; // validity is inclusive of the auction index
+        uint validToAuctionIndex; // validity is inclusive of the auction index
     }
 
     struct StandingOrderData {
@@ -42,8 +42,7 @@ contract SnappAuction is SnappBase {
         uint8[] buyToken, 
         uint8[] sellToken, 
         uint128[] buyAmount,
-        uint128[] sellAmount,
-        uint nonce
+        uint128[] sellAmount
     );
 
     event AuctionSettlement(
@@ -140,7 +139,7 @@ contract SnappAuction is SnappBase {
         }
         standingOrderPlacements[accountId].reservedAccountOrders[newNonce].orderHash = orderHash;
 
-        emit StandingSellOrderBatch(auctionIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts, newNonce);
+        emit StandingSellOrderBatch(auctionIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
     }
 
     function placeSellOrder(
