@@ -9,15 +9,19 @@ contract SnappAuction is SnappBase {
     uint8 public constant AUCTION_RESERVED_ACCOUNTS = 50;
     uint8 public constant AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = 10;
     
-    struct StandingOrders {
+    struct StandingOrderBatch {
         bytes32 orderHash;
-        uint validFrom;
-        uint validTo;
+        uint validFromAuctionIndex;
+        uint validToAuctionIndex;
     }
 
-    //mapping from accountId to nonce to StandingOrders
-    mapping (uint16 => mapping(uint128 => StandingOrders)) public reservedAccountOrders;
-    mapping (uint16 => uint128) public standingOrderNonce;
+    struct StandingOrderData{
+        mapping(uint => StandingOrderBatch) reservedAccountOrders;
+        uint standingOrderNonce;
+    }
+
+    //mapping from accountId to nonce to StandingOrderBatch
+    mapping (uint16 => StandingOrderData) public standingOrderPlacements;
 
     uint public auctionIndex = MAX_UINT;
     mapping (uint => PendingBatch) public auctions;
@@ -32,13 +36,14 @@ contract SnappAuction is SnappBase {
         uint128 sellAmount
     );
 
-    event StandingSellOrder(
-        uint validFrom, 
+    event StandingSellOrderBatch(
+        uint validFromAuctionIndex, 
         uint16 accountId, 
-        uint8 buyToken, 
-        uint8 sellToken, 
-        uint128 buyAmount,
-        uint128 sellAmount
+        uint8[] buyToken, 
+        uint8[] sellToken, 
+        uint128[] buyAmount,
+        uint128[] sellAmount,
+        uint nonce
     );
 
     event AuctionSettlement(
@@ -76,15 +81,19 @@ contract SnappAuction is SnappBase {
     }
 
     function getStandingOrderHash(uint16 userId, uint128 nonce) public view returns (bytes32) {
-        return reservedAccountOrders[userId][nonce].orderHash;
+        return standingOrderPlacements[userId].reservedAccountOrders[nonce].orderHash;
     }
     
     function getStandingOrderValidFrom(uint16 userId, uint128 nonce) public view returns (uint) {
-        return reservedAccountOrders[userId][nonce].validFrom;
+        return standingOrderPlacements[userId].reservedAccountOrders[nonce].validFromAuctionIndex;
     }
 
-    function getStandingOrderValidTo(uint16 userId, uint128 nonce) public view returns (uint) {
-        return reservedAccountOrders[userId][nonce].validTo;
+    function getStandingOrdervalidToAuctionIndex(uint16 userId, uint128 nonce) public view returns (uint) {
+        return standingOrderPlacements[userId].reservedAccountOrders[nonce].validToAuctionIndex;
+    }
+
+    function getStandingOrderNonce(uint16 userId) public view returns (uint) {
+        return standingOrderPlacements[userId].standingOrderNonce;
     }
 
     /**
@@ -109,7 +118,7 @@ contract SnappAuction is SnappBase {
             auctionIndex == MAX_UINT ||
             block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
         ) {
-            createNewAuctionBatch();
+            createNewPendingBatch();
         }
 
         for (uint i = 0; i < numOrders; i++) {
@@ -122,18 +131,19 @@ contract SnappAuction is SnappBase {
                     encodeOrder(accountId, buyTokens[i], sellTokens[i], buyAmounts[i], sellAmounts[i])
                 )
             );
-            emit StandingSellOrder(auctionIndex, accountId, buyTokens[i], sellTokens[i], buyAmounts[i], sellAmounts[i]);
-        }
-        uint128 currentNonce = standingOrderNonce[accountId];
-        uint128 newNonce = currentNonce;
+        }        
+        uint currentNonce = standingOrderPlacements[accountId].standingOrderNonce;
+        uint newNonce = currentNonce;
         
-        if (auctionIndex > reservedAccountOrders[accountId][currentNonce].validFrom) {
-            reservedAccountOrders[accountId][currentNonce].validTo = auctionIndex - 1;
+        if (auctionIndex > standingOrderPlacements[accountId].reservedAccountOrders[currentNonce].validFromAuctionIndex) {
+            standingOrderPlacements[accountId].reservedAccountOrders[currentNonce].validToAuctionIndex = auctionIndex - 1;
             newNonce += 1;
-            standingOrderNonce[accountId] = newNonce;
-            reservedAccountOrders[accountId][newNonce].validFrom = auctionIndex;
+            standingOrderPlacements[accountId].standingOrderNonce = newNonce;
+            standingOrderPlacements[accountId].reservedAccountOrders[newNonce].validFromAuctionIndex = auctionIndex;
         }
-        reservedAccountOrders[accountId][newNonce].orderHash = orderHash;
+        standingOrderPlacements[accountId].reservedAccountOrders[newNonce].orderHash = orderHash;
+
+        emit StandingSellOrderBatch(auctionIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts, newNonce);
     }
 
     function placeSellOrder(
@@ -153,7 +163,7 @@ contract SnappAuction is SnappBase {
             auctions[auctionIndex].size == maxUnreservedOrderCount() || 
             block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
         ) {
-            createNewAuctionBatch();
+            createNewPendingBatch();
         }
 
         // Update Auction Hash based on request
@@ -221,7 +231,7 @@ contract SnappAuction is SnappBase {
         return AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE);
     }
 
-    function createNewAuctionBatch() internal {
+    function createNewPendingBatch() internal {
         require(
                 auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
                 "Too many pending auctions"
