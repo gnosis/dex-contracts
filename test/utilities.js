@@ -117,6 +117,7 @@ const send = function (method, params, web3Provider) {
 // Wait for n blocks to pass
 const waitForNSeconds = async function(seconds, web3Provider=web3) {
   await send("evm_increaseTime", [seconds], web3Provider)
+  await send("evm_mine", [], web3Provider)
 }
 
 const toHex = function(buffer) {
