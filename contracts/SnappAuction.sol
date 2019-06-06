@@ -11,17 +11,16 @@ contract SnappAuction is SnappBase {
     
     struct StandingOrderBatch {
         bytes32 orderHash;
-        uint validFromAuctionIndex; // validity is inclusive of the auction index
-        uint validToAuctionIndex; // validity is inclusive of the auction index
+        uint validFromIndex; // validity is inclusive of the auction index
+        // validToIndex is indirectly given as validFromIndex of next Orderbatch
     }
 
     struct StandingOrderData {
         mapping(uint => StandingOrderBatch) reservedAccountOrders;
-        uint standingOrderNonce;
+        uint currentCnt;
     }
 
-    //mapping from accountId to nonce to StandingOrderBatch
-    mapping (uint16 => StandingOrderData) public standingOrderPlacements;
+    mapping (uint16 => StandingOrderData) public standingOrderData;
 
     uint public auctionIndex = MAX_UINT;
     mapping (uint => PendingBatch) public auctions;
@@ -37,7 +36,7 @@ contract SnappAuction is SnappBase {
     );
 
     event StandingSellOrderBatch(
-        uint validFromAuctionIndex, 
+        uint validFromIndex, 
         uint16 accountId, 
         uint8[] buyToken, 
         uint8[] sellToken, 
@@ -79,20 +78,25 @@ contract SnappAuction is SnappBase {
         return auctions[slot].appliedAccountStateIndex != 0;
     }
 
-    function getStandingOrderHash(uint16 userId, uint128 nonce) public view returns (bytes32) {
-        return standingOrderPlacements[userId].reservedAccountOrders[nonce].orderHash;
+    function getStandingOrderHash(uint16 userId, uint128 current) public view returns (bytes32) {
+        return standingOrderData[userId].reservedAccountOrders[current].orderHash;
     }
     
-    function getStandingOrderValidFrom(uint16 userId, uint128 nonce) public view returns (uint) {
-        return standingOrderPlacements[userId].reservedAccountOrders[nonce].validFromAuctionIndex;
+    function getStandingOrderValidFrom(uint16 userId, uint128 current) public view returns (uint) {
+        return standingOrderData[userId].reservedAccountOrders[current].validFromIndex;
     }
 
-    function getStandingOrdervalidToAuctionIndex(uint16 userId, uint128 nonce) public view returns (uint) {
-        return standingOrderPlacements[userId].reservedAccountOrders[nonce].validToAuctionIndex;
+    function getStandingOrderValidTo(uint16 userId, uint128 current) public view returns (uint) {
+        uint validTo = standingOrderData[userId].reservedAccountOrders[current + 1].validFromIndex;
+        if (validTo == 0) {
+            return MAX_UINT;
+        } else {
+            return validTo - 1; 
+        }
     }
 
-    function getStandingOrderNonce(uint16 userId) public view returns (uint) {
-        return standingOrderPlacements[userId].standingOrderNonce;
+    function getStandingOrderCounter(uint16 userId) public view returns (uint) {
+        return standingOrderData[userId].currentCnt;
     }
 
     /**
@@ -103,7 +107,7 @@ contract SnappAuction is SnappBase {
         uint8[] memory sellTokens,
         uint128[] memory buyAmounts,
         uint128[] memory sellAmounts
-    ) public onlyRegistered() {
+        ) public onlyRegistered() {
         
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
@@ -128,17 +132,18 @@ contract SnappAuction is SnappBase {
                 )
             );
         }        
-        uint currentNonce = standingOrderPlacements[accountId].standingOrderNonce;
-        uint newNonce = currentNonce;
-        
-        if (auctionIndex > standingOrderPlacements[accountId].reservedAccountOrders[currentNonce].validFromAuctionIndex) {
-            standingOrderPlacements[accountId].reservedAccountOrders[currentNonce].validToAuctionIndex = auctionIndex - 1;
-            newNonce += 1;
-            standingOrderPlacements[accountId].standingOrderNonce = newNonce;
-            standingOrderPlacements[accountId].reservedAccountOrders[newNonce].validFromAuctionIndex = auctionIndex;
+        uint currentCnt = standingOrderData[accountId].currentCnt;
+        StandingOrderBatch memory standingOrderBatch = standingOrderData[accountId].reservedAccountOrders[currentCnt];
+        if (auctionIndex > standingOrderBatch.validFromIndex) {
+            currentCnt = currentCnt + ;
+            standingOrderData[accountId].currentCnt = currentCnt;
+            standingOrderBatch = standingOrderData[accountId].reservedAccountOrders[currentCnt];
+            standingOrderBatch.validFromIndex = auctionIndex;
+            standingOrderBatch.orderHash = orderHash;
+        } else {
+            standingOrderBatch.orderHash = orderHash;
         }
-        standingOrderPlacements[accountId].reservedAccountOrders[newNonce].orderHash = orderHash;
-
+        standingOrderData[accountId].reservedAccountOrders[currentCnt] = standingOrderBatch;
         emit StandingSellOrderBatch(auctionIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
     }
 

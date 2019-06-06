@@ -195,10 +195,10 @@ contract("SnappAuction", async (accounts) => {
       await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
 
       const userId = await instance.publicKeyToAccountMap.call(user_1)
-      const nonce = await instance.getStandingOrderNonce.call(userId)
-      assert.equal(nonce, 0)
-      const validFromAuctionIndex = await instance.getStandingOrderValidFrom(userId, nonce)
-      assert.equal(validFromAuctionIndex, 0)
+      const pointer = await instance.getStandingOrderCounter.call(userId)
+      assert.equal(pointer, 0)
+      const validFromIndex = await instance.getStandingOrderValidFrom(userId, pointer)
+      assert.equal(validFromIndex, 0)
     })
 
     it("Generic standing sell order as replacement of current batch(2 TX)", async () => {
@@ -210,13 +210,13 @@ contract("SnappAuction", async (accounts) => {
       await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,0], { from: user_1 })
 
       const userId = await instance.publicKeyToAccountMap.call(user_1)
-      const nonce = await instance.getStandingOrderNonce.call(userId)
-      assert.equal(nonce, 0)
+      const pointer = await instance.getStandingOrderCounter.call(userId)
+      assert.equal(pointer, 0)
 
-      const validFromAuctionIndex = await instance.getStandingOrderValidFrom(userId, nonce)
-      assert.equal(validFromAuctionIndex, 0)
+      const validFromIndex = await instance.getStandingOrderValidFrom(userId, pointer)
+      assert.equal(validFromIndex, 0)
 
-      const validToAuctionIndex = await instance.getStandingOrderValidFrom(userId, nonce - 1)
+      const validToAuctionIndex = await instance.getStandingOrderValidFrom(userId, pointer - 1)
       assert.equal(validToAuctionIndex, 0)
     })
     
@@ -232,13 +232,13 @@ contract("SnappAuction", async (accounts) => {
       await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,0], { from: user_1 })
 
       const userId = await instance.publicKeyToAccountMap.call(user_1)
-      const nonce = await instance.getStandingOrderNonce.call(userId)
-      assert.equal(nonce, 1)
+      const pointer = await instance.getStandingOrderCounter.call(userId)
+      assert.equal(pointer, 1)
 
-      const validFromAuctionIndex = await instance.getStandingOrderValidFrom(userId, nonce)
-      assert.equal(validFromAuctionIndex, 1)
+      const validFromIndex = await instance.getStandingOrderValidFrom(userId, pointer)
+      assert.equal(validFromIndex, 1)
 
-      const validToAuctionIndex = await instance.getStandingOrderValidFrom(userId, nonce - 1)
+      const validToAuctionIndex = await instance.getStandingOrderValidTo(userId, pointer - 1)
       assert.equal(validToAuctionIndex, 0)
     })
   })
