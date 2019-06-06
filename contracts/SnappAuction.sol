@@ -11,17 +11,11 @@ contract SnappAuction is SnappBase {
     
     struct StandingOrderBatch {
         bytes32 orderHash;
-        uint validFromAuctionIndex; // validity is inclusive of the auction index
         uint validToAuctionIndex; // validity is inclusive of the auction index
     }
 
-    struct StandingOrderData {
-        mapping(uint => StandingOrderBatch) reservedAccountOrders;
-        uint standingOrderNonce;
-    }
-
-    //mapping from accountId to nonce to StandingOrderBatch
-    mapping (uint16 => StandingOrderData) public standingOrderPlacements;
+    //mapping from accountId to validFromAuctionIndex to StandingOrderBatch
+    mapping (uint16 => mapping(uint => StandingOrderBatch)) public standingOrderPlacements;
 
     uint public auctionIndex = MAX_UINT;
     mapping (uint => PendingBatch) public auctions;
@@ -79,21 +73,14 @@ contract SnappAuction is SnappBase {
         return auctions[slot].appliedAccountStateIndex != 0;
     }
 
-    function getStandingOrderHash(uint16 userId, uint128 nonce) public view returns (bytes32) {
-        return standingOrderPlacements[userId].reservedAccountOrders[nonce].orderHash;
+    function getStandingOrderHash(uint16 userId, uint validFromAuctionIndex) public view returns (bytes32) {
+        return standingOrderPlacements[userId][validFromAuctionIndex].orderHash;
     }
     
-    function getStandingOrderValidFrom(uint16 userId, uint128 nonce) public view returns (uint) {
-        return standingOrderPlacements[userId].reservedAccountOrders[nonce].validFromAuctionIndex;
+    function getStandingOrdervalidToAuctionIndex(uint16 userId, uint validFromAuctionIndex) public view returns (uint) {
+        return standingOrderPlacements[userId][validFromAuctionIndex].validToAuctionIndex;
     }
 
-    function getStandingOrdervalidToAuctionIndex(uint16 userId, uint128 nonce) public view returns (uint) {
-        return standingOrderPlacements[userId].reservedAccountOrders[nonce].validToAuctionIndex;
-    }
-
-    function getStandingOrderNonce(uint16 userId) public view returns (uint) {
-        return standingOrderPlacements[userId].standingOrderNonce;
-    }
 
     /**
      * Auction Functionality
@@ -102,12 +89,16 @@ contract SnappAuction is SnappBase {
         uint8[] memory buyTokens,
         uint8[] memory sellTokens,
         uint128[] memory buyAmounts,
-        uint128[] memory sellAmounts
+        uint128[] memory sellAmounts,
+        uint prevValidFromAuctionIndex
     ) public onlyRegistered() {
         
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
         require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Accout is not a reserved account");
+
+        // Check correctness of prevValidFromAuctionIndex
+        require( standingOrderPlacements[accountId][prevValidFromAuctionIndex].validToAuctionIndex != MAX_UINT, "validToAuctionIndex is set, this is not the previous orderbatch");
 
         bytes32 orderHash;
         uint numOrders = buyTokens.length;
@@ -127,17 +118,13 @@ contract SnappAuction is SnappBase {
                     encodeOrder(accountId, buyTokens[i], sellTokens[i], buyAmounts[i], sellAmounts[i])
                 )
             );
-        }        
-        uint currentNonce = standingOrderPlacements[accountId].standingOrderNonce;
-        uint newNonce = currentNonce;
-        
-        if (auctionIndex > standingOrderPlacements[accountId].reservedAccountOrders[currentNonce].validFromAuctionIndex) {
-            standingOrderPlacements[accountId].reservedAccountOrders[currentNonce].validToAuctionIndex = auctionIndex - 1;
-            newNonce += 1;
-            standingOrderPlacements[accountId].standingOrderNonce = newNonce;
-            standingOrderPlacements[accountId].reservedAccountOrders[newNonce].validFromAuctionIndex = auctionIndex;
         }
-        standingOrderPlacements[accountId].reservedAccountOrders[newNonce].orderHash = orderHash;
+        
+        if (auctionIndex > prevValidFromAuctionIndex) {
+            standingOrderPlacements[accountId][prevValidFromAuctionIndex].validToAuctionIndex = auctionIndex - 1;
+            standingOrderPlacements[accountId][auctionIndex].validToAuctionIndex = MAX_UINT;
+        }
+        standingOrderPlacements[accountId][auctionIndex].orderHash = orderHash;
 
         emit StandingSellOrderBatch(auctionIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
     }
