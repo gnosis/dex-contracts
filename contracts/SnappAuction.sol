@@ -17,7 +17,7 @@ contract SnappAuction is SnappBase {
 
     struct StandingOrderData {
         mapping(uint => StandingOrderBatch) reservedAccountOrders;
-        uint currentCnt;
+        uint currentBatchIndex;
     }
 
     mapping (uint16 => StandingOrderData) public standingOrderData;
@@ -36,7 +36,7 @@ contract SnappAuction is SnappBase {
     );
 
     event StandingSellOrderBatch(
-        uint validFromIndex, 
+        uint currentBatchIndex, 
         uint16 accountId, 
         uint8[] buyToken, 
         uint8[] sellToken, 
@@ -78,16 +78,16 @@ contract SnappAuction is SnappBase {
         return auctions[slot].appliedAccountStateIndex != 0;
     }
 
-    function getStandingOrderHash(uint16 userId, uint128 current) public view returns (bytes32) {
-        return standingOrderData[userId].reservedAccountOrders[current].orderHash;
+    function getStandingOrderHash(uint16 userId, uint128 batchIndex) public view returns (bytes32) {
+        return standingOrderData[userId].reservedAccountOrders[batchIndex].orderHash;
     }
     
-    function getStandingOrderValidFrom(uint16 userId, uint128 current) public view returns (uint) {
-        return standingOrderData[userId].reservedAccountOrders[current].validFromIndex;
+    function getStandingOrderValidFrom(uint16 userId, uint128 batchIndex) public view returns (uint) {
+        return standingOrderData[userId].reservedAccountOrders[batchIndex].validFromIndex;
     }
 
-    function getStandingOrderValidTo(uint16 userId, uint128 current) public view returns (uint) {
-        uint validTo = standingOrderData[userId].reservedAccountOrders[current + 1].validFromIndex;
+    function getStandingOrderValidTo(uint16 userId, uint128 batchIndex) public view returns (uint) {
+        uint validTo = standingOrderData[userId].reservedAccountOrders[batchIndex + 1].validFromIndex;
         if (validTo == 0) {
             return MAX_UINT;
         } else {
@@ -96,7 +96,7 @@ contract SnappAuction is SnappBase {
     }
 
     function getStandingOrderCounter(uint16 userId) public view returns (uint) {
-        return standingOrderData[userId].currentCnt;
+        return standingOrderData[userId].currentBatchIndex;
     }
 
     /**
@@ -107,7 +107,7 @@ contract SnappAuction is SnappBase {
         uint8[] memory sellTokens,
         uint128[] memory buyAmounts,
         uint128[] memory sellAmounts,
-        uint validTill
+        uint validUntil
     ) public onlyRegistered() {
         
         // Update Auction Hash based on request
@@ -126,7 +126,7 @@ contract SnappAuction is SnappBase {
         }
 
         // Check that order is still valid 
-        require(validTill >= auctionIndex || validTill == 0, "orderBatch is no longer valid");
+        require(validUntil >= auctionIndex || validUntil == 0, "orderBatch is no longer valid");
 
         for (uint i = 0; i < numOrders; i++) {
             orderHash = sha256(
@@ -136,19 +136,19 @@ contract SnappAuction is SnappBase {
                 )
             );
         }        
-        uint currentCnt = standingOrderData[accountId].currentCnt;
-        StandingOrderBatch memory standingOrderBatch = standingOrderData[accountId].reservedAccountOrders[currentCnt];
+        uint currentBatchIndex = standingOrderData[accountId].currentBatchIndex;
+        StandingOrderBatch memory standingOrderBatch = standingOrderData[accountId].reservedAccountOrders[currentBatchIndex];
         if (auctionIndex > standingOrderBatch.validFromIndex) {
-            currentCnt = currentCnt + 1;
-            standingOrderData[accountId].currentCnt = currentCnt;
-            standingOrderBatch = standingOrderData[accountId].reservedAccountOrders[currentCnt];
+            currentBatchIndex = currentBatchIndex + 1;
+            standingOrderData[accountId].currentBatchIndex = currentBatchIndex;
+            standingOrderBatch = standingOrderData[accountId].reservedAccountOrders[currentBatchIndex];
             standingOrderBatch.validFromIndex = auctionIndex;
             standingOrderBatch.orderHash = orderHash;
         } else {
             standingOrderBatch.orderHash = orderHash;
         }
-        standingOrderData[accountId].reservedAccountOrders[currentCnt] = standingOrderBatch;
-        emit StandingSellOrderBatch(auctionIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
+        standingOrderData[accountId].reservedAccountOrders[currentBatchIndex] = standingOrderBatch;
+        emit StandingSellOrderBatch(currentBatchIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
     }
 
     function placeSellOrder(
