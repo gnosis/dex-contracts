@@ -106,8 +106,9 @@ contract SnappAuction is SnappBase {
         uint8[] memory buyTokens,
         uint8[] memory sellTokens,
         uint128[] memory buyAmounts,
-        uint128[] memory sellAmounts
-        ) public onlyRegistered() {
+        uint128[] memory sellAmounts,
+        uint validTill
+    ) public onlyRegistered() {
         
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
@@ -124,6 +125,9 @@ contract SnappAuction is SnappBase {
             createNewPendingBatch();
         }
 
+        // Check that order is still valid 
+        require(validTill >= auctionIndex || validTill == 0, "orderBatch is no longer valid");
+
         for (uint i = 0; i < numOrders; i++) {
             orderHash = sha256(
                 abi.encodePacked(
@@ -135,7 +139,7 @@ contract SnappAuction is SnappBase {
         uint currentCnt = standingOrderData[accountId].currentCnt;
         StandingOrderBatch memory standingOrderBatch = standingOrderData[accountId].reservedAccountOrders[currentCnt];
         if (auctionIndex > standingOrderBatch.validFromIndex) {
-            currentCnt = currentCnt + ;
+            currentCnt = currentCnt + 1;
             standingOrderData[accountId].currentCnt = currentCnt;
             standingOrderBatch = standingOrderData[accountId].reservedAccountOrders[currentCnt];
             standingOrderBatch.validFromIndex = auctionIndex;
