@@ -1,5 +1,7 @@
 contracts/Migrations.sol
 .solhint.json
 .solhintignore
+.soliumignore
+.soliumrc.json
 
 node_modules/

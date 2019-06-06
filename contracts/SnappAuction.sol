@@ -1,4 +1,5 @@
 pragma solidity ^0.5.0;
+// solium-disable security/no-block-members
 
 import "./SnappBase.sol";
 
@@ -8,7 +9,7 @@ contract SnappAuction is SnappBase {
     uint16 public constant AUCTION_BATCH_SIZE = 1000;
     uint8 public constant AUCTION_RESERVED_ACCOUNTS = 50;
     uint8 public constant AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = 10;
-    
+
     struct StandingOrderBatch {
         bytes32 orderHash;
         uint validFromIndex; // validity is inclusive of the auction index
@@ -36,10 +37,10 @@ contract SnappAuction is SnappBase {
     );
 
     event StandingSellOrderBatch(
-        uint currentBatchIndex, 
-        uint16 accountId, 
-        uint8[] buyToken, 
-        uint8[] sellToken, 
+        uint currentBatchIndex,
+        uint16 accountId,
+        uint8[] buyToken,
+        uint8[] sellToken,
         uint128[] buyAmount,
         uint128[] sellAmount
     );
@@ -56,7 +57,7 @@ contract SnappAuction is SnappBase {
         uint8 numReservedAccounts,
         uint8 ordersPerReservedAccount
     );
-    
+
     constructor () public {
         emit AuctionInitialization(
             AUCTION_BATCH_SIZE, AUCTION_RESERVED_ACCOUNTS, AUCTION_RESERVED_ACCOUNT_BATCH_SIZE
@@ -81,7 +82,7 @@ contract SnappAuction is SnappBase {
     function getStandingOrderHash(uint16 userId, uint128 batchIndex) public view returns (bytes32) {
         return standingOrders[userId].reservedAccountOrders[batchIndex].orderHash;
     }
-    
+
     function getStandingOrderValidFrom(uint16 userId, uint128 batchIndex) public view returns (uint) {
         return standingOrders[userId].reservedAccountOrders[batchIndex].validFromIndex;
     }
@@ -91,7 +92,7 @@ contract SnappAuction is SnappBase {
         if (validTo == 0) {
             return MAX_UINT;
         } else {
-            return validTo - 1; 
+            return validTo - 1;
         }
     }
 
@@ -108,7 +109,7 @@ contract SnappAuction is SnappBase {
         uint128[] memory buyAmounts,
         uint128[] memory sellAmounts
     ) public onlyRegistered() {
-        
+
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
         require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Accout is not a reserved account");
@@ -116,7 +117,7 @@ contract SnappAuction is SnappBase {
         bytes32 orderHash;
         uint numOrders = buyTokens.length;
         require(numOrders <= AUCTION_RESERVED_ACCOUNT_BATCH_SIZE, "Too many orders for reserved batch");
-        
+
         if (
             auctionIndex == MAX_UINT ||
             block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
@@ -131,7 +132,7 @@ contract SnappAuction is SnappBase {
                     encodeOrder(accountId, buyTokens[i], sellTokens[i], buyAmounts[i], sellAmounts[i])
                 )
             );
-        }        
+        }
         uint currentBatchIndex = standingOrders[accountId].currentBatchIndex;
         StandingOrderBatch memory standingOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
         if (auctionIndex > standingOrderBatch.validFromIndex) {
@@ -214,8 +215,8 @@ contract SnappAuction is SnappBase {
         uint8 sellToken,
         uint128 buyAmount,
         uint128 sellAmount
-    ) 
-        internal view returns (bytes32) 
+    )
+        internal view returns (bytes32)
     {
         // Restrict buy and sell amount to occupy at most 96 bits.
         require(buyAmount < 0x1000000000000000000000000, "Buy amount too large!");
@@ -237,8 +238,8 @@ contract SnappAuction is SnappBase {
 
     function createNewPendingBatch() internal {
         require(
-                auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
-                "Too many pending auctions"
+            auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
+            "Too many pending auctions"
             );
         auctionIndex++;
         auctions[auctionIndex] = PendingBatch({
