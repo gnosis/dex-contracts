@@ -90,7 +90,8 @@ contract SnappAuction is SnappBase {
         uint8[] memory sellTokens,
         uint128[] memory buyAmounts,
         uint128[] memory sellAmounts,
-        uint prevValidFromAuctionIndex
+        uint prevValidFromAuctionIndex,
+        uint ordersReplayableUntil
     ) public onlyRegistered() {
         
         // Update Auction Hash based on request
@@ -110,6 +111,10 @@ contract SnappAuction is SnappBase {
         ) {
             createNewPendingBatch();
         }
+
+        //Checks that orders are not submitted after a long waiting time.
+        // This can be used by traders to enforce not placing orders after invalid state transitions
+        require(ordersReplayableUntil <= auctionIndex || ordersReplayableUntil == 0, "order no longer replayable");
 
         for (uint i = 0; i < numOrders; i++) {
             orderHash = sha256(
