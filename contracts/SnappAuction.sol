@@ -106,8 +106,7 @@ contract SnappAuction is SnappBase {
         uint8[] memory buyTokens,
         uint8[] memory sellTokens,
         uint128[] memory buyAmounts,
-        uint128[] memory sellAmounts,
-        uint validUntil
+        uint128[] memory sellAmounts
     ) public onlyRegistered() {
         
         // Update Auction Hash based on request
@@ -124,9 +123,6 @@ contract SnappAuction is SnappBase {
         ) {
             createNewPendingBatch();
         }
-
-        // Check that order is still valid 
-        require(validUntil >= auctionIndex || validUntil == 0, "orderBatch is no longer valid");
 
         for (uint i = 0; i < numOrders; i++) {
             orderHash = sha256(

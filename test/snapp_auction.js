@@ -134,7 +134,7 @@ contract("SnappAuction", async (accounts) => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
       await truffleAssert.reverts(
-        instance.placeStandingSellOrder([0], [1], [1], [1], 0, { from: user_2 }),
+        instance.placeStandingSellOrder([0], [1], [1], [1], { from: user_2 }),
         "Must have registered account"
       )
     })
@@ -144,7 +144,7 @@ contract("SnappAuction", async (accounts) => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
       await truffleAssert.reverts(
-        instance.placeStandingSellOrder([3], [1], [1], [1], 0, { from: user_1 }),
+        instance.placeStandingSellOrder([3], [1], [1], [1], { from: user_1 }),
         "Buy token is not registered"
       )
     })
@@ -153,7 +153,7 @@ contract("SnappAuction", async (accounts) => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       await truffleAssert.reverts(
-        instance.placeStandingSellOrder([1], [3], [1], [1], 0, { from: user_1 }),
+        instance.placeStandingSellOrder([1], [3], [1], [1], { from: user_1 }),
         "Sell token is not registered"
       )
     })
@@ -163,7 +163,7 @@ contract("SnappAuction", async (accounts) => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
       await truffleAssert.reverts(
-        instance.placeStandingSellOrder([0], [1], ["0x10000000000000000000000000"], [1], 0, { from: user_1 }),
+        instance.placeStandingSellOrder([0], [1], ["0x10000000000000000000000000"], [1], { from: user_1 }),
         "Buy amount too large!"
       )
     })
@@ -173,7 +173,7 @@ contract("SnappAuction", async (accounts) => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
       await truffleAssert.reverts(
-        instance.placeStandingSellOrder([0], [1], [1], ["0x10000000000000000000000000"], 0, { from: user_1 }),
+        instance.placeStandingSellOrder([0], [1], [1], ["0x10000000000000000000000000"], { from: user_1 }),
         "Sell amount too large!"
       )
     })
@@ -183,28 +183,8 @@ contract("SnappAuction", async (accounts) => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
       await truffleAssert.reverts(
-        instance.placeStandingSellOrder([0,0,0,1,1,1,1,1,1,1,2,0,1], [1], [1], ["0x10000000000000000000000000"], 0, { from: user_1 }),
+        instance.placeStandingSellOrder([0,0,0,1,1,1,1,1,1,1,2,0,1], [1], [1], ["0x10000000000000000000000000"], { from: user_1 }),
         "Too many orders for reserved batch"
-      )
-    })
-
-    it("Reject: submitted orderBatch is no longer valid", async () => {
-      const instance = await SnappAuction.new()
-      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
-
-      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], 0, { from: user_1 })
-      
-      // Wait for current order slot to be inactive
-      await waitForNSeconds(181)
-
-      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,0], 0, { from: user_1 })
-
-      // Wait for current order slot to be inactive
-      await waitForNSeconds(181)
-
-      await truffleAssert.reverts(
-        instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,0], 1, { from: user_1 }),
-        "orderBatch is no longer valid"
       )
     })
 
@@ -212,7 +192,7 @@ contract("SnappAuction", async (accounts) => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
-      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], 0, { from: user_1 })
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
 
       const userId = await instance.publicKeyToAccountMap.call(user_1)
       const pointer = await instance.getStandingOrderCounter.call(userId)
@@ -225,9 +205,9 @@ contract("SnappAuction", async (accounts) => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
-      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], 0, { from: user_1 })
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
       
-      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,0], 0, { from: user_1 })
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,0], { from: user_1 })
 
       const userId = await instance.publicKeyToAccountMap.call(user_1)
       const pointer = await instance.getStandingOrderCounter.call(userId)
@@ -244,12 +224,12 @@ contract("SnappAuction", async (accounts) => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
-      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], 0, { from: user_1 })
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
       
       // Wait for current order slot to be inactive
       await waitForNSeconds(181)
 
-      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,0], 0, { from: user_1 })
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,0], { from: user_1 })
 
       const userId = await instance.publicKeyToAccountMap.call(user_1)
       const pointer = await instance.getStandingOrderCounter.call(userId)
