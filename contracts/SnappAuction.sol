@@ -98,7 +98,7 @@ contract SnappAuction is SnappBase {
         require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Accout is not a reserved account");
 
         // Check correctness of prevValidFromAuctionIndex
-        require( standingOrderPlacements[accountId][prevValidFromAuctionIndex].validToAuctionIndex != MAX_UINT, "validToAuctionIndex is set, this is not the previous orderbatch");
+        require( standingOrderPlacements[accountId][prevValidFromAuctionIndex].validToAuctionIndex != MAX_UINT || prevValidFromAuctionIndex == 0, "validToAuctionIndex is set, this is not the previous orderbatch");
 
         bytes32 orderHash;
         uint numOrders = buyTokens.length;
