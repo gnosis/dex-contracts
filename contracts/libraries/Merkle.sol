@@ -17,7 +17,7 @@ library Merkle {
         internal
         pure
         returns (bool)
-    {   
+    {
         require(proof.length == height * 32, "Proof length does not agree with height provided");
         bytes32 proofElement;
         bytes32 computedHash = leaf;

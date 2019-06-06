@@ -14,7 +14,7 @@ contract SnappBase is Ownable {
     uint8 public constant MAX_TOKENS = 30;
     uint8 public constant DEPOSIT_BATCH_SIZE = 100;
     uint8 public constant WITHDRAW_BATCH_SIZE = 100;
-    
+
     bytes32[] public stateRoots;  // Pedersen Hash
 
     enum TransitionType {
@@ -155,7 +155,7 @@ contract SnappBase is Ownable {
         );
 
         if (depositIndex == MAX_UINT ||
-            deposits[depositIndex].size == DEPOSIT_BATCH_SIZE || 
+            deposits[depositIndex].size == DEPOSIT_BATCH_SIZE ||
             block.timestamp > deposits[depositIndex].creationTimestamp + 3 minutes
         ) {
             depositIndex++;
@@ -186,20 +186,23 @@ contract SnappBase is Ownable {
         bytes32 _depositHash
     )
         public onlyOwner()
-    {   
+    {
         require(slot != MAX_UINT && slot <= depositIndex, "Requested deposit slot does not exist");
         require(slot == 0 || deposits[slot-1].appliedAccountStateIndex != 0, "Must apply deposit slots in order!");
         require(deposits[slot].shaHash == _depositHash, "Deposits have been reorged");
         require(deposits[slot].appliedAccountStateIndex == 0, "Deposits already processed");
-        require(block.timestamp > deposits[slot].creationTimestamp + 3 minutes, "Requested deposit slot is still active");
+        require(
+            block.timestamp > deposits[slot].creationTimestamp + 3 minutes,
+            "Requested deposit slot is still active"
+        );
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
 
-        // Note that the only slot that can ever be empty is the first (at index zero) 
+        // Note that the only slot that can ever be empty is the first (at index zero)
         // This occurs when no deposits are made within the first 20 blocks of the contract's deployment
         // This code allows for the processing of the empty block and since it will only happen once
         // No, additional verification is necessary.
 
-        stateRoots.push(_newStateRoot);        
+        stateRoots.push(_newStateRoot);
         deposits[slot].appliedAccountStateIndex = stateIndex();
 
         emit StateTransition(TransitionType.Deposit, stateIndex(), _newStateRoot, slot);
@@ -220,7 +223,7 @@ contract SnappBase is Ownable {
         // This is governed by WITHDRAW_BATCH_SIZE and creationTimestamp
         if (
             withdrawIndex == MAX_UINT ||
-            pendingWithdraws[withdrawIndex].size == WITHDRAW_BATCH_SIZE || 
+            pendingWithdraws[withdrawIndex].size == WITHDRAW_BATCH_SIZE ||
             block.timestamp > pendingWithdraws[withdrawIndex].creationTimestamp + 3 minutes
         ) {
             withdrawIndex++;
@@ -262,7 +265,7 @@ contract SnappBase is Ownable {
         require(pendingWithdraws[slot].shaHash == _withdrawHash, "Withdraws have been reorged");
         require(pendingWithdraws[slot].appliedAccountStateIndex == 0, "Withdraws already processed");
         require(
-            block.timestamp > pendingWithdraws[slot].creationTimestamp + 3 minutes, 
+            block.timestamp > pendingWithdraws[slot].creationTimestamp + 3 minutes,
             "Requested withdraw slot is still active");
         require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect State Root");
 
@@ -291,13 +294,13 @@ contract SnappBase is Ownable {
         // No need to check tokenId or accountId (wouldn't pass merkle proof if unregistered).
         require(pendingWithdraws[slot].appliedAccountStateIndex > 0, "Requested slot has not been processed");
         require(claimableWithdraws[slot].claimedBitmap[inclusionIndex] == false, "Already claimed");
-        
+
         bytes32 leaf = encodeFlux(accountId, tokenId, amount);
         require(
             leaf.checkMembership(inclusionIndex, claimableWithdraws[slot].merkleRoot, proof, 7),
             "Failed Merkle membership check."
         );
-        
+
         // Set claim bitmap to true (indicating that funds have been claimed).
         claimableWithdraws[slot].claimedBitmap[inclusionIndex] = true;
 
