@@ -20,7 +20,7 @@ contract SnappAuction is SnappBase {
         uint currentBatchIndex;
     }
 
-    mapping (uint16 => StandingOrderData) public standingOrderData;
+    mapping (uint16 => StandingOrderData) public standingOrders;
 
     uint public auctionIndex = MAX_UINT;
     mapping (uint => PendingBatch) public auctions;
@@ -79,15 +79,15 @@ contract SnappAuction is SnappBase {
     }
 
     function getStandingOrderHash(uint16 userId, uint128 batchIndex) public view returns (bytes32) {
-        return standingOrderData[userId].reservedAccountOrders[batchIndex].orderHash;
+        return standingOrders[userId].reservedAccountOrders[batchIndex].orderHash;
     }
     
     function getStandingOrderValidFrom(uint16 userId, uint128 batchIndex) public view returns (uint) {
-        return standingOrderData[userId].reservedAccountOrders[batchIndex].validFromIndex;
+        return standingOrders[userId].reservedAccountOrders[batchIndex].validFromIndex;
     }
 
     function getStandingOrderValidTo(uint16 userId, uint128 batchIndex) public view returns (uint) {
-        uint validTo = standingOrderData[userId].reservedAccountOrders[batchIndex + 1].validFromIndex;
+        uint validTo = standingOrders[userId].reservedAccountOrders[batchIndex + 1].validFromIndex;
         if (validTo == 0) {
             return MAX_UINT;
         } else {
@@ -96,7 +96,7 @@ contract SnappAuction is SnappBase {
     }
 
     function getStandingOrderCounter(uint16 userId) public view returns (uint) {
-        return standingOrderData[userId].currentBatchIndex;
+        return standingOrders[userId].currentBatchIndex;
     }
 
     /**
@@ -132,18 +132,20 @@ contract SnappAuction is SnappBase {
                 )
             );
         }        
-        uint currentBatchIndex = standingOrderData[accountId].currentBatchIndex;
-        StandingOrderBatch memory standingOrderBatch = standingOrderData[accountId].reservedAccountOrders[currentBatchIndex];
+        uint currentBatchIndex = standingOrders[accountId].currentBatchIndex;
+        StandingOrderBatch memory standingOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
         if (auctionIndex > standingOrderBatch.validFromIndex) {
             currentBatchIndex = currentBatchIndex + 1;
-            standingOrderData[accountId].currentBatchIndex = currentBatchIndex;
-            standingOrderBatch = standingOrderData[accountId].reservedAccountOrders[currentBatchIndex];
+            standingOrders[accountId].currentBatchIndex = currentBatchIndex;
+            standingOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
             standingOrderBatch.validFromIndex = auctionIndex;
             standingOrderBatch.orderHash = orderHash;
         } else {
             standingOrderBatch.orderHash = orderHash;
         }
-        standingOrderData[accountId].reservedAccountOrders[currentBatchIndex] = standingOrderBatch;
+        //TODO: The case auctionIndex < standingOrderBatch.validFromIndex can happen once roll-backs are implemented
+        //Then we have to revert the orderplacement
+        standingOrders[accountId].reservedAccountOrders[currentBatchIndex] = standingOrderBatch;
         emit StandingSellOrderBatch(currentBatchIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
     }
 
