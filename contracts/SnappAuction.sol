@@ -22,6 +22,8 @@ contract SnappAuction is SnappBase {
 
     mapping (uint16 => StandingOrderData) public standingOrders;
 
+    mapping (uint => uint) indexTransitionBlock;
+
     uint public auctionIndex = MAX_UINT;
     mapping (uint => PendingBatch) public auctions;
 
@@ -184,7 +186,7 @@ contract SnappAuction is SnappBase {
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
         bytes32 _orderHash,
-        uint[] memory _standingOrderIndex,
+        bytes32 _transitionBlockHash,
         bytes memory pricesAndVolumes
     )
         public onlyOwner()
@@ -192,13 +194,8 @@ contract SnappAuction is SnappBase {
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested order slot does not exist");
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
-        
-        bytes memory batchHashSequence = abi.encode(auctions[slot].shaHash);
-        for(uint i = 0; i < AUCTION_RESERVED_ACCOUNTS; i++){
-            require(orderBatchIsValidAtAuctionIndex(auctionIndex, uint8(i), _standingOrderIndex[i]), "non-valid standingOrderBatch referenced");
-            batchHashSequence.push(standingOrders[uint16(i)].reservedAccountOrders[_standingOrderIndex[i]].orderHash);
-        }
-        require(sha256(abi.encode(batchHashSequence)) == _orderHash, "Order hash doesn't agree");
+        require(auctions[slot].shaHash == _orderHash, "Order hash doesn't agree");
+        require(blockhash(indexTransitionBlock[slot]) == _transitionBlockHash, "transitionBlockHash wrong, Solution was not calculated on correct data");
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
                 auctions[slot].size == maxUnreservedOrderCount(),
@@ -238,7 +235,7 @@ contract SnappAuction is SnappBase {
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
     }
 
-    function orderBatchIsValidAtAuctionIndex(uint autionIndex, uint8 userId, uint batchIndex) public view returns(bool) {
+    function orderBatchIsValidAtAuctionIndex(uint autionIndex, uint8 userId, uint128 batchIndex) public view returns(bool) {
         if (
             auctionIndex >= getStandingOrderValidFrom(userId, batchIndex) 
             && auctionIndex <= getStandingOrderValidTo(userId, batchIndex)
@@ -258,6 +255,7 @@ contract SnappAuction is SnappBase {
                 auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
                 "Too many pending auctions"
             );
+        indexTransitionBlock[auctionIndex] = block.number;    
         auctionIndex++;
         auctions[auctionIndex] = PendingBatch({
             size: 0,
