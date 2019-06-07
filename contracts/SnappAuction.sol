@@ -182,9 +182,10 @@ contract SnappAuction is SnappBase {
         auctions[auctionIndex].size++;
     }
 
-    function placeMultiSellOrder(bytes memory packedOrders) public {
+    function placeMultiSellOrder(bytes memory packedOrders) public onlyRegistered() {
         // Note that this could result failure of all orders if even one fails.
         require(packedOrders.length % 28 == 0, "Each order should be packed in 28 bytes!");
+
         for (uint i = 0; i < packedOrders.length / 28; i++) {
             bytes memory orderData = packedOrders.slice(28*i, 28*(i+1));
             unpackAndVerifyOrderData(orderData);
