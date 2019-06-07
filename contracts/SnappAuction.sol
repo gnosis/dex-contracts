@@ -2,9 +2,11 @@ pragma solidity ^0.5.0;
 // solium-disable security/no-block-members
 
 import "./SnappBase.sol";
+import "../node_modules/solidity-bytes-utils/contracts/BytesLib.sol";
 
 
 contract SnappAuction is SnappBase {
+    using BytesLib for bytes;
 
     uint16 public constant AUCTION_BATCH_SIZE = 1000;
     uint8 public constant AUCTION_RESERVED_ACCOUNTS = 50;
@@ -34,6 +36,12 @@ contract SnappAuction is SnappBase {
         uint8 sellToken,
         uint128 buyAmount,
         uint128 sellAmount
+    );
+
+    event PackedSellOrder(
+        uint auctionId,
+        uint16 slotIndex,
+        bytes encodedOrder
     );
 
     event StandingSellOrderBatch(
@@ -157,13 +165,7 @@ contract SnappAuction is SnappBase {
         uint128 sellAmount
     ) public onlyRegistered() {
 
-        if (
-            auctionIndex == MAX_UINT ||
-            auctions[auctionIndex].size == maxUnreservedOrderCount() ||
-            block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
-        ) {
-            createNewPendingBatch();
-        }
+        orderBatchUpdate();
 
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
@@ -180,20 +182,20 @@ contract SnappAuction is SnappBase {
         auctions[auctionIndex].size++;
     }
 
-    function placeMultiSellOrder(
-        uint8[] memory buyTokens,
-        uint8[] memory sellTokens,
-        uint128[] memory buyAmounts,
-        uint128[] memory sellAmounts
-    ) public {
-        uint numOrders = buyTokens.length;
-        require(numOrders == sellTokens.length, "numOrders != sellTokens length");
-        require(numOrders == buyAmounts.length, "numOrders != buyAmounts length");
-        require(numOrders == sellAmounts.length, "numOrders != sellAmounts length");
+    function placeMultiSellOrder(bytes memory packedOrders) public {
+        // Note that this could result failure of all orders if even one fails.
+        require(packedOrders.length % 27 == 0, "Each order should be packed in 27 bytes!");
+        for (uint i = 0; i < packedOrders.length / 27; i++) {
+            bytes memory orderData = packedOrders.slice(27*i, 27*(i+1));
+            unpackAndVerifyOrderData(orderData);
+            orderBatchUpdate();
 
-        for (uint i = 0; i < numOrders; i++) {
-            // onlyRegistered() enforced by this function call
-            placeSellOrder(buyTokens[i], sellTokens[i], buyAmounts[i], sellAmounts[i]);
+            bytes32 nextAuctionHash = sha256(abi.encodePacked(auctions[auctionIndex].shaHash, orderData));
+            auctions[auctionIndex].shaHash = nextAuctionHash;
+
+            emit PackedSellOrder(auctionIndex, auctions[auctionIndex].size, orderData);
+            // Only increment size after event (so it is emitted as an index)
+            auctions[auctionIndex].size++;
         }
     }
 
@@ -265,5 +267,47 @@ contract SnappAuction is SnappBase {
             creationTimestamp: block.timestamp,
             appliedAccountStateIndex: 0
         });
+    }
+
+    function orderBatchUpdate() private {
+        if (
+            auctionIndex == MAX_UINT ||
+            auctions[auctionIndex].size == maxUnreservedOrderCount() ||
+            block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
+        ) {
+            createNewPendingBatch();
+        }
+    }
+
+    function unpackAndVerifyOrderData(bytes memory packedOrder) private view {
+        // TODO - use ECRecover for signatures from first 16 bits of packedOrder
+        uint16 accountId = publicKeyToAccountMap(msg.sender);
+        // uint16 accountId = BytesLib.toUint16(orderData, 0);
+        // WARNING - currently this enables any registered member to place an order for any other registered member!
+
+        uint8 buyToken = BytesLib.toUint8(packedOrder, 2);
+        uint8 sellToken = BytesLib.toUint8(packedOrder, 2 + 1);
+
+        // Would have preferred to use uint 96 or 128, but BytesLib doesn't have this.
+        uint buyAmount = BytesLib.toUint(packedOrder, 2 + 1 + 1);
+        uint sellAmount = BytesLib.toUint(packedOrder, 2 + 1 + 1 + 12);
+        verifyOrderData(accountId, buyToken, sellToken, buyAmount, sellAmount);
+    }
+
+    function verifyOrderData(
+        uint16 accountId,
+        uint8 buyToken,
+        uint8 sellToken,
+        uint buyAmount,
+        uint sellAmount
+    ) private view {
+        require(hasAccount(accountId), "Requested account not registered!");
+        // Restrict buy and sell amount to occupy at most 96 bits.
+        require(buyAmount < 0x1000000000000000000000000, "Buy amount too large!");
+        require(sellAmount < 0x1000000000000000000000000, "Sell amount too large!");
+
+        // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
+        require(buyToken < numTokens, "Buy token is not registered");
+        require(sellToken < numTokens, "Sell token is not registered");
     }
 }
