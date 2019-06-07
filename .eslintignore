@@ -1,5 +1,5 @@
 build
-contracts/*
+contracts
 .*
 node_modules
 truffle-config.js
