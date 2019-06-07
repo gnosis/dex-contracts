@@ -184,6 +184,7 @@ contract SnappAuction is SnappBase {
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
         bytes32 _orderHash,
+        uint[] memory _standingOrderIndex,
         bytes memory pricesAndVolumes
     )
         public onlyOwner()
@@ -191,7 +192,13 @@ contract SnappAuction is SnappBase {
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested order slot does not exist");
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
-        require(auctions[slot].shaHash == _orderHash, "Order hash doesn't agree");
+        
+        bytes memory batchHashSequence = abi.encode(auctions[slot].shaHash);
+        for(uint i = 0; i < AUCTION_RESERVED_ACCOUNTS; i++){
+            require(orderBatchIsValidAtAuctionIndex(auctionIndex, uint8(i), _standingOrderIndex[i]), "non-valid standingOrderBatch referenced");
+            batchHashSequence.push(standingOrders[uint16(i)].reservedAccountOrders[_standingOrderIndex[i]].orderHash);
+        }
+        require(sha256(abi.encode(batchHashSequence)) == _orderHash, "Order hash doesn't agree");
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
                 auctions[slot].size == maxUnreservedOrderCount(),
@@ -229,6 +236,17 @@ contract SnappAuction is SnappBase {
 
         // solhint-disable-next-line max-line-length
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
+    }
+
+    function orderBatchIsValidAtAuctionIndex(uint autionIndex, uint8 userId, uint batchIndex) public view returns(bool) {
+        if (
+            auctionIndex >= getStandingOrderValidFrom(userId, batchIndex) 
+            && auctionIndex <= getStandingOrderValidTo(userId, batchIndex)
+        ) {
+            return true;
+        } else { 
+            return false;
+        }
     }
 
     function maxUnreservedOrderCount() internal pure returns (uint16) {
