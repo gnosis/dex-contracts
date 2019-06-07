@@ -133,19 +133,19 @@ contract SnappAuction is SnappBase {
             );
         }        
         uint currentBatchIndex = standingOrders[accountId].currentBatchIndex;
-        StandingOrderBatch memory standingOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
-        if (auctionIndex > standingOrderBatch.validFromIndex) {
+        StandingOrderBatch memory currentOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
+        if (auctionIndex > currentOrderBatch.validFromIndex) {
             currentBatchIndex = currentBatchIndex + 1;
             standingOrders[accountId].currentBatchIndex = currentBatchIndex;
-            standingOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
-            standingOrderBatch.validFromIndex = auctionIndex;
-            standingOrderBatch.orderHash = orderHash;
+            currentOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
+            currentOrderBatch.validFromIndex = auctionIndex;
+            currentOrderBatch.orderHash = orderHash;
         } else {
-            standingOrderBatch.orderHash = orderHash;
+            currentOrderBatch.orderHash = orderHash;
         }
-        //TODO: The case auctionIndex < standingOrderBatch.validFromIndex can happen once roll-backs are implemented
+        //TODO: The case auctionIndex < currentOrderBatch.validFromIndex can happen once roll-backs are implemented
         //Then we have to revert the orderplacement
-        standingOrders[accountId].reservedAccountOrders[currentBatchIndex] = standingOrderBatch;
+        standingOrders[accountId].reservedAccountOrders[currentBatchIndex] = currentOrderBatch;
         emit StandingSellOrderBatch(currentBatchIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
     }
 
@@ -214,8 +214,8 @@ contract SnappAuction is SnappBase {
         uint8 sellToken,
         uint128 buyAmount,
         uint128 sellAmount
-    ) 
-        internal view returns (bytes32) 
+    )
+        internal view returns (bytes32)
     {
         // Restrict buy and sell amount to occupy at most 96 bits.
         require(buyAmount < 0x1000000000000000000000000, "Buy amount too large!");
