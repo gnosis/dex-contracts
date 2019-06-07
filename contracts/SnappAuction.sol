@@ -235,17 +235,6 @@ contract SnappAuction is SnappBase {
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
     }
 
-    function orderBatchIsValidAtAuctionIndex(uint autionIndex, uint8 userId, uint128 batchIndex) public view returns(bool) {
-        if (
-            auctionIndex >= getStandingOrderValidFrom(userId, batchIndex) 
-            && auctionIndex <= getStandingOrderValidTo(userId, batchIndex)
-        ) {
-            return true;
-        } else { 
-            return false;
-        }
-    }
-
     function maxUnreservedOrderCount() internal pure returns (uint16) {
         return AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE);
     }
