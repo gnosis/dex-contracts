@@ -5,7 +5,7 @@ pragma solidity ^0.5.0;
 //  contracts during development.
 //
 //  For other environments, only use compiled contracts from the NPM package.
-import "../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
 
 
 // solium-disable no-empty-blocks

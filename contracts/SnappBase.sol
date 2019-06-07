@@ -1,8 +1,8 @@
 pragma solidity ^0.5.0;
 
 // solium-disable security/no-block-members
-import "../node_modules/openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "../node_modules/openzeppelin-solidity/contracts/ownership/Ownable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./libraries/Merkle.sol";
 import "./libraries/IdToAddressBiMap.sol";
 

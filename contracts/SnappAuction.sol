@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 // solium-disable security/no-block-members
 
 import "./SnappBase.sol";
-import "../node_modules/solidity-bytes-utils/contracts/BytesLib.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 
 contract SnappAuction is SnappBase {
