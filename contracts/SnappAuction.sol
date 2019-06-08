@@ -281,7 +281,7 @@ contract SnappAuction is SnappBase {
     }
 
     function unpackAndVerifyOrderData(bytes memory packedOrder) private view {
-        // TODO - use ECRecover for signatures from first 16 bits of packedOrder
+        // TODO - use ECRecover from signature contained in first 65 bytes of packedOrder
         uint16 accountId = publicKeyToAccountMap(msg.sender);
         // uint16 accountId = BytesLib.toUint16(orderData, 0);
         // WARNING - currently this enables any registered member to place an order for any other registered member!
