@@ -151,31 +151,6 @@ contract SnappAuction is SnappBase {
         standingOrders[accountId].reservedAccountOrders[currentBatchIndex] = currentOrderBatch;
         emit StandingSellOrderBatch(currentBatchIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
     }
-    
-    // TODO - remove this completely
-    // function placeSellOrder(
-    //     uint8 buyToken,
-    //     uint8 sellToken,
-    //     uint128 buyAmount,
-    //     uint128 sellAmount
-    // ) public onlyRegistered() {
-
-    //     orderBatchUpdate();
-
-    //     // Update Auction Hash based on request
-    //     uint16 accountId = publicKeyToAccountMap(msg.sender);
-    //     bytes32 nextAuctionHash = sha256(
-    //         abi.encodePacked(
-    //             auctions[auctionIndex].shaHash,
-    //             encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
-    //         )
-    //     );
-    //     auctions[auctionIndex].shaHash = nextAuctionHash;
-
-    //     emit SellOrder(auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount);
-    //     // Only increment size after event (so it is emitted as an index)
-    //     auctions[auctionIndex].size++;
-    // }
 
     function placeSellOrders(bytes memory packedOrders) public onlyRegistered() {
         // Note that this could result failure of all orders if even one fails.
