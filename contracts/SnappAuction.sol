@@ -166,11 +166,11 @@ contract SnappAuction is SnappBase {
             uint8 sellToken = BytesLib.toUint8(orderData, 1);
 
             uint96 buyAmount;
-            assembly {
+            assembly {  // solhint-disable no-inline-assembly
                 buyAmount := mload(add(add(orderData, 0xc), 2))
             }
             uint96 sellAmount;
-            assembly {
+            assembly {  // solhint-disable no-inline-assembly
                 sellAmount := mload(add(add(orderData, 0xc), 14))
             }
             orderBatchUpdate();  // Could this be done more efficiently?
@@ -179,7 +179,7 @@ contract SnappAuction is SnappBase {
             );
             bytes32 nextAuctionHash = sha256(
                 abi.encodePacked(
-                    auctions[auctionIndex].shaHash, 
+                    auctions[auctionIndex].shaHash,
                     encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
                 )
             );
