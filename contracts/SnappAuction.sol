@@ -34,14 +34,8 @@ contract SnappAuction is SnappBase {
         uint16 accountId,
         uint8 buyToken,
         uint8 sellToken,
-        uint128 buyAmount,
-        uint128 sellAmount
-    );
-
-    event PackedSellOrder(
-        uint auctionId,
-        uint16 slotIndex,
-        bytes encodedOrder
+        uint96 buyAmount,
+        uint96 sellAmount
     );
 
     event StandingSellOrderBatch(
@@ -49,8 +43,8 @@ contract SnappAuction is SnappBase {
         uint16 accountId,
         uint8[] buyToken,
         uint8[] sellToken,
-        uint128[] buyAmount,
-        uint128[] sellAmount
+        uint96[] buyAmount,
+        uint96[] sellAmount
     );
 
     event AuctionSettlement(
@@ -114,8 +108,8 @@ contract SnappAuction is SnappBase {
     function placeStandingSellOrder(
         uint8[] memory buyTokens,
         uint8[] memory sellTokens,
-        uint128[] memory buyAmounts,
-        uint128[] memory sellAmounts
+        uint96[] memory buyAmounts,
+        uint96[] memory sellAmounts
     ) public onlyRegistered() {
 
         // Update Auction Hash based on request
@@ -157,44 +151,67 @@ contract SnappAuction is SnappBase {
         standingOrders[accountId].reservedAccountOrders[currentBatchIndex] = currentOrderBatch;
         emit StandingSellOrderBatch(currentBatchIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
     }
+    
+    // TODO - remove this completely
+    // function placeSellOrder(
+    //     uint8 buyToken,
+    //     uint8 sellToken,
+    //     uint128 buyAmount,
+    //     uint128 sellAmount
+    // ) public onlyRegistered() {
 
-    function placeSellOrder(
-        uint8 buyToken,
-        uint8 sellToken,
-        uint128 buyAmount,
-        uint128 sellAmount
-    ) public onlyRegistered() {
+    //     orderBatchUpdate();
 
-        orderBatchUpdate();
+    //     // Update Auction Hash based on request
+    //     uint16 accountId = publicKeyToAccountMap(msg.sender);
+    //     bytes32 nextAuctionHash = sha256(
+    //         abi.encodePacked(
+    //             auctions[auctionIndex].shaHash,
+    //             encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
+    //         )
+    //     );
+    //     auctions[auctionIndex].shaHash = nextAuctionHash;
 
-        // Update Auction Hash based on request
-        uint16 accountId = publicKeyToAccountMap(msg.sender);
-        bytes32 nextAuctionHash = sha256(
-            abi.encodePacked(
-                auctions[auctionIndex].shaHash,
-                encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
-            )
-        );
-        auctions[auctionIndex].shaHash = nextAuctionHash;
+    //     emit SellOrder(auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount);
+    //     // Only increment size after event (so it is emitted as an index)
+    //     auctions[auctionIndex].size++;
+    // }
 
-        emit SellOrder(auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount);
-        // Only increment size after event (so it is emitted as an index)
-        auctions[auctionIndex].size++;
-    }
-
-    function placeMultiSellOrder(bytes memory packedOrders) public onlyRegistered() {
+    function placeSellOrders(bytes memory packedOrders) public onlyRegistered() {
         // Note that this could result failure of all orders if even one fails.
-        require(packedOrders.length % 28 == 0, "Each order should be packed in 28 bytes!");
+        require(packedOrders.length % 26 == 0, "Each order should be packed in 26 bytes!");
+        // TODO - use ECRecover from signature contained in first 65 bytes of packedOrder
+        uint16 accountId = publicKeyToAccountMap(msg.sender);
+        bytes memory orderData;
 
-        for (uint i = 0; i < packedOrders.length / 28; i++) {
-            bytes memory orderData = packedOrders.slice(28*i, 28*(i+1));
-            unpackAndVerifyOrderData(orderData);
-            orderBatchUpdate();
+        for (uint i = 0; i < packedOrders.length / 26; i++) {
+            orderData = packedOrders.slice(26*i, 26);
 
-            bytes32 nextAuctionHash = sha256(abi.encodePacked(auctions[auctionIndex].shaHash, orderData));
+            uint8 buyToken = BytesLib.toUint8(orderData, 0);
+            uint8 sellToken = BytesLib.toUint8(orderData, 1);
+
+            uint96 buyAmount;
+            assembly {
+                buyAmount := mload(add(add(orderData, 0xc), 2))
+            }
+            uint96 sellAmount;
+            assembly {
+                sellAmount := mload(add(add(orderData, 0xc), 14))
+            }
+            orderBatchUpdate();  // Could this be done more efficiently?
+            emit SellOrder(
+                auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount
+            );
+            bytes32 nextAuctionHash = sha256(
+                abi.encodePacked(
+                    auctions[auctionIndex].shaHash, 
+                    encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
+                )
+            );
             auctions[auctionIndex].shaHash = nextAuctionHash;
-
-            emit PackedSellOrder(auctionIndex, auctions[auctionIndex].size, orderData);
+            emit SellOrder(
+                auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount
+            );
             // Only increment size after event (so it is emitted as an index)
             auctions[auctionIndex].size++;
         }
@@ -233,8 +250,8 @@ contract SnappAuction is SnappBase {
         uint16 accountId,
         uint8 buyToken,
         uint8 sellToken,
-        uint128 buyAmount,
-        uint128 sellAmount
+        uint96 buyAmount,
+        uint96 sellAmount
     )
         internal view returns (bytes32)
     {
@@ -242,10 +259,9 @@ contract SnappAuction is SnappBase {
         require(buyAmount < 0x1000000000000000000000000, "Buy amount too large!");
         require(sellAmount < 0x1000000000000000000000000, "Sell amount too large!");
 
-        // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
+        // Must have 0 <= tokenId < MAX_TOKENS anyway, so may as well ensure registered.
         require(buyToken < numTokens, "Buy token is not registered");
         require(sellToken < numTokens, "Sell token is not registered");
-
         // Could also enforce that buyToken != sellToken, but not technically illegal.
 
         // solhint-disable-next-line max-line-length
@@ -278,37 +294,5 @@ contract SnappAuction is SnappBase {
         ) {
             createNewPendingBatch();
         }
-    }
-
-    function unpackAndVerifyOrderData(bytes memory packedOrder) private view {
-        // TODO - use ECRecover from signature contained in first 65 bytes of packedOrder
-        uint16 accountId = publicKeyToAccountMap(msg.sender);
-        // uint16 accountId = BytesLib.toUint16(orderData, 0);
-        // WARNING - currently this enables any registered member to place an order for any other registered member!
-
-        uint8 buyToken = BytesLib.toUint8(packedOrder, 2);
-        uint8 sellToken = BytesLib.toUint8(packedOrder, 2 + 1);
-
-        // Would have preferred to use uint 96 or 128, but BytesLib doesn't have this.
-        uint buyAmount = BytesLib.toUint(packedOrder, 2 + 1 + 1);
-        uint sellAmount = BytesLib.toUint(packedOrder, 2 + 1 + 1 + 12);
-        verifyOrderData(accountId, buyToken, sellToken, buyAmount, sellAmount);
-    }
-
-    function verifyOrderData(
-        uint16 accountId,
-        uint8 buyToken,
-        uint8 sellToken,
-        uint buyAmount,
-        uint sellAmount
-    ) private view {
-        require(hasAccount(accountId), "Requested account not registered!");
-        // Restrict buy and sell amount to occupy at most 96 bits.
-        require(buyAmount < 0x1000000000000000000000000, "Buy amount too large!");
-        require(sellAmount < 0x1000000000000000000000000, "Sell amount too large!");
-
-        // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
-        require(buyToken < numTokens, "Buy token is not registered");
-        require(sellToken < numTokens, "Sell token is not registered");
     }
 }

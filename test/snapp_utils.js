@@ -47,14 +47,26 @@ const uint128 = function(num) {
   return num.toString(16).padStart(32, "0")
 }
 
+// returns byte string of hexed-sliced-padded int
+const uint96 = function(num) {
+  // TODO - make this interpret the large end of 2^96
+  assert(num < 2**96)
+  return num.toString(16).padStart(24, "0")
+}
+
 // returns equivalent to Soliditiy's abi.encodePacked(uint16 a, uint8 b, uint128 c)
 const encodePacked_16_8_128 = function(a, b, c) {
   return Buffer.from("00000000000000000000000000" + uint16(a) + uint8(b) + uint128(c), "hex")
+}
+
+const encodeOrder = function(buyToken, sellToken, buyAmount, sellAmount) {
+  return Buffer.from(uint8(buyToken) + uint8(sellToken) +  uint96(buyAmount) + uint96(sellAmount), "hex")
 }
 
 module.exports = {
   falseArray,
   isActive,
   stateHash,
-  encodePacked_16_8_128
+  encodePacked_16_8_128,
+  encodeOrder
 }
