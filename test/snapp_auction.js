@@ -5,7 +5,8 @@ const truffleAssert = require("truffle-assertions")
 
 const {
   waitForNSeconds,
-  setupEnvironment } = require("./utilities.js")
+  setupEnvironment,
+  splitArray } = require("./utilities.js")
 
 const {
   isActive,
@@ -440,15 +441,26 @@ contract("SnappAuction", async (accounts) => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       const order = encodeOrder(0, 1, 2, 3)
-      const maxAuctionSize = 250;  // TODO - fetch this from contract.
-      const orders = Array(maxAuctionSize + 1).fill(order)
-      const concatenated_orders = Buffer.concat(orders)
-      await instance.placeSellOrders(concatenated_orders, { from: user_1 })
+      const maxAuctionSize = (await instance.AUCTION_BATCH_SIZE.call()).toNumber()
+      const orders = Array(maxAuctionSize).fill(order)
+      const partitionedOrders = splitArray(orders, 100)
+      var concatenated_orders
+      var count = 0
+      await partitionedOrders.forEach(function(partition) {  // should be about 10
+        concatenated_orders = Buffer.concat(partition)
+        instance.placeSellOrders(concatenated_orders, { from: user_1 })
+      })
+      // const concatenated_orders = Buffer.concat(orders)
+      // await instance.placeSellOrders(concatenated_orders, { from: user_1 })
 
       const auctionIndex = (await instance.auctionIndex.call()).toNumber()
       const currentAuction = await instance.auctions(auctionIndex)
 
       assert.equal(currentAuction.size.toNumber(), maxAuctionSize)
+
+      // The last order should wind up in second batch!
+      await instance.placeSellOrders(order, { from: user_1 })
+      console.log((await instance.auctionIndex.call()).toNumber())
     })
   })
 })
