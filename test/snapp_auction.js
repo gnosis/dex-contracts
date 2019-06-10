@@ -434,4 +434,21 @@ contract("SnappAuction", async (accounts) => {
       await instance.applyAuction(second_slot, new_state, "0x2", second_auction_state.shaHash, auctionSolution)
     })
   })
+
+  describe("Larger Test Cases", () => {
+    it.only("Fill order batch", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const order = encodeOrder(0, 1, 2, 3)
+      const maxAuctionSize = 250;  // TODO - fetch this from contract.
+      const orders = Array(maxAuctionSize + 1).fill(order)
+      const concatenated_orders = Buffer.concat(orders)
+      await instance.placeSellOrders(concatenated_orders, { from: user_1 })
+
+      const auctionIndex = (await instance.auctionIndex.call()).toNumber()
+      const currentAuction = await instance.auctions(auctionIndex)
+
+      assert.equal(currentAuction.size.toNumber(), maxAuctionSize)
+    })
+  })
 })
