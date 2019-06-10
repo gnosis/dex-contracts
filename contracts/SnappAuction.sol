@@ -173,9 +173,6 @@ contract SnappAuction is SnappBase {
                 sellAmount := mload(add(add(orderData, 0xc), 14))
             }
             orderBatchUpdate();  // Could this be done more efficiently?
-            emit SellOrder(
-                auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount
-            );
             bytes32 nextAuctionHash = sha256(
                 abi.encodePacked(
                     auctions[auctionIndex].shaHash,
