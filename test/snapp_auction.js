@@ -153,26 +153,6 @@ contract("SnappAuction", async (accounts) => {
       )
     })
 
-    it("Reject: Buy Amount >= 2^100", async () => {
-      const instance = await SnappAuction.new()
-      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
-
-      await truffleAssert.reverts(
-        instance.placeStandingSellOrder([0], [1], ["0x10000000000000000000000000"], [1], { from: user_1 }),
-        "Buy amount too large!"
-      )
-    })
-
-    it("Reject: Sell Amount >= 2^100", async () => {
-      const instance = await SnappAuction.new()
-      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
-
-      await truffleAssert.reverts(
-        instance.placeStandingSellOrder([0], [1], [1], ["0x10000000000000000000000000"], { from: user_1 }),
-        "Sell amount too large!"
-      )
-    })
-
     it("Reject: More than AUCTION_RESERVED_ACCOUNT_BATCH_SIZE=10 orders", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
