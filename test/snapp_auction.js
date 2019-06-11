@@ -445,7 +445,6 @@ contract("SnappAuction", async (accounts) => {
       await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
 
       const first_slot = (await instance.auctionIndex.call()).toNumber()
-      const first_auction_state = await instance.auctions.call(first_slot)
 
       // Wait for current order slot to be inactive
       await waitForNSeconds(181)
@@ -453,7 +452,6 @@ contract("SnappAuction", async (accounts) => {
       // Place an order to ensure second order slot is created.
       const order_tx = await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
       const second_slot = order_tx.logs[0].args.auctionId.toNumber()
-      const second_auction_state = await instance.auctions(second_slot)
 
       // Wait for second order slot to be inactive
       await waitForNSeconds(181)

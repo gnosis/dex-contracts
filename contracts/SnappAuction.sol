@@ -193,7 +193,10 @@ contract SnappAuction is SnappBase {
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested order slot does not exist");
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
-        require(_transitionBlockHash == bytes32(0) || blockhash(indexTransitionBlock[slot]) == _transitionBlockHash, "Blockhash doesn't agree");
+        require(
+            _transitionBlockHash == bytes32(0) || blockhash(indexTransitionBlock[slot]) == _transitionBlockHash,
+            "Blockhash doesn't agree"
+        );
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
                 auctions[slot].size == maxUnreservedOrderCount(),
