@@ -40,8 +40,10 @@ contract("SnappAuction", async (accounts) => {
       const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
       const AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = await instance.AUCTION_RESERVED_ACCOUNT_BATCH_SIZE()
 
-      assert.equal(await instance.maxUnreservedOrderCount.call(), 
-          AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE))
+      assert.equal(
+        await instance.maxUnreservedOrderCount.call(), 
+        AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE)
+      )
     })
     
   })
