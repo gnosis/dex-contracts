@@ -208,6 +208,10 @@ contract SnappAuction is SnappBase {
         emit AuctionSettlement(slot, stateIndex(), _newStateRoot, pricesAndVolumes);
     }
 
+    function maxUnreservedOrderCount() public pure returns (uint16) {
+        return AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE);
+    }
+    
     function encodeOrder(
         uint16 accountId,
         uint8 buyToken,
@@ -229,10 +233,6 @@ contract SnappAuction is SnappBase {
 
         // solhint-disable-next-line max-line-length
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
-    }
-
-    function maxUnreservedOrderCount() public pure returns (uint16) {
-        return AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE);
     }
 
     function createNewPendingBatch() internal {
