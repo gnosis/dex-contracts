@@ -287,7 +287,7 @@ contract("SnappAuction", async (accounts) => {
       assert.equal(await isActive(auction_state), true)
 
       await truffleAssert.reverts(
-        instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution),
+        instance.applyAuction(slot, state_root, new_state, "0x0", auctionSolution),
         "Requested order slot is still active"
       )
     })
@@ -310,7 +310,7 @@ contract("SnappAuction", async (accounts) => {
       assert.notEqual(wrong_state_root, await stateHash(instance))
 
       await truffleAssert.reverts(
-        instance.applyAuction(slot, wrong_state_root, new_state, auction_state.shaHash, auctionSolution),
+        instance.applyAuction(slot, wrong_state_root, new_state, "0x0", auctionSolution),
         "Incorrect state root"
       )
     })
@@ -336,7 +336,7 @@ contract("SnappAuction", async (accounts) => {
 
       await truffleAssert.reverts(
         instance.applyAuction(slot, state_root, new_state, wrong_order_hash, auctionSolution),
-        "Order hash doesn't agree"
+        "Blockhash doesn't agree"
       )
     })
 
@@ -358,12 +358,12 @@ contract("SnappAuction", async (accounts) => {
       const curr_slot = (await instance.auctionIndex.call()).toNumber()
 
       await truffleAssert.reverts(
-        instance.applyAuction(curr_slot + 1, state_root, new_state, auction_state.shaHash, auctionSolution),
+        instance.applyAuction(curr_slot + 1, state_root, new_state, "0x0", auctionSolution),
         "Requested order slot does not exist"
       )
     })
 
-    it("Successfully apply auction", async () => {
+    it("Successfully apply auction with BlockHash = 0x0 ", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
@@ -379,7 +379,33 @@ contract("SnappAuction", async (accounts) => {
 
       const state_root = await stateHash(instance)
       
-      await instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution)
+      await instance.applyAuction(slot, state_root, new_state, "0x0", auctionSolution)
+
+      const state_index = (await instance.stateIndex.call()).toNumber()
+      const applied_index = ((await instance.auctions(slot)).appliedAccountStateIndex).toNumber()
+
+      assert.equal(applied_index, state_index)
+    })
+    it("Successfully apply auction with blockHash ", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
+
+      const slot = (await instance.auctionIndex.call()).toNumber()
+      const auction_state = await instance.auctions.call(slot)
+
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+
+      // Ensure order slot is inactive
+      assert.equal(await isActive(auction_state), false)
+
+      const state_root = await stateHash(instance)
+      const block_nr = await instance.indexTransitionBlock.call(slot)
+      const block = await web3.eth.getBlock(block_nr)
+      const block_hash = block.hash
+
+      await instance.applyAuction(slot, state_root, new_state, block_hash, auctionSolution)
 
       const state_index = (await instance.stateIndex.call()).toNumber()
       const applied_index = ((await instance.auctions(slot)).appliedAccountStateIndex).toNumber()
@@ -404,11 +430,11 @@ contract("SnappAuction", async (accounts) => {
       const state_root = await stateHash(instance)
 
       // Apply auction once
-      await instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution)
+      await instance.applyAuction(slot, state_root, new_state, "0x0", auctionSolution)
       
       // Try to apply same slot again
       await truffleAssert.reverts(
-        instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution),
+        instance.applyAuction(slot, state_root, new_state, "0x0", auctionSolution),
         "Auction already applied"
       )
     })
@@ -435,12 +461,12 @@ contract("SnappAuction", async (accounts) => {
       const state_root = await stateHash(instance)
 
       await truffleAssert.reverts(
-        instance.applyAuction(second_slot, state_root, new_state, second_auction_state.shaHash, auctionSolution),
+        instance.applyAuction(second_slot, state_root, new_state, "0x0", auctionSolution),
         "Must apply auction slots in order!"
       )
 
-      await instance.applyAuction(first_slot, state_root, new_state, first_auction_state.shaHash, auctionSolution)
-      await instance.applyAuction(second_slot, new_state, "0x2", second_auction_state.shaHash, auctionSolution)
+      await instance.applyAuction(first_slot, state_root, new_state, "0x0", auctionSolution)
+      await instance.applyAuction(second_slot, new_state, "0x2", "0x0", auctionSolution)
     })
   })
 })

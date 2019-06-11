@@ -22,7 +22,7 @@ contract SnappAuction is SnappBase {
 
     mapping (uint16 => StandingOrderData) public standingOrders;
 
-    mapping (uint => uint) indexTransitionBlock;
+    mapping (uint => uint) public indexTransitionBlock;
 
     uint public auctionIndex = MAX_UINT;
     mapping (uint => PendingBatch) public auctions;
@@ -185,7 +185,6 @@ contract SnappAuction is SnappBase {
         uint slot,
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
-        bytes32 _orderHash,
         bytes32 _transitionBlockHash,
         bytes memory pricesAndVolumes
     )
@@ -194,8 +193,7 @@ contract SnappAuction is SnappBase {
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested order slot does not exist");
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
-        require(auctions[slot].shaHash == _orderHash, "Order hash doesn't agree");
-        require(blockhash(indexTransitionBlock[slot]) == _transitionBlockHash, "transitionBlockHash wrong, Solution was not calculated on correct data");
+        require(_transitionBlockHash == bytes32(0) || blockhash(indexTransitionBlock[slot]) == _transitionBlockHash, "Blockhash doesn't agree");
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
                 auctions[slot].size == maxUnreservedOrderCount(),
@@ -244,8 +242,8 @@ contract SnappAuction is SnappBase {
                 auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
                 "Too many pending auctions"
             );
-        indexTransitionBlock[auctionIndex] = block.number;    
         auctionIndex++;
+        indexTransitionBlock[auctionIndex] = block.number;    
         auctions[auctionIndex] = PendingBatch({
             size: 0,
             shaHash: bytes32(0),
