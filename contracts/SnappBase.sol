@@ -115,6 +115,10 @@ contract SnappBase is Ownable {
         return IdToAddressBiMap.getAddressAt(registeredTokens, id);
     }
 
+    function hasAccount(uint16 accountId) public view returns (bool) {
+        return IdToAddressBiMap.hasId(registeredAccounts, accountId);
+    }
+
     /**
      * Modifiers
      */

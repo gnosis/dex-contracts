@@ -1,9 +1,11 @@
 pragma solidity ^0.5.0;
 
 import "./SnappBase.sol";
+import "solidity-bytes-utils/contracts/BytesLib.sol";
 
 
 contract SnappAuction is SnappBase {
+    using BytesLib for bytes;
 
     uint16 public constant AUCTION_BATCH_SIZE = 1000;
     uint16 public constant AUCTION_RESERVED_ACCOUNTS = 50;
@@ -31,8 +33,8 @@ contract SnappAuction is SnappBase {
         uint16 accountId,
         uint8 buyToken,
         uint8 sellToken,
-        uint128 buyAmount,
-        uint128 sellAmount
+        uint96 buyAmount,
+        uint96 sellAmount
     );
 
     event StandingSellOrderBatch(
@@ -40,8 +42,8 @@ contract SnappAuction is SnappBase {
         uint16 accountId,
         uint8[] buyToken,
         uint8[] sellToken,
-        uint128[] buyAmount,
-        uint128[] sellAmount
+        uint96[] buyAmount,
+        uint96[] sellAmount
     );
 
     event AuctionSettlement(
@@ -105,8 +107,8 @@ contract SnappAuction is SnappBase {
     function placeStandingSellOrder(
         uint8[] memory buyTokens,
         uint8[] memory sellTokens,
-        uint128[] memory buyAmounts,
-        uint128[] memory sellAmounts
+        uint96[] memory buyAmounts,
+        uint96[] memory sellAmounts
     ) public onlyRegistered() {
 
         // Update Auction Hash based on request
@@ -152,17 +154,10 @@ contract SnappAuction is SnappBase {
     function placeSellOrder(
         uint8 buyToken,
         uint8 sellToken,
-        uint128 buyAmount,
-        uint128 sellAmount
+        uint96 buyAmount,
+        uint96 sellAmount
     ) public onlyRegistered() {
-
-        if (
-            auctionIndex == MAX_UINT ||
-            auctions[auctionIndex].size == maxUnreservedOrderCount() ||
-            block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
-        ) {
-            createNewPendingBatch();
-        }
+        createNewPendingBatchIfNecessary();
 
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
@@ -177,6 +172,44 @@ contract SnappAuction is SnappBase {
         emit SellOrder(auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount);
         // Only increment size after event (so it is emitted as an index)
         auctions[auctionIndex].size++;
+    }
+
+    function placeSellOrders(bytes memory packedOrders) public onlyRegistered() {
+        // Note that this could result failure of all orders if even one fails.
+        require(packedOrders.length % 26 == 0, "Each order should be packed in 26 bytes!");
+        // TODO - use ECRecover from signature contained in first 65 bytes of packedOrder
+        uint16 accountId = publicKeyToAccountMap(msg.sender);
+        bytes memory orderData;
+
+        for (uint i = 0; i < packedOrders.length / 26; i++) {
+            orderData = packedOrders.slice(26*i, 26);
+
+            uint8 buyToken = BytesLib.toUint8(orderData, 0);
+            uint8 sellToken = BytesLib.toUint8(orderData, 1);
+
+            uint96 buyAmount;
+            assembly {  // solhint-disable no-inline-assembly
+                buyAmount := mload(add(add(orderData, 0xc), 2))
+            }
+            uint96 sellAmount;
+            assembly {  // solhint-disable no-inline-assembly
+                sellAmount := mload(add(add(orderData, 0xc), 14))
+            }
+            createNewPendingBatchIfNecessary();
+            bytes32 nextAuctionHash = sha256(
+                abi.encodePacked(
+                    auctions[auctionIndex].shaHash,  // TODO - Below todo will affect this.
+                    encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
+                )
+            );
+            // TODO - auctions.shaHash should only need to be updated once (per index) on the outside of this loop
+            auctions[auctionIndex].shaHash = nextAuctionHash;
+            emit SellOrder(
+                auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount
+            );
+            // Only increment size after event (so it is emitted as an index)
+            auctions[auctionIndex].size++;
+        }
     }
 
     function applyAuction(
@@ -216,8 +249,8 @@ contract SnappAuction is SnappBase {
         uint16 accountId,
         uint8 buyToken,
         uint8 sellToken,
-        uint128 buyAmount,
-        uint128 sellAmount
+        uint96 buyAmount,
+        uint96 sellAmount
     )
         internal view returns (bytes32)
     {
@@ -225,10 +258,9 @@ contract SnappAuction is SnappBase {
         require(buyAmount < 0x1000000000000000000000000, "Buy amount too large!");
         require(sellAmount < 0x1000000000000000000000000, "Sell amount too large!");
 
-        // Must have 0 < tokenId < MAX_TOKENS anyway, so may as well ensure registered.
+        // Must have 0 <= tokenId < MAX_TOKENS anyway, so may as well ensure registered.
         require(buyToken < numTokens, "Buy token is not registered");
         require(sellToken < numTokens, "Sell token is not registered");
-
         // Could also enforce that buyToken != sellToken, but not technically illegal.
 
         // solhint-disable-next-line max-line-length
@@ -247,5 +279,15 @@ contract SnappAuction is SnappBase {
             creationTimestamp: block.timestamp,
             appliedAccountStateIndex: 0
         });
+    }
+
+    function createNewPendingBatchIfNecessary() private {
+        if (
+            auctionIndex == MAX_UINT ||
+            auctions[auctionIndex].size == maxUnreservedOrderCount() ||
+            block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
+        ) {
+            createNewPendingBatch();
+        }
     }
 }
