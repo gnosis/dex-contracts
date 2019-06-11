@@ -151,6 +151,36 @@ contract SnappAuction is SnappBase {
         emit StandingSellOrderBatch(currentBatchIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
     }
 
+    function placeSellOrder(
+        uint8 buyToken,
+        uint8 sellToken,
+        uint96 buyAmount,
+        uint96 sellAmount
+    ) public onlyRegistered() {
+
+        if (
+            auctionIndex == MAX_UINT ||
+            auctions[auctionIndex].size == maxUnreservedOrderCount() ||
+            block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
+        ) {
+            createNewPendingBatch();
+        }
+
+        // Update Auction Hash based on request
+        uint16 accountId = publicKeyToAccountMap(msg.sender);
+        bytes32 nextAuctionHash = sha256(
+            abi.encodePacked(
+                auctions[auctionIndex].shaHash,
+                encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
+            )
+        );
+        auctions[auctionIndex].shaHash = nextAuctionHash;
+
+        emit SellOrder(auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount);
+        // Only increment size after event (so it is emitted as an index)
+        auctions[auctionIndex].size++;
+    }
+
     function placeSellOrders(bytes memory packedOrders) public onlyRegistered() {
         // Note that this could result failure of all orders if even one fails.
         require(packedOrders.length % 26 == 0, "Each order should be packed in 26 bytes!");
