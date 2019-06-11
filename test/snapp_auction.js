@@ -33,6 +33,17 @@ contract("SnappAuction", async (accounts) => {
       const instance = await SnappAuction.new()
       assert.equal(await instance.getOrderHash.call(0), 0x0)
     })
+
+    it("maxUnreservedOrderCount", async () => {
+      const instance = await SnappAuction.new()
+      const AUCTION_BATCH_SIZE = await instance.AUCTION_BATCH_SIZE()
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = await instance.AUCTION_RESERVED_ACCOUNT_BATCH_SIZE()
+
+      assert.equal(await instance.maxUnreservedOrderCount.call(), 
+      AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE))
+    })
+    
   })
 
   describe("placeSellOrder()", () => {
@@ -181,9 +192,11 @@ contract("SnappAuction", async (accounts) => {
     it("Reject: More than AUCTION_RESERVED_ACCOUNT_BATCH_SIZE=10 orders", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
-
+      const AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = await instance.AUCTION_RESERVED_ACCOUNT_BATCH_SIZE()
+      const buyToken_list = new Array(AUCTION_RESERVED_ACCOUNT_BATCH_SIZE.toNumber() +1)
+      buyToken_list.fill(1)
       await truffleAssert.reverts(
-        instance.placeStandingSellOrder([0,0,0,1,1,1,1,1,1,1,2,0,1], [1], [1], ["0x10000000000000000000000000"], { from: user_1 }),
+        instance.placeStandingSellOrder(buyToken_list, [1], [1], ["0x10000000000000000000000000"], { from: user_1 }),
         "Too many orders for reserved batch"
       )
     })

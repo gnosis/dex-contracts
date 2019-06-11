@@ -6,8 +6,8 @@ import "./SnappBase.sol";
 contract SnappAuction is SnappBase {
 
     uint16 public constant AUCTION_BATCH_SIZE = 1000;
-    uint8 public constant AUCTION_RESERVED_ACCOUNTS = 50;
-    uint8 public constant AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = 10;
+    uint16 public constant AUCTION_RESERVED_ACCOUNTS = 50;
+    uint16 public constant AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = 10;
     
     struct StandingOrderBatch {
         bytes32 orderHash;
@@ -53,8 +53,8 @@ contract SnappAuction is SnappBase {
 
     event AuctionInitialization(
         uint16 maxOrders,
-        uint8 numReservedAccounts,
-        uint8 ordersPerReservedAccount
+        uint16 numReservedAccounts,
+        uint16 ordersPerReservedAccount
     );
     
     constructor () public {
@@ -231,7 +231,7 @@ contract SnappAuction is SnappBase {
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
     }
 
-    function maxUnreservedOrderCount() internal pure returns (uint16) {
+    function maxUnreservedOrderCount() public pure returns (uint16) {
         return AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE);
     }
 
