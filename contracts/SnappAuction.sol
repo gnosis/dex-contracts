@@ -175,10 +175,11 @@ contract SnappAuction is SnappBase {
             createNewPendingBatchIfNecessary();
             bytes32 nextAuctionHash = sha256(
                 abi.encodePacked(
-                    auctions[auctionIndex].shaHash,
+                    auctions[auctionIndex].shaHash,  // TODO - Below todo will affect this.
                     encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
                 )
             );
+            // TODO - auctions.shaHash should only need to be updated once (per index) on the outside of this loop
             auctions[auctionIndex].shaHash = nextAuctionHash;
             emit SellOrder(
                 auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount
