@@ -25,5 +25,4 @@ contract IdToAddressBiMapWrapper {
     function insert(uint16 id, address addr) public returns (bool) {
         return IdToAddressBiMap.insert(map, id, addr);
     }
-    
 }
