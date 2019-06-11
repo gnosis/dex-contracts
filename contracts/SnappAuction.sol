@@ -157,14 +157,7 @@ contract SnappAuction is SnappBase {
         uint96 buyAmount,
         uint96 sellAmount
     ) public onlyRegistered() {
-
-        if (
-            auctionIndex == MAX_UINT ||
-            auctions[auctionIndex].size == maxUnreservedOrderCount() ||
-            block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
-        ) {
-            createNewPendingBatch();
-        }
+        createNewPendingBatchIfNecessary();
 
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
