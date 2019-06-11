@@ -172,7 +172,7 @@ contract SnappAuction is SnappBase {
             assembly {  // solhint-disable no-inline-assembly
                 sellAmount := mload(add(add(orderData, 0xc), 14))
             }
-            orderBatchUpdate();  // Could this be done more efficiently?
+            createNewPendingBatchIfNecessary();
             bytes32 nextAuctionHash = sha256(
                 abi.encodePacked(
                     auctions[auctionIndex].shaHash,
@@ -257,7 +257,7 @@ contract SnappAuction is SnappBase {
         });
     }
 
-    function orderBatchUpdate() private {
+    function createNewPendingBatchIfNecessary() private {
         if (
             auctionIndex == MAX_UINT ||
             auctions[auctionIndex].size == maxUnreservedOrderCount() ||
