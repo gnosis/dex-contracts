@@ -9,7 +9,6 @@ const {
 
 const {
   isActive,
-  stateHash,
   encodeOrder }  = require("./snapp_utils.js")
 
 contract("SnappAuction", async (accounts) => {
@@ -244,8 +243,7 @@ contract("SnappAuction", async (accounts) => {
       await instance.placeSellOrders(order, { from: user_1 })
 
       const slot = (await instance.auctionIndex.call()).toNumber()
-      const state_index = (await instance.stateIndex.call()).toNumber()
-      const state_root = await instance.stateRoots.call(state_index)
+      const state_root = await instance.getCurrentStateRoot()
       const auction_state = await instance.auctions.call(slot)
 
       await truffleAssert.reverts(
@@ -260,8 +258,7 @@ contract("SnappAuction", async (accounts) => {
       await instance.placeSellOrders(order, { from: user_1 })
 
       const slot = (await instance.auctionIndex.call()).toNumber()
-      const state_index = (await instance.stateIndex.call()).toNumber()
-      const state_root = await instance.stateRoots.call(state_index)
+      const state_root = await instance.getCurrentStateRoot()
       const auction_state = await instance.auctions.call(slot)
 
       assert.equal(await isActive(auction_state), true)
@@ -288,7 +285,7 @@ contract("SnappAuction", async (accounts) => {
       assert.equal(await isActive(auction_state), false)
 
       const wrong_state_root = "0x1"
-      assert.notEqual(wrong_state_root, await stateHash(instance))
+      assert.notEqual(wrong_state_root, await instance.getCurrentStateRoot())
 
       await truffleAssert.reverts(
         instance.applyAuction(slot, wrong_state_root, new_state, auction_state.shaHash, auctionSolution),
@@ -311,7 +308,7 @@ contract("SnappAuction", async (accounts) => {
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
 
-      const state_root = await stateHash(instance)
+      const state_root = await instance.getCurrentStateRoot()
       const wrong_order_hash = "0x1"
 
       assert.notEqual(wrong_order_hash, auction_state.shaHash)
@@ -337,7 +334,7 @@ contract("SnappAuction", async (accounts) => {
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
 
-      const state_root = await stateHash(instance)
+      const state_root = await instance.getCurrentStateRoot()
       const curr_slot = (await instance.auctionIndex.call()).toNumber()
 
       await truffleAssert.reverts(
@@ -361,7 +358,7 @@ contract("SnappAuction", async (accounts) => {
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
 
-      const state_root = await stateHash(instance)
+      const state_root = await instance.getCurrentStateRoot()
       
       await instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution)
 
@@ -386,7 +383,7 @@ contract("SnappAuction", async (accounts) => {
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
 
-      const state_root = await stateHash(instance)
+      const state_root = await instance.getCurrentStateRoot()
 
       // Apply auction once
       await instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution)
@@ -418,7 +415,7 @@ contract("SnappAuction", async (accounts) => {
       // Wait for second order slot to be inactive
       await waitForNSeconds(181)
 
-      const state_root = await stateHash(instance)
+      const state_root = await instance.getCurrentStateRoot()
 
       await truffleAssert.reverts(
         instance.applyAuction(second_slot, state_root, new_state, second_auction_state.shaHash, auctionSolution),

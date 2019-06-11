@@ -7,6 +7,7 @@ import "solidity-bytes-utils/contracts/BytesLib.sol";
 contract SnappAuction is SnappBase {
     using BytesLib for bytes;
 
+    uint public constant MAX_UINT = 2**256 - 1;
     uint16 public constant AUCTION_BATCH_SIZE = 1000;
     uint16 public constant AUCTION_RESERVED_ACCOUNTS = 50;
     uint16 public constant AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = 10;
@@ -25,7 +26,7 @@ contract SnappAuction is SnappBase {
     mapping (uint16 => StandingOrderData) public standingOrders;
 
     uint public auctionIndex = MAX_UINT;
-    mapping (uint => PendingBatch) public auctions;
+    mapping (uint => SnappBaseCore.PendingBatch) public auctions;
 
     event SellOrder(
         uint auctionId,
@@ -230,9 +231,9 @@ contract SnappAuction is SnappBase {
                 auctions[slot].size == maxUnreservedOrderCount(),
             "Requested order slot is still active"
         );
-        require(stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
+        require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
 
-        stateRoots.push(_newStateRoot);
+        coreData.stateRoots.push(_newStateRoot);
         auctions[slot].appliedAccountStateIndex = stateIndex();
 
         // Store solution information in shaHash of pendingBatch (required for snark proof)
@@ -259,8 +260,8 @@ contract SnappAuction is SnappBase {
         require(sellAmount < 0x1000000000000000000000000, "Sell amount too large!");
 
         // Must have 0 <= tokenId < MAX_TOKENS anyway, so may as well ensure registered.
-        require(buyToken < numTokens, "Buy token is not registered");
-        require(sellToken < numTokens, "Sell token is not registered");
+        require(buyToken < coreData.numTokens, "Buy token is not registered");
+        require(sellToken < coreData.numTokens, "Sell token is not registered");
         // Could also enforce that buyToken != sellToken, but not technically illegal.
 
         // solhint-disable-next-line max-line-length
@@ -273,7 +274,7 @@ contract SnappAuction is SnappBase {
             "Too many pending auctions"
             );
         auctionIndex++;
-        auctions[auctionIndex] = PendingBatch({
+        auctions[auctionIndex] = SnappBaseCore.PendingBatch({
             size: 0,
             shaHash: bytes32(0),
             creationTimestamp: block.timestamp,
