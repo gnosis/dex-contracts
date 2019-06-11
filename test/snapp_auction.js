@@ -118,9 +118,6 @@ contract("SnappAuction", async (accounts) => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       const order1 = encodeOrder(0, 1, 3, 4)
       const order2 = encodeOrder(1, 0, 1,   123456789)
-      // const order2 = encodeOrder(1, 0, 1,   100000000000000009) --> shows 100000000000000020
-      // const order2 = encodeOrder(1, 0, 1,  1000000000000000009) --> shows 1000000000000000000
-      // const order2 = encodeOrder(1, 0, 1, 10000000000000000009) --> shows 10000000000000000000
       const twoOrders = Buffer.concat([order1, order2])
       await instance.placeSellOrders(twoOrders, { from: user_1 })
 
