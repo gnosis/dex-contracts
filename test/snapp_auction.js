@@ -470,4 +470,35 @@ contract("SnappAuction", async (accounts) => {
       await instance.applyAuction(second_slot, second_state_root, new_state, second_orderhash, second_standingOrderIndexList, auctionSolution)
     })
   })
+  describe("calculateOrderHash()", () => {
+    it("calculates the orderHash with standingOrderIndex = [0,...,0]", async () => {
+      const instance = await SnappAuction.new()
+      const curr_slot = await instance.auctionIndex.call()
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const bytes = await instance.calculateOrderHash(curr_slot, standingOrderIndexList)
+      assert.notEqual(bytes, "0x0000000000000000000000000000000000000000", "orderHash was not calculated correctly")
+    })
+    it("throws is standingOrderIndex is not valid in slot", async () => {
+      const instance = await SnappAuction.new()
+
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
+      
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,0], { from: user_1 })
+
+      const curr_slot = await instance.auctionIndex.call()
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      standingOrderIndexList[1] = 1
+      await truffleAssert.reverts(instance.calculateOrderHash(curr_slot, standingOrderIndexList), 
+        "non-valid standingOrderBatch referenced")
+    })
+  })
 })
