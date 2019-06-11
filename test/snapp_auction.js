@@ -530,8 +530,8 @@ contract("SnappAuction", async (accounts) => {
       const maxAuctionSize = (await instance.AUCTION_BATCH_SIZE.call()).toNumber()
       const orders = Array(maxAuctionSize).fill(order)
       const partitionedOrders = splitArray(orders, 100)
-      var concatenated_orders
-      var count = 0
+      let concatenated_orders
+      // let count = 0
       await partitionedOrders.forEach(function(partition) {  // should be about 10
         concatenated_orders = Buffer.concat(partition)
         instance.placeSellOrders(concatenated_orders, { from: user_1 })
@@ -545,7 +545,7 @@ contract("SnappAuction", async (accounts) => {
 
       // The last order should wind up in second batch!
       await instance.placeSellOrders(order, { from: user_1 })
-      console.log((await instance.auctionIndex.call()).toNumber())
+      // console.log((await instance.auctionIndex.call()).toNumber())
     })
   })
 })
