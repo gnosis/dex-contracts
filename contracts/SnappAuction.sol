@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "./SnappBase.sol";
 
+
 contract SnappAuction is SnappBase {
 
     uint16 public constant AUCTION_BATCH_SIZE = 1000;
