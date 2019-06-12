@@ -51,9 +51,7 @@ module.exports = async (callback) => {
       callback(`Error: No token registered at index ${tokenId}`)
     }
 
-    // Verify slot has been processed
-    const claimableState = await instance.claimableWithdraws(slot)
-    if (claimableState.appliedAccountStateIndex == 0) {
+    if (await instance.isPendingWithdrawActive(slot)) {
       callback(`Error: Requested slot ${slot} not been processed!`)
     }
 
@@ -72,9 +70,10 @@ module.exports = async (callback) => {
       }
     }
     const tree = new MerkleTree(withdraw_hashes, sha256)
+    const claimable_root = await instance.getClaimableWithdrawHash(slot)
     // Verify merkle roots agree
-    if (claimableState.merkleRoot != toHex(tree.getRoot())) {
-      callback(`Merkle Roots disagree: ${claimableState.merkleRoot} != ${toHex(tree.getRoot())}`)
+    if (claimable_root != toHex(tree.getRoot())) {
+      callback(`Merkle Roots disagree: ${claimable_root} != ${toHex(tree.getRoot())}`)
     }
 
     for (let i = 0; i < valid_withdrawals.length; i++) {
