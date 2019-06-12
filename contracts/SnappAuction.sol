@@ -32,7 +32,10 @@ contract SnappAuction is SnappBase {
         uint auctionId,
         uint16 slotIndex,
         uint16 accountId,
-        bytes packedOrder
+        uint8 buyToken,
+        uint8 sellToken,
+        uint96 buyAmount,
+        uint96 sellAmount
     );
 
     event StandingSellOrderBatch(
@@ -156,21 +159,23 @@ contract SnappAuction is SnappBase {
         uint16 accountId = publicKeyToAccountMap(msg.sender);
 
         for (uint i = 0; i < packedOrders.length / 26; i++) {
+            (uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount) = decodeOrder(packedOrders.slice(26*i, 26));
+
             createNewPendingBatchIfNecessary();
-            bytes32 nextAuctionHash = calculateNextOrderHashIteration(
-                packedOrders.slice(26*i, 26),
-                auctions[auctionIndex].shaHash,
-                accountId
+            bytes32 nextAuctionHash = sha256(
+                abi.encodePacked(
+                    auctions[auctionIndex].shaHash,  // TODO - Below todo will affect this.
+                    encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
+                )
             );
             // TODO - auctions.shaHash should only need to be updated once (per index) on the outside of this loop
             auctions[auctionIndex].shaHash = nextAuctionHash;
-
+            emit SellOrder(
+                auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount
+            );
             // Only increment size after event (so it is emitted as an index)
             auctions[auctionIndex].size++;
         }
-        emit SellOrder(
-            auctionIndex, auctions[auctionIndex].size, accountId, packedOrders
-            );
     }
 
     function applyAuction(
@@ -224,20 +229,24 @@ contract SnappAuction is SnappBase {
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
     }
 
-    function calculateNextOrderHashIteration(bytes memory orderData, bytes32 previousHash, uint16 accountId) internal view
-        returns(bytes32)
+    function decodeOrder(bytes memory orderData) internal pure
+        returns(uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount)
     {
-        uint96 buyAmount;
         assembly {  // solhint-disable no-inline-assembly
             buyAmount := mload(add(add(orderData, 0xc), 0))
         }
-        uint96 sellAmount;
         assembly {  // solhint-disable no-inline-assembly
             sellAmount := mload(add(add(orderData, 0xc), 12))
         }
 
-        uint8 sellToken = BytesLib.toUint8(orderData, 24);
-        uint8 buyToken = BytesLib.toUint8(orderData, 25);
+        sellToken = BytesLib.toUint8(orderData, 24);
+        buyToken = BytesLib.toUint8(orderData, 25);
+    }
+
+    function calculateNextOrderHashIteration(bytes memory orderData, bytes32 previousHash, uint16 accountId) internal view
+        returns(bytes32)
+    {
+        (uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount) = decodeOrder(orderData);
 
         return sha256(
             abi.encodePacked(
