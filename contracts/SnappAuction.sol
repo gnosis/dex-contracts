@@ -120,25 +120,7 @@ contract SnappAuction is SnappBase {
         bytes32 orderHash;
         bytes memory orderData;
         for (uint i = 0; i < numOrders; i++) {
-            orderData = packedOrders.slice(26*i, 26);
-
-            uint8 buyToken = BytesLib.toUint8(orderData, 0);
-            uint8 sellToken = BytesLib.toUint8(orderData, 1);
-
-            uint96 buyAmount;
-            assembly {  // solhint-disable no-inline-assembly
-                buyAmount := mload(add(add(orderData, 0xc), 2))
-            }
-            uint96 sellAmount;
-            assembly {  // solhint-disable no-inline-assembly
-                sellAmount := mload(add(add(orderData, 0xc), 14))
-            }
-            orderHash = sha256(
-                abi.encodePacked(
-                    orderHash,
-                    encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
-                )
-            );
+            orderhash = calculateNextOrderHashIteration(packedOrders.slice(26*i, 26), orderhash);
         }
         uint currentBatchIndex = standingOrders[accountId].currentBatchIndex;
         StandingOrderBatch memory currentOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
@@ -176,27 +158,8 @@ contract SnappAuction is SnappBase {
         bytes memory orderData;
 
         for (uint i = 0; i < packedOrders.length / 26; i++) {
-            orderData = packedOrders.slice(26*i, 26);
-
-            uint96 buyAmount;
-            assembly {  // solhint-disable no-inline-assembly
-                buyAmount := mload(add(add(orderData, 0xc), 0))
-            }
-            uint96 sellAmount;
-            assembly {  // solhint-disable no-inline-assembly
-                sellAmount := mload(add(add(orderData, 0xc), 12))
-            }
-
-            uint8 sellToken = BytesLib.toUint8(orderData, 24);
-            uint8 buyToken = BytesLib.toUint8(orderData, 25);
-
             createNewPendingBatchIfNecessary();
-            bytes32 nextAuctionHash = sha256(
-                abi.encodePacked(
-                    auctions[auctionIndex].shaHash,  // TODO - Below todo will affect this.
-                    encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
-                )
-            );
+            bytes32 nextAuctionHash = calculateNextOrderHashIteration(packedOrders.slice(26*i, 26), auctions[auctionIndex].shaHash);
             // TODO - auctions.shaHash should only need to be updated once (per index) on the outside of this loop
             auctions[auctionIndex].shaHash = nextAuctionHash;
             
@@ -261,6 +224,27 @@ contract SnappAuction is SnappBase {
 
         // solhint-disable-next-line max-line-length
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
+    }
+    function calculateNextOrderHashIteration(bytes orderData, bytes32 previousHash) internal
+        returns(bytes32)
+    {
+        buyToken = BytesLib.toUint8(orderData, 0);
+        sellToken = BytesLib.toUint8(orderData, 1);
+
+        buyAmount;
+        assembly {  // solhint-disable no-inline-assembly
+            buyAmount := mload(add(add(orderData, 0xc), 2))
+        }
+        sellAmount;
+        assembly {  // solhint-disable no-inline-assembly
+            sellAmount := mload(add(add(orderData, 0xc), 14))
+        }
+        return nextHash = sha256(
+                abi.encodePacked(
+                    previousHash,  // TODO - Below todo will affect this.
+                    encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
+                )
+            );
     }
 
     function createNewPendingBatch() internal {
