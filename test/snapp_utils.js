@@ -21,13 +21,6 @@ const isActive = async function(object) {
   const timestamp = (await web3.eth.getBlock(block)).timestamp
   return timestamp <= object.creationTimestamp.toNumber() + 180
 }
-
-const stateHash = async function(contract) {
-  const state_index = (await contract.stateIndex.call()).toNumber()
-  const state_root = await contract.stateRoots.call(state_index)
-  return state_root
-}
-
 // returns byte string of hexed-sliced-padded int
 const uint8 = function(num) {
   assert(num < 2**8)
@@ -66,7 +59,6 @@ const encodeOrder = function(buyToken, sellToken, buyAmount, sellAmount) {
 module.exports = {
   falseArray,
   isActive,
-  stateHash,
   encodePacked_16_8_128,
   encodeOrder
 }
