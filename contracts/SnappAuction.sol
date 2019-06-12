@@ -30,7 +30,7 @@ contract SnappAuction is SnappBase {
 
     event SellOrder(
         uint auctionId,
-        uint16 slotIndex,
+        uint16 slotStartIndex,
         uint16 accountId,
         bytes packedOrder
     );
@@ -164,7 +164,7 @@ contract SnappAuction is SnappBase {
             );
             // TODO - auctions.shaHash should only need to be updated once (per index) on the outside of this loop
             auctions[auctionIndex].shaHash = nextAuctionHash;
-            
+
             // Only increment size after event (so it is emitted as an index)
             auctions[auctionIndex].size++;
         }
@@ -205,7 +205,7 @@ contract SnappAuction is SnappBase {
     function maxUnreservedOrderCount() public pure returns (uint16) {
         return AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE);
     }
-    
+
     function encodeOrder(
         uint16 accountId,
         uint8 buyToken,
