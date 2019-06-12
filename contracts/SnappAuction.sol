@@ -32,7 +32,7 @@ contract SnappAuction is SnappBase {
         uint auctionId,
         uint16 slotIndex,
         uint16 accountId,
-        bytes packedOrders
+        bytes packedOrder
     );
 
     event StandingSellOrderBatch(
