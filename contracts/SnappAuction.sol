@@ -162,25 +162,10 @@ contract SnappAuction is SnappBase {
         uint8 sellToken,
         uint96 buyAmount,
         uint96 sellAmount
-    ) public onlyRegistered() {
-        createNewPendingBatchIfNecessary();
-
-        // Update Auction Hash based on request
-        uint16 accountId = publicKeyToAccountMap(msg.sender);
-        bytes32 nextAuctionHash = sha256(
-            abi.encodePacked(
-                auctions[auctionIndex].shaHash,
-                encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
-            )
-        );
-        auctions[auctionIndex].shaHash = nextAuctionHash;
-
-        emit SellOrder(
-            auctionIndex, auctions[auctionIndex].size, accountId,
-            abi.encode((uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128))
-        );
-        // Only increment size after event (so it is emitted as an index)
-        auctions[auctionIndex].size++;
+    ) public {
+        // Ignore first 4 bytes padding and last two bytes accountId
+        bytes memory packed = abi.encodePacked(encodeOrder(0, buyToken, sellToken, buyAmount, sellAmount));
+        placeSellOrders(BytesLib.slice(packed, 4, 26));
     }
 
     function placeSellOrders(bytes memory packedOrders) public onlyRegistered() {
@@ -193,17 +178,18 @@ contract SnappAuction is SnappBase {
         for (uint i = 0; i < packedOrders.length / 26; i++) {
             orderData = packedOrders.slice(26*i, 26);
 
-            uint8 buyToken = BytesLib.toUint8(orderData, 0);
-            uint8 sellToken = BytesLib.toUint8(orderData, 1);
-
             uint96 buyAmount;
             assembly {  // solhint-disable no-inline-assembly
-                buyAmount := mload(add(add(orderData, 0xc), 2))
+                buyAmount := mload(add(add(orderData, 0xc), 0))
             }
             uint96 sellAmount;
             assembly {  // solhint-disable no-inline-assembly
-                sellAmount := mload(add(add(orderData, 0xc), 14))
+                sellAmount := mload(add(add(orderData, 0xc), 12))
             }
+
+            uint8 sellToken = BytesLib.toUint8(orderData, 24);
+            uint8 buyToken = BytesLib.toUint8(orderData, 25);
+
             createNewPendingBatchIfNecessary();
             bytes32 nextAuctionHash = sha256(
                 abi.encodePacked(
