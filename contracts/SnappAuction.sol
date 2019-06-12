@@ -30,7 +30,7 @@ contract SnappAuction is SnappBase {
 
     event SellOrder(
         uint auctionId,
-        uint16 slotStartIndex,
+        uint16 slotIndex,
         uint16 accountId,
         bytes packedOrder
     );
@@ -241,10 +241,10 @@ contract SnappAuction is SnappBase {
 
         return sha256(
             abi.encodePacked(
-                    previousHash,
-                    encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
-                )
-            );
+                previousHash,
+                encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
+            )
+        );
     }
 
     function createNewPendingBatch() internal {
