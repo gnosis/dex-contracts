@@ -517,6 +517,24 @@ contract("SnappAuction", async (accounts) => {
 
       assert.equal(currentAuction.size, 2)
     })
+
+    it("Order Encoding", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const order = encodeOrder(0, 1, 2, 3)
+      const tx = await instance.placeSellOrders(order, { from: user_1 })
+      const eventLog = tx.logs
+
+      const buyToken = eventLog[0].args.buyToken
+      const sellToken = eventLog[0].args.sellToken
+      const buyAmount = eventLog[0].args.buyAmount
+      const sellAmount = eventLog[0].args.sellAmount
+
+      assert.equal(buyToken, 0)
+      assert.equal(sellToken, 1)
+      assert.equal(buyAmount, 2)
+      assert.equal(sellAmount, 3)
+    })
   })
 
   describe("Larger Test Cases", () => {
