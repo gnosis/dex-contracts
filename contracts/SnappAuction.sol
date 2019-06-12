@@ -241,7 +241,7 @@ contract SnappAuction is SnappBase {
 
         return sha256(
             abi.encodePacked(
-                    previousHash,  // TODO - Below todo will affect this.
+                    previousHash,
                     encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
                 )
             );
