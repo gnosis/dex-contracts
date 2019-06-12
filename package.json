@@ -46,7 +46,8 @@
     "fast-memoize": "^2.5.1",
     "merkletreejs": "0.0.22",
     "mongodb": "^3.1.13",
-    "openzeppelin-solidity": "2.1.1"
+    "openzeppelin-solidity": "2.1.1",
+    "solidity-bytes-utils": "0.0.7"
   },
   "devDependencies": {
     "es6-promise": "^4.2.5",
@@ -57,6 +58,7 @@
     "minimist": "^1.2.0",
     "solhint": "^1.5.0",
     "solidity-coverage": "^0.5.11",
+    "solium": "^1.2.4",
     "truffle": "^5.0.0-next.26",
     "truffle-assertions": "^0.8.0"
   }

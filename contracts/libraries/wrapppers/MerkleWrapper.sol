@@ -4,12 +4,11 @@ import "../Merkle.sol";
 
 
 contract MerkleWrapper {
-    
     function checkMembership(
-        bytes32 leaf, 
-        uint256 index, 
-        bytes32 rootHash, 
-        bytes memory proof, 
+        bytes32 leaf,
+        uint256 index,
+        bytes32 rootHash,
+        bytes memory proof,
         uint height
     )
         public
