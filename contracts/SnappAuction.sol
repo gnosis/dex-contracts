@@ -32,19 +32,13 @@ contract SnappAuction is SnappBase {
         uint auctionId,
         uint16 slotIndex,
         uint16 accountId,
-        uint8 buyToken,
-        uint8 sellToken,
-        uint96 buyAmount,
-        uint96 sellAmount
+        bytes packedOrders
     );
 
     event StandingSellOrderBatch(
         uint currentBatchIndex,
         uint16 accountId,
-        uint8[] buyToken,
-        uint8[] sellToken,
-        uint96[] buyAmount,
-        uint96[] sellAmount
+        bytes packedOrders
     );
 
     event AuctionSettlement(
@@ -106,18 +100,15 @@ contract SnappAuction is SnappBase {
      * Auction Functionality
      */
     function placeStandingSellOrder(
-        uint8[] memory buyTokens,
-        uint8[] memory sellTokens,
-        uint96[] memory buyAmounts,
-        uint96[] memory sellAmounts
+        bytes memory packedOrders
     ) public onlyRegistered() {
 
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
         require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Accout is not a reserved account");
 
-        bytes32 orderHash;
-        uint numOrders = buyTokens.length;
+        require(packedOrders.length % 26 == 0, "Each order should be packed in 26 bytes!");
+        uint numOrders = packedOrders.length / 26;
         require(numOrders <= AUCTION_RESERVED_ACCOUNT_BATCH_SIZE, "Too many orders for reserved batch");
 
         if (
@@ -126,12 +117,26 @@ contract SnappAuction is SnappBase {
         ) {
             createNewPendingBatch();
         }
-
+        bytes32 orderHash;
+        bytes memory orderData;
         for (uint i = 0; i < numOrders; i++) {
+            orderData = packedOrders.slice(26*i, 26);
+
+            uint8 buyToken = BytesLib.toUint8(orderData, 0);
+            uint8 sellToken = BytesLib.toUint8(orderData, 1);
+
+            uint96 buyAmount;
+            assembly {  // solhint-disable no-inline-assembly
+                buyAmount := mload(add(add(orderData, 0xc), 2))
+            }
+            uint96 sellAmount;
+            assembly {  // solhint-disable no-inline-assembly
+                sellAmount := mload(add(add(orderData, 0xc), 14))
+            }
             orderHash = sha256(
                 abi.encodePacked(
                     orderHash,
-                    encodeOrder(accountId, buyTokens[i], sellTokens[i], buyAmounts[i], sellAmounts[i])
+                    encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
                 )
             );
         }
@@ -149,7 +154,7 @@ contract SnappAuction is SnappBase {
         //TODO: The case auctionIndex < currentOrderBatch.validFromIndex can happen once roll-backs are implemented
         //Then we have to revert the orderplacement
         standingOrders[accountId].reservedAccountOrders[currentBatchIndex] = currentOrderBatch;
-        emit StandingSellOrderBatch(currentBatchIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
+        emit StandingSellOrderBatch(currentBatchIndex, accountId, packedOrders);
     }
 
     function placeSellOrder(
@@ -170,7 +175,10 @@ contract SnappAuction is SnappBase {
         );
         auctions[auctionIndex].shaHash = nextAuctionHash;
 
-        emit SellOrder(auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount);
+        emit SellOrder(
+            auctionIndex, auctions[auctionIndex].size, accountId,
+            abi.encode((uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128))
+        );
         // Only increment size after event (so it is emitted as an index)
         auctions[auctionIndex].size++;
     }
@@ -205,12 +213,13 @@ contract SnappAuction is SnappBase {
             );
             // TODO - auctions.shaHash should only need to be updated once (per index) on the outside of this loop
             auctions[auctionIndex].shaHash = nextAuctionHash;
-            emit SellOrder(
-                auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount
-            );
+            
             // Only increment size after event (so it is emitted as an index)
             auctions[auctionIndex].size++;
         }
+        emit SellOrder(
+            auctionIndex, auctions[auctionIndex].size, accountId, packedOrders
+            );
     }
 
     function applyAuction(
