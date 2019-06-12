@@ -256,21 +256,15 @@ contract SnappAuction is SnappBase {
             batchHashSequence = abi.encodePacked(
                 batchHashSequence,
                 standingOrders[uint16(i)].reservedAccountOrders[_standingOrderIndex[i]].orderHash
-                );
+            );
         }
         return sha256(abi.encode(batchHashSequence));
     }
 
     function orderBatchIsValidAtAuctionIndex(uint _auctionIndex, uint8 userId, uint128 orderBatchIndex)
     public view returns(bool) {
-        if (
-            _auctionIndex >= getStandingOrderValidFrom(userId, orderBatchIndex)
-            && _auctionIndex <= getStandingOrderValidTo(userId, orderBatchIndex)
-        ) {
-            return true;
-        } else {
-            return false;
-        }
+        return _auctionIndex >= getStandingOrderValidFrom(userId, orderBatchIndex)
+            && _auctionIndex <= getStandingOrderValidTo(userId, orderBatchIndex);
     }
 
     function maxUnreservedOrderCount() public pure returns (uint16) {
