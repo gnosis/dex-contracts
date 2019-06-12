@@ -153,12 +153,12 @@ const generateMerkleTree = memoize(_generateMerkleTree, {
  * @param spacing: int
  * @returns {Array}
  */
-function splitArray(input, spacing) {
-  var output = [];
-  for (var i = 0; i < input.length; i += spacing) {
-    output[output.length] = input.slice(i, i + spacing);
+function partitionArray(input, spacing) {
+  const output = []
+  for (let i = 0; i < input.length; i += spacing) {
+    output[output.length] = input.slice(i, i + spacing)
   }
-  return output;
+  return output
 }
 
 module.exports = {
@@ -172,5 +172,5 @@ module.exports = {
   toHex,
   countDuplicates,
   generateMerkleTree,
-  splitArray,
+  partitionArray,
 }

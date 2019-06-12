@@ -271,7 +271,7 @@ contract SnappAuction is SnappBase {
         require(
             auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
             "Too many pending auctions"
-            );
+        );
         auctionIndex++;
         auctions[auctionIndex] = PendingBatch({
             size: 0,
