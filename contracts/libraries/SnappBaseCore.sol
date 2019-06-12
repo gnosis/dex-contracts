@@ -17,7 +17,7 @@ library SnappBaseCore {
 
     event WithdrawRequest(uint24 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
     event Deposit(uint24 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
-    event StateTransition(TransitionType transitionType, uint stateIndex, bytes32 stateHash, uint slot);
+    event StateTransition(uint8 transitionType, uint stateIndex, bytes32 stateHash, uint slot);
     event SnappInitialization(bytes32 stateHash, uint8 maxTokensk, uint24 maxAccounts);
 
     enum TransitionType {
