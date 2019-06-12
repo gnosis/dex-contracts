@@ -215,10 +215,6 @@ contract SnappAuction is SnappBase {
     )
         internal view returns (bytes32)
     {
-        // Restrict buy and sell amount to occupy at most 96 bits.
-        require(buyAmount < 0x1000000000000000000000000, "Buy amount too large!");
-        require(sellAmount < 0x1000000000000000000000000, "Sell amount too large!");
-
         // Must have 0 <= tokenId < MAX_TOKENS anyway, so may as well ensure registered.
         require(buyToken < coreData.numTokens, "Buy token is not registered");
         require(sellToken < coreData.numTokens, "Sell token is not registered");
@@ -228,7 +224,7 @@ contract SnappAuction is SnappBase {
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
     }
 
-    function calculateNextOrderHashIteration(bytes memory orderData, bytes32 previousHash, uint16 accountId) internal
+    function calculateNextOrderHashIteration(bytes memory orderData, bytes32 previousHash, uint16 accountId) internal view
         returns(bytes32)
     {
         uint96 buyAmount;
@@ -255,7 +251,7 @@ contract SnappAuction is SnappBase {
         require(
             auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
             "Too many pending auctions"
-            );
+        );
         auctionIndex++;
         auctions[auctionIndex] = SnappBaseCore.PendingBatch({
             size: 0,

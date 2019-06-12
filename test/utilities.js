@@ -147,6 +147,20 @@ const generateMerkleTree = memoize(_generateMerkleTree, {
   strategy: memoize.strategies.variadic
 })
 
+/**
+ * Partitions arrary into chunks of size spacing
+ * @param input: Array
+ * @param spacing: int
+ * @returns {Array}
+ */
+function partitionArray(input, spacing) {
+  const output = []
+  for (let i = 0; i < input.length; i += spacing) {
+    output[output.length] = input.slice(i, i + spacing)
+  }
+  return output
+}
+
 module.exports = {
   assertRejects,
   waitForNSeconds,
@@ -158,4 +172,5 @@ module.exports = {
   toHex,
   countDuplicates,
   generateMerkleTree,
+  partitionArray,
 }
