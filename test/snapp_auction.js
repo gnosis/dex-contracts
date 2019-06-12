@@ -501,4 +501,27 @@ contract("SnappAuction", async (accounts) => {
         "non-valid standingOrderBatch referenced")
     })
   })
+  describe("orderBatchIsValidAtAuctionIndex()", () => {
+    it("checks a valid orderBatch", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const isValid = await instance.orderBatchIsValidAtAuctionIndex(0, 1, 0)
+      assert.equal(isValid, true, "orderBatchIsValidAtAuctionIndex should return true")
+    })
+    it("checks an invalid orderBatch", async () => {
+      const instance = await SnappAuction.new()
+
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
+      
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+
+      await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,0], { from: user_1 })
+
+      const isValid = await instance.orderBatchIsValidAtAuctionIndex(0, 0, 1)
+      assert.equal(isValid, false, "orderBatchIsValidAtAuctionIndex should be false")
+    })
+  })
 })
