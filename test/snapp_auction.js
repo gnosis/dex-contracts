@@ -533,12 +533,14 @@ contract("SnappAuction", async (accounts) => {
 
       const orders = Array(maxAuctionSize).fill(order)
       const partitionedOrders = partitionArray(orders, 100)
+      
+      await Promise.all(
+        partitionedOrders.map(part => {
+          const concatenated_orders = Buffer.concat(part)
+          return instance.placeSellOrders(concatenated_orders, { from: user_1 })
+        })
+      )
 
-      await partitionedOrders.forEach(function(partition) {  // should be about 10
-        const concatenated_orders = Buffer.concat(partition)
-        instance.placeSellOrders(concatenated_orders, { from: user_1 })
-      })
- 
       const auctionIndex = (await instance.auctionIndex.call()).toNumber()
       const currentAuction = await instance.auctions(auctionIndex)
       assert.equal(
