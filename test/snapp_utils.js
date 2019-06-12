@@ -60,5 +60,5 @@ module.exports = {
   falseArray,
   isActive,
   encodePacked_16_8_128,
-  encodeOrder  
+  encodeOrder
 }
