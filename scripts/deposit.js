@@ -34,7 +34,7 @@ module.exports = async (callback) => {
     const slot = tx.logs[0].args.slot.toNumber()
     const slot_index = tx.logs[0].args.slotIndex.toNumber()
   
-    const deposit_hash = (await instance.deposits(slot)).shaHash
+    const deposit_hash = (await instance.getDepositHash(slot))
     console.log("Deposit successful: Slot %s - Index %s - Hash %s", slot, slot_index, deposit_hash)
     callback()
   } catch(error) {

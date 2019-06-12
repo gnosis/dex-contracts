@@ -26,7 +26,7 @@ module.exports = async (callback) => {
     const slot = tx.logs[0].args.slot.toNumber()
     const slot_index = tx.logs[0].args.slotIndex.toNumber()
   
-    const withdraw_hash = (await instance.pendingWithdraws(slot)).shaHash
+    const withdraw_hash = (await instance.getWithdrawHash(slot))
     console.log("Withdraw Request successful: Slot %s - Index %s - Hash %s", slot, slot_index, withdraw_hash)
     callback()
   } catch(error) {
