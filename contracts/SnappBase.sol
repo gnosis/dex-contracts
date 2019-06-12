@@ -68,6 +68,10 @@ contract SnappBase is Ownable {
         return coreData.pendingWithdraws[slot].shaHash;
     }
 
+    function getClaimableWithdrawHash(uint slot) public view returns (bytes32) {
+        return coreData.claimableWithdraws[slot].merkleRoot;
+    }
+
     function hasWithdrawBeenClaimed(uint slot, uint16 index) public view returns (bool) {
         return coreData.claimableWithdraws[slot].claimedBitmap[index];
     }

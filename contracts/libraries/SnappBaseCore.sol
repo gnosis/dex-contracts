@@ -160,7 +160,7 @@ library SnappBaseCore {
         data.stateRoots.push(_newStateRoot);
         data.deposits[slot].appliedAccountStateIndex = stateIndex(data);
 
-        emit StateTransition(TransitionType.Deposit, stateIndex(data), _newStateRoot, slot);
+        emit StateTransition(uint8(TransitionType.Deposit), stateIndex(data), _newStateRoot, slot);
     }
 
     /**
@@ -234,7 +234,7 @@ library SnappBaseCore {
             appliedAccountStateIndex: stateIndex(data)
         });
 
-        emit StateTransition(TransitionType.Withdraw, stateIndex(data), _newStateRoot, slot);
+        emit StateTransition(uint8(TransitionType.Withdraw), stateIndex(data), _newStateRoot, slot);
     }
 
     function claimWithdrawal(

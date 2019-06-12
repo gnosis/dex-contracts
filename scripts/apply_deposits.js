@@ -10,19 +10,15 @@ module.exports = async (callback) => {
     const [slot, new_state] = arguments
     
     const instance = await SnappAuction.deployed()
-    const state_index = (await instance.stateIndex.call()).toNumber()
-    const curr_state = await instance.stateRoots.call(state_index)
+    const curr_state = await instance.getCurrentStateRoot()
 
-    const deposit_state = await instance.deposits.call(slot)
-    if (deposit_state.appliedAccountStateIndex != 0) {
+    if (await instance.hasDepositBeenApplied(slot)) {
       callback("Error: Requested deposit slot has already been applied")
     }
 
     console.log("Current slot for: %d with curr_state %s and new_state %s", slot, curr_state, new_state)
-    await instance.applyDeposits(slot, curr_state, new_state, deposit_state.shaHash)
-    const updated_state = await instance.deposits.call(slot)
+    await instance.applyDeposits(slot, curr_state, new_state, await instance.getDepositHash(slot))
     console.log("Successfully applied Deposits!")
-    console.log("New appliedAccountStateIndex is:", updated_state.appliedAccountStateIndex.toNumber())
     callback()
   } catch (error) {
     callback(error)
