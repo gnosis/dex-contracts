@@ -530,10 +530,10 @@ contract("SnappAuction", async (accounts) => {
       const buyAmount = eventLog[0].args.buyAmount
       const sellAmount = eventLog[0].args.sellAmount
 
-      assert.equal(buyToken, 0)
-      assert.equal(sellToken, 1)
-      assert.equal(buyAmount, 2)
-      assert.equal(sellAmount, 3)
+      assert.equal(buyToken, 0, "buyToken not as expected")
+      assert.equal(sellToken, 1, "sellToken not as expected")
+      assert.equal(buyAmount, 2, "buyAmount not as expected")
+      assert.equal(sellAmount, 3, "sellAmount not as expected")
     })
   })
 
