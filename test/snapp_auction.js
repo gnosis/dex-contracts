@@ -518,7 +518,7 @@ contract("SnappAuction", async (accounts) => {
       assert.equal(currentAuction.size, 2)
     })
 
-    it("Order Encoding", async () => {
+    it("Encodes order information in emitted event", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       const order = encodeOrder(0, 1, 2, 3)
