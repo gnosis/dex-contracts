@@ -118,7 +118,6 @@ contract SnappAuction is SnappBase {
             createNewPendingBatch();
         }
         bytes32 orderHash;
-        bytes memory orderData;
         for (uint i = 0; i < numOrders; i++) {
             orderhash = calculateNextOrderHashIteration(packedOrders.slice(26*i, 26), orderhash);
         }
@@ -155,11 +154,13 @@ contract SnappAuction is SnappBase {
         require(packedOrders.length % 26 == 0, "Each order should be packed in 26 bytes!");
         // TODO - use ECRecover from signature contained in first 65 bytes of packedOrder
         uint16 accountId = publicKeyToAccountMap(msg.sender);
-        bytes memory orderData;
 
         for (uint i = 0; i < packedOrders.length / 26; i++) {
             createNewPendingBatchIfNecessary();
-            bytes32 nextAuctionHash = calculateNextOrderHashIteration(packedOrders.slice(26*i, 26), auctions[auctionIndex].shaHash);
+            bytes32 nextAuctionHash = calculateNextOrderHashIteration(
+                packedOrders.slice(26*i, 26),
+                auctions[auctionIndex].shaHash
+            );
             // TODO - auctions.shaHash should only need to be updated once (per index) on the outside of this loop
             auctions[auctionIndex].shaHash = nextAuctionHash;
             
@@ -225,6 +226,7 @@ contract SnappAuction is SnappBase {
         // solhint-disable-next-line max-line-length
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
     }
+
     function calculateNextOrderHashIteration(bytes orderData, bytes32 previousHash) internal
         returns(bytes32)
     {
@@ -240,7 +242,7 @@ contract SnappAuction is SnappBase {
             sellAmount := mload(add(add(orderData, 0xc), 14))
         }
         return nextHash = sha256(
-                abi.encodePacked(
+            abi.encodePacked(
                     previousHash,  // TODO - Below todo will affect this.
                     encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
                 )
