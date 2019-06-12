@@ -505,12 +505,11 @@ contract("SnappAuction", async (accounts) => {
     it("checks a valid orderBatch", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
-      const isValid = await instance.orderBatchIsValidAtAuctionIndex(0, 1, 0)
+      const isValid = await instance.orderBatchIsValidAtAuctionIndex(0, 0, 0)
       assert.equal(isValid, true, "orderBatchIsValidAtAuctionIndex should return true")
     })
     it("checks an invalid orderBatch", async () => {
       const instance = await SnappAuction.new()
-
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
       await instance.placeStandingSellOrder([0,0], [0,1], [3,1], [3,1], { from: user_1 })
