@@ -23,7 +23,7 @@ contract SnappAuction is SnappBase {
         uint currentBatchIndex;
     }
 
-    mapping (uint24 => StandingOrderData) public standingOrders;
+    mapping (uint16 => StandingOrderData) public standingOrders;
 
     uint public auctionIndex = MAX_UINT;
     mapping (uint => SnappBaseCore.PendingBatch) public auctions;
@@ -31,7 +31,7 @@ contract SnappAuction is SnappBase {
     event SellOrder(
         uint auctionId,
         uint16 slotIndex,
-        uint24 accountId,
+        uint16 accountId,
         uint8 buyToken,
         uint8 sellToken,
         uint96 buyAmount,
@@ -40,7 +40,7 @@ contract SnappAuction is SnappBase {
 
     event StandingSellOrderBatch(
         uint currentBatchIndex,
-        uint24 accountId,
+        uint16 accountId,
         bytes packedOrders
     );
 
@@ -78,16 +78,16 @@ contract SnappAuction is SnappBase {
         return auctions[slot].appliedAccountStateIndex != 0;
     }
 
-    function getStandingOrderHash(uint24 accountId, uint128 batchIndex) public view returns (bytes32) {
-        return standingOrders[accountId].reservedAccountOrders[batchIndex].orderHash;
+    function getStandingOrderHash(uint16 userId, uint128 batchIndex) public view returns (bytes32) {
+        return standingOrders[userId].reservedAccountOrders[batchIndex].orderHash;
     }
 
-    function getStandingOrderValidFrom(uint24 accountId, uint128 batchIndex) public view returns (uint) {
-        return standingOrders[accountId].reservedAccountOrders[batchIndex].validFromIndex;
+    function getStandingOrderValidFrom(uint16 userId, uint128 batchIndex) public view returns (uint) {
+        return standingOrders[userId].reservedAccountOrders[batchIndex].validFromIndex;
     }
 
-    function getStandingOrderValidTo(uint24 accountId, uint128 batchIndex) public view returns (uint) {
-        uint validTo = standingOrders[accountId].reservedAccountOrders[batchIndex + 1].validFromIndex;
+    function getStandingOrderValidTo(uint16 userId, uint128 batchIndex) public view returns (uint) {
+        uint validTo = standingOrders[userId].reservedAccountOrders[batchIndex + 1].validFromIndex;
         if (validTo == 0) {
             return MAX_UINT;
         } else {
@@ -95,8 +95,8 @@ contract SnappAuction is SnappBase {
         }
     }
 
-    function getStandingOrderCounter(uint24 accountId) public view returns (uint) {
-        return standingOrders[accountId].currentBatchIndex;
+    function getStandingOrderCounter(uint16 userId) public view returns (uint) {
+        return standingOrders[userId].currentBatchIndex;
     }
 
     /**
@@ -107,7 +107,7 @@ contract SnappAuction is SnappBase {
     ) public onlyRegistered() {
 
         // Update Auction Hash based on request
-        uint24 accountId = publicKeyToAccountMap(msg.sender);
+        uint16 accountId = publicKeyToAccountMap(msg.sender);
         require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Accout is not a reserved account");
 
         require(packedOrders.length % 26 == 0, "Each order should be packed in 26 bytes!");
@@ -163,7 +163,7 @@ contract SnappAuction is SnappBase {
         // Note that this could result failure of all orders if even one fails.
         require(packedOrders.length % 26 == 0, "Each order should be packed in 26 bytes!");
         // TODO - use ECRecover from signature contained in first 65 bytes of packedOrder
-        uint24 accountId = publicKeyToAccountMap(msg.sender);
+        uint16 accountId = publicKeyToAccountMap(msg.sender);
         bytes memory orderData;
 
         for (uint i = 0; i < packedOrders.length / 26; i++) {
@@ -220,7 +220,7 @@ contract SnappAuction is SnappBase {
     }
 
     function encodeOrder(
-        uint24 accountId,
+        uint16 accountId,
         uint8 buyToken,
         uint8 sellToken,
         uint96 buyAmount,

@@ -80,30 +80,30 @@ contract SnappBase is Ownable {
         return block.timestamp <= coreData.deposits[slot].creationTimestamp + 3 minutes;
     }
 
-    function publicKeyToAccountMap(address addr) public view returns (uint24) {
+    function publicKeyToAccountMap(address addr) public view returns (uint16) {
         return coreData.publicKeyToAccountMap(addr);
     }
 
-    function accountToPublicKeyMap(uint24 id) public view returns (address) {
+    function accountToPublicKeyMap(uint16 id) public view returns (address) {
         return coreData.accountToPublicKeyMap(id);
     }
 
-    function tokenAddresToIdMap(address addr) public view returns (uint24) {
+    function tokenAddresToIdMap(address addr) public view returns (uint16) {
         return IdToAddressBiMap.getId(coreData.registeredTokens, addr);
     }
 
-    function tokenIdToAddressMap(uint24 id) public view returns (address) {
+    function tokenIdToAddressMap(uint16 id) public view returns (address) {
         return coreData.tokenIdToAddressMap(id);
     }
 
-    function hasAccount(uint24 accountId) public view returns (bool) {
+    function hasAccount(uint16 accountId) public view returns (bool) {
         return IdToAddressBiMap.hasId(coreData.registeredAccounts, accountId);
     }
 
     /**
      * General Snapp Functionality
      */
-    function openAccount(uint24 accountId) public {
+    function openAccount(uint16 accountId) public {
         coreData.openAccount(accountId);
     }
 
@@ -151,7 +151,7 @@ contract SnappBase is Ownable {
     function claimWithdrawal(
         uint slot,
         uint16 inclusionIndex,
-        uint24 accountId,
+        uint16 accountId,
         uint8 tokenId,
         uint128 amount,
         bytes memory proof
