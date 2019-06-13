@@ -545,10 +545,11 @@ contract("SnappAuction", async (accounts) => {
       const tx = await instance.placeSellOrders(order, { from: user_1 })
       const eventLog = tx.logs
 
-      const sellToken = eventLog[0].args.sellToken
       const buyToken = eventLog[0].args.buyToken
+      const sellToken = eventLog[0].args.sellToken
       const buyAmount = eventLog[0].args.buyAmount
       const sellAmount = eventLog[0].args.sellAmount
+
       assert.equal(buyToken, 0, "buyToken not as expected")
       assert.equal(sellToken, 1, "sellToken not as expected")
       assert.equal(buyAmount, 2, "buyAmount not as expected")
