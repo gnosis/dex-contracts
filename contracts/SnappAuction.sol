@@ -122,7 +122,14 @@ contract SnappAuction is SnappBase {
         }
         bytes32 orderHash;
         for (uint i = 0; i < numOrders; i++) {
-            orderHash = calculateNextOrderHashIteration(packedOrders.slice(26*i, 26), orderHash, accountId);
+            (uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount) = decodeOrder(packedOrders.slice(26*i, 26));
+
+            orderHash = sha256(
+                abi.encodePacked(
+                    orderHash,
+                    encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
+                )
+            );
         }
         uint currentBatchIndex = standingOrders[accountId].currentBatchIndex;
         StandingOrderBatch memory currentOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
@@ -241,19 +248,6 @@ contract SnappAuction is SnappBase {
 
         sellToken = BytesLib.toUint8(orderData, 24);
         buyToken = BytesLib.toUint8(orderData, 25);
-    }
-
-    function calculateNextOrderHashIteration(bytes memory orderData, bytes32 previousHash, uint16 accountId) internal view
-        returns(bytes32)
-    {
-        (uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount) = decodeOrder(orderData);
-
-        return sha256(
-            abi.encodePacked(
-                previousHash,
-                encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
-            )
-        );
     }
 
     function createNewPendingBatch() internal {
