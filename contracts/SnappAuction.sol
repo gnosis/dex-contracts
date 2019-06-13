@@ -259,7 +259,7 @@ contract SnappAuction is SnappBase {
                 standingOrders[uint16(i)].reservedAccountOrders[_standingOrderIndex[i]].orderHash
             );
         }
-        return sha256(abi.encode(batchHashSequence));
+        return sha256(abi.encodePacked(batchHashSequence));
     }
 
     function orderBatchIsValidAtAuctionIndex(uint _auctionIndex, uint8 userId, uint128 orderBatchIndex)
