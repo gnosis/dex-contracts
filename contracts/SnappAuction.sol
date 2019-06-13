@@ -248,18 +248,15 @@ contract SnappAuction is SnappBase {
 
     function calculateOrderHash(uint slot, uint128[] memory _standingOrderIndex)
     public view returns (bytes32) {
-        bytes memory batchHashSequence = abi.encode(auctions[slot].shaHash);
+        bytes32[] memory orderHashes = new bytes32[](AUCTION_RESERVED_ACCOUNTS);
         for (uint i = 0; i < AUCTION_RESERVED_ACCOUNTS; i++) {
             require(
                 orderBatchIsValidAtAuctionIndex(slot, uint8(i), _standingOrderIndex[i]),
                 "non-valid standingOrderBatch referenced"
             );
-            batchHashSequence = abi.encodePacked(
-                batchHashSequence,
-                standingOrders[uint16(i)].reservedAccountOrders[_standingOrderIndex[i]].orderHash
-            );
+            orderHashes[i] = standingOrders[uint16(i)].reservedAccountOrders[_standingOrderIndex[i]].orderHash;
         }
-        return sha256(abi.encodePacked(batchHashSequence));
+        return sha256(abi.encodePacked(orderHashes));
     }
 
     function orderBatchIsValidAtAuctionIndex(uint _auctionIndex, uint8 userId, uint128 orderBatchIndex)
