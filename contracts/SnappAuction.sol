@@ -232,8 +232,8 @@ contract SnappAuction is SnappBase {
 
     function orderBatchIsValidAtAuctionIndex(uint _auctionIndex, uint8 userId, uint128 orderBatchIndex)
     public view returns(bool) {
-        return _auctionIndex >= getStandingOrderValidFrom(userId, orderBatchIndex)
-            && _auctionIndex <= getStandingOrderValidTo(userId, orderBatchIndex);
+        return _auctionIndex >= getStandingOrderValidFrom(userId, orderBatchIndex) &&
+            _auctionIndex <= getStandingOrderValidTo(userId, orderBatchIndex);
     }
 
     function maxUnreservedOrderCount() public pure returns (uint16) {
