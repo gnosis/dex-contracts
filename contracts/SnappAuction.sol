@@ -41,10 +41,7 @@ contract SnappAuction is SnappBase {
     event StandingSellOrderBatch(
         uint currentBatchIndex,
         uint16 accountId,
-        uint8[] buyToken,
-        uint8[] sellToken,
-        uint96[] buyAmount,
-        uint96[] sellAmount
+        bytes packedOrders
     );
 
     event AuctionSettlement(
@@ -106,18 +103,15 @@ contract SnappAuction is SnappBase {
      * Auction Functionality
      */
     function placeStandingSellOrder(
-        uint8[] memory buyTokens,
-        uint8[] memory sellTokens,
-        uint96[] memory buyAmounts,
-        uint96[] memory sellAmounts
+        bytes memory packedOrders
     ) public onlyRegistered() {
 
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
         require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Accout is not a reserved account");
 
-        bytes32 orderHash;
-        uint numOrders = buyTokens.length;
+        require(packedOrders.length % 26 == 0, "Each order should be packed in 26 bytes!");
+        uint numOrders = packedOrders.length / 26;
         require(numOrders <= AUCTION_RESERVED_ACCOUNT_BATCH_SIZE, "Too many orders for reserved batch");
 
         if (
@@ -126,12 +120,14 @@ contract SnappAuction is SnappBase {
         ) {
             createNewPendingBatch();
         }
-
+        bytes32 orderHash;
         for (uint i = 0; i < numOrders; i++) {
+            (uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount) = decodeOrder(packedOrders.slice(26*i, 26));
+
             orderHash = sha256(
                 abi.encodePacked(
                     orderHash,
-                    encodeOrder(accountId, buyTokens[i], sellTokens[i], buyAmounts[i], sellAmounts[i])
+                    encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
                 )
             );
         }
@@ -149,7 +145,7 @@ contract SnappAuction is SnappBase {
         //TODO: The case auctionIndex < currentOrderBatch.validFromIndex can happen once roll-backs are implemented
         //Then we have to revert the orderplacement
         standingOrders[accountId].reservedAccountOrders[currentBatchIndex] = currentOrderBatch;
-        emit StandingSellOrderBatch(currentBatchIndex, accountId, buyTokens, sellTokens, buyAmounts, sellAmounts);
+        emit StandingSellOrderBatch(currentBatchIndex, accountId, packedOrders);
     }
 
     function placeSellOrder(
@@ -157,22 +153,10 @@ contract SnappAuction is SnappBase {
         uint8 sellToken,
         uint96 buyAmount,
         uint96 sellAmount
-    ) public onlyRegistered() {
-        createNewPendingBatchIfNecessary();
-
-        // Update Auction Hash based on request
-        uint16 accountId = publicKeyToAccountMap(msg.sender);
-        bytes32 nextAuctionHash = sha256(
-            abi.encodePacked(
-                auctions[auctionIndex].shaHash,
-                encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
-            )
-        );
-        auctions[auctionIndex].shaHash = nextAuctionHash;
-
-        emit SellOrder(auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount);
-        // Only increment size after event (so it is emitted as an index)
-        auctions[auctionIndex].size++;
+    ) public {
+        // Ignore first 4 bytes padding and last two bytes accountId
+        bytes memory packed = abi.encodePacked(encodeOrder(0, buyToken, sellToken, buyAmount, sellAmount));
+        placeSellOrders(BytesLib.slice(packed, 4, 26));
     }
 
     function placeSellOrders(bytes memory packedOrders) public onlyRegistered() {
@@ -180,22 +164,9 @@ contract SnappAuction is SnappBase {
         require(packedOrders.length % 26 == 0, "Each order should be packed in 26 bytes!");
         // TODO - use ECRecover from signature contained in first 65 bytes of packedOrder
         uint16 accountId = publicKeyToAccountMap(msg.sender);
-        bytes memory orderData;
-
         for (uint i = 0; i < packedOrders.length / 26; i++) {
-            orderData = packedOrders.slice(26*i, 26);
+            (uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount) = decodeOrder(packedOrders.slice(26*i, 26));
 
-            uint8 buyToken = BytesLib.toUint8(orderData, 0);
-            uint8 sellToken = BytesLib.toUint8(orderData, 1);
-
-            uint96 buyAmount;
-            assembly {  // solhint-disable no-inline-assembly
-                buyAmount := mload(add(add(orderData, 0xc), 2))
-            }
-            uint96 sellAmount;
-            assembly {  // solhint-disable no-inline-assembly
-                sellAmount := mload(add(add(orderData, 0xc), 14))
-            }
             createNewPendingBatchIfNecessary();
             bytes32 nextAuctionHash = sha256(
                 abi.encodePacked(
@@ -268,7 +239,7 @@ contract SnappAuction is SnappBase {
     function maxUnreservedOrderCount() public pure returns (uint16) {
         return AUCTION_BATCH_SIZE - (AUCTION_RESERVED_ACCOUNTS * AUCTION_RESERVED_ACCOUNT_BATCH_SIZE);
     }
-    
+
     function encodeOrder(
         uint16 accountId,
         uint8 buyToken,
@@ -278,10 +249,6 @@ contract SnappAuction is SnappBase {
     )
         internal view returns (bytes32)
     {
-        // Restrict buy and sell amount to occupy at most 96 bits.
-        require(buyAmount < 0x1000000000000000000000000, "Buy amount too large!");
-        require(sellAmount < 0x1000000000000000000000000, "Sell amount too large!");
-
         // Must have 0 <= tokenId < MAX_TOKENS anyway, so may as well ensure registered.
         require(buyToken < coreData.numTokens, "Buy token is not registered");
         require(sellToken < coreData.numTokens, "Sell token is not registered");
@@ -291,11 +258,25 @@ contract SnappAuction is SnappBase {
         return bytes32(uint(accountId) + (uint(buyToken) << 16) + (uint(sellToken) << 24) + (uint(sellAmount) << 32) + (uint(buyAmount) << 128));
     }
 
+    function decodeOrder(bytes memory orderData) internal pure
+        returns(uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount)
+    {
+        assembly {  // solhint-disable no-inline-assembly
+            buyAmount := mload(add(add(orderData, 0xc), 0))
+        }
+        assembly {  // solhint-disable no-inline-assembly
+            sellAmount := mload(add(add(orderData, 0xc), 12))
+        }
+
+        sellToken = BytesLib.toUint8(orderData, 24);
+        buyToken = BytesLib.toUint8(orderData, 25);
+    }
+
     function createNewPendingBatch() internal {
         require(
             auctionIndex == MAX_UINT || auctionIndex < 2 || auctions[auctionIndex - 2].appliedAccountStateIndex != 0,
             "Too many pending auctions"
-            );
+        );
         auctionIndex++;
         auctions[auctionIndex] = SnappBaseCore.PendingBatch({
             size: 0,

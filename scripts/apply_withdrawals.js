@@ -14,16 +14,13 @@ module.exports = async (callback) => {
     const state_index = (await instance.stateIndex.call()).toNumber()
     const curr_state = await instance.stateRoots.call(state_index)
 
-    const withdraw_state = await instance.pendingWithdraws.call(slot)
-    if (withdraw_state.appliedAccountStateIndex != 0) {
+    if (await instance.hasWithdrawBeenApplied(slot)) {
       callback("Error: Requested withdraw slot has already been applied")
     }
 
     console.log("Current slot for: %d with curr_state %s and new_state %s", slot, curr_state, new_state)
-    await instance.applyWithdrawals(slot, merkle_root, curr_state, new_state, withdraw_state.shaHash)
-    const updated_state = await instance.pendingWithdraws.call(slot)
+    await instance.applyWithdrawals(slot, merkle_root, curr_state, new_state, await instance.getWithdrawHash(slot))
     console.log("Successfully applied Withdrawals!")
-    console.log("New appliedAccountStateIndex is:", updated_state.appliedAccountStateIndex.toNumber())
     callback()
   } catch (error) {
     callback(error)

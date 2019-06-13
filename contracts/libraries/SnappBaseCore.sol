@@ -17,7 +17,7 @@ library SnappBaseCore {
 
     event WithdrawRequest(uint16 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
     event Deposit(uint16 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
-    event StateTransition(TransitionType transitionType, uint stateIndex, bytes32 stateHash, uint slot);
+    event StateTransition(uint8 transitionType, uint stateIndex, bytes32 stateHash, uint slot);
     event SnappInitialization(bytes32 stateHash, uint8 maxTokens, uint16 maxAccounts);
 
     enum TransitionType {
@@ -160,7 +160,7 @@ library SnappBaseCore {
         data.stateRoots.push(_newStateRoot);
         data.deposits[slot].appliedAccountStateIndex = stateIndex(data);
 
-        emit StateTransition(TransitionType.Deposit, stateIndex(data), _newStateRoot, slot);
+        emit StateTransition(uint8(TransitionType.Deposit), stateIndex(data), _newStateRoot, slot);
     }
 
     /**
@@ -234,7 +234,7 @@ library SnappBaseCore {
             appliedAccountStateIndex: stateIndex(data)
         });
 
-        emit StateTransition(TransitionType.Withdraw, stateIndex(data), _newStateRoot, slot);
+        emit StateTransition(uint8(TransitionType.Withdraw), stateIndex(data), _newStateRoot, slot);
     }
 
     function claimWithdrawal(

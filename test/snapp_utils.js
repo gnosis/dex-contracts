@@ -53,7 +53,7 @@ const encodePacked_16_8_128 = function(a, b, c) {
 }
 
 const encodeOrder = function(buyToken, sellToken, buyAmount, sellAmount) {
-  return Buffer.from(uint8(buyToken) + uint8(sellToken) +  uint96(buyAmount) + uint96(sellAmount), "hex")
+  return Buffer.from(uint96(buyAmount) + uint96(sellAmount) + uint8(sellToken) + uint8(buyToken) , "hex")
 }
 
 module.exports = {
