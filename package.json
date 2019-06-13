@@ -41,6 +41,7 @@
   },
   "homepage": "https://github.com/gnosis/dex-contracts#readme",
   "dependencies": {
+    "bn.js": "^4.11.8",
     "ethereumjs-abi": "^0.6.6",
     "ethereumjs-util": "^6.0.0",
     "fast-memoize": "^2.5.1",
