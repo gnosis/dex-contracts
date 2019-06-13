@@ -6,7 +6,7 @@ const {
 module.exports = async (callback) => {
   try {
     const instance = await SnappAuction.deployed()
-    const [buyToken, sellToken, minBuy, maxSell, sender] = getOrderData(instance, callback)
+    const [buyToken, sellToken, minBuy, maxSell, sender] = await getOrderData(instance, callback, web3)
   
     const tx = await instance.placeSellOrder(buyToken, sellToken, minBuy, maxSell, { from: sender })
     const auction_id = tx.logs[0].args.auctionId.toNumber()

@@ -8,7 +8,7 @@ const getArgumentsHelper = function() {
   return arguments
 }
 
-const getOrderData = async function(instance, callback) {
+const getOrderData = async function(instance, callback, web3) {
   const arguments = getArgumentsHelper()
   if (arguments.length != 5) {
     callback("Error: This script requires arguments - <accountId> <buyToken> <sellToken> <minBuy> <maxSell>")
@@ -32,7 +32,7 @@ const getOrderData = async function(instance, callback) {
     callback(`Error: No token registered at index ${sellToken}`)
   }
 
-  return (buyToken, sellToken, minBuy, maxSell, sender)
+  return [buyToken, sellToken, minBuy, maxSell, sender]
 }
 
 module.exports = {
