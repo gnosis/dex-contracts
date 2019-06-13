@@ -10,7 +10,7 @@ const {
 
 const {
   isActive,
-  encodeOrder}  = require("./snapp_utils.js")
+  encodeOrder }  = require("./snapp_utils.js")
 
 contract("SnappAuction", async (accounts) => {
   const [token_owner, user_1, user_2] = accounts
@@ -544,8 +544,8 @@ contract("SnappAuction", async (accounts) => {
       const order = encodeOrder(0, 1, 2, 3)
       const tx = await instance.placeSellOrders(order, { from: user_1 })
       const eventLog = tx.logs
-      const sellToken = eventLog[0].args.sellToken
       const buyToken = eventLog[0].args.buyToken
+      const sellToken = eventLog[0].args.sellToken
       const buyAmount = eventLog[0].args.buyAmount
       const sellAmount = eventLog[0].args.sellAmount
       assert.equal(buyToken, 0, "buyToken not as expected")
