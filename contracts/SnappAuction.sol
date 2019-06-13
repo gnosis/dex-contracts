@@ -40,6 +40,7 @@ contract SnappAuction is SnappBase {
 
     event StandingSellOrderBatch(
         uint currentBatchIndex,
+        uint validFromAuctionId,
         uint16 accountId,
         bytes packedOrders
     );
@@ -145,7 +146,7 @@ contract SnappAuction is SnappBase {
         //TODO: The case auctionIndex < currentOrderBatch.validFromIndex can happen once roll-backs are implemented
         //Then we have to revert the orderplacement
         standingOrders[accountId].reservedAccountOrders[currentBatchIndex] = currentOrderBatch;
-        emit StandingSellOrderBatch(currentBatchIndex, accountId, packedOrders);
+        emit StandingSellOrderBatch(currentBatchIndex, auctionIndex, accountId, packedOrders);
     }
 
     function placeSellOrder(
