@@ -544,6 +544,7 @@ contract("SnappAuction", async (accounts) => {
       const order = encodeOrder(0, 1, 2, 3)
       const tx = await instance.placeSellOrders(order, { from: user_1 })
       const eventLog = tx.logs
+
       const buyToken = eventLog[0].args.buyToken
       const sellToken = eventLog[0].args.sellToken
       const buyAmount = eventLog[0].args.buyAmount
