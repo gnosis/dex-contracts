@@ -7,9 +7,6 @@ const MintableERC20 = artifacts.require("./ERC20Mintable.sol")
 const zeroHash = "0x0"
 const oneHash = "0x1"
 
-const BN = require("bn.js")
-const oneBN = new BN("1", 10)
-
 const truffleAssert = require("truffle-assertions")
 
 const Promise = require("es6-promise").Promise
@@ -95,22 +92,22 @@ contract("SnappBase", async (accounts) => {
   })
   
   describe("openAccount()", () => {
-    it("Do not allow open account at MAX_ACCOUNT_ID + 1", async () => {
+    it("Do not allow open account at index >= maxAccountNumber", async () => {
       const instance = await SnappBase.new()
       const core = await SnappBaseCore.new()
-      const maxAccoundId = await core.MAX_ACCOUNT_ID.call()
-      await truffleAssert.reverts(instance.openAccount(maxAccoundId.add(oneBN)), "Account index exceeds max")
+      const max_account_id = (await core.MAX_ACCOUNT_ID.call()).toNumber()
+      await truffleAssert.reverts(instance.openAccount(max_account_id), "Account index exceeds max")
+      await truffleAssert.reverts(instance.openAccount(max_account_id + 1), "Account index exceeds max")
     })
 
-    it("Generic Open Account: 0 <= index <= maxUint24 - 2 = 16 777 214", async () => {
+    it("Do allow open account at 0 <= index < maxAccountNumber", async () => {
       const instance = await SnappBase.new()
       const core = await SnappBaseCore.new()
-      const maxAccoundId = await core.MAX_ACCOUNT_ID.call()
-
-      await instance.openAccount(maxAccoundId)
+      const max_account_id = (await core.MAX_ACCOUNT_ID.call()).toNumber()
+      await instance.openAccount(max_account_id - 1)
       await instance.openAccount(0, { from: user_1 })
 
-      assert.equal((await instance.publicKeyToAccountMap.call(owner)).toNumber(), maxAccoundId)
+      assert.equal((await instance.publicKeyToAccountMap.call(owner)).toNumber(), max_account_id - 1)
       assert.equal((await instance.publicKeyToAccountMap.call(user_1)).toNumber(), 0)
     })
 
