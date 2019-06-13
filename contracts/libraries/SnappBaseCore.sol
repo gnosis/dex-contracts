@@ -10,15 +10,15 @@ library SnappBaseCore {
     using Merkle for bytes32;
 
     uint public constant MAX_UINT = 2**256 - 1;
-    uint8 public constant MAX_ACCOUNT_ID = 100;
+    uint24 public constant MAX_ACCOUNT_ID = 2**24 - 2;
     uint8 public constant MAX_TOKENS = 30;
     uint8 public constant DEPOSIT_BATCH_SIZE = 100;
     uint8 public constant WITHDRAW_BATCH_SIZE = 100;
 
-    event WithdrawRequest(uint16 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
-    event Deposit(uint16 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
+    event WithdrawRequest(uint24 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
+    event Deposit(uint24 accountId, uint8 tokenId, uint128 amount, uint slot, uint16 slotIndex);
     event StateTransition(uint8 transitionType, uint stateIndex, bytes32 stateHash, uint slot);
-    event SnappInitialization(bytes32 stateHash, uint8 maxTokens, uint16 maxAccounts);
+    event SnappInitialization(bytes32 stateHash, uint8 maxTokensk, uint24 maxAccounts);
 
     enum TransitionType {
         Deposit,
@@ -67,23 +67,23 @@ library SnappBaseCore {
         return data.stateRoots.length - 1;
     }
 
-    function publicKeyToAccountMap(Data storage data, address addr) public view returns (uint16) {
+    function publicKeyToAccountMap(Data storage data, address addr) public view returns (uint24) {
         return IdToAddressBiMap.getId(data.registeredAccounts, addr);
     }
 
-    function accountToPublicKeyMap(Data storage data, uint16 id) public view returns (address) {
-        return IdToAddressBiMap.getAddressAt(data.registeredAccounts, id);
+    function accountToPublicKeyMap(Data storage data, uint24 accountId) public view returns (address) {
+        return IdToAddressBiMap.getAddressAt(data.registeredAccounts, accountId);
     }
 
-    function tokenIdToAddressMap(Data storage data, uint16 id) public view returns (address) {
-        return IdToAddressBiMap.getAddressAt(data.registeredTokens, id);
+    function tokenIdToAddressMap(Data storage data, uint24 tokenId) public view returns (address) {
+        return IdToAddressBiMap.getAddressAt(data.registeredTokens, tokenId);
     }
 
     /**
      * General Snapp Functionality
      */
-    function openAccount(Data storage data, uint16 accountId) public {
-        require(accountId < MAX_ACCOUNT_ID, "Account index exceeds max");
+    function openAccount(Data storage data, uint24 accountId) public {
+        require(accountId <= MAX_ACCOUNT_ID, "Account index exceeds max");
         require(
             IdToAddressBiMap.insert(data.registeredAccounts, accountId, msg.sender),
             "Address occupies slot or requested slot already taken"
@@ -124,7 +124,7 @@ library SnappBaseCore {
         }
 
         // Update Deposit Hash based on request
-        uint16 accountId = publicKeyToAccountMap(data, msg.sender);
+        uint24 accountId = publicKeyToAccountMap(data, msg.sender);
         bytes32 nextDepositHash = sha256(
             abi.encodePacked(data.deposits[data.depositIndex].shaHash, encodeFlux(accountId, tokenId, amount))
         );
@@ -191,7 +191,7 @@ library SnappBaseCore {
         }
 
         // Update Withdraw Hash based on request
-        uint16 accountId = publicKeyToAccountMap(data, msg.sender);
+        uint24 accountId = publicKeyToAccountMap(data, msg.sender);
         bytes32 nextWithdrawHash = sha256(
             abi.encodePacked(data.pendingWithdraws[data.withdrawIndex].shaHash, encodeFlux(accountId, tokenId, amount))
         );
@@ -241,7 +241,7 @@ library SnappBaseCore {
         Data storage data,
         uint slot,
         uint16 inclusionIndex,
-        uint16 accountId,
+        uint24 accountId,
         uint8 tokenId,
         uint128 amount,
         bytes memory proof
@@ -263,7 +263,7 @@ library SnappBaseCore {
         ERC20(tokenIdToAddressMap(data, tokenId)).transfer(accountToPublicKeyMap(data, accountId), amount);
     }
 
-    function encodeFlux(uint16 accountId, uint8 tokenId, uint128 amount) internal pure returns (bytes32) {
+    function encodeFlux(uint24 accountId, uint8 tokenId, uint128 amount) internal pure returns (bytes32) {
         return bytes32(uint(amount) + (uint(tokenId) << 128) + (uint(accountId) << 136));
     }
 }
