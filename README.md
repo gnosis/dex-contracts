@@ -16,8 +16,16 @@ Checkout the [Formal Specification](https://github.com/gnosis/dex-research/blob/
 
 Checkout our [wiki](https://github.com/gnosis/dex-contracts/wiki/Script-Usage-Examples)
 
+# Contributions
+Our continuoius integration is running several linters which must pass in order to make a contribution to this repo. For your convenience there is a `pre-commit` hook file contained in the project's root directory. You can make your life easier by executing the following command after cloning this project (it will ensure your changes pass linting before allowing commits).
 
-# Contributors
+```bash
+cp pre-commit .git/hooks/
+chmod +x .git/hooks/pre-commit
+```
+
+For any other questions, comments or concerns please feel free to contact any of the project admins:
+
 - Alex ([josojo](https://github.com/josojo))
 - Ben ([bh2smith](https://github.com/bh2smith))
 - Felix ([fleupold](https://github.com/fleupold))

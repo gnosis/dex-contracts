@@ -1,6 +1,6 @@
 const SnappAuction = artifacts.require("SnappAuction")
 const zero_address = 0x0
-const getArgumentsHelper = require("./script_utilities.js")
+const { getArgumentsHelper } = require("./script_utilities.js")
 
 module.exports = async (callback) => {
   try {

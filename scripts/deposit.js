@@ -1,6 +1,6 @@
 const SnappAuction = artifacts.require("SnappAuction")
 const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
-const getArgumentsHelper = require("./script_utilities.js")
+const { getArgumentsHelper } = require("./script_utilities.js")
 
 const zero_address = 0x0
 

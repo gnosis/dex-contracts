@@ -1,5 +1,5 @@
 const SnappAuction = artifacts.require("SnappAuction")
-const getArgumentsHelper = require("./script_utilities.js")
+const { getArgumentsHelper } = require("./script_utilities.js")
 
 module.exports = async (callback) => {
   try {
