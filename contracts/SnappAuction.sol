@@ -199,7 +199,7 @@ contract SnappAuction is SnappBase {
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(
-            calculateOrderHash(auctionIndex, _standingOrderIndex) == _orderHash,
+            calculateOrderHash(slot, _standingOrderIndex) == _orderHash,
             "Order hash doesn't agree"
             );
         require(
