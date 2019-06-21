@@ -165,8 +165,6 @@ contract SnappAuction is SnappBase {
         require(packedOrders.length % 26 == 0, "Each order should be packed in 26 bytes!");
         // TODO - use ECRecover from signature contained in first 65 bytes of packedOrder
         uint16 accountId = publicKeyToAccountMap(msg.sender);
-        bytes memory orderData;
-
         for (uint i = 0; i < packedOrders.length / 26; i++) {
             (uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount) = decodeOrder(packedOrders.slice(26*i, 26));
 
@@ -192,6 +190,7 @@ contract SnappAuction is SnappBase {
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
         bytes32 _orderHash,
+        uint128[] memory _standingOrderIndex,
         bytes memory pricesAndVolumes
     )
         public onlyOwner()
@@ -199,7 +198,10 @@ contract SnappAuction is SnappBase {
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested order slot does not exist");
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
-        require(auctions[slot].shaHash == _orderHash, "Order hash doesn't agree");
+        require(
+            calculateOrderHash(slot, _standingOrderIndex) == _orderHash,
+            "Order hash doesn't agree"
+        );
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
                 auctions[slot].size == maxUnreservedOrderCount(),
@@ -214,6 +216,25 @@ contract SnappAuction is SnappBase {
         auctions[slot].shaHash = sha256(pricesAndVolumes);
 
         emit AuctionSettlement(slot, stateIndex(), _newStateRoot, pricesAndVolumes);
+    }
+
+    function calculateOrderHash(uint slot, uint128[] memory _standingOrderIndex)
+    public view returns (bytes32) {
+        bytes32[] memory orderHashes = new bytes32[](AUCTION_RESERVED_ACCOUNTS);
+        for (uint i = 0; i < AUCTION_RESERVED_ACCOUNTS; i++) {
+            require(
+                orderBatchIsValidAtAuctionIndex(slot, uint8(i), _standingOrderIndex[i]),
+                "non-valid standingOrderBatch referenced"
+            );
+            orderHashes[i] = standingOrders[uint16(i)].reservedAccountOrders[_standingOrderIndex[i]].orderHash;
+        }
+        return sha256(abi.encodePacked(auctions[slot].shaHash, orderHashes));
+    }
+
+    function orderBatchIsValidAtAuctionIndex(uint _auctionIndex, uint8 userId, uint128 orderBatchIndex)
+    public view returns(bool) {
+        return _auctionIndex >= getStandingOrderValidFrom(userId, orderBatchIndex) &&
+            _auctionIndex <= getStandingOrderValidTo(userId, orderBatchIndex);
     }
 
     function maxUnreservedOrderCount() public pure returns (uint16) {

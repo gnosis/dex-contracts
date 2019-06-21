@@ -250,9 +250,11 @@ contract("SnappAuction", async (accounts) => {
     it("Cannot apply auction before first order", async () => {
       const instance = await SnappAuction.new()
       const curr_slot = await instance.auctionIndex.call()
-  
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
       await truffleAssert.reverts(
-        instance.applyAuction(curr_slot, "0x0", "0x0", "0x0", "0x0"),
+        instance.applyAuction(curr_slot, "0x0", "0x0", "0x0", standingOrderIndexList, "0x0"),
         "Requested order slot does not exist"
       )
     })
@@ -266,10 +268,12 @@ contract("SnappAuction", async (accounts) => {
       const slot = (await instance.auctionIndex.call()).toNumber()
       const state_root = await instance.getCurrentStateRoot()
       const auction_state = await instance.auctions.call(slot)
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
 
       await truffleAssert.reverts(
-        instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution, { from: user_1 })
-      )
+        instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, standingOrderIndexList, auctionSolution, { from: user_1 }))
     })
 
     it("Reject: active slot", async () => {
@@ -281,11 +285,13 @@ contract("SnappAuction", async (accounts) => {
       const slot = (await instance.auctionIndex.call()).toNumber()
       const state_root = await instance.getCurrentStateRoot()
       const auction_state = await instance.auctions.call(slot)
-
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
       assert.equal(await isActive(auction_state), true)
-
       await truffleAssert.reverts(
-        instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution),
+        instance.applyAuction(slot, state_root, new_state, orderhash, standingOrderIndexList, auctionSolution),
         "Requested order slot is still active"
       )
     })
@@ -298,7 +304,11 @@ contract("SnappAuction", async (accounts) => {
 
       const slot = (await instance.auctionIndex.call()).toNumber()
       const auction_state = await instance.auctions.call(slot)
-
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
+      
       // Wait for current order slot to be inactive
       await waitForNSeconds(181)
 
@@ -309,7 +319,7 @@ contract("SnappAuction", async (accounts) => {
       assert.notEqual(wrong_state_root, await instance.getCurrentStateRoot())
 
       await truffleAssert.reverts(
-        instance.applyAuction(slot, wrong_state_root, new_state, auction_state.shaHash, auctionSolution),
+        instance.applyAuction(slot, wrong_state_root, new_state, orderhash, standingOrderIndexList, auctionSolution),
         "Incorrect state root"
       )
     })
@@ -322,6 +332,9 @@ contract("SnappAuction", async (accounts) => {
 
       const slot = (await instance.auctionIndex.call()).toNumber()
       const auction_state = await instance.auctions.call(slot)
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
 
       // Wait for current order slot to be inactive
       await waitForNSeconds(181)
@@ -335,9 +348,7 @@ contract("SnappAuction", async (accounts) => {
       assert.notEqual(wrong_order_hash, auction_state.shaHash)
 
       await truffleAssert.reverts(
-        instance.applyAuction(slot, state_root, new_state, wrong_order_hash, auctionSolution),
-        "Order hash doesn't agree"
-      )
+        instance.applyAuction(slot, state_root, new_state, wrong_order_hash, standingOrderIndexList, auctionSolution))
     })
 
     it("Reject: out-of-range slot", async () => {
@@ -348,7 +359,11 @@ contract("SnappAuction", async (accounts) => {
 
       const slot = (await instance.auctionIndex.call()).toNumber()
       const auction_state = await instance.auctions.call(slot)
-
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
+      
       // Wait for current order slot to be inactive
       await waitForNSeconds(181)
 
@@ -359,7 +374,7 @@ contract("SnappAuction", async (accounts) => {
       const curr_slot = (await instance.auctionIndex.call()).toNumber()
 
       await truffleAssert.reverts(
-        instance.applyAuction(curr_slot + 1, state_root, new_state, auction_state.shaHash, auctionSolution),
+        instance.applyAuction(curr_slot + 1, state_root, new_state, orderhash, standingOrderIndexList, auctionSolution),
         "Requested order slot does not exist"
       )
     })
@@ -372,6 +387,10 @@ contract("SnappAuction", async (accounts) => {
 
       const slot = (await instance.auctionIndex.call()).toNumber()
       const auction_state = await instance.auctions.call(slot)
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
 
       // Wait for current order slot to be inactive
       await waitForNSeconds(181)
@@ -381,7 +400,7 @@ contract("SnappAuction", async (accounts) => {
 
       const state_root = await instance.getCurrentStateRoot()
       
-      await instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution)
+      await instance.applyAuction(slot, state_root, new_state, orderhash, standingOrderIndexList, auctionSolution)
 
       const state_index = (await instance.stateIndex.call()).toNumber()
       const applied_index = ((await instance.auctions(slot)).appliedAccountStateIndex).toNumber()
@@ -397,6 +416,10 @@ contract("SnappAuction", async (accounts) => {
 
       const slot = (await instance.auctionIndex.call()).toNumber()
       const auction_state = await instance.auctions.call(slot)
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
 
       // Wait for current order slot to be inactive
       await waitForNSeconds(181)
@@ -407,11 +430,11 @@ contract("SnappAuction", async (accounts) => {
       const state_root = await instance.getCurrentStateRoot()
 
       // Apply auction once
-      await instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution)
+      await instance.applyAuction(slot, state_root, new_state, orderhash, standingOrderIndexList, auctionSolution)
       
       // Try to apply same slot again
       await truffleAssert.reverts(
-        instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, auctionSolution),
+        instance.applyAuction(slot, state_root, new_state, orderhash, standingOrderIndexList, auctionSolution),
         "Auction already applied"
       )
     })
@@ -423,28 +446,93 @@ contract("SnappAuction", async (accounts) => {
       await instance.placeSellOrders(order, { from: user_1 })
 
       const first_slot = (await instance.auctionIndex.call()).toNumber()
-      const first_auction_state = await instance.auctions.call(first_slot)
-
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const first_standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      first_standingOrderIndexList.fill(0)
+      const first_orderhash = await instance.calculateOrderHash(first_slot, first_standingOrderIndexList)
       // Wait for current order slot to be inactive
       await waitForNSeconds(181)
 
       // Place an order to ensure second order slot is created.
       const order_tx = await instance.placeSellOrders(order, { from: user_1 })
       const second_slot = order_tx.logs[0].args.auctionId.toNumber()
-      const second_auction_state = await instance.auctions(second_slot)
-
+      const second_standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      second_standingOrderIndexList.fill(0)
+      const second_orderhash = await instance.calculateOrderHash(second_slot, second_standingOrderIndexList)
       // Wait for second order slot to be inactive
       await waitForNSeconds(181)
 
       const state_root = await instance.getCurrentStateRoot()
 
       await truffleAssert.reverts(
-        instance.applyAuction(second_slot, state_root, new_state, second_auction_state.shaHash, auctionSolution),
+        instance.applyAuction(second_slot, state_root, new_state, second_orderhash, second_standingOrderIndexList, auctionSolution),
         "Must apply auction slots in order!"
       )
+      
+      await instance.applyAuction(first_slot, state_root, new_state, first_orderhash, first_standingOrderIndexList, auctionSolution)
+      const second_state_root = await instance.getCurrentStateRoot.call()
+      await instance.applyAuction(second_slot, second_state_root, new_state, second_orderhash, second_standingOrderIndexList, auctionSolution)
+    })
+  })
+  describe("calculateOrderHash()", () => {
+    it("calculates the orderHash with standingOrderIndex = [0,...,0]", async () => {
+      const instance = await SnappAuction.new()
+      const curr_slot = await instance.auctionIndex.call()
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const bytes = await instance.calculateOrderHash(curr_slot, standingOrderIndexList)
+      assert.notEqual(bytes, "0x0000000000000000000000000000000000000000", "orderHash was not calculated correctly")
+    })
+    it("throws is standingOrderIndex is not valid in slot", async () => {
+      const instance = await SnappAuction.new()
 
-      await instance.applyAuction(first_slot, state_root, new_state, first_auction_state.shaHash, auctionSolution)
-      await instance.applyAuction(second_slot, new_state, "0x2", second_auction_state.shaHash, auctionSolution)
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      let orders = [[0,0,3,3],[0,1,1,1]]
+      orders = orders.map(x => encodeOrder(x[0],x[1],x[2],x[3]))
+      orders = Buffer.concat(orders)
+      await instance.placeStandingSellOrder(orders, { from: user_1 })
+      
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+      orders = [[0,0,3,3],[0,1,1,0]]
+      orders = orders.map(x => encodeOrder(x[0],x[1],x[2],x[3]))
+      orders = Buffer.concat(orders)
+      await instance.placeStandingSellOrder(orders, { from: user_1 })
+
+      const curr_slot = await instance.auctionIndex.call()
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      standingOrderIndexList[1] = 1
+      await truffleAssert.reverts(instance.calculateOrderHash(curr_slot, standingOrderIndexList), 
+        "non-valid standingOrderBatch referenced")
+    })
+  })
+  describe("orderBatchIsValidAtAuctionIndex()", () => {
+    it("checks a valid orderBatch", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const isValid = await instance.orderBatchIsValidAtAuctionIndex(0, 0, 0)
+      assert.equal(isValid, true, "orderBatchIsValidAtAuctionIndex should return true")
+    })
+    it("checks an invalid orderBatch", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      let orders = [[0,0,3,3],[0,1,1,1]]
+      orders = orders.map(x => encodeOrder(x[0],x[1],x[2],x[3]))
+      orders = Buffer.concat(orders)
+      await instance.placeStandingSellOrder(orders, { from: user_1 })
+      
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+      orders = [[0,0,3,3],[0,1,1,0]]
+      orders = orders.map(x => encodeOrder(x[0],x[1],x[2],x[3]))
+      orders = Buffer.concat(orders)
+      await instance.placeStandingSellOrder(orders, { from: user_1 })
+
+      const isValid = await instance.orderBatchIsValidAtAuctionIndex(0, 0, 1)
+      assert.equal(isValid, false, "orderBatchIsValidAtAuctionIndex should be false")
     })
   })
 
