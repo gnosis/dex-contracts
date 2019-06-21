@@ -201,7 +201,7 @@ contract SnappAuction is SnappBase {
         require(
             calculateOrderHash(slot, _standingOrderIndex) == _orderHash,
             "Order hash doesn't agree"
-            );
+        );
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
                 auctions[slot].size == maxUnreservedOrderCount(),
