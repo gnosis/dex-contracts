@@ -135,6 +135,7 @@ contract SnappAuction is SnappBase {
         uint32 currentBatchIndex = standingOrders[accountId].currentBatchIndex;
         StandingOrderBatch memory currentOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
         if (auctionIndex > currentOrderBatch.validFromIndex) {
+            //following line could overflow
             currentBatchIndex = currentBatchIndex + 1;
             standingOrders[accountId].currentBatchIndex = currentBatchIndex;
             currentOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
