@@ -20,7 +20,7 @@ contract SnappAuction is SnappBase {
 
     struct StandingOrderData {
         mapping(uint => StandingOrderBatch) reservedAccountOrders;
-        uint currentBatchIndex;
+        uint32 currentBatchIndex;
     }
 
     mapping (uint16 => StandingOrderData) public standingOrders;
@@ -132,7 +132,7 @@ contract SnappAuction is SnappBase {
                 )
             );
         }
-        uint currentBatchIndex = standingOrders[accountId].currentBatchIndex;
+        uint32 currentBatchIndex = standingOrders[accountId].currentBatchIndex;
         StandingOrderBatch memory currentOrderBatch = standingOrders[accountId].reservedAccountOrders[currentBatchIndex];
         if (auctionIndex > currentOrderBatch.validFromIndex) {
             currentBatchIndex = currentBatchIndex + 1;
@@ -190,7 +190,7 @@ contract SnappAuction is SnappBase {
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
         bytes32 _orderHash,
-        uint128[] memory _standingOrderIndex,
+        uint32[] memory _standingOrderIndex,
         bytes memory pricesAndVolumes
     )
         public onlyOwner()
@@ -218,7 +218,7 @@ contract SnappAuction is SnappBase {
         emit AuctionSettlement(slot, stateIndex(), _newStateRoot, pricesAndVolumes);
     }
 
-    function calculateOrderHash(uint slot, uint128[] memory _standingOrderIndex)
+    function calculateOrderHash(uint slot, uint32[] memory _standingOrderIndex)
     public view returns (bytes32) {
         bytes32[] memory orderHashes = new bytes32[](AUCTION_RESERVED_ACCOUNTS);
         for (uint i = 0; i < AUCTION_RESERVED_ACCOUNTS; i++) {
@@ -231,7 +231,7 @@ contract SnappAuction is SnappBase {
         return sha256(abi.encodePacked(auctions[slot].shaHash, orderHashes));
     }
 
-    function orderBatchIsValidAtAuctionIndex(uint _auctionIndex, uint8 userId, uint128 orderBatchIndex)
+    function orderBatchIsValidAtAuctionIndex(uint _auctionIndex, uint8 userId, uint32 orderBatchIndex)
     public view returns(bool) {
         return _auctionIndex >= getStandingOrderValidFrom(userId, orderBatchIndex) &&
             _auctionIndex <= getStandingOrderValidTo(userId, orderBatchIndex);
