@@ -505,7 +505,7 @@ contract("SnappAuction", async (accounts) => {
       const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
       standingOrderIndexList.fill(0)
       standingOrderIndexList[1] = 1
-      await truffleAssert.reverts(instance.calculateOrderHash(curr_slot, standingOrderIndexList), 
+      await truffleAssert.reverts(instance.calculateOrderHash.sendTransaction(curr_slot, standingOrderIndexList), 
         "non-valid standingOrderBatch referenced")
     })
   })
