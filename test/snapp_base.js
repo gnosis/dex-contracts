@@ -1,8 +1,9 @@
 const SnappBase = artifacts.require("SnappBase")
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
 const SnappBaseCore = artifacts.require("SnappBaseCore")
+const MultiFlux = artifacts.require("MultiFlux")
 const ERC20 = artifacts.require("ERC20")
-const MintableERC20 = artifacts.require("./ERC20Mintable.sol")
+const MintableERC20 = artifacts.require("ERC20Mintable")
 
 const zeroHash = "0x0"
 const oneHash = "0x1"
@@ -32,6 +33,9 @@ contract("SnappBase", async (accounts) => {
 
     await SnappBase.link(IdToAddressBiMap, lib1.address)
     await SnappBase.link(SnappBaseCore, lib2.address)
+
+    await MultiFlux.link(IdToAddressBiMap, lib1.address)
+    await MultiFlux.link(SnappBaseCore, lib2.address)
   })
 
   describe("public view functions", () => {
@@ -989,6 +993,41 @@ contract("SnappBase", async (accounts) => {
           withdraw_slot, withdraw_slot_index + 1, account_id, token_id, withdraw_amount, proof, { from: user_1 }),
         "Failed Merkle membership check."
       )
+    })
+  })
+
+  describe("Filled request batches", () => {
+    it("full deposit", async () => {
+      const instance = await MultiFlux.new()
+      const core = await SnappBaseCore.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+
+      const batchSize = (await core.depositBatchSize.call()).toNumber()
+      await instance.multiDeposit(1, 1, batchSize, { from: user_1 })
+      const index_0 = (await instance.getCurrentDepositIndex.call()).toNumber()
+      assert.equal(index_0, 0)
+
+      await instance.deposit(1, 1, { from: user_1 })
+      const index_1 = await instance.getCurrentDepositIndex.call()
+      assert.equal(index_1.toNumber(), 1)
+    })
+
+    it("full withdraw", async () => {
+      const instance = await MultiFlux.new()
+      const core = await SnappBaseCore.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      
+      // Must deposit before withdraw so contract has sufficient balance 
+      await instance.deposit(1, 1, { from: user_1 })
+
+      const batchSize = (await core.withdrawBatchSize.call()).toNumber()
+      await instance.multiWithdraw(1, 1, batchSize, { from: user_1 })
+      const index_0 = (await instance.getCurrentWithdrawIndex.call()).toNumber()
+      assert.equal(index_0, 0)
+      
+      await instance.requestWithdrawal(1, 1, { from: user_1 })
+      const index_1 = (await instance.getCurrentWithdrawIndex.call()).toNumber()
+      assert.equal(index_1, 1)
     })
   })
 })
