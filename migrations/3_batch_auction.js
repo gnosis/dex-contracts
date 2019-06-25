@@ -2,7 +2,7 @@
 
 const BiMap = artifacts.require("IdToAddressBiMap.sol")
 const SnappBaseCore = artifacts.require("SnappBaseCore.sol")
-const SnappAuction = artifacts.require("./SnappAuction.sol")
+const SnappAuction = artifacts.require("SnappAuction.sol")
 
 module.exports = async function (deployer) {
   await deployer.deploy(BiMap)
