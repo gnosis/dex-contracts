@@ -1,3 +1,4 @@
+const BN = require("bn.js")
 const SnappAuction = artifacts.require("SnappAuction")
 const MintableERC20 = artifacts.require("./ERC20Mintable.sol")
 
@@ -610,6 +611,16 @@ contract("SnappAuction", async (accounts) => {
 
       const auctionIndex = (await instance.auctionIndex.call()).toNumber()
       assert.equal(auctionIndex, 1)
+    })
+
+    it("Large sell order", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const largeNumberString = "79228162514264333000000000000"  // compare with 2**96 = 7.922816251426434e+28
+      const amount = new BN(largeNumberString, 10)
+      const order = encodeOrder(0, 1, 1, amount)
+      const tx = await instance.placeSellOrders(order, { from: user_1 })
+      assert.equal(tx.logs[0].args.sellAmount.toString(), largeNumberString)
     })
 
     it("Generic Multi order (2)", async () => {
