@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "../../SnappBase.sol";
+import "../SnappBase.sol";
 
 
 contract MultiFlux is SnappBase {
