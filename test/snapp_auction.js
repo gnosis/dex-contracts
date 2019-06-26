@@ -616,7 +616,7 @@ contract("SnappAuction", async (accounts) => {
     it("Large sell order", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
-      const largeNumberString = "79228162514264333000000000000"  // compare with 2**96 = 7.922816251426434e+28
+      const largeNumberString = "79228162514264337593543950335"  // This is 2**96 - 1
       const amount = new BN(largeNumberString, 10)
       const order = encodeOrder(0, 1, 1, amount)
       const tx = await instance.placeSellOrders(order, { from: user_1 })

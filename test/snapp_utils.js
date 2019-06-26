@@ -1,4 +1,5 @@
 const assert = require("assert")
+const BN = require("bn.js")
 
 // returns boolean array of length num filled with false 
 // except for those indicies in true_list
@@ -36,14 +37,15 @@ const uint16 = function(num) {
 
 // returns byte string of hexed-sliced-padded int
 const uint128 = function(num) {
-  assert(num < 2**128)
+  const twoPowOneTwentyEight = new BN(2).pow(new BN(128))
+  assert(num < twoPowOneTwentyEight)
   return num.toString(16).padStart(32, "0")
 }
 
 // returns byte string of hexed-sliced-padded int
 const uint96 = function(num) {
-  // TODO - make this interpret the large end of 2^96
-  assert(num < 2**96)
+  const twoPowNinteySix = new BN(2).pow(new BN(96))
+  assert(num < twoPowNinteySix)
   return num.toString(16).padStart(24, "0")
 }
 
