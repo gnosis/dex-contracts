@@ -63,14 +63,6 @@ library SnappBaseCore {
     /**
      * Public View Methods
      */
-    function depositBatchSize() public pure returns (uint8) {
-        return DEPOSIT_BATCH_SIZE;
-    }
-
-    function withdrawBatchSize() public pure returns (uint8) {
-        return WITHDRAW_BATCH_SIZE;
-    }
-
     function stateIndex(Data storage data) public view returns (uint) {
         return data.stateRoots.length - 1;
     }

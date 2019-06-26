@@ -996,13 +996,13 @@ contract("SnappBase", async (accounts) => {
     })
   })
 
-  describe("Filled request batches", () => {
-    it("full deposit", async () => {
+  describe("Larger Test Cases", () => {
+    it("Fill deposit batch", async () => {
       const instance = await MultiFlux.new()
       const core = await SnappBaseCore.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
 
-      const batchSize = (await core.depositBatchSize.call()).toNumber()
+      const batchSize = (await core.DEPOSIT_BATCH_SIZE.call()).toNumber()
       await instance.multiDeposit(1, 1, batchSize, { from: user_1 })
       const index_0 = (await instance.getCurrentDepositIndex.call()).toNumber()
       assert.equal(index_0, 0)
@@ -1012,7 +1012,7 @@ contract("SnappBase", async (accounts) => {
       assert.equal(index_1.toNumber(), 1)
     })
 
-    it("full withdraw", async () => {
+    it("Fill withdraw batch", async () => {
       const instance = await MultiFlux.new()
       const core = await SnappBaseCore.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
@@ -1020,7 +1020,7 @@ contract("SnappBase", async (accounts) => {
       // Must deposit before withdraw so contract has sufficient balance 
       await instance.deposit(1, 1, { from: user_1 })
 
-      const batchSize = (await core.withdrawBatchSize.call()).toNumber()
+      const batchSize = (await core.WITHDRAW_BATCH_SIZE.call()).toNumber()
       await instance.multiWithdraw(1, 1, batchSize, { from: user_1 })
       const index_0 = (await instance.getCurrentWithdrawIndex.call()).toNumber()
       assert.equal(index_0, 0)
