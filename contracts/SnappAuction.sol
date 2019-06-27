@@ -123,7 +123,7 @@ contract SnappAuction is SnappBase {
         }
         bytes32 orderHash;
         for (uint i = 0; i < numOrders; i++) {
-            // solhint-disable indent
+            // solhint-disable-next-line indent
             (uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount) = decodeOrder(packedOrders.slice(26*i, 26));
 
             orderHash = sha256(
@@ -167,6 +167,7 @@ contract SnappAuction is SnappBase {
         // TODO - use ECRecover from signature contained in first 65 bytes of packedOrder
         uint16 accountId = publicKeyToAccountMap(msg.sender);
         for (uint i = 0; i < packedOrders.length / 26; i++) {
+            // solhint-disable-next-line indent
             (uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount) = decodeOrder(packedOrders.slice(26*i, 26));
 
             createNewPendingBatchIfNecessary();
