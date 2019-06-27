@@ -123,6 +123,7 @@ contract SnappAuction is SnappBase {
         }
         bytes32 orderHash;
         for (uint i = 0; i < numOrders; i++) {
+            // solhint-disable indent
             (uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount) = decodeOrder(packedOrders.slice(26*i, 26));
 
             orderHash = sha256(
@@ -262,12 +263,8 @@ contract SnappAuction is SnappBase {
     function decodeOrder(bytes memory orderData) internal pure
         returns(uint8 buyToken, uint8 sellToken, uint96 buyAmount, uint96 sellAmount)
     {
-        assembly {  // solhint-disable no-inline-assembly
-            buyAmount := mload(add(add(orderData, 0xc), 0))
-        }
-        assembly {  // solhint-disable no-inline-assembly
-            sellAmount := mload(add(add(orderData, 0xc), 12))
-        }
+        buyAmount = BytesLib.toUint96(orderData, 0);
+        sellAmount = BytesLib.toUint96(orderData, 12);
 
         sellToken = BytesLib.toUint8(orderData, 24);
         buyToken = BytesLib.toUint8(orderData, 25);
