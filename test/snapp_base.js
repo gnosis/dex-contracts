@@ -1,9 +1,9 @@
 const SnappBase = artifacts.require("SnappBase")
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
 const SnappBaseCore = artifacts.require("SnappBaseCore")
-const MultiFlux = artifacts.require("MultiFlux")
 const ERC20 = artifacts.require("ERC20")
 const MintableERC20 = artifacts.require("ERC20Mintable")
+const MultiCaller = artifacts.require("MultiCaller")
 
 const zeroHash = "0x0"
 const oneHash = "0x1"
@@ -18,7 +18,8 @@ const {
   approveContract,
   countDuplicates,
   generateMerkleTree,
-  setupEnvironment } = require("./utilities.js")
+  setupEnvironment,
+  setupMultiCaller } = require("./utilities.js")
 
 const { encodePacked_16_8_128 }  = require("./snapp_utils.js")
 
@@ -33,9 +34,6 @@ contract("SnappBase", async (accounts) => {
 
     await SnappBase.link(IdToAddressBiMap, lib1.address)
     await SnappBase.link(SnappBaseCore, lib2.address)
-
-    await MultiFlux.link(IdToAddressBiMap, lib1.address)
-    await MultiFlux.link(SnappBaseCore, lib2.address)
   })
 
   describe("public view functions", () => {
@@ -998,12 +996,17 @@ contract("SnappBase", async (accounts) => {
 
   describe("Larger Test Cases", () => {
     it("Fill deposit batch", async () => {
-      const instance = await MultiFlux.new()
+      const multiCaller = await MultiCaller.new()
+      const instance = await SnappBase.new()
       const core = await SnappBaseCore.new()
-      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      // Note that only the token at index 1 is important here.
+      const token = (await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2))[1]
+      await setupMultiCaller(instance, token_owner, [token], multiCaller)
 
       const batchSize = (await core.DEPOSIT_BATCH_SIZE.call()).toNumber()
-      await instance.multiDeposit(1, 1, batchSize, { from: user_1 })
+
+      const calldata = instance.contract.methods.deposit(1, 1).encodeABI()
+      await multiCaller.executeWithCalldata(instance.address, batchSize, calldata)
       const index_0 = (await instance.getCurrentDepositIndex.call()).toNumber()
       assert.equal(index_0, 0)
 
@@ -1013,15 +1016,21 @@ contract("SnappBase", async (accounts) => {
     })
 
     it("Fill withdraw batch", async () => {
-      const instance = await MultiFlux.new()
+      const multiCaller = await MultiCaller.new()
+      const instance = await SnappBase.new()
       const core = await SnappBaseCore.new()
-      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      // Note that only the token at index 1 is important here.
+      const token = (await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2))[1]
+      await setupMultiCaller(instance, token_owner, [token], multiCaller)
       
       // Must deposit before withdraw so contract has sufficient balance 
       await instance.deposit(1, 1, { from: user_1 })
 
       const batchSize = (await core.WITHDRAW_BATCH_SIZE.call()).toNumber()
-      await instance.multiWithdraw(1, 1, batchSize, { from: user_1 })
+
+      const calldata = instance.contract.methods.requestWithdrawal(1, 1).encodeABI()
+      await multiCaller.executeWithCalldata(instance.address, batchSize, calldata)
+
       const index_0 = (await instance.getCurrentWithdrawIndex.call()).toNumber()
       assert.equal(index_0, 0)
       
