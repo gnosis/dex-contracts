@@ -1000,8 +1000,8 @@ contract("SnappBase", async (accounts) => {
       const instance = await SnappBase.new()
       const core = await SnappBaseCore.new()
       // Note that only the token at index 1 is important here.
-      const token = (await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2))[1]
-      await setupMultiCaller(instance, token_owner, [token], multiCaller)
+      const tokens = (await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2))
+      await setupMultiCaller(instance, token_owner, [tokens], multiCaller)
 
       const batchSize = (await core.DEPOSIT_BATCH_SIZE.call()).toNumber()
 
@@ -1020,8 +1020,8 @@ contract("SnappBase", async (accounts) => {
       const instance = await SnappBase.new()
       const core = await SnappBaseCore.new()
       // Note that only the token at index 1 is important here.
-      const token = (await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2))[1]
-      await setupMultiCaller(instance, token_owner, [token], multiCaller)
+      const tokens = (await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2))[1]
+      await setupMultiCaller(instance, token_owner, [tokens], multiCaller)
       
       // Must deposit before withdraw so contract has sufficient balance 
       await instance.deposit(1, 1, { from: user_1 })
