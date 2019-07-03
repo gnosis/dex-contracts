@@ -81,7 +81,7 @@ const registerTokens = async function(token_artifact, contract, token_owner, num
 }
 
 /**
- * depoloys tokens, funds opens accounts, approves contract for transfer and opens accounts 
+ * deploys tokens, funds opens accounts, approves contract for transfer and opens accounts 
  * The object consists of:
  * 1.) BatchAuction Contract
  * 2.) desired token owner (ideally not contract owner)
@@ -98,6 +98,26 @@ const setupEnvironment = async function(token_artifact, contract, token_owner, a
   }
   await openAccounts(contract, accounts)
   return tokens
+}
+
+/**
+ * Dev tool to register the multiCaller contract on the dFusion exchange.
+ * Note: assumes tokens are registered.
+ * @param snappInstance: dFusion - base contract address
+ * @param tokenOwner: Someone who can mint requested token (to fund account)
+ * @param tokens: tokens that multiCaller will have balance in
+ * @param multiCaller: contract address 
+ */
+const setupMultiCaller = async function(snappInstance, tokenOwner, tokens, multiCaller) {
+  const amount = "300000000000000000000"
+  for (let i = 0; i < tokens.length; i++) {
+    await fundAccounts(tokenOwner, [multiCaller.address], tokens[i], amount)
+    
+    const approveCalldata = tokens[i].contract.methods.approve(snappInstance.address, amount).encodeABI()
+    await multiCaller.executeWithCalldata(tokens[i].address, 1, approveCalldata) 
+  }
+  const openAccountCallData = snappInstance.contract.methods.openAccount(11).encodeABI()
+  await multiCaller.executeWithCalldata(snappInstance.address, 1, openAccountCallData)
 }
 
 const jsonrpc = "2.0"
@@ -173,4 +193,5 @@ module.exports = {
   countDuplicates,
   generateMerkleTree,
   partitionArray,
+  setupMultiCaller
 }
