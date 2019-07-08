@@ -48,14 +48,14 @@
     "merkletreejs": "0.0.22",
     "mongodb": "^3.1.13",
     "openzeppelin-solidity": "2.1.1",
-    "solidity-bytes-utils": "0.0.7"
+    "solidity-bytes-utils": "0.0.8"
   },
   "devDependencies": {
     "es6-promise": "^4.2.5",
     "eslint": "^5.12.0",
     "eslint-plugin-no-only-tests": "^2.3.0",
     "eslint-plugin-react": "^7.12.3",
-    "eth-gas-reporter": "^0.2.1",
+    "eth-gas-reporter": "^0.2.3",
     "husky": "^2.5.0",
     "minimist": "^1.2.0",
     "solhint": "^1.5.0",
