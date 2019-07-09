@@ -2,6 +2,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/gnosis/dex-contracts/badge.svg)](https://coveralls.io/github/gnosis/dex-contracts)
 
 
+
 # dFusion - Smart Contracts
 
 The **dFusion Exchange** is a fully decentralized trading protocol which facilitates ring trades via discrete auction between several [ERC20](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md) token pairs.
