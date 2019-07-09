@@ -177,9 +177,9 @@ contract("SnappAuction", async (accounts) => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       const AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = await instance.AUCTION_RESERVED_ACCOUNT_BATCH_SIZE()
-      
+      const badOrder = Buffer.from("0".repeat(AUCTION_RESERVED_ACCOUNT_BATCH_SIZE*26+1), "binary")
       await truffleAssert.reverts(
-        instance.placeStandingSellOrder(Buffer.from("0".repeat(AUCTION_RESERVED_ACCOUNT_BATCH_SIZE*26+1), "binary"), { from: user_1 }),
+        instance.placeStandingSellOrder(badOrder, { from: user_1 }),
         "Each order should be packed in 26 bytes!"
       )
     })
@@ -614,6 +614,17 @@ contract("SnappAuction", async (accounts) => {
       await truffleAssert.reverts(
         instance.placeSellOrders(order, { from: user_1 }),
         "Too many pending auctions"
+      )
+    })
+
+    it("Rejects order data with incorrect length", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const badOrder = Buffer.from("0".repeat(26+1))
+
+      await truffleAssert.reverts(
+        instance.placeSellOrders(badOrder, { from: user_1 }),
+        "Each order should be packed in 26 bytes!"
       )
     })
 
