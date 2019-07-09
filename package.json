@@ -51,6 +51,7 @@
     "solidity-bytes-utils": "0.0.8"
   },
   "devDependencies": {
+    "coveralls": "^3.0.4",
     "es6-promise": "^4.2.5",
     "eslint": "^5.12.0",
     "eslint-plugin-no-only-tests": "^2.3.0",
