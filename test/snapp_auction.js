@@ -201,10 +201,9 @@ contract("SnappAuction", async (accounts) => {
       orders = Buffer.concat(orders)
 
       await truffleAssert.reverts(
-        await instance.placeStandingSellOrder(orders, { from: user_1 }),
+        instance.placeStandingSellOrder(orders, { from: user_1 }),
         "Account is not a reserved account"
       )
-
     })
 
     it("Generic standing sell order as replacement of current batch (1 TX)", async () => {
