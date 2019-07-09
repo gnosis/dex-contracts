@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/gnosis/dex-contracts.svg?branch=master)](https://travis-ci.org/gnosis/dex-contracts?branch=master)
-<!-- TODO - Include solidity-coverage badge -->
+[![Coverage Status](https://coveralls.io/repos/github/gnosis/dex-contracts/badge.svg)](https://coveralls.io/github/gnosis/dex-contracts)
 
 
 # dFusion - Smart Contracts

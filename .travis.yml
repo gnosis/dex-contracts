@@ -12,3 +12,4 @@ script:
   - npm run solhint
   - npm test
   - solium -d contracts/
+  - npm run coverage && cat ./coverage/lcov.info | coveralls
