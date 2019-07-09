@@ -109,7 +109,7 @@ contract SnappAuction is SnappBase {
 
         // Update Auction Hash based on request
         uint16 accountId = publicKeyToAccountMap(msg.sender);
-        require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Accout is not a reserved account");
+        require(accountId <= AUCTION_RESERVED_ACCOUNTS, "Account is not a reserved account");
 
         require(packedOrders.length % 26 == 0, "Each order should be packed in 26 bytes!");
         uint numOrders = packedOrders.length / 26;
