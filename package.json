@@ -63,7 +63,7 @@
     "solidity-coverage": "^0.5.11",
     "solidity-multicall": "^1.0.0",
     "solium": "^1.2.4",
-    "truffle": "^5.0.5",
+    "truffle": "^5.0.26",
     "truffle-assertions": "^0.8.0"
   }
 }
