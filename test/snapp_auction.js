@@ -202,7 +202,7 @@ contract("SnappAuction", async (accounts) => {
 
       await truffleAssert.reverts(
         await instance.placeStandingSellOrder(orders, { from: user_1 }),
-        "Account is not a reserved account."
+        "Account is not a reserved account"
       )
 
     })
