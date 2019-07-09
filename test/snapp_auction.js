@@ -7,7 +7,10 @@ const truffleAssert = require("truffle-assertions")
 const {
   waitForNSeconds,
   setupEnvironment,
-  partitionArray } = require("./utilities.js")
+  partitionArray,
+  registerTokens,
+  fundAccounts,
+  approveContract } = require("./utilities.js")
 
 const {
   isActive,
@@ -35,6 +38,11 @@ contract("SnappAuction", async (accounts) => {
     it("getOrderHash(slot)", async () => {
       const instance = await SnappAuction.new()
       assert.equal(await instance.getOrderHash.call(0), 0x0)
+    })
+
+    it("getStandingOrderHash(userId, batchIndex)", async () => {
+      const instance = await SnappAuction.new()
+      assert.equal(await instance.getStandingOrderHash.call(0, 0), 0x0)
     })
 
     it("maxUnreservedOrderCount", async () => {
@@ -174,6 +182,29 @@ contract("SnappAuction", async (accounts) => {
         instance.placeStandingSellOrder(Buffer.from("0".repeat(AUCTION_RESERVED_ACCOUNT_BATCH_SIZE*26+1), "binary"), { from: user_1 }),
         "Each order should be packed in 26 bytes!"
       )
+    })
+
+    it("Rejects standing order requests from non-reserved accounts", async () => {
+      const instance = await SnappAuction.new()
+
+      const numReservedAccounts = (await instance.AUCTION_RESERVED_ACCOUNTS()).toNumber()
+
+      const tokens = await registerTokens(MintableERC20, instance, token_owner, 1)
+      const amount = "300000000000000000000"
+      await fundAccounts(token_owner, [user_1], tokens[0], amount)
+      await approveContract(instance, [user_1], tokens[0], amount)
+
+      instance.openAccount(numReservedAccounts + 1, { from: user_1 })
+
+      let orders = [[0,0,3,3],[0,1,1,1]]
+      orders = orders.map(x => encodeOrder(x[0],x[1],x[2],x[3]))
+      orders = Buffer.concat(orders)
+
+      await truffleAssert.reverts(
+        await instance.placeStandingSellOrder(orders, { from: user_1 }),
+        "Account is not a reserved account."
+      )
+
     })
 
     it("Generic standing sell order as replacement of current batch (1 TX)", async () => {
