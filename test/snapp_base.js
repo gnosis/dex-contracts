@@ -86,11 +86,20 @@ contract("SnappBase", async (accounts) => {
       assert.equal(await instance.getWithdrawHash.call(0), 0x0)
     })
 
+    it("getClaimableWithdrawHash(slot)", async () => {
+      const instance = await SnappBase.new()
+      assert.equal(await instance.getClaimableWithdrawHash.call(0), 0x0)
+    })
+
     it("hasWithdrawBeenClaimed(slot, index)", async () => {
       const instance = await SnappBase.new()
       assert.equal(await instance.hasWithdrawBeenClaimed.call(0, 0), false)
     })
-    
+
+    it("hasAccount(accountId)", async () => {
+      const instance = await SnappBase.new()
+      assert.equal(await instance.hasAccount.call(0), false)
+    })
   })
   
   describe("openAccount()", () => {
