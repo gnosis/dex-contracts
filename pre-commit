@@ -34,7 +34,7 @@ printf "\nJavascript validation completed!\n"
 
 printf "\nValidating Solidity:\n"
 
-# Check for eslint
+# Check for solhint
 which solhint &> /dev/null
 if [[ "$?" == 1 ]]; then
   echo "\t\033[41mPlease install solhint\033[0m"

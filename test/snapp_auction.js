@@ -7,7 +7,8 @@ const truffleAssert = require("truffle-assertions")
 const {
   waitForNSeconds,
   setupEnvironment,
-  partitionArray } = require("./utilities.js")
+  partitionArray,
+  registerTokens } = require("./utilities.js")
 
 const {
   isActive,
@@ -35,6 +36,11 @@ contract("SnappAuction", async (accounts) => {
     it("getOrderHash(slot)", async () => {
       const instance = await SnappAuction.new()
       assert.equal(await instance.getOrderHash.call(0), 0x0)
+    })
+
+    it("getStandingOrderHash(userId, batchIndex)", async () => {
+      const instance = await SnappAuction.new()
+      assert.equal(await instance.getStandingOrderHash.call(0, 0), 0x0)
     })
 
     it("maxUnreservedOrderCount", async () => {
@@ -158,9 +164,9 @@ contract("SnappAuction", async (accounts) => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       const AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = await instance.AUCTION_RESERVED_ACCOUNT_BATCH_SIZE()
-      
+      const badOrder = Buffer.from("0".repeat(AUCTION_RESERVED_ACCOUNT_BATCH_SIZE*26+26), "binary")
       await truffleAssert.reverts(
-        instance.placeStandingSellOrder(Buffer.from("0".repeat(AUCTION_RESERVED_ACCOUNT_BATCH_SIZE*26+26), "binary"), { from: user_1 }),
+        instance.placeStandingSellOrder(badOrder, { from: user_1 }),
         "Too many orders for reserved batch"
       )
     })
@@ -169,10 +175,25 @@ contract("SnappAuction", async (accounts) => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       const AUCTION_RESERVED_ACCOUNT_BATCH_SIZE = await instance.AUCTION_RESERVED_ACCOUNT_BATCH_SIZE()
-      
+      const badOrder = Buffer.from("0".repeat(AUCTION_RESERVED_ACCOUNT_BATCH_SIZE*26+1), "binary")
       await truffleAssert.reverts(
-        instance.placeStandingSellOrder(Buffer.from("0".repeat(AUCTION_RESERVED_ACCOUNT_BATCH_SIZE*26+1), "binary"), { from: user_1 }),
+        instance.placeStandingSellOrder(badOrder, { from: user_1 }),
         "Each order should be packed in 26 bytes!"
+      )
+    })
+
+    it("Rejects standing order requests from non-reserved accounts", async () => {
+      const instance = await SnappAuction.new()
+
+      const numReservedAccounts = (await instance.AUCTION_RESERVED_ACCOUNTS()).toNumber()
+
+      await registerTokens(MintableERC20, instance, token_owner, 1)
+      instance.openAccount(numReservedAccounts + 1, { from: user_1 })
+
+      const order = encodeOrder(0, 1, 1, 1)
+      await truffleAssert.reverts(
+        instance.placeStandingSellOrder(order, { from: user_1 }),
+        "Account is not a reserved account"
       )
     })
 
@@ -584,6 +605,17 @@ contract("SnappAuction", async (accounts) => {
       await truffleAssert.reverts(
         instance.placeSellOrders(order, { from: user_1 }),
         "Too many pending auctions"
+      )
+    })
+
+    it("Rejects order data with incorrect length", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const badOrder = Buffer.from("0".repeat(26+1))
+
+      await truffleAssert.reverts(
+        instance.placeSellOrders(badOrder, { from: user_1 }),
+        "Each order should be packed in 26 bytes!"
       )
     })
 
