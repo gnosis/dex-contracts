@@ -8,9 +8,7 @@ const {
   waitForNSeconds,
   setupEnvironment,
   partitionArray,
-  registerTokens,
-  fundAccounts,
-  approveContract } = require("./utilities.js")
+  registerTokens } = require("./utilities.js")
 
 const {
   isActive,
@@ -189,19 +187,12 @@ contract("SnappAuction", async (accounts) => {
 
       const numReservedAccounts = (await instance.AUCTION_RESERVED_ACCOUNTS()).toNumber()
 
-      const tokens = await registerTokens(MintableERC20, instance, token_owner, 1)
-      const amount = "300000000000000000000"
-      await fundAccounts(token_owner, [user_1], tokens[0], amount)
-      await approveContract(instance, [user_1], tokens[0], amount)
-
+      await registerTokens(MintableERC20, instance, token_owner, 1)
       instance.openAccount(numReservedAccounts + 1, { from: user_1 })
 
-      let orders = [[0,0,3,3],[0,1,1,1]]
-      orders = orders.map(x => encodeOrder(x[0],x[1],x[2],x[3]))
-      orders = Buffer.concat(orders)
-
+      const order = encodeOrder(0, 1, 1, 1)
       await truffleAssert.reverts(
-        instance.placeStandingSellOrder(orders, { from: user_1 }),
+        instance.placeStandingSellOrder(order, { from: user_1 }),
         "Account is not a reserved account"
       )
     })
