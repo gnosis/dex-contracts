@@ -23,7 +23,7 @@ contract SnappAuctionChallenge {
 
     uint public committedSurplus;
     uint public tempSurplus;  // Not sure about the reason for this.
-    bool public tempSurplusFlag;
+    bool public tempSurplusFlag;  // What is this flag meant for?
 
     bytes32 public committedStateRootHash;
 
@@ -73,8 +73,8 @@ contract SnappAuctionChallenge {
         bytes memory pricesAndVolumes,
         bytes memory orders
     ) public onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
-        uint surplus = tempSurplus; // couldn't we just put a zero here?
-        uint16 offset = tempSurplusFlag ? 500 : 0;  // What is this 500? Is this about reserved/regualar orders?
+        uint surplus = tempSurplus;
+        uint16 offset = tempSurplusFlag ? 500 : 0;
         for (uint16 i = 0; i < 500; i++) {
             Order memory order = getOrder(orders, i + offset);
             (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, i + offset);
@@ -85,7 +85,9 @@ contract SnappAuctionChallenge {
                 .add(floatToUint(order.sellAmount))
                 .sub(1)
                 .div(floatToUint(order.sellAmount));
-            surplus = surplus.add((buyVolume.sub(relativeBuy)).mul(buyPrice));
+            surplus = surplus.add(
+                (buyVolume.sub(relativeBuy)).mul(buyPrice)
+            );
         }
         if (tempSurplusFlag) {
             tempSurplus = 0;
