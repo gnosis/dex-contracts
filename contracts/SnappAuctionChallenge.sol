@@ -22,7 +22,7 @@ contract SnappAuctionChallenge {
     bytes32 public committedOrderHash;
 
     uint public committedSurplus;
-    uint public tempSurplus;
+    uint public tempSurplus;  // Not sure about the reason for this.
     bool public tempSurplusFlag;
 
     bytes32 public committedStateRootHash;
@@ -73,8 +73,8 @@ contract SnappAuctionChallenge {
         bytes memory pricesAndVolumes,
         bytes memory orders
     ) public onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
-        uint surplus = tempSurplus;
-        uint16 offset = tempSurplusFlag ? 500 : 0;
+        uint surplus = tempSurplus; // couldn't we just put a zero here?
+        uint16 offset = tempSurplusFlag ? 500 : 0;  // What is this 500? Is this about reserved/regualar orders?
         for (uint16 i = 0; i < 500; i++) {
             Order memory order = getOrder(orders, i + offset);
             (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, i + offset);
