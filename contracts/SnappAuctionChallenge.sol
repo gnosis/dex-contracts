@@ -55,7 +55,7 @@ contract SnappAuctionChallenge {
         uint buyPrice = getPrice(pricesAndVolumes, order.buyToken);
         uint sellPrice = getPrice(pricesAndVolumes, order.sellToken);
 
-        require(challengePriceNonUniform(buyPrice, sellPrice, buyVolume, sellVolume), "Prices are uniform");
+        require(priceNotUniform(buyPrice, sellPrice, buyVolume, sellVolume), "Prices are uniform");
         return true;
     }
 
@@ -372,7 +372,7 @@ contract SnappAuctionChallenge {
         return rolledHash;
     }
 
-    function challengePriceNonUniform(
+    function priceNotUniform(
         uint buyPrice,
         uint sellPrice,
         uint buyVolume,
