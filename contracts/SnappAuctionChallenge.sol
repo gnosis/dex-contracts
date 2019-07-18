@@ -56,7 +56,7 @@ contract SnappAuctionChallenge {
         uint sellPrice = getPrice(pricesAndVolumes, order.sellToken);
 
         require(priceNotUniform(buyPrice, sellPrice, buyVolume, sellVolume), "Prices are uniform");
-        return true;
+        return true;  // Why not just return priceNotUniform?
     }
 
     function challengeLimitPrice(
@@ -66,7 +66,7 @@ contract SnappAuctionChallenge {
     ) public view onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         Order memory order = getOrder(orders, badOrder);
         (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, badOrder);
-        return buyVolume * floatToUint(order.sellAmount) >= sellVolume * floatToUint(order.buyAmount);
+        return buyVolume * floatToUint(order.sellAmount) > sellVolume * floatToUint(order.buyAmount);
     }
 
     function challengeSurplus(
