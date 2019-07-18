@@ -378,6 +378,6 @@ contract SnappAuctionChallenge {
         uint buyVolume,
         uint sellVolume
     ) internal pure returns (bool) {
-        return ((buyPrice * sellVolume) - (sellPrice * buyVolume))**2 > EPSILON**2;
+        return ((buyPrice * buyVolume) - (sellPrice * sellVolume))**2 > EPSILON**2;
     }
 }
