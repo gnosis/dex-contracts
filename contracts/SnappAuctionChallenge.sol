@@ -43,7 +43,7 @@ contract SnappAuctionChallenge {
         bytes memory pricesAndVolumes,
         bytes memory orders,
         uint16 badOrder
-    ) public returns (bool) {
+    ) public view returns (bool) {
         require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
         require(!checkOrderData(orders), "Wrong order data");
 
@@ -60,7 +60,7 @@ contract SnappAuctionChallenge {
         bytes memory pricesAndVolumes,
         bytes memory orders,
         uint16 badOrder
-    ) public returns (bool) {
+    ) public view returns (bool) {
         require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
         require(!checkOrderData(orders), "Wrong order data");
 
@@ -105,7 +105,7 @@ contract SnappAuctionChallenge {
         bytes memory pricesAndVolumes,
         bytes memory orders,
         uint8 token
-    ) public returns (bool) {
+    ) public view returns (bool) {
         require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
         require(!checkOrderData(orders), "Wrong order data");
 
@@ -130,7 +130,7 @@ contract SnappAuctionChallenge {
         bytes memory stateRoots,
         bytes memory merklePaths,
         uint8 stateRootIndex
-    ) public returns (bool) {
+    ) public view returns (bool) {
         require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
         require(!checkOrderData(orders), "Wrong order data");
         require(sha256(stateRoots) != committedStateRootHash, "Wrong state roots");
@@ -165,7 +165,7 @@ contract SnappAuctionChallenge {
         bytes memory proof,
         uint index,
         int value
-    ) public returns (bool) {
+    ) public view returns (bool) {
         bool valid = Merkle.checkMembership(
             bytes32(value), index, committedStateRootHash, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
         );
@@ -176,7 +176,7 @@ contract SnappAuctionChallenge {
         bytes memory openOrders,
         bytes memory openOrdersCancelled
         //bytes memory accountOrders
-    ) public returns (bool) {
+    ) public view returns (bool) {
         require(!checkOrderData(openOrders), "Wrong open order data");
         require(rollingHash(
             openOrdersCancelled, 0x0, 0, openOrdersCancelled.length, 5
@@ -362,17 +362,17 @@ contract SnappAuctionChallenge {
         uint offset,
         uint length,
         uint width
-    ) internal view returns (bytes32) {
+    ) internal pure returns (bytes32) {
         bytes16 order = 0x0;
-        bytes32 rollingHash = startingHash;
+        bytes32 rolledHash = startingHash;
         for (uint256 i = 32 + offset; i <= 32 + offset + length; i += width) {
             /* solhint-disable no-inline-assembly */
             assembly {
                 order := mload(add(data, i))
             }
-            rollingHash = sha256(abi.encodePacked(rollingHash, order));
+            rolledHash = sha256(abi.encodePacked(rolledHash, order));
         }
-        return rollingHash;
+        return rolledHash;
     }
 
     function challengePriceNonUniform(
