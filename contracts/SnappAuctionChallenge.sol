@@ -36,6 +36,12 @@ contract SnappAuctionChallenge {
         uint24 rolloverCount;
     }
 
+    modifier onlyVerifiedOrdersAndSolution(bytes memory pricesAndVolumes, bytes memory orders) {
+        require(checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
+        require(checkOrderData(orders), "Wrong order data");
+        _;
+    }
+
     /**
      * Top level challenges
      */
@@ -43,10 +49,7 @@ contract SnappAuctionChallenge {
         bytes memory pricesAndVolumes,
         bytes memory orders,
         uint16 badOrder
-    ) public view returns (bool) {
-        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
-        require(!checkOrderData(orders), "Wrong order data");
-
+    ) public view onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         Order memory order = getOrder(orders, badOrder);
         (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, badOrder);
         uint buyPrice = getPrice(pricesAndVolumes, order.buyToken);
@@ -60,10 +63,7 @@ contract SnappAuctionChallenge {
         bytes memory pricesAndVolumes,
         bytes memory orders,
         uint16 badOrder
-    ) public view returns (bool) {
-        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
-        require(!checkOrderData(orders), "Wrong order data");
-
+    ) public view onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         Order memory order = getOrder(orders, badOrder);
         (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, badOrder);
         return buyVolume * floatToUint(order.sellAmount) >= sellVolume * floatToUint(order.buyAmount);
@@ -72,10 +72,7 @@ contract SnappAuctionChallenge {
     function challengeSurplus(
         bytes memory pricesAndVolumes,
         bytes memory orders
-    ) public returns (bool) {
-        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
-        require(!checkOrderData(orders), "Wrong order data");
-
+    ) public onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         uint surplus = tempSurplus;
         uint16 offset = tempSurplusFlag ? 500 : 0;
         for (uint16 i = 0; i < 500; i++) {
