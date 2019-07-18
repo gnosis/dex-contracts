@@ -96,7 +96,7 @@ contract SnappAuctionChallenge {
         } else {
             tempSurplus = surplus;
             tempSurplusFlag = true;
-            return true;
+            return true;  // Returning true here somehow implies that the challenge is successful after the first tx
         }
     }
 
