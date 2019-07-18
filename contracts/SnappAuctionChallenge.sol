@@ -180,8 +180,8 @@ contract SnappAuctionChallenge {
         ) != committedOrderHash, "Wrong cancellation data");
 
         for (uint16 i = 0; i < openOrdersCancelled.length / 5; i++) {
-            (uint24 account, uint16 slot) = getCancelledOrder(openOrdersCancelled, i);
-            Order memory o = getOrder(openOrders, slot);
+            // (uint24 account, uint16 slot) = getCancelledOrder(openOrdersCancelled, i);
+            // Order memory o = getOrder(openOrders, slot);
             if (true) {
                 openOrders[i*16] = 0;
                 openOrders[i*16 + 1] = 0;
