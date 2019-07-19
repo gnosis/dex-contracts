@@ -104,10 +104,7 @@ contract SnappAuctionChallenge {
         bytes memory pricesAndVolumes,
         bytes memory orders,
         uint8 token
-    ) public view returns (bool) {
-        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
-        require(!checkOrderData(orders), "Wrong order data");
-
+    ) public view onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         uint totalBuyVolume = 0;
         uint totalSellVolume = 0;
         for (uint16 i = 0; i < 1000; i++) {
