@@ -22,8 +22,8 @@ contract SnappAuctionChallenge {
     bytes32 public committedOrderHash;
 
     uint public committedSurplus;
-    uint public tempSurplus;  // Not sure about the reason for this.
-    bool public tempSurplusFlag;  // What is this flag meant for?
+    uint public tempSurplus;
+    bool public tempSurplusFlag;
 
     bytes32 public committedStateRootHash;
 
@@ -120,12 +120,12 @@ contract SnappAuctionChallenge {
         return totalSellVolume.sub(totalBuyVolume) > EPSILON;
     }
 
-    function challengeStateTransition(
+    function challengeAuctionSettlement(
         bytes memory pricesAndVolumes,
-        bytes memory orders,      // Should this be "challengeAuctionSettlement"?
-        bytes memory stateRoots,  // What are these and how many are they?
+        bytes memory orders,
+        bytes memory stateRoots,
         bytes memory merklePaths,
-        uint8 stateRootIndex      // Is this checkPointIndex? Will we also need stateIndex?
+        uint8 stateRootIndex
     ) public view onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         require(sha256(stateRoots) != committedStateRootHash, "Wrong state roots");
 
@@ -135,18 +135,20 @@ contract SnappAuctionChallenge {
             (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, i);
 
             (uint leaf, bytes memory proof) = getBuyBalanceAndProof(merklePaths, i);
+            // TODO - wrap this in require(condition);
             Merkle.checkMembership(
                 bytes32(leaf), order.account * NUM_TOKENS + order.buyToken, stateRoot, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
-            );  // This would just be a boolean statement which isn't assigned to anything?
+            );
             leaf = leaf.add(buyVolume);
             stateRoot = Merkle.computeRoot(
                 bytes32(leaf), order.account * NUM_TOKENS + order.buyToken, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
             );
 
             (leaf, proof) = getSellBalanceAndProof(merklePaths, i);
+            // TODO - wrap this in require(condition);
             Merkle.checkMembership(
                 bytes32(leaf), order.account * NUM_TOKENS + order.sellToken, stateRoot, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
-            );  // Ditto; boolean statement doesn't do anything?
+            );
             leaf = leaf.sub(sellVolume);
             stateRoot = Merkle.computeRoot(
                 bytes32(leaf), order.account * NUM_TOKENS + order.sellToken, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
