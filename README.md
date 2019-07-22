@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/gnosis/dex-contracts.svg?branch=master)](https://travis-ci.org/gnosis/dex-contracts?branch=master)
-[![Coverage Status](https://coveralls.io/repos/github/gnosis/dex-contracts/badge.svg)](https://coveralls.io/github/gnosis/dex-contracts)
+[![Coverage Status](https://coveralls.io/repos/github/gnosis/dex-contracts/badge.svg?branch=master)](https://coveralls.io/github/gnosis/dex-contracts?branch=master)
 
 
 
