@@ -122,13 +122,11 @@ contract SnappAuctionChallenge {
 
     function challengeStateTransition(
         bytes memory pricesAndVolumes,
-        bytes memory orders,
-        bytes memory stateRoots,
+        bytes memory orders,      // Should this be "challengeAuctionSettlement"?
+        bytes memory stateRoots,  // What are these and how many are they?
         bytes memory merklePaths,
-        uint8 stateRootIndex
-    ) public view returns (bool) {
-        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
-        require(!checkOrderData(orders), "Wrong order data");
+        uint8 stateRootIndex      // Is this checkPointIndex? Will we also need stateIndex?
+    ) public view onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         require(sha256(stateRoots) != committedStateRootHash, "Wrong state roots");
 
         bytes32 stateRoot = getStateRoot(stateRoots, stateRootIndex);
@@ -139,7 +137,7 @@ contract SnappAuctionChallenge {
             (uint leaf, bytes memory proof) = getBuyBalanceAndProof(merklePaths, i);
             Merkle.checkMembership(
                 bytes32(leaf), order.account * NUM_TOKENS + order.buyToken, stateRoot, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
-            );
+            );  // This would just be a boolean statement which isn't assigned to anything?
             leaf = leaf.add(buyVolume);
             stateRoot = Merkle.computeRoot(
                 bytes32(leaf), order.account * NUM_TOKENS + order.buyToken, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
@@ -148,7 +146,7 @@ contract SnappAuctionChallenge {
             (leaf, proof) = getSellBalanceAndProof(merklePaths, i);
             Merkle.checkMembership(
                 bytes32(leaf), order.account * NUM_TOKENS + order.sellToken, stateRoot, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
-            );
+            );  // Ditto; boolean statement doesn't do anything?
             leaf = leaf.sub(sellVolume);
             stateRoot = Merkle.computeRoot(
                 bytes32(leaf), order.account * NUM_TOKENS + order.sellToken, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
