@@ -374,9 +374,14 @@ contract SnappAuctionChallenge {
     function priceNotUniform(
         uint buyPrice,
         uint sellPrice,
-        uint buyVolume,
-        uint sellVolume
+        uint buyAmount,
+        uint sellAmount
     ) internal pure returns (bool) {
-        return ((buyPrice * buyVolume) - (sellPrice * sellVolume))**2 > EPSILON**2;
+        uint buyVolume = buyPrice * buyVolume;
+        uint sellVolume = sellPrice * sellVolume;
+        if (buyVolume > sellVolume) {
+            return buyVolume - sellVolume < EPSILON;
+        }
+        return sellVolume - buyVolume < EPSILON;
     }
 }
