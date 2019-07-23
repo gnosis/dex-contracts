@@ -33,6 +33,7 @@ contract SnappAuction is SnappBase {
         uint objectiveValue;
         bytes32 tentativeState;
     }
+
     mapping (uint => AuctionResult) public auctionResults;
 
     event SellOrder(
