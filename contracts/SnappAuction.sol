@@ -28,6 +28,13 @@ contract SnappAuction is SnappBase {
     uint public auctionIndex = MAX_UINT;
     mapping (uint => SnappBaseCore.PendingBatch) public auctions;
 
+    struct AuctionResult {
+        address solver;
+        uint objectiveValue;
+        bytes32 tentativeState;
+    }
+    mapping (uint => AuctionResult) public auctionResults;
+
     event SellOrder(
         uint auctionId,
         uint16 slotIndex,
@@ -185,6 +192,51 @@ contract SnappAuction is SnappBase {
             // Only increment size after event (so it is emitted as an index)
             auctions[auctionIndex].size++;
         }
+    }
+
+    function auctionSolutionBid(
+        uint slot,
+        uint proposedObjectiveValue,
+        bytes32 proposedStateRoot,
+        bytes32 _currStateRoot
+        // bytes32 _orderHash,
+        // bytes32 _standingOrderIndex          // should ensure acting on correct order set
+    ) public onlyOwner() {
+        require(
+            slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0,
+            "Previous auction not yet resolved!"
+        );
+        // Verify state root and order hash before continuing.
+        require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
+        // TODO - verify acting on correct order hash.
+        // require(
+        //     calculateOrderHash(slot, _standingOrderIndex) == _orderHash,
+        //     "Order hash doesn't agree"
+        // );
+
+        // Ensure that auction batch is inactive, unprocessed and in correct phase for bidding
+        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");  // This is a bit redundant.
+        require(slot != MAX_UINT && slot <= auctionIndex, "Requested order slot does not exist");
+        require(
+            block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
+                auctions[slot].size == maxUnreservedOrderCount(),
+            "Requested order slot is still active"
+        );
+        require(
+            block.timestamp < auctions[slot].creationTimestamp + 6 minutes,
+            "Bidding period for this auction has expired"
+        );
+
+        // Ensure proposed value exceeds current max.
+        require(
+            proposedObjectiveValue > auctionResults[slot].objectiveValue,
+            "Proposed objective value is less than existing"
+        );
+        auctionResults[slot] = AuctionResult({
+            solver: msg.sender,
+            objectiveValue: proposedObjectiveValue,
+            tentativeState: proposedStateRoot
+        });
     }
 
     function applyAuction(
