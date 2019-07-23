@@ -196,12 +196,12 @@ contract SnappAuction is SnappBase {
 
     function auctionSolutionBid(
         uint slot,
-        uint proposedObjectiveValue,
+        bytes32 _currStateRoot,
         bytes32 proposedStateRoot,
-        bytes32 _currStateRoot
+        uint proposedObjectiveValue
         // bytes32 _orderHash,
         // bytes32 _standingOrderIndex          // should ensure acting on correct order set
-    ) public onlyOwner() {
+    ) public {
         require(
             slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0,
             "Previous auction not yet resolved!"
