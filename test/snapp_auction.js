@@ -692,8 +692,8 @@ contract("SnappAuction", async (accounts) => {
 
   describe("auctionSolutionBid()", () => {
     const new_state = "0x1"
-    // const low_objective = 1
-    // const high_objective = 2
+    const low_objective = 1
+    const high_objective = 2
 
     const prices = "0x" + "".padEnd(16*30 *2, "0") // represents 30 uint128 (token prices)
     const volumes = "0x" + "".padEnd(32*1000*2, "0") // represents 1000 * 2 uint128 (numerator, denominator)
@@ -819,15 +819,94 @@ contract("SnappAuction", async (accounts) => {
     })
 
     it("Rejects when bidding period has expired", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
+
+      const slot = (await instance.auctionIndex.call()).toNumber()
+      const current_state = await instance.getCurrentStateRoot()
+
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+      // Wait for bidding period to expire
+      await waitForNSeconds(181)
+
+      await truffleAssert.reverts(
+        instance.auctionSolutionBid(slot, current_state, new_state, 0),
+        "Bidding period for this auction has expired"
+      )
     })
 
     it("Accepts and records first proposal", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
+
+      const slot = (await instance.auctionIndex.call()).toNumber()
+      const current_state = await instance.getCurrentStateRoot()
+
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+
+      await instance.auctionSolutionBid(slot, current_state, new_state, 1, { from: user_1 })
+
+      const auction_results = await instance.auctionResults(slot)
+
+      assert.equal(
+        auction_results.tentativeState,
+        "0x0100000000000000000000000000000000000000000000000000000000000000"  // how EVM interprets new_state
+      )
+      assert.equal(auction_results.objectiveValue, 1)
+      assert.equal(auction_results.solver, user_1)
     })
-    it("Rejects proposed values lower than current", async () => {
+
+    it("Rejects proposed values < or = to current", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
+
+      const slot = (await instance.auctionIndex.call()).toNumber()
+      const current_state = await instance.getCurrentStateRoot()
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+
+      // reject Equal
+      await truffleAssert.reverts(
+        instance.auctionSolutionBid(slot, current_state, new_state, 0),
+        "Proposed objective value is less than existing"
+      )
+
+      await instance.auctionSolutionBid(slot, current_state, new_state, low_objective)
+
+      // reject less than
+      await truffleAssert.reverts(
+        instance.auctionSolutionBid(slot, current_state, new_state, 0),
+        "Proposed objective value is less than existing"
+      )
     })
-    it("Rejects proposed values equal to current", async () => {
-    })
+
     it("Accepts updates better proposal", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
+
+      const slot = (await instance.auctionIndex.call()).toNumber()
+      const current_state = await instance.getCurrentStateRoot()
+
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+
+      await instance.auctionSolutionBid(slot, current_state, new_state, low_objective)
+      await instance.auctionSolutionBid(slot, current_state, new_state, high_objective, { from: user_1 })
+
+      const auction_results = await instance.auctionResults(slot)
+
+      assert.equal(
+        auction_results.tentativeState,
+        "0x0100000000000000000000000000000000000000000000000000000000000000"  // how EVM interprets new_state
+      )
+      assert.equal(auction_results.objectiveValue, high_objective)
+      assert.equal(auction_results.solver, user_1)
     })
   })
 
