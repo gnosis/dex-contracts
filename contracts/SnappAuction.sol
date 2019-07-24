@@ -26,15 +26,19 @@ contract SnappAuction is SnappBase {
     mapping (uint16 => StandingOrderData) public standingOrders;
 
     uint public auctionIndex = MAX_UINT;
-    mapping (uint => SnappBaseCore.PendingBatch) public auctions;
 
-    struct AuctionResult {
+    struct AuctionBatch {
         address solver;
-        uint objectiveValue;
-        bytes32 tentativeState;
+        uint objectiveValue;           // Traders utility
+        bytes32 solutionHash;          // Succinct record of trade execution & prices
+        bytes32 tentativeState;        // Proposed account state during bidding phase
+        uint16 size;                   // Number of orders in this auction
+        bytes32 shaHash;               // Rolling shaHash of all orders
+        uint creationTimestamp;        // Timestamp of batch creation
+        uint appliedAccountStateIndex; // stateIndex when batch applied - 0 implies unapplied.
     }
 
-    mapping (uint => AuctionResult) public auctionResults;
+    mapping (uint => AuctionBatch) public auctions;
 
     event SellOrder(
         uint auctionId,
@@ -200,28 +204,20 @@ contract SnappAuction is SnappBase {
         bytes32 _currStateRoot,
         bytes32 proposedStateRoot,
         uint proposedObjectiveValue
-        // bytes32 _orderHash,
-        // bytes32 _standingOrderIndex          // should ensure acting on correct order set
     ) public {
         require(
             slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0,
             "Previous auction not yet resolved!"
         );
-        // Verify state root and order hash before continuing.
         require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
-        // TODO - verify acting on correct order hash.
-        // require(
-        //     calculateOrderHash(slot, _standingOrderIndex) == _orderHash,
-        //     "Order hash doesn't agree"
-        // );
 
         // Ensure that auction batch is inactive, unprocessed and in correct phase for bidding
-        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");  // This is a bit redundant.
+        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
                 auctions[slot].size == maxUnreservedOrderCount(),
-            "Requested order slot is still active"
+            "Requested auction slot is still active"
         );
         require(
             block.timestamp < auctions[slot].creationTimestamp + 6 minutes,
@@ -230,14 +226,14 @@ contract SnappAuction is SnappBase {
 
         // Ensure proposed value exceeds current max.
         require(
-            proposedObjectiveValue > auctionResults[slot].objectiveValue,
+            proposedObjectiveValue > auctions[slot].objectiveValue,
             "Proposed objective value is less than existing"
         );
-        auctionResults[slot] = AuctionResult({
-            solver: msg.sender,
-            objectiveValue: proposedObjectiveValue,
-            tentativeState: proposedStateRoot
-        });
+
+        // Set appropriate fields in auction batch
+        auctions[slot].solver = msg.sender;
+        auctions[slot].objectiveValue = proposedObjectiveValue;
+        auctions[slot].tentativeState = proposedStateRoot;
     }
 
     function applyAuction(
@@ -250,7 +246,7 @@ contract SnappAuction is SnappBase {
     )
         public onlyOwner()
     {
-        require(slot != MAX_UINT && slot <= auctionIndex, "Requested order slot does not exist");
+        require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(
@@ -260,7 +256,7 @@ contract SnappAuction is SnappBase {
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
                 auctions[slot].size == maxUnreservedOrderCount(),
-            "Requested order slot is still active"
+            "Requested auction slot is still active"
         );
         require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
 
@@ -268,13 +264,14 @@ contract SnappAuction is SnappBase {
         auctions[slot].appliedAccountStateIndex = stateIndex();
 
         // Store solution information in shaHash of pendingBatch (required for snark proof)
-        auctions[slot].shaHash = sha256(pricesAndVolumes);
+        auctions[slot].solutionHash = sha256(pricesAndVolumes);
 
         emit AuctionSettlement(slot, stateIndex(), _newStateRoot, pricesAndVolumes);
     }
 
     function calculateOrderHash(uint slot, uint128[] memory _standingOrderIndex)
-    public view returns (bytes32) {
+        public view returns (bytes32)
+    {
         bytes32[] memory orderHashes = new bytes32[](AUCTION_RESERVED_ACCOUNTS);
         for (uint i = 0; i < AUCTION_RESERVED_ACCOUNTS; i++) {
             require(
@@ -287,7 +284,8 @@ contract SnappAuction is SnappBase {
     }
 
     function orderBatchIsValidAtAuctionIndex(uint _auctionIndex, uint8 userId, uint128 orderBatchIndex)
-    public view returns(bool) {
+        public view returns(bool)
+    {
         return _auctionIndex >= getStandingOrderValidFrom(userId, orderBatchIndex) &&
             _auctionIndex <= getStandingOrderValidTo(userId, orderBatchIndex);
     }
@@ -330,7 +328,11 @@ contract SnappAuction is SnappBase {
             "Too many pending auctions"
         );
         auctionIndex++;
-        auctions[auctionIndex] = SnappBaseCore.PendingBatch({
+        auctions[auctionIndex] = AuctionBatch({
+            solver: address(0),
+            objectiveValue: 0,
+            solutionHash: bytes32(0),
+            tentativeState: bytes32(0),
             size: 0,
             shaHash: bytes32(0),
             creationTimestamp: block.timestamp,

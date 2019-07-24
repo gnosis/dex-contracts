@@ -277,7 +277,7 @@ contract("SnappAuction", async (accounts) => {
       standingOrderIndexList.fill(0)
       await truffleAssert.reverts(
         instance.applyAuction(curr_slot, "0x0", "0x0", "0x0", standingOrderIndexList, "0x0"),
-        "Requested order slot does not exist"
+        "Requested auction slot does not exist"
       )
     })
 
@@ -314,7 +314,7 @@ contract("SnappAuction", async (accounts) => {
       assert.equal(await isActive(auction_state), true)
       await truffleAssert.reverts(
         instance.applyAuction(slot, state_root, new_state, orderhash, standingOrderIndexList, auctionSolution),
-        "Requested order slot is still active"
+        "Requested auction slot is still active"
       )
     })
 
@@ -397,7 +397,7 @@ contract("SnappAuction", async (accounts) => {
 
       await truffleAssert.reverts(
         instance.applyAuction(curr_slot + 1, state_root, new_state, orderhash, standingOrderIndexList, auctionSolution),
-        "Requested order slot does not exist"
+        "Requested auction slot does not exist"
       )
     })
 
@@ -799,7 +799,7 @@ contract("SnappAuction", async (accounts) => {
 
       await truffleAssert.reverts(
         instance.auctionSolutionBid(current_slot + 1, new_state, new_state, 0),
-        "Requested order slot does not exist"
+        "Requested auction slot does not exist"
       )
     })
 
@@ -814,7 +814,7 @@ contract("SnappAuction", async (accounts) => {
 
       await truffleAssert.reverts(
         instance.auctionSolutionBid(current_slot, state_root, new_state, 0),
-        "Requested order slot is still active"
+        "Requested auction slot is still active"
       )
     })
 
@@ -850,7 +850,7 @@ contract("SnappAuction", async (accounts) => {
 
       await instance.auctionSolutionBid(slot, current_state, new_state, 1, { from: user_1 })
 
-      const auction_results = await instance.auctionResults(slot)
+      const auction_results = await instance.auctions(slot)
 
       assert.equal(
         auction_results.tentativeState,
@@ -899,7 +899,7 @@ contract("SnappAuction", async (accounts) => {
       await instance.auctionSolutionBid(slot, current_state, new_state, low_objective)
       await instance.auctionSolutionBid(slot, current_state, new_state, high_objective, { from: user_1 })
 
-      const auction_results = await instance.auctionResults(slot)
+      const auction_results = await instance.auctions(slot)
 
       assert.equal(
         auction_results.tentativeState,
