@@ -27,10 +27,11 @@ contract SnappAuction is SnappBase {
 
     uint public auctionIndex = MAX_UINT;
 
-    struct AuctionBatch {
+    struct PendingAuction {
         address solver;
         uint objectiveValue;           // Traders utility
         bytes32 solutionHash;          // Succinct record of trade execution & prices
+        uint solutionAcceptedTime;   // Time solution was accepted (written at time of solutionHash)
         bytes32 tentativeState;        // Proposed account state during bidding phase
         uint16 size;                   // Number of orders in this auction
         bytes32 shaHash;               // Rolling shaHash of all orders
@@ -38,7 +39,7 @@ contract SnappAuction is SnappBase {
         uint appliedAccountStateIndex; // stateIndex when batch applied - 0 implies unapplied.
     }
 
-    mapping (uint => AuctionBatch) public auctions;
+    mapping (uint => PendingAuction) public auctions;
 
     event SellOrder(
         uint auctionId,
@@ -214,9 +215,14 @@ contract SnappAuction is SnappBase {
         // Ensure that auction batch is inactive, unprocessed and in correct phase for bidding
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
+
+        uint biddingStartTime = auctions[slot].creationTimestamp + 3 minutes;
+        if (slot > 0 && auctions[slot-1].solutionAcceptedTime > biddingStartTime) {
+            biddingStartTime = auctions[slot-1].solutionAcceptedTime;
+        }
+
         require(
-            block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
-                auctions[slot].size == maxUnreservedOrderCount(),
+            block.timestamp > biddingStartTime || auctions[slot].size == maxUnreservedOrderCount(),
             "Requested auction slot is still active"
         );
         require(
@@ -265,6 +271,7 @@ contract SnappAuction is SnappBase {
 
         // Store solution information in shaHash of pendingBatch (required for snark proof)
         auctions[slot].solutionHash = sha256(pricesAndVolumes);
+        auctions[slot].solutionAcceptedTime = block.timestamp;
 
         emit AuctionSettlement(slot, stateIndex(), _newStateRoot, pricesAndVolumes);
     }
@@ -328,7 +335,7 @@ contract SnappAuction is SnappBase {
             "Too many pending auctions"
         );
         auctionIndex++;
-        auctions[auctionIndex] = AuctionBatch({
+        auctions[auctionIndex] = PendingAuction({
             solver: address(0),
             objectiveValue: 0,
             solutionHash: bytes32(0),
