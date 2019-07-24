@@ -26,8 +26,8 @@ library SnappBaseCore {
     }
 
     struct PendingBatch {
-        uint16 size;                   // Number of deposits in this batch
-        bytes32 shaHash;               // Rolling shaHash of all deposits
+        uint16 size;                   // Number of elements in this batch
+        bytes32 shaHash;               // Rolling shaHash of all batch content
         uint creationTimestamp;        // Timestamp of batch creation
         uint appliedAccountStateIndex; // accountState index when batch applied (for rollback), 0 implies not applied.
     }
