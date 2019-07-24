@@ -217,7 +217,7 @@ contract SnappAuction is SnappBase {
 
         // Ensure that auction batch is inactive, unprocessed and in correct phase for bidding
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");  // This is a bit redundant.
-        require(slot != MAX_UINT && slot <= auctionIndex, "Requested order slot does not exist");
+        require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
                 auctions[slot].size == maxUnreservedOrderCount(),
