@@ -339,6 +339,7 @@ contract SnappAuction is SnappBase {
             solver: address(0),
             objectiveValue: 0,
             solutionHash: bytes32(0),
+            solutionAcceptedTime: 0,
             tentativeState: bytes32(0),
             size: 0,
             shaHash: bytes32(0),
