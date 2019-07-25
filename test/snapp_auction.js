@@ -908,6 +908,41 @@ contract("SnappAuction", async (accounts) => {
       assert.equal(auction_results.objectiveValue, high_objective)
       assert.equal(auction_results.solver, user_1)
     })
+
+    it("Treats special case of alternate biddingStartTime", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+
+      // First Auction
+      await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
+      await waitForNSeconds(181)
+      // Second Auction
+      await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
+      await waitForNSeconds(181)
+
+      const current_slot = (await instance.auctionIndex.call()).toNumber()
+      const current_state =  await instance.getCurrentStateRoot()
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(current_slot, standingOrderIndexList)
+
+      await instance.applyAuction(
+        current_slot - 1, current_state, current_state, orderhash, standingOrderIndexList, auctionSolution
+      )
+      await waitForNSeconds(1)
+      // This is the point where biddingStartTime = auctions[slot-1].solutionAcceptedTime;
+      await instance.auctionSolutionBid(current_slot, current_state, new_state, 1)
+      // Ensuring that slot > 0 and
+      // auctions[slot-1].solutionAcceptedTime > auctions[slot].creationTimestamp + 3 minutes
+      assert(current_slot > 0)
+      const prev_auction = await instance.auctions(current_slot - 1)
+      const curr_auction = await instance.auctions(current_slot)
+      const prevAuctionAcceptedTime = prev_auction.solutionAcceptedTime.toNumber()
+      const currAuctionCreationTime = curr_auction.creationTimestamp.toNumber()
+
+      assert(prevAuctionAcceptedTime > currAuctionCreationTime + 181)
+    })
   })
 
   describe("Larger Test Cases", () => {
