@@ -28,14 +28,17 @@ contract SnappAuction is SnappBase {
     uint public auctionIndex = MAX_UINT;
 
     struct PendingAuction {
+        // Order Collection fields
+        bytes32 orderHash;             // Rolling shaHash of all orders
+        uint16 numOrders;              // Number of orders in this auction
+        uint creationTimestamp;        // Timestamp of batch creation
+        // Solution Bidding phase
         address solver;
         uint objectiveValue;           // Traders utility
-        bytes32 solutionHash;          // Succinct record of trade execution & prices
-        uint solutionAcceptedTime;   // Time solution was accepted (written at time of solutionHash)
         bytes32 tentativeState;        // Proposed account state during bidding phase
-        uint16 size;                   // Number of orders in this auction
-        bytes32 shaHash;               // Rolling shaHash of all orders
-        uint creationTimestamp;        // Timestamp of batch creation
+        // Auction Settlement phase
+        bytes32 solutionHash;          // Succinct record of trade execution & prices
+        uint solutionAcceptedTime;     // Time solution was accepted (written at time of solutionHash)
         uint appliedAccountStateIndex; // stateIndex when batch applied - 0 implies unapplied.
     }
 
@@ -85,7 +88,7 @@ contract SnappAuction is SnappBase {
     }
 
     function getOrderHash(uint slot) public view returns (bytes32) {
-        return auctions[slot].shaHash;
+        return auctions[slot].orderHash;
     }
 
     function hasAuctionBeenApplied(uint slot) public view returns (bool) {
@@ -186,17 +189,17 @@ contract SnappAuction is SnappBase {
             createNewPendingBatchIfNecessary();
             bytes32 nextAuctionHash = sha256(
                 abi.encodePacked(
-                    auctions[auctionIndex].shaHash,  // TODO - Below todo will affect this.
+                    auctions[auctionIndex].orderHash,  // TODO - Below todo will affect this.
                     encodeOrder(accountId, buyToken, sellToken, buyAmount, sellAmount)
                 )
             );
-            // TODO - auctions.shaHash should only need to be updated once (per index) on the outside of this loop
-            auctions[auctionIndex].shaHash = nextAuctionHash;
+            // TODO - auctions.orderHash should only need to be updated once (per index) on the outside of this loop
+            auctions[auctionIndex].orderHash = nextAuctionHash;
             emit SellOrder(
-                auctionIndex, auctions[auctionIndex].size, accountId, buyToken, sellToken, buyAmount, sellAmount
+                auctionIndex, auctions[auctionIndex].numOrders, accountId, buyToken, sellToken, buyAmount, sellAmount
             );
             // Only increment size after event (so it is emitted as an index)
-            auctions[auctionIndex].size++;
+            auctions[auctionIndex].numOrders++;
         }
     }
 
@@ -216,17 +219,21 @@ contract SnappAuction is SnappBase {
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
 
+        // Solution bidding can only begin once the previous auction has settled
+        // A1: | order collection | solution bidding | solution posting |
+        // A2: |                  | order collection | solution bidding |  solution posting
+        // biddingStartTime = max(currentBatch.creationTimestamp + 3 minutes, previousBatch.solutionAcceptedTime)
         uint biddingStartTime = auctions[slot].creationTimestamp + 3 minutes;
         if (slot > 0 && auctions[slot-1].solutionAcceptedTime > biddingStartTime) {
             biddingStartTime = auctions[slot-1].solutionAcceptedTime;
         }
 
         require(
-            block.timestamp > biddingStartTime || auctions[slot].size == maxUnreservedOrderCount(),
+            block.timestamp > biddingStartTime || auctions[slot].numOrders == maxUnreservedOrderCount(),
             "Requested auction slot is still active"
         );
         require(
-            block.timestamp < auctions[slot].creationTimestamp + 6 minutes,
+            block.timestamp < biddingStartTime + 3 minutes,
             "Bidding period for this auction has expired"
         );
 
@@ -261,7 +268,7 @@ contract SnappAuction is SnappBase {
         );
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
-                auctions[slot].size == maxUnreservedOrderCount(),
+                auctions[slot].numOrders == maxUnreservedOrderCount(),
             "Requested auction slot is still active"
         );
         require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
@@ -287,7 +294,7 @@ contract SnappAuction is SnappBase {
             );
             orderHashes[i] = standingOrders[uint16(i)].reservedAccountOrders[_standingOrderIndex[i]].orderHash;
         }
-        return sha256(abi.encodePacked(auctions[slot].shaHash, orderHashes));
+        return sha256(abi.encodePacked(auctions[slot].orderHash, orderHashes));
     }
 
     function orderBatchIsValidAtAuctionIndex(uint _auctionIndex, uint8 userId, uint128 orderBatchIndex)
@@ -351,7 +358,7 @@ contract SnappAuction is SnappBase {
     function createNewPendingBatchIfNecessary() private {
         if (
             auctionIndex == MAX_UINT ||
-            auctions[auctionIndex].size == maxUnreservedOrderCount() ||
+            auctions[auctionIndex].numOrders == maxUnreservedOrderCount() ||
             block.timestamp > (auctions[auctionIndex].creationTimestamp + 3 minutes)
         ) {
             createNewPendingBatch();
