@@ -930,6 +930,7 @@ contract("SnappAuction", async (accounts) => {
       await instance.applyAuction(
         current_slot - 1, current_state, current_state, orderhash, standingOrderIndexList, auctionSolution
       )
+      // Need to wait at least one more second!
       await waitForNSeconds(1)
       // This is the point where biddingStartTime = auctions[slot-1].solutionAcceptedTime;
       await instance.auctionSolutionBid(current_slot, current_state, new_state, 1)
