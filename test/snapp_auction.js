@@ -919,6 +919,8 @@ contract("SnappAuction", async (accounts) => {
       // Second Auction
       await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
       await waitForNSeconds(181)
+      // Need to wait at least one more second for strict inequality!
+      await waitForNSeconds(1)
 
       const current_slot = (await instance.auctionIndex.call()).toNumber()
       const current_state =  await instance.getCurrentStateRoot()
@@ -930,8 +932,6 @@ contract("SnappAuction", async (accounts) => {
       await instance.applyAuction(
         current_slot - 1, current_state, current_state, orderhash, standingOrderIndexList, auctionSolution
       )
-      // Need to wait at least one more second!
-      await waitForNSeconds(1)
       // This is the point where biddingStartTime = auctions[slot-1].solutionAcceptedTime;
       await instance.auctionSolutionBid(current_slot, current_state, new_state, 1)
       // Ensuring that slot > 0 and
@@ -941,7 +941,6 @@ contract("SnappAuction", async (accounts) => {
       const curr_auction = await instance.auctions(current_slot)
       const prevAuctionAcceptedTime = prev_auction.solutionAcceptedTime.toNumber()
       const currAuctionCreationTime = curr_auction.creationTimestamp.toNumber()
-
       assert(prevAuctionAcceptedTime > currAuctionCreationTime + 181)
     })
   })
