@@ -113,8 +113,8 @@ contract("SnappAuction", async (accounts) => {
       const auctionIndex = (await instance.auctionIndex.call()).toNumber()
       const currentAuction = await instance.auctions(auctionIndex)
 
-      assert.equal(currentAuction.size, 1)
-      assert.notEqual(currentAuction.shaHash, 0)
+      assert.equal(currentAuction.numOrders, 1)
+      assert.notEqual(currentAuction.orderhash, 0)
     })
 
     it("Generic sell orders over two batches", async () => {
@@ -295,7 +295,7 @@ contract("SnappAuction", async (accounts) => {
       standingOrderIndexList.fill(0)
 
       await truffleAssert.reverts(
-        instance.applyAuction(slot, state_root, new_state, auction_state.shaHash, standingOrderIndexList, auctionSolution, { from: user_1 }))
+        instance.applyAuction(slot, state_root, new_state, auction_state.orderHash, standingOrderIndexList, auctionSolution, { from: user_1 }))
     })
 
     it("Reject: active slot", async () => {
@@ -630,7 +630,7 @@ contract("SnappAuction", async (accounts) => {
       const auctionIndex = (await instance.auctionIndex.call()).toNumber()
       const currentAuction = await instance.auctions(auctionIndex)
 
-      assert.equal(currentAuction.size, 1)
+      assert.equal(currentAuction.numOrders, 1)
       assert.notEqual(currentAuction.shaHash, 0)
     })
 
@@ -668,7 +668,7 @@ contract("SnappAuction", async (accounts) => {
       const auctionIndex = (await instance.auctionIndex.call()).toNumber()
       const currentAuction = await instance.auctions(auctionIndex)
 
-      assert.equal(currentAuction.size, 2)
+      assert.equal(currentAuction.numOrders, 2)
     })
 
     it("Encodes order information in emitted event", async () => {
@@ -932,7 +932,7 @@ contract("SnappAuction", async (accounts) => {
       const auctionIndex = (await instance.auctionIndex.call()).toNumber()
       const currentAuction = await instance.auctions(auctionIndex)
       assert.equal(
-        currentAuction.size.toNumber(), 
+        currentAuction.numOrders.toNumber(), 
         maxAuctionSize - numReservedAccounts * numOrdersPerReserved,
         "auction batch should be full with regular orders!"
       )

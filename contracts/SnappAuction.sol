@@ -343,14 +343,14 @@ contract SnappAuction is SnappBase {
         );
         auctionIndex++;
         auctions[auctionIndex] = PendingAuction({
+            orderHash: bytes32(0),
+            numOrders: 0,
+            creationTimestamp: block.timestamp,
             solver: address(0),
             objectiveValue: 0,
+            tentativeState: bytes32(0),
             solutionHash: bytes32(0),
             solutionAcceptedTime: 0,
-            tentativeState: bytes32(0),
-            size: 0,
-            shaHash: bytes32(0),
-            creationTimestamp: block.timestamp,
             appliedAccountStateIndex: 0
         });
     }
