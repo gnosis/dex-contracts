@@ -36,6 +36,12 @@ contract SnappAuctionChallenge {
         uint24 rolloverCount;
     }
 
+    modifier onlyVerifiedOrdersAndSolution(bytes memory pricesAndVolumes, bytes memory orders) {
+        require(checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
+        require(checkOrderData(orders), "Wrong order data");
+        _;
+    }
+
     /**
      * Top level challenges
      */
@@ -43,39 +49,30 @@ contract SnappAuctionChallenge {
         bytes memory pricesAndVolumes,
         bytes memory orders,
         uint16 badOrder
-    ) public returns (bool) {
-        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
-        require(!checkOrderData(orders), "Wrong order data");
-        
+    ) public view onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         Order memory order = getOrder(orders, badOrder);
         (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, badOrder);
         uint buyPrice = getPrice(pricesAndVolumes, order.buyToken);
         uint sellPrice = getPrice(pricesAndVolumes, order.sellToken);
 
-        require(challengePriceNonUniform(buyPrice, sellPrice, buyVolume, sellVolume), "Prices are uniform");
-        return true;
+        require(priceNotUniform(buyPrice, sellPrice, buyVolume, sellVolume), "Prices are uniform");
+        return true;  // Why not just return priceNotUniform?
     }
 
     function challengeLimitPrice(
         bytes memory pricesAndVolumes,
         bytes memory orders,
         uint16 badOrder
-    ) public returns (bool) {
-        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
-        require(!checkOrderData(orders), "Wrong order data");
-
+    ) public view onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         Order memory order = getOrder(orders, badOrder);
         (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, badOrder);
-        return buyVolume * floatToUint(order.sellAmount) >= sellVolume * floatToUint(order.buyAmount);
+        return buyVolume * floatToUint(order.sellAmount) > sellVolume * floatToUint(order.buyAmount);
     }
 
     function challengeSurplus(
         bytes memory pricesAndVolumes,
         bytes memory orders
-    ) public returns (bool) {
-        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
-        require(!checkOrderData(orders), "Wrong order data");
-
+    ) public onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         uint surplus = tempSurplus;
         uint16 offset = tempSurplusFlag ? 500 : 0;
         for (uint16 i = 0; i < 500; i++) {
@@ -88,7 +85,9 @@ contract SnappAuctionChallenge {
                 .add(floatToUint(order.sellAmount))
                 .sub(1)
                 .div(floatToUint(order.sellAmount));
-            surplus = surplus.add((buyVolume.sub(relativeBuy)).mul(buyPrice));
+            surplus = surplus.add(
+                (buyVolume.sub(relativeBuy)).mul(buyPrice)
+            );
         }
         if (tempSurplusFlag) {
             tempSurplus = 0;
@@ -97,7 +96,7 @@ contract SnappAuctionChallenge {
         } else {
             tempSurplus = surplus;
             tempSurplusFlag = true;
-            return true;
+            return true;  // Returning true here somehow implies that the challenge is successful after the first tx
         }
     }
 
@@ -105,10 +104,7 @@ contract SnappAuctionChallenge {
         bytes memory pricesAndVolumes,
         bytes memory orders,
         uint8 token
-    ) public returns (bool) {
-        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
-        require(!checkOrderData(orders), "Wrong order data");
-
+    ) public view onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         uint totalBuyVolume = 0;
         uint totalSellVolume = 0;
         for (uint16 i = 0; i < 1000; i++) {
@@ -124,15 +120,13 @@ contract SnappAuctionChallenge {
         return totalSellVolume.sub(totalBuyVolume) > EPSILON;
     }
 
-    function challengeStateTransition(
+    function challengeAuctionSettlement(
         bytes memory pricesAndVolumes,
         bytes memory orders,
         bytes memory stateRoots,
         bytes memory merklePaths,
         uint8 stateRootIndex
-    ) public returns (bool) {
-        require(!checkPriceAndVolumeData(pricesAndVolumes), "Wrong prices or volumes");
-        require(!checkOrderData(orders), "Wrong order data");
+    ) public view onlyVerifiedOrdersAndSolution(pricesAndVolumes, orders) returns (bool) {
         require(sha256(stateRoots) != committedStateRootHash, "Wrong state roots");
 
         bytes32 stateRoot = getStateRoot(stateRoots, stateRootIndex);
@@ -141,6 +135,7 @@ contract SnappAuctionChallenge {
             (uint buyVolume, uint sellVolume) = getVolumes(pricesAndVolumes, i);
 
             (uint leaf, bytes memory proof) = getBuyBalanceAndProof(merklePaths, i);
+            // TODO - wrap this in require(condition);
             Merkle.checkMembership(
                 bytes32(leaf), order.account * NUM_TOKENS + order.buyToken, stateRoot, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
             );
@@ -150,6 +145,7 @@ contract SnappAuctionChallenge {
             );
 
             (leaf, proof) = getSellBalanceAndProof(merklePaths, i);
+            // TODO - wrap this in require(condition);
             Merkle.checkMembership(
                 bytes32(leaf), order.account * NUM_TOKENS + order.sellToken, stateRoot, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
             );
@@ -165,7 +161,7 @@ contract SnappAuctionChallenge {
         bytes memory proof,
         uint index,
         int value
-    ) public returns (bool) {
+    ) public view returns (bool) {
         bool valid = Merkle.checkMembership(
             bytes32(value), index, committedStateRootHash, proof, ACCOUNT_HEIGHT + TOKEN_HEIGHT
         );
@@ -176,15 +172,15 @@ contract SnappAuctionChallenge {
         bytes memory openOrders,
         bytes memory openOrdersCancelled
         //bytes memory accountOrders
-    ) public returns (bool) {
+    ) public view returns (bool) {
         require(!checkOrderData(openOrders), "Wrong open order data");
         require(rollingHash(
             openOrdersCancelled, 0x0, 0, openOrdersCancelled.length, 5
         ) != committedOrderHash, "Wrong cancellation data");
 
         for (uint16 i = 0; i < openOrdersCancelled.length / 5; i++) {
-            (uint24 account, uint16 slot) = getCancelledOrder(openOrdersCancelled, i);
-            Order memory o = getOrder(openOrders, slot);
+            // (uint24 account, uint16 slot) = getCancelledOrder(openOrdersCancelled, i);
+            // Order memory o = getOrder(openOrders, slot);
             if (true) {
                 openOrders[i*16] = 0;
                 openOrders[i*16 + 1] = 0;
@@ -309,8 +305,8 @@ contract SnappAuctionChallenge {
         /*
          * Each proof consists of:
          * [
-         *   buyBalance, 5 * buy token proof nodes, 
-         *   sellBalance, 5 * sell token proof nodes, 
+         *   buyBalance, 5 * buy token proof nodes,
+         *   sellBalance, 5 * sell token proof nodes,
          *   24 * account proof nodes
          * ]
          */
@@ -346,15 +342,11 @@ contract SnappAuctionChallenge {
     /**
      * Internal functions
      */
-    function checkPriceAndVolumeData(
-        bytes memory pricesAndVolumes
-    ) internal view returns (bool) {
+    function checkPriceAndVolumeData(bytes memory pricesAndVolumes) internal view returns (bool) {
         return sha256(pricesAndVolumes) == priceAndVolumeHash;
     }
 
-    function checkOrderData(
-        bytes memory orders
-    ) internal view returns (bool) {
+    function checkOrderData(bytes memory orders) internal view returns (bool) {
         return committedOrderHash == rollingHash(
             orders, 0x0, 0, orders.length, 16
         );
@@ -366,25 +358,30 @@ contract SnappAuctionChallenge {
         uint offset,
         uint length,
         uint width
-    ) internal view returns (bytes32) {
+    ) internal pure returns (bytes32) {
         bytes16 order = 0x0;
-        bytes32 rollingHash = startingHash;
+        bytes32 rolledHash = startingHash;
         for (uint256 i = 32 + offset; i <= 32 + offset + length; i += width) {
             /* solhint-disable no-inline-assembly */
             assembly {
                 order := mload(add(data, i))
             }
-            rollingHash = sha256(abi.encodePacked(rollingHash, order));
+            rolledHash = sha256(abi.encodePacked(rolledHash, order));
         }
-        return rollingHash;
+        return rolledHash;
     }
 
-    function challengePriceNonUniform(
-        uint buyPrice, 
-        uint sellPrice, 
-        uint buyVolume, 
-        uint sellVolume
+    function priceNotUniform(
+        uint buyPrice,
+        uint sellPrice,
+        uint buyAmount,
+        uint sellAmount
     ) internal pure returns (bool) {
-        return ((buyPrice * sellVolume) - (sellPrice * buyVolume))**2 > EPSILON**2;
+        uint buyVolume = buyPrice * buyVolume;
+        uint sellVolume = sellPrice * sellVolume;
+        if (buyVolume > sellVolume) {
+            return buyVolume - sellVolume < EPSILON;
+        }
+        return sellVolume - buyVolume < EPSILON;
     }
 }
