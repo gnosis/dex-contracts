@@ -116,6 +116,18 @@ contract SnappAuction is SnappBase {
         return standingOrders[userId].currentBatchIndex;
     }
 
+    function biddingStartTime(uint slot) public view returns (uint) {
+        // Solution bidding can only begin once the previous auction has settled
+        // A1: | order collection | solution bidding | solution posting |
+        // A2: |                  | order collection | solution bidding |  solution posting
+        // biddingStartTime = max(currentBatch.creationTimestamp + 3 minutes, previousBatch.solutionAcceptedTime)
+        uint bidStart = auctions[slot].creationTimestamp + 3 minutes;
+        if (slot > 0 && auctions[slot-1].solutionAcceptedTime > bidStart) {
+            bidStart = auctions[slot-1].solutionAcceptedTime;
+        }
+        return bidStart;
+    }
+
     /**
      * Auction Functionality
      */
@@ -219,21 +231,12 @@ contract SnappAuction is SnappBase {
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
 
-        // Solution bidding can only begin once the previous auction has settled
-        // A1: | order collection | solution bidding | solution posting |
-        // A2: |                  | order collection | solution bidding |  solution posting
-        // biddingStartTime = max(currentBatch.creationTimestamp + 3 minutes, previousBatch.solutionAcceptedTime)
-        uint biddingStartTime = auctions[slot].creationTimestamp + 3 minutes;
-        if (slot > 0 && auctions[slot-1].solutionAcceptedTime > biddingStartTime) {
-            biddingStartTime = auctions[slot-1].solutionAcceptedTime;
-        }
-
         require(
-            block.timestamp > biddingStartTime || auctions[slot].numOrders == maxUnreservedOrderCount(),
+            block.timestamp > biddingStartTime(slot) || auctions[slot].numOrders == maxUnreservedOrderCount(),
             "Requested auction slot is still active"
         );
         require(
-            block.timestamp < biddingStartTime + 3 minutes,
+            block.timestamp < biddingStartTime(slot) + 3 minutes,
             "Bidding period for this auction has expired"
         );
 
@@ -247,6 +250,82 @@ contract SnappAuction is SnappBase {
         auctions[slot].solver = msg.sender;
         auctions[slot].objectiveValue = proposedObjectiveValue;
         auctions[slot].tentativeState = proposedStateRoot;
+    }
+
+    function winnerApplyAuction(
+        uint slot,
+        bytes memory pricesAndVolumes
+    )
+        public onlyOwner()
+    {
+        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
+        require(
+            block.timestamp > biddingStartTime(slot) + 3 minutes,
+            "Requested auction still in bidding phase."
+        );
+        require(
+            block.timestamp < biddingStartTime(slot) + 270 seconds,  // 3 + 1.5 minutes
+            "Too late for winning result to submit solution"
+        );
+        require(
+            auctions[slot].solver == msg.sender,
+            "Only winner of bidding phase may apply auction here"
+        );
+        internalApplyAuction(slot, auctions[slot].tentativeState, pricesAndVolumes);
+    }
+
+    function fallbackApplyAuction(
+        uint slot,
+        bytes32 _currStateRoot,
+        bytes32 newStateRoot,
+        bytes memory pricesAndVolumes
+    )
+        public onlyOwner()
+    {
+        require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
+        require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
+        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
+        require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
+
+        require(
+            block.timestamp > biddingStartTime(slot) + 270 seconds,  // 3 + 1.5 minutes
+            "Waiting on winner to provide solution"
+        );
+        require(
+            block.timestamp < biddingStartTime(slot) + 6 minutes,
+            "Waiting on winner to provide solution"
+        );
+        // TODO - Deal with this part of the settlement period.
+        // Assuming we take any provided solution and apply it!?
+        internalApplyAuction(slot, newStateRoot, pricesAndVolumes);
+    }
+
+    function nudgeTrivialAuction(uint slot) public {
+        require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
+        require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
+        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
+
+        require(
+            block.timestamp > biddingStartTime(slot) + 6 minutes,
+            "Requested auction still in settlement proposal phase"
+        );
+
+        bytes memory trivialSolution;  // p_i = 1 and (bA, sA)_j = (0, 0) \forall i, j
+        // Could simply state that null bytes represents trivial auction
+        internalApplyAuction(slot, coreData.stateRoots[stateIndex()], trivialSolution);
+    }
+
+    function internalApplyAuction(
+        uint slot,
+        bytes32 newStateRoot,
+        bytes memory pricesAndVolumes
+    )
+        internal
+    {
+        coreData.stateRoots.push(newStateRoot);
+        auctions[slot].appliedAccountStateIndex = stateIndex();
+        auctions[slot].solutionHash = sha256(pricesAndVolumes);
+        emit AuctionSettlement(slot, stateIndex(), newStateRoot, pricesAndVolumes);
     }
 
     function applyAuction(
