@@ -315,19 +315,6 @@ contract SnappAuction is SnappBase {
         internalApplyAuction(slot, coreData.stateRoots[stateIndex()], trivialSolution);
     }
 
-    function internalApplyAuction(
-        uint slot,
-        bytes32 newStateRoot,
-        bytes memory pricesAndVolumes
-    )
-        internal
-    {
-        coreData.stateRoots.push(newStateRoot);
-        auctions[slot].appliedAccountStateIndex = stateIndex();
-        auctions[slot].solutionHash = sha256(pricesAndVolumes);
-        emit AuctionSettlement(slot, stateIndex(), newStateRoot, pricesAndVolumes);
-    }
-
     function applyAuction(
         uint slot,
         bytes32 _currStateRoot,
@@ -413,6 +400,19 @@ contract SnappAuction is SnappBase {
 
         sellToken = BytesLib.toUint8(orderData, 24);
         buyToken = BytesLib.toUint8(orderData, 25);
+    }
+
+    function internalApplyAuction(
+        uint slot,
+        bytes32 newStateRoot,
+        bytes memory pricesAndVolumes
+    )
+        internal
+    {
+        coreData.stateRoots.push(newStateRoot);
+        auctions[slot].appliedAccountStateIndex = stateIndex();
+        auctions[slot].solutionHash = sha256(pricesAndVolumes);
+        emit AuctionSettlement(slot, stateIndex(), newStateRoot, pricesAndVolumes);
     }
 
     function createNewPendingBatch() internal {
