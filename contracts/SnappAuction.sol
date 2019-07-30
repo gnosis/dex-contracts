@@ -38,7 +38,7 @@ contract SnappAuction is SnappBase {
         bytes32 tentativeState;        // Proposed account state during bidding phase
         // Auction Settlement phase
         bytes32 solutionHash;          // Succinct record of trade execution & prices
-        uint solutionAcceptedTime;     // Time solution was accepted (written at time of solutionHash)
+        uint auctionAppliedTime;       // Time auction was applied (written at time of solutionHash)
         uint appliedAccountStateIndex; // stateIndex when batch applied - 0 implies unapplied.
     }
 
@@ -120,10 +120,10 @@ contract SnappAuction is SnappBase {
         // Solution bidding can only begin once the previous auction has settled
         // A1: | order collection | solution bidding | solution posting |
         // A2: |                  | order collection | solution bidding |  solution posting
-        // biddingStartTime = max(currentBatch.creationTimestamp + 3 minutes, previousBatch.solutionAcceptedTime)
+        // biddingStartTime = max(currentBatch.creationTimestamp + 3 minutes, previousBatch.auctionAppliedTime)
         uint bidStart = auctions[slot].creationTimestamp + 3 minutes;
-        if (slot > 0 && auctions[slot-1].solutionAcceptedTime > bidStart) {
-            bidStart = auctions[slot-1].solutionAcceptedTime;
+        if (slot > 0 && auctions[slot-1].auctionAppliedTime > bidStart) {
+            bidStart = auctions[slot-1].auctionAppliedTime;
         }
         return bidStart;
     }
@@ -230,7 +230,6 @@ contract SnappAuction is SnappBase {
         // Ensure that auction batch is inactive, unprocessed and in correct phase for bidding
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
-
         require(
             block.timestamp > biddingStartTime(slot) || auctions[slot].numOrders == maxUnreservedOrderCount(),
             "Requested auction slot is still active"
@@ -252,102 +251,84 @@ contract SnappAuction is SnappBase {
         auctions[slot].tentativeState = proposedStateRoot;
     }
 
-    function winnerApplyAuction(
-        uint slot,
-        bytes memory pricesAndVolumes
-    )
-        public onlyOwner()
-    {
-        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
-        require(
-            block.timestamp > biddingStartTime(slot) + 3 minutes,
-            "Requested auction still in bidding phase."
-        );
-        require(
-            block.timestamp < biddingStartTime(slot) + 270 seconds,  // 3 + 1.5 minutes
-            "Too late for winning result to submit solution"
-        );
-        require(
-            auctions[slot].solver == msg.sender,
-            "Only winner of bidding phase may apply auction here"
-        );
-        internalApplyAuction(slot, auctions[slot].tentativeState, pricesAndVolumes);
-    }
-
-    function fallbackApplyAuction(
-        uint slot,
-        bytes32 _currStateRoot,
-        bytes32 newStateRoot,
-        bytes memory pricesAndVolumes
-    )
-        public onlyOwner()
-    {
-        require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
-        require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
-        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
-        require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
-
-        require(
-            block.timestamp > biddingStartTime(slot) + 270 seconds,  // 3 + 1.5 minutes
-            "Waiting on winner to provide solution"
-        );
-        require(
-            block.timestamp < biddingStartTime(slot) + 6 minutes,
-            "Waiting on winner to provide solution"
-        );
-        // TODO - Deal with this part of the settlement period.
-        // Assuming we take any provided solution and apply it!?
-        internalApplyAuction(slot, newStateRoot, pricesAndVolumes);
-    }
-
-    function nudgeTrivialAuction(uint slot) public {
-        require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
-        require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
-        require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
-
-        require(
-            block.timestamp > biddingStartTime(slot) + 6 minutes,
-            "Requested auction still in settlement proposal phase"
-        );
-
-        bytes memory trivialSolution;  // p_i = 1 and (bA, sA)_j = (0, 0) \forall i, j
-        // Could simply state that null bytes represents trivial auction
-        internalApplyAuction(slot, coreData.stateRoots[stateIndex()], trivialSolution);
-    }
-
     function applyAuction(
         uint slot,
         bytes32 _currStateRoot,
-        bytes32 _newStateRoot,
+        bytes32 newStateRoot,                 // Only needed the case of fallback
         bytes32 _orderHash,
         uint128[] memory _standingOrderIndex,
-        bytes memory pricesAndVolumes
-    )
-        public onlyOwner()
-    {
+        bytes memory pricesAndVolumes         // Can be empty in the trivial case.
+    ) public onlyOwner() {
+        // Auction related constraints (slot exists, is inactive, no previous auction pending and not already applied)
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
         require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
-        require(
-            calculateOrderHash(slot, _standingOrderIndex) == _orderHash,
-            "Order hash doesn't agree"
-        );
+
+        // State related constraints (order hash and state root agree)
+        require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
+        require(calculateOrderHash(slot, _standingOrderIndex) == _orderHash, "Order hash doesn't agree");
+
+        // Phase related constraints
         require(
             block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
                 auctions[slot].numOrders == maxUnreservedOrderCount(),
             "Requested auction slot is still active"
         );
-        require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
+        require(
+            block.timestamp > biddingStartTime(slot) + 3 minutes,
+            "Requested auction still in bidding phase or earlier"
+        );
 
-        coreData.stateRoots.push(_newStateRoot);
-        auctions[slot].appliedAccountStateIndex = stateIndex();
-
-        // Store solution information in shaHash of pendingBatch (required for snark proof)
-        auctions[slot].solutionHash = sha256(pricesAndVolumes);
-        auctions[slot].solutionAcceptedTime = block.timestamp;
-
-        emit AuctionSettlement(slot, stateIndex(), _newStateRoot, pricesAndVolumes);
+        if (block.timestamp < biddingStartTime(slot) + 270 seconds && auctions[slot].solver != address(0)) {
+            // Winner Apply Auction
+            require(
+                auctions[slot].solver == msg.sender,
+                "Only winner of bidding phase may apply auction here"
+            );
+            internalApplyAuction(slot, auctions[slot].tentativeState, pricesAndVolumes);
+        } else if (block.timestamp < biddingStartTime(slot) + 6 minutes) {
+            // Fallback Apply Auction
+            internalApplyAuction(slot, newStateRoot, pricesAndVolumes);
+        } else {
+            // Trivial Apply Auction
+            bytes memory trivialSolution;  // p_i = 1 and (bA, sA)_j = (0, 0) \forall i, j
+            internalApplyAuction(slot, coreData.stateRoots[stateIndex()], trivialSolution);
+        }
     }
+
+    // function applyAuction(
+    //     uint slot,
+    //     bytes32 _currStateRoot,
+    //     bytes32 _newStateRoot,
+    //     bytes32 _orderHash,
+    //     uint128[] memory _standingOrderIndex,
+    //     bytes memory pricesAndVolumes
+    // )
+    //     public onlyOwner()
+    // {
+    //     require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
+    //     require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
+    //     require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
+    //     require(
+    //         calculateOrderHash(slot, _standingOrderIndex) == _orderHash,
+    //         "Order hash doesn't agree"
+    //     );
+    //     require(
+    //         block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
+    //             auctions[slot].numOrders == maxUnreservedOrderCount(),
+    //         "Requested auction slot is still active"
+    //     );
+    //     require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
+
+    //     coreData.stateRoots.push(_newStateRoot);
+    //     auctions[slot].appliedAccountStateIndex = stateIndex();
+
+    //     // Store solution information in shaHash of pendingBatch (required for snark proof)
+    //     auctions[slot].solutionHash = sha256(pricesAndVolumes);
+    //     auctions[slot].auctionAppliedTime = block.timestamp;
+
+    //     emit AuctionSettlement(slot, stateIndex(), _newStateRoot, pricesAndVolumes);
+    // }
 
     function calculateOrderHash(uint slot, uint128[] memory _standingOrderIndex)
         public view returns (bytes32)
@@ -412,6 +393,7 @@ contract SnappAuction is SnappBase {
         coreData.stateRoots.push(newStateRoot);
         auctions[slot].appliedAccountStateIndex = stateIndex();
         auctions[slot].solutionHash = sha256(pricesAndVolumes);
+        auctions[slot].auctionAppliedTime = block.timestamp;
         emit AuctionSettlement(slot, stateIndex(), newStateRoot, pricesAndVolumes);
     }
 
@@ -429,7 +411,7 @@ contract SnappAuction is SnappBase {
             objectiveValue: 0,
             tentativeState: bytes32(0),
             solutionHash: bytes32(0),
-            solutionAcceptedTime: 0,
+            auctionAppliedTime: 0,
             appliedAccountStateIndex: 0
         });
     }
