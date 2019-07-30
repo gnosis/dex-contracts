@@ -312,6 +312,7 @@ contract("SnappAuction", async (accounts) => {
       standingOrderIndexList.fill(0)
       const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
       assert.equal(await isActive(auction_state), true)
+
       await truffleAssert.reverts(
         instance.applyAuction(slot, state_root, new_state, orderhash, standingOrderIndexList, auctionSolution),
         "Requested auction slot is still active"
@@ -414,8 +415,8 @@ contract("SnappAuction", async (accounts) => {
       standingOrderIndexList.fill(0)
       const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
 
-      // Wait for current order slot to be inactive
-      await waitForNSeconds(181)
+      // Wait for current order slot to be inactive & bidding phase to pass
+      await waitForNSeconds(181 + 180)
 
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
@@ -443,8 +444,8 @@ contract("SnappAuction", async (accounts) => {
       standingOrderIndexList.fill(0)
       const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
 
-      // Wait for current order slot to be inactive
-      await waitForNSeconds(181)
+      // Wait for current order slot to be inactive & bidding phase to pass
+      await waitForNSeconds(181 + 180)
 
       // Ensure order slot is inactive
       assert.equal(await isActive(auction_state), false)
@@ -467,13 +468,11 @@ contract("SnappAuction", async (accounts) => {
       const order = encodeOrder(0, 1, 1, 1)
       await instance.placeSellOrders(order, { from: user_1 })
 
-      const first_slot = (await instance.auctionIndex.call()).toNumber()
       const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
       const first_standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
       first_standingOrderIndexList.fill(0)
-      const first_orderhash = await instance.calculateOrderHash(first_slot, first_standingOrderIndexList)
-      // Wait for current order slot to be inactive
-      await waitForNSeconds(181)
+      // Wait for current order slot to be inactive & bidding phase to pass
+      await waitForNSeconds(181 + 180)
 
       // Place an order to ensure second order slot is created.
       const order_tx = await instance.placeSellOrders(order, { from: user_1 })
@@ -481,8 +480,6 @@ contract("SnappAuction", async (accounts) => {
       const second_standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
       second_standingOrderIndexList.fill(0)
       const second_orderhash = await instance.calculateOrderHash(second_slot, second_standingOrderIndexList)
-      // Wait for second order slot to be inactive
-      await waitForNSeconds(181)
 
       const state_root = await instance.getCurrentStateRoot()
 
@@ -490,10 +487,6 @@ contract("SnappAuction", async (accounts) => {
         instance.applyAuction(second_slot, state_root, new_state, second_orderhash, second_standingOrderIndexList, auctionSolution),
         "Must apply auction slots in order!"
       )
-      
-      await instance.applyAuction(first_slot, state_root, new_state, first_orderhash, first_standingOrderIndexList, auctionSolution)
-      const second_state_root = await instance.getCurrentStateRoot.call()
-      await instance.applyAuction(second_slot, second_state_root, new_state, second_orderhash, second_standingOrderIndexList, auctionSolution)
     })
   })
 
@@ -752,17 +745,13 @@ contract("SnappAuction", async (accounts) => {
       await instance.placeSellOrders(order, { from: user_1 })
 
       const slot = (await instance.auctionIndex.call()).toNumber()
-      const auction_state = await instance.auctions.call(slot)
       const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
       const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
       standingOrderIndexList.fill(0)
       const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
 
-      // Wait for current order slot to be inactive
-      await waitForNSeconds(181)
-
-      // Ensure order slot is inactive
-      assert.equal(await isActive(auction_state), false)
+      // Wait for current order slot to be inactive and bidding phase is over
+      await waitForNSeconds(181 + 180)
 
       const state_root = await instance.getCurrentStateRoot()
 
@@ -781,8 +770,8 @@ contract("SnappAuction", async (accounts) => {
       const order = encodeOrder(0, 1, 1, 1)
       await instance.placeSellOrders(order, { from: user_1 })
 
-      // Wait for current order slot to be inactive
-      await waitForNSeconds(181)
+      // Wait for current order slot to be inactive and bidding phase is over
+      await waitForNSeconds(181 + 180)
 
       const current_state = await instance.getCurrentStateRoot()
       const current_slot = (await instance.auctionIndex.call()).toNumber()
@@ -933,19 +922,22 @@ contract("SnappAuction", async (accounts) => {
       )
       await waitForNSeconds(1)
 
-      // This is the point where biddingStartTime = auctions[slot-1].solutionAcceptedTime;
+      // This is the point where biddingStartTime = auctions[slot-1].auctionAppliedTime;
       await instance.auctionSolutionBid(current_slot, current_state, new_state, 1)
       await waitForNSeconds(1)
 
       // Ensuring that slot > 0 and
-      // auctions[slot-1].solutionAcceptedTime > auctions[slot].creationTimestamp + 3 minutes
-      assert(current_slot > 0)
+      // auctions[slot-1].auctionAppliedTime > auctions[slot].creationTimestamp + 3 minutes
+      assert(current_slot > 0, "slot should be positive!")
       const prev_auction = await instance.auctions(current_slot - 1)
       const curr_auction = await instance.auctions(current_slot)
-      const prevAuctionAcceptedTime = prev_auction.solutionAcceptedTime.toNumber()
+      const prevAuctionAcceptedTime = prev_auction.auctionAppliedTime.toNumber()
       const currAuctionCreationTime = curr_auction.creationTimestamp.toNumber()
       const three_minutes = 180 // (seconds)
-      assert(prevAuctionAcceptedTime > currAuctionCreationTime + three_minutes)
+      assert(
+        prevAuctionAcceptedTime > currAuctionCreationTime + three_minutes,
+        "prevAuctionEnd - currAuctionStart <= three minutes"
+      )
     })
   })
 
