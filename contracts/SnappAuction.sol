@@ -296,40 +296,6 @@ contract SnappAuction is SnappBase {
         }
     }
 
-    // function applyAuction(
-    //     uint slot,
-    //     bytes32 _currStateRoot,
-    //     bytes32 _newStateRoot,
-    //     bytes32 _orderHash,
-    //     uint128[] memory _standingOrderIndex,
-    //     bytes memory pricesAndVolumes
-    // )
-    //     public onlyOwner()
-    // {
-    //     require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
-    //     require(slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0, "Must apply auction slots in order!");
-    //     require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
-    //     require(
-    //         calculateOrderHash(slot, _standingOrderIndex) == _orderHash,
-    //         "Order hash doesn't agree"
-    //     );
-    //     require(
-    //         block.timestamp > auctions[slot].creationTimestamp + 3 minutes ||
-    //             auctions[slot].numOrders == maxUnreservedOrderCount(),
-    //         "Requested auction slot is still active"
-    //     );
-    //     require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
-
-    //     coreData.stateRoots.push(_newStateRoot);
-    //     auctions[slot].appliedAccountStateIndex = stateIndex();
-
-    //     // Store solution information in shaHash of pendingBatch (required for snark proof)
-    //     auctions[slot].solutionHash = sha256(pricesAndVolumes);
-    //     auctions[slot].auctionAppliedTime = block.timestamp;
-
-    //     emit AuctionSettlement(slot, stateIndex(), _newStateRoot, pricesAndVolumes);
-    // }
-
     function calculateOrderHash(uint slot, uint128[] memory _standingOrderIndex)
         public view returns (bytes32)
     {
