@@ -402,6 +402,28 @@ contract("SnappAuction", async (accounts) => {
       )
     })
 
+    it("rejects calls when still in bidding phase", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const order = encodeOrder(0, 1, 1, 1)
+      await instance.placeSellOrders(order, { from: user_1 })
+
+      const slot = (await instance.auctionIndex.call()).toNumber()
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
+
+      // Wait for current order slot to be inactive & bidding phase to pass
+      await waitForNSeconds(181)
+
+      const current_state = await instance.getCurrentStateRoot()
+      await truffleAssert.reverts(
+        instance.applyAuction(slot, current_state, new_state, orderhash, standingOrderIndexList, auctionSolution),
+        "Requested auction still in bidding phase or earlier"
+      )
+    })
+
     it("Successfully apply auction", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
@@ -429,6 +451,109 @@ contract("SnappAuction", async (accounts) => {
       const applied_index = ((await instance.auctions(slot)).appliedAccountStateIndex).toNumber()
 
       assert.equal(applied_index, state_index)
+    })
+
+    it("apply trivial auction", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const order = encodeOrder(0, 1, 1, 1)
+      await instance.placeSellOrders(order, { from: user_1 })
+
+      const slot = (await instance.auctionIndex.call()).toNumber()
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
+
+      // Wait for current order slot to be inactive & bidding phase to pass
+      await waitForNSeconds(181 + 180)
+      // wait for regular settlement period to pass!
+      await waitForNSeconds(181)
+
+      const state_root = await instance.getCurrentStateRoot()
+      
+      const tx = await instance.applyAuction(
+        slot, state_root, new_state, orderhash, standingOrderIndexList, auctionSolution)
+
+      assert.equal(tx.logs[0].args.pricesAndVolumes, null, "auction solution should be empty")
+    })
+
+    it("accepts winner's solution", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const order = encodeOrder(0, 1, 1, 1)
+      await instance.placeSellOrders(order, { from: user_1 })
+
+      const slot = (await instance.auctionIndex.call()).toNumber()
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
+
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+      
+      const current_state = await instance.getCurrentStateRoot()
+      await instance.auctionSolutionBid(slot, current_state, new_state, 1)
+      // Wait for bidding phase to pass
+      await waitForNSeconds(181)
+      // winner is owner in this context (and currently has to be)
+      await instance.applyAuction(slot, current_state, new_state, orderhash, standingOrderIndexList, auctionSolution)
+    })
+
+    it("rejects imposter winner's solution", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const order = encodeOrder(0, 1, 1, 1)
+      await instance.placeSellOrders(order, { from: user_1 })
+
+      const slot = (await instance.auctionIndex.call()).toNumber()
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
+
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+      const current_state = await instance.getCurrentStateRoot()
+      await instance.auctionSolutionBid(slot, current_state, new_state, 1, { from: user_1 })
+      // Wait for bidding phase to pass
+      await waitForNSeconds(181)   
+
+      await truffleAssert.reverts(
+        instance.applyAuction(
+          slot, current_state, new_state, orderhash, standingOrderIndexList, auctionSolution
+        ),
+        "Only winner of bidding phase may apply auction here"
+      )
+    })
+
+    it("records winning bid and allows fallback applyAuction", async () => {
+      const instance = await SnappAuction.new()
+      await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
+      const order = encodeOrder(0, 1, 1, 1)
+      await instance.placeSellOrders(order, { from: user_1 })
+
+      const slot = (await instance.auctionIndex.call()).toNumber()
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
+
+      // Wait for current order slot to be inactive
+      await waitForNSeconds(181)
+      
+      const current_state = await instance.getCurrentStateRoot()
+      await instance.auctionSolutionBid(slot, current_state, new_state, 1)
+      // Wait for bidding phase to pass
+      await waitForNSeconds(181)
+      // Wait for winner's chance to submit to pass (half a minute)
+      await waitForNSeconds(91)
+
+      // winner is owner in this context (and currently has to be)
+      await instance.applyAuction(
+        slot, current_state, new_state, orderhash, standingOrderIndexList, auctionSolution, { from: user_1 }
+      )
     })
 
     it("Reject: apply same slot twice", async () => {
