@@ -16,12 +16,14 @@ contract IntervalTokenStore {
         uint amount,
         uint stateIndex
     );
+
     event WithdrawRequest(
         address user,
         address token,
         uint amount,
         uint stateIndex
     );
+
     event Withdraw(
         address user,
         address token,
@@ -29,7 +31,7 @@ contract IntervalTokenStore {
     );
 
     // User => Token => BalanceState
-    mapping(address => mapping(address => BalanceState)) balanceStates;
+    mapping(address => mapping(address => BalanceState)) private balanceStates;
 
     struct BalanceState {
         uint256 balance;
@@ -96,7 +98,7 @@ contract IntervalTokenStore {
     }
 
     function updateDepositsBalance(address user, address token) public {
-        if ( balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex ) {
+        if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
             balanceStates[user][token].balance += balanceStates[user][token].pendingDeposits.amount;
 
             delete balanceStates[user][token].pendingDeposits;
@@ -105,7 +107,7 @@ contract IntervalTokenStore {
 
     function addBalance(address user, address token, uint amount) internal {
         updateDepositsBalance(msg.sender, token);
-        balanceStates[user][token].balance += amount;
+        balanceStates[user][token].balance = balanceStates[user][token].balance.add(amount);
     }
 
     function substractBalance(address user, address token, uint amount) internal {
@@ -117,23 +119,38 @@ contract IntervalTokenStore {
      * view functions
      */
 
-    function getPendingDepositAmount(address user, address token) public view returns(uint){
+    function getPendingDepositAmount(address user, address token) public view returns(uint) {
         return balanceStates[user][token].pendingDeposits.amount;
     }
 
-    function getPendingDepositBatchNumber(address user, address token) public view returns(uint){
+    function getPendingDepositBatchNumber(address user, address token) public view returns(uint) {
         return balanceStates[user][token].pendingDeposits.stateIndex;
     }
 
-    function getPendingWithdrawAmount(address user, address token) public view returns(uint){
+    function getPendingWithdrawAmount(address user, address token) public view returns(uint) {
         return balanceStates[user][token].pendingWithdraws.amount;
     }
 
-    function getPendingWithdrawBatchNumber(address user, address token) public view returns(uint){
+    function getPendingWithdrawBatchNumber(address user, address token) public view returns(uint) {
         return balanceStates[user][token].pendingWithdraws.stateIndex;
     }
 
-    function getBalance(address user, address token) public view returns(uint){
+    function getBalance(address user, address token) public view returns(uint) {
         return balanceStates[user][token].balance;
+    }
+
+
+    /**
+     * internal functions
+     */
+
+    function addBalance(address user, address token, uint amount) internal {
+        updateDepositsBalance(msg.sender, token);
+        balanceStates[user][token].balance = balanceStates[user][token].balance.add(amount);
+    }
+
+    function substractBalance(address user, address token, uint amount) internal {
+        updateDepositsBalance(msg.sender, token);
+        balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
     }
 }
