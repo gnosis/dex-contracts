@@ -1,4 +1,4 @@
-// TokenStore stores Tokens for applications, which have discrete States increasing with time
+// IntervalTokenStore stores tokens for applications, which have discrete states increasing with time
 pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
