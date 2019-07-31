@@ -9,8 +9,21 @@ contract IntervalTokenStore {
     event Deposit(
         address user,
         address token,
+        uint amount,
+        uint stateIndex
+    );
+    event WithdrawRequest(
+        address user,
+        address token,
+        uint amount,
+        uint stateIndex
+    );
+    event Withdraw(
+        address user,
+        address token,
         uint amount
     );
+
     // User => Token => BalanceState
     mapping(address => mapping(address => BalanceState)) balanceStates;
 
@@ -19,7 +32,7 @@ contract IntervalTokenStore {
         PendingFlux pendingDeposits;
         PendingFlux pendingWithdraws;
     }
-    
+
     struct PendingFlux {
         uint256 amount;
         uint256 stateIndex;  // deposits will be processed for any currentStateIndex > stateIndex
@@ -45,11 +58,12 @@ contract IntervalTokenStore {
         );
         balanceStates[msg.sender][token].pendingDeposits.amount += amount;
         balanceStates[msg.sender][token].pendingDeposits.stateIndex = currentStateIndex;
-        emit Deposit(msg.sender, token, amount);
+        emit Deposit(msg.sender, token, amount, currentStateIndex);
     }
 
     function withdrawRequest(address token, uint amount) public {
         balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: currentStateIndex });
+        emit WithdrawRequest(msg.sender, token, amount, currentStateIndex);
     }
 
     function withdraw(address token, uint amount) public {
@@ -74,6 +88,7 @@ contract IntervalTokenStore {
         delete balanceStates[msg.sender][token].pendingWithdraws;
 
         ERC20(token).transfer(msg.sender, amount);
+        emit Withdraw(msg.sender, token, amount);
     }
 
     function updateDepositsBalance(address user, address token) public {
