@@ -1,4 +1,3 @@
-// IntervalTokenStore stores tokens for applications, which have discrete states increasing with time
 pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
@@ -6,7 +5,11 @@ import "openzeppelin-solidity/contracts/math/Math.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 
-contract IntervalTokenStore {
+// EpochTokenLocker saveguards tokens for applications with constant-balances during discrete epochs
+// It allows to deposit token which become credited in the next epoch and allows to request a token-withdraw
+// which becomes claimable after the current epoch expired.
+
+contract EpochTokenLocker {
     using SafeMath for uint;
 
     event Deposit(
@@ -16,7 +19,7 @@ contract IntervalTokenStore {
         uint stateIndex
     );
 
-    event WithdrawRequest(
+    event withdrawRequest(
         address user,
         address token,
         uint amount,
@@ -34,17 +37,16 @@ contract IntervalTokenStore {
 
     struct BalanceState {
         uint256 balance;
-        PendingFlux pendingDeposits;
-        PendingFlux pendingWithdraws;
+        PendingFlux pendingDeposits; // deposits will be credited in any next epoch, i.e. currentStateIndex > stateIndex
+        PendingFlux pendingWithdraws; // withdraws are allowed in any next epoch , i.e. currentStateIndex > stateIndex
     }
 
     struct PendingFlux {
         uint256 amount;
-        uint256 stateIndex;  // deposits will be processed for any currentStateIndex > stateIndex
-                              // withdraws are allowed for any currentStateIndex > stateIndex
+        uint256 stateIndex;
     }
 
-    uint256 public currentStateIndex=0;
+    uint256 public currentStateIndex = 0;
 
     function updateAndGetBalance(address user, address token) public returns(uint256) {
         updateDepositsBalance(user, token);
@@ -61,19 +63,19 @@ contract IntervalTokenStore {
             ERC20(token).transferFrom(msg.sender, address(this), amount),
             "Tokentransfer for deposit was not successful"
         );
-        balanceStates[msg.sender][token].pendingDeposits.amount += amount;
+        balanceStates[msg.sender][token].pendingDeposits.amount = balanceStates[msg.sender][token].pendingDeposits.amount.add(amount);
         balanceStates[msg.sender][token].pendingDeposits.stateIndex = currentStateIndex;
         emit Deposit(msg.sender, token, amount, currentStateIndex);
     }
 
-    function withdrawRequest(address token, uint amount) public {
+    function requestWithdraw(address token, uint amount) public {
         balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: currentStateIndex });
-        emit WithdrawRequest(msg.sender, token, amount, currentStateIndex);
+        emit withdrawRequest(msg.sender, token, amount, currentStateIndex);
     }
 
     function withdraw(address token, uint amount) public {
-        updateDepositsBalance(msg.sender, token);
-
+        updateDepositsBalance(msg.sender, token); // withdrawn amount might just be deposited before
+        
         require(
             balanceStates[msg.sender][token].pendingWithdraws.stateIndex < currentStateIndex,
             "withdraw was not registered previously"
@@ -89,7 +91,7 @@ contract IntervalTokenStore {
             "balances not sufficient"
         );
 
-        balanceStates[msg.sender][token].balance -= amount;
+        balanceStates[msg.sender][token].balance = balanceStates[msg.sender][token].balance.sub(amount);
         delete balanceStates[msg.sender][token].pendingWithdraws;
 
         ERC20(token).transfer(msg.sender, amount);
@@ -98,7 +100,9 @@ contract IntervalTokenStore {
 
     function updateDepositsBalance(address user, address token) public {
         if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
-            balanceStates[user][token].balance += balanceStates[user][token].pendingDeposits.amount;
+            balanceStates[user][token].balance = balanceStates[user][token].balance.add(
+                balanceStates[user][token].pendingDeposits.amount
+            );
 
             delete balanceStates[user][token].pendingDeposits;
         }
