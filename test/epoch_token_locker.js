@@ -1,4 +1,4 @@
-const IntervalTokenStore = artifacts.require("IntervalTokenStore")
+const EpochTokenLocker = artifacts.require("EpochTokenLocker")
 const IntervalTokenStoreTestInterface = artifacts.require("IntervalTokenStoreTestInterface")
 const MockContract = artifacts.require("MockContract")
 const ERC20Interface = artifacts.require("ERC20")
@@ -8,12 +8,12 @@ const ERC20Interface = artifacts.require("ERC20")
 const truffleAssert = require("truffle-assertions")
 
 
-contract("IntervalTokenStore", async (accounts) => {
+contract("EpochTokenLocker", async (accounts) => {
   const [user_1] = accounts
 
   describe("deposit", () => {
     it("processes a deposit and stores it in the pendingDeposits", async () => {
-      const instance = await IntervalTokenStore.new()
+      const instance = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
 
@@ -23,14 +23,14 @@ contract("IntervalTokenStore", async (accounts) => {
     })
   
     it("throws, if transferFrom fails", async () => {
-      const instance = await IntervalTokenStore.new()
+      const instance = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(false)
       await truffleAssert.reverts(instance.deposit(ERC20.address, 100), "Tokentransfer for deposit was not successful")
     })
 
     it("adds two deposits, if they are deposited during same stateIndex", async () => {
-      const instance = await IntervalTokenStore.new()
+      const instance = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
       await instance.deposit(ERC20.address, 100)
@@ -55,7 +55,7 @@ contract("IntervalTokenStore", async (accounts) => {
 
   describe("updateDepositsBalance", () => {
     it("processes a deposit and will not process the pendingDeposit with same stateIndex", async () => {
-      const instance = await IntervalTokenStore.new()
+      const instance = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
 
@@ -78,13 +78,13 @@ contract("IntervalTokenStore", async (accounts) => {
       assert.equal(await instance.getPendingDepositBatchNumber(user_1, ERC20.address), 0)
     })
   })
-  describe("withdrawRequest", () => {  
+  describe("requestWithdraw", () => {  
     it("processes a withdraw request", async () => {
       const instance = await IntervalTokenStoreTestInterface.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
   
-      await instance.withdrawRequest(ERC20.address, 100)
+      await instance.requestWithdraw(ERC20.address, 100)
       assert.equal(await instance.getPendingWithdrawAmount(user_1, ERC20.address), 100)
       assert.equal(await instance.getPendingWithdrawBatchNumber(user_1, ERC20.address), 0)
     })
@@ -100,7 +100,7 @@ contract("IntervalTokenStore", async (accounts) => {
       await instance.updateDepositsBalance(user_1, ERC20.address)
       assert.equal(await instance.getBalance(user_1, ERC20.address), 100)
 
-      await instance.withdrawRequest(ERC20.address, 100)
+      await instance.requestWithdraw(ERC20.address, 100)
       await instance.increaseStateIndex()
       await instance.withdraw(ERC20.address, 100)
 
@@ -121,7 +121,7 @@ contract("IntervalTokenStore", async (accounts) => {
       await instance.updateDepositsBalance(user_1, ERC20.address)
       assert.equal(await instance.getBalance(user_1, ERC20.address), 100)
   
-      await instance.withdrawRequest(ERC20.address, 100)
+      await instance.requestWithdraw(ERC20.address, 100)
       await truffleAssert.reverts(instance.withdraw(ERC20.address, 100), "withdraw was not registered previously")
     })
     it("processes a withdraw request and withdraws fails, as withdraw amount was not sufficient", async () => {
@@ -129,7 +129,7 @@ contract("IntervalTokenStore", async (accounts) => {
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
     
-      await instance.withdrawRequest(ERC20.address, 10)
+      await instance.requestWithdraw(ERC20.address, 10)
       await instance.increaseStateIndex()
       await truffleAssert.reverts(instance.withdraw(ERC20.address, 100), "registered withdraw-amount was not sufficient")
     })
@@ -138,7 +138,7 @@ contract("IntervalTokenStore", async (accounts) => {
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
       
-      await instance.withdrawRequest(ERC20.address, 100)
+      await instance.requestWithdraw(ERC20.address, 100)
       await instance.increaseStateIndex()
       await truffleAssert.reverts(instance.withdraw(ERC20.address, 100), "balances not sufficient")
     })
@@ -171,7 +171,7 @@ contract("IntervalTokenStore", async (accounts) => {
       await ERC20.givenAnyReturnBool(true)
       
       await instance.deposit(ERC20.address, 100)
-      await instance.withdrawRequest(ERC20.address, 50)
+      await instance.requestWithdraw(ERC20.address, 50)
       await instance.increaseStateIndex()
       assert.equal(await instance.updateAndGetBalance.call(user_1, ERC20.address), 50)
     })
@@ -181,7 +181,7 @@ contract("IntervalTokenStore", async (accounts) => {
       await ERC20.givenAnyReturnBool(true)
       
       await instance.deposit(ERC20.address, 100)
-      await instance.withdrawRequest(ERC20.address, 150)
+      await instance.requestWithdraw(ERC20.address, 150)
       await instance.increaseStateIndex()
       assert.equal(await instance.updateAndGetBalance.call(user_1, ERC20.address), 0)
     })

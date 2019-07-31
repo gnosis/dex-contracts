@@ -2,10 +2,10 @@
 pragma solidity ^0.5.0;
 
 import "@gnosis.pm/mock-contract/contracts/MockContract.sol";
-import "../IntervalTokenStore.sol";
+import "../EpochTokenLocker.sol";
 
 
-contract IntervalTokenStoreTestInterface is IntervalTokenStore {
+contract IntervalTokenStoreTestInterface is EpochTokenLocker {
 
 
     function increaseStateIndex() public {
