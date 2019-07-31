@@ -9,7 +9,6 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract IntervalTokenStore {
     using SafeMath for uint;
 
-
     event Deposit(
         address user,
         address token,
@@ -105,20 +104,9 @@ contract IntervalTokenStore {
         }
     }
 
-    function addBalance(address user, address token, uint amount) internal {
-        updateDepositsBalance(msg.sender, token);
-        balanceStates[user][token].balance = balanceStates[user][token].balance.add(amount);
-    }
-
-    function substractBalance(address user, address token, uint amount) internal {
-        updateDepositsBalance(msg.sender, token);
-        balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
-    }
-
     /**
      * view functions
      */
-
     function getPendingDepositAmount(address user, address token) public view returns(uint) {
         return balanceStates[user][token].pendingDeposits.amount;
     }
@@ -139,11 +127,9 @@ contract IntervalTokenStore {
         return balanceStates[user][token].balance;
     }
 
-
     /**
      * internal functions
      */
-
     function addBalance(address user, address token, uint amount) internal {
         updateDepositsBalance(msg.sender, token);
         balanceStates[user][token].balance = balanceStates[user][token].balance.add(amount);
