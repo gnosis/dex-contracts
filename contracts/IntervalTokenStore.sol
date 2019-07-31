@@ -3,8 +3,12 @@ pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "openzeppelin-solidity/contracts/math/Math.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+
 
 contract IntervalTokenStore {
+    using SafeMath for uint;
+
 
     event Deposit(
         address user,
@@ -99,21 +103,36 @@ contract IntervalTokenStore {
         }
     }
 
+    function addBalance(address user, address token, uint amount) internal {
+        updateDepositsBalance(msg.sender, token);
+        balanceStates[user][token].balance += amount;
+    }
+
+    function substractBalance(address user, address token, uint amount) internal {
+        updateDepositsBalance(msg.sender, token);
+        balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
+    }
+
     /**
      * view functions
      */
+
     function getPendingDepositAmount(address user, address token) public view returns(uint){
         return balanceStates[user][token].pendingDeposits.amount;
     }
+
     function getPendingDepositBatchNumber(address user, address token) public view returns(uint){
         return balanceStates[user][token].pendingDeposits.stateIndex;
     }
+
     function getPendingWithdrawAmount(address user, address token) public view returns(uint){
         return balanceStates[user][token].pendingWithdraws.amount;
     }
+
     function getPendingWithdrawBatchNumber(address user, address token) public view returns(uint){
         return balanceStates[user][token].pendingWithdraws.stateIndex;
     }
+
     function getBalance(address user, address token) public view returns(uint){
         return balanceStates[user][token].balance;
     }

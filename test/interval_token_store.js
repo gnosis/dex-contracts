@@ -4,6 +4,7 @@ const MockContract = artifacts.require("MockContract")
 const ERC20Interface = artifacts.require("ERC20")
 
 
+
 const truffleAssert = require("truffle-assertions")
 
 
@@ -183,6 +184,33 @@ contract("IntervalTokenStore", async (accounts) => {
       await instance.withdrawRequest(ERC20.address, 150)
       await instance.increaseStateIndex()
       assert.equal(await instance.updateAndGetBalance.call(user_1, ERC20.address), 0)
+    })
+  })
+  describe("addBalance", () => {  
+    it("modifies the balance by adding", async () => {
+      const instance = await IntervalTokenStoreTestInterface.new()
+      const ERC20 = await MockContract.new()
+
+      await instance.addBalanceTest(user_1, ERC20.address, 100)
+
+      assert.equal(await instance.getBalance(user_1, ERC20.address), 100)
+    })
+  })
+  describe("substractBalance", () => {  
+    it("modifies the balance by substracting", async () => {
+      const instance = await IntervalTokenStoreTestInterface.new()
+      const ERC20 = await MockContract.new()
+
+      await instance.addBalanceTest(user_1, ERC20.address, 100)
+      await instance.substractBalanceTest(user_1, ERC20.address, 50)
+
+      assert.equal(await instance.getBalance(user_1, ERC20.address), 50)
+    })
+    it("throws in case of underflow", async () => {
+      const instance = await IntervalTokenStoreTestInterface.new()
+      const ERC20 = await MockContract.new()
+  
+      await truffleAssert.reverts(instance.substractBalanceTest(user_1, ERC20.address, 50))
     })
   })
 })
