@@ -40,15 +40,15 @@ contract("EpochTokenLocker", async (accounts) => {
       assert.equal(await epochTokenLocker.getPendingDepositBatchNumber(user_1, ERC20.address), 0)
     })
 
-    it("does not add two deposits, if they are not deposited during same stateIndex", async () => {
+    it("does not consolidates two deposits, if they are not deposited during same stateIndex", async () => {
       const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
-      await epochTokenLocker.deposit(ERC20.address, 100)
+      await epochTokenLocker.deposit(ERC20.address, 200)
   
-      assert.equal(await epochTokenLocker.getPendingDepositAmount(user_1, ERC20.address), 100)
+      assert.equal(await epochTokenLocker.getPendingDepositAmount(user_1, ERC20.address), 200)
       assert.equal(await epochTokenLocker.getPendingDepositBatchNumber(user_1, ERC20.address), 1)
     })
   })
@@ -184,6 +184,16 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.requestWithdraw(ERC20.address, 150)
       await epochTokenLocker.increaseStateIndex()
       assert.equal(await epochTokenLocker.updateAndGetBalance.call(user_1, ERC20.address), 0)
+    })
+    it("returns just the balance + pending deposit if withdraw was made in same stateIndex", async () => {
+      const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
+      const ERC20 = await MockContract.new()
+      await ERC20.givenAnyReturnBool(true)
+      
+      await epochTokenLocker.deposit(ERC20.address, 100)
+      await epochTokenLocker.increaseStateIndex()
+      await epochTokenLocker.requestWithdraw(ERC20.address, 150)
+      assert.equal(await epochTokenLocker.updateAndGetBalance.call(user_1, ERC20.address), 100)
     })
   })
   describe("addBalance", () => {  
