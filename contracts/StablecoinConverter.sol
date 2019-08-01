@@ -28,7 +28,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     // Bytes Id -> open order amount
     mapping(bytes32 => uint) public orders;
-    // test
+
     function placeOrder(
         address buyToken,
         address sellToken,
