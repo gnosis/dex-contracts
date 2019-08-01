@@ -43,10 +43,10 @@ contract EpochTokenLocker {
 
     struct PendingFlux {
         uint256 amount;
-        uint256 stateIndex;
+        uint32 stateIndex;
     }
 
-    uint256 public currentStateIndex = 0;
+    uint32 public currentStateIndex = 0;
 
     function updateAndGetBalance(address user, address token) public returns(uint256) {
         updateDepositsBalance(user, token);
