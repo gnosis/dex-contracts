@@ -102,7 +102,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       await instance.requestWithdraw(ERC20.address, 100)
       await instance.increaseStateIndex()
-      await instance.withdraw(ERC20.address, 100)
+      await instance.withdraw(ERC20.address)
 
       assert.equal(await instance.getPendingWithdrawAmount(user_1, ERC20.address), 0)
       assert.equal(await instance.getPendingWithdrawBatchNumber(user_1, ERC20.address), 0)
@@ -122,25 +122,25 @@ contract("EpochTokenLocker", async (accounts) => {
       assert.equal(await instance.getBalance(user_1, ERC20.address), 100)
   
       await instance.requestWithdraw(ERC20.address, 100)
-      await truffleAssert.reverts(instance.withdraw(ERC20.address, 100), "withdraw was not registered previously")
+      await truffleAssert.reverts(instance.withdraw(ERC20.address), "withdraw was not registered previously")
     })
-    it("processes a withdraw request and withdraws fails, as withdraw amount was not sufficient", async () => {
-      const instance = await IntervalTokenStoreTestInterface.new()
-      const ERC20 = await MockContract.new()
-      await ERC20.givenAnyReturnBool(true)
-    
-      await instance.requestWithdraw(ERC20.address, 10)
-      await instance.increaseStateIndex()
-      await truffleAssert.reverts(instance.withdraw(ERC20.address, 100), "registered withdraw-amount was not sufficient")
-    })
-    it("processes a withdraw request and withdraws fails, as balance is not sufficient", async () => {
+    it("processes a withdraw request and withdraws only available amounts", async () => {
       const instance = await IntervalTokenStoreTestInterface.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
       
+
+      await instance.deposit(ERC20.address, 50)
+      await instance.increaseStateIndex()
+      await instance.updateDepositsBalance(user_1, ERC20.address)
+
       await instance.requestWithdraw(ERC20.address, 100)
       await instance.increaseStateIndex()
-      await truffleAssert.reverts(instance.withdraw(ERC20.address, 100), "balances not sufficient")
+      await instance.withdraw(ERC20.address)
+
+      const token = await ERC20Interface.new()
+      const depositTransfer = token.contract.methods.transfer(accounts[0], 50).encodeABI()
+      assert.equal(await ERC20.invocationCountForCalldata.call(depositTransfer), 1)
     })
   })
   describe("updateAndGetBalance", () => {  

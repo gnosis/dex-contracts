@@ -63,7 +63,8 @@ contract EpochTokenLocker {
             ERC20(token).transferFrom(msg.sender, address(this), amount),
             "Tokentransfer for deposit was not successful"
         );
-        balanceStates[msg.sender][token].pendingDeposits.amount = balanceStates[msg.sender][token].pendingDeposits.amount.add(amount);
+        balanceStates[msg.sender][token].pendingDeposits.amount = balanceStates[msg.sender][token].pendingDeposits.amount
+            .add(amount);
         balanceStates[msg.sender][token].pendingDeposits.stateIndex = currentStateIndex;
         emit Deposit(msg.sender, token, amount, currentStateIndex);
     }
@@ -73,22 +74,17 @@ contract EpochTokenLocker {
         emit withdrawRequest(msg.sender, token, amount, currentStateIndex);
     }
 
-    function withdraw(address token, uint amount) public {
+    function withdraw(address token) public {
         updateDepositsBalance(msg.sender, token); // withdrawn amount might just be deposited before
-        
+
         require(
             balanceStates[msg.sender][token].pendingWithdraws.stateIndex < currentStateIndex,
             "withdraw was not registered previously"
         );
 
-        require(
-            balanceStates[msg.sender][token].pendingWithdraws.amount >= amount,
-            "registered withdraw-amount was not sufficient"
-        );
-
-        require(
-            balanceStates[msg.sender][token].balance >= amount,
-            "balances not sufficient"
+        uint amount = Math.min(
+            balanceStates[msg.sender][token].balance,
+            balanceStates[msg.sender][token].pendingWithdraws.amount
         );
 
         balanceStates[msg.sender][token].balance = balanceStates[msg.sender][token].balance.sub(amount);
