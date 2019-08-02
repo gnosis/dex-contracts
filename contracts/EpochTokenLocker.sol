@@ -47,15 +47,6 @@ contract EpochTokenLocker {
 
     uint256 public currentStateIndex = 0;
 
-    function updateBalance(address user, address token) public returns(uint256) {
-        updateDepositsBalance(user, token);
-        uint balance = balanceStates[user][token].balance;
-        if (balanceStates[user][token].pendingWithdraws.stateIndex < currentStateIndex) {
-            balance -= Math.min(balanceStates[user][token].pendingWithdraws.amount, balance);
-        }
-        return balance;
-    }
-
     function deposit(address token, uint amount) public {
         updateDepositsBalance(msg.sender, token);
         require(
