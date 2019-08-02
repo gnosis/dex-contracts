@@ -125,10 +125,7 @@ contract EpochTokenLocker {
         return balanceStates[user][token].pendingWithdraws.stateIndex;
     }
 
-    function getAvailableBalance(address user, address token) public view returns(uint) {
-        return balanceStates[user][token].balance;
-    }
-    function getTotalBalance(address user, address token) public returns(uint256) {
+    function getBalance(address user, address token) public view returns(uint256) {
         uint balance = balanceStates[user][token].balance;
         if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
             balance = balance.add(balanceStates[user][token].pendingDeposits.amount);
