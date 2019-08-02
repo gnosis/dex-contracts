@@ -13,6 +13,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract EpochTokenLocker {
     using SafeMath for uint;
 
+
     event Deposit(
         address user,
         address token,
@@ -49,7 +50,7 @@ contract EpochTokenLocker {
 
     uint256 public currentStateIndex = 0;
 
-    function updateAndGetBalance(address user, address token) public returns(uint256) {
+    function updateBalance(address user, address token) public returns(uint256) {
         updateDepositsBalance(user, token);
         uint balance = balanceStates[user][token].balance;
         if (balanceStates[user][token].pendingWithdraws.stateIndex < currentStateIndex) {
@@ -124,8 +125,18 @@ contract EpochTokenLocker {
         return balanceStates[user][token].pendingWithdraws.stateIndex;
     }
 
-    function getBalance(address user, address token) public view returns(uint) {
+    function getAvailableBalance(address user, address token) public view returns(uint) {
         return balanceStates[user][token].balance;
+    }
+    function getTotalBalance(address user, address token) public returns(uint256) {
+        uint balance = balanceStates[user][token].balance;
+        if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
+            balance = balance.add(balanceStates[user][token].pendingDeposits.amount);
+        }
+        if (balanceStates[user][token].pendingWithdraws.stateIndex < currentStateIndex) {
+            balance -= Math.min(balanceStates[user][token].pendingWithdraws.amount, balance);
+        }
+        return balance;
     }
 
     /**

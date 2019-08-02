@@ -3,8 +3,6 @@ const IntervalTokenStoreTestInterface = artifacts.require("IntervalTokenStoreTes
 const MockContract = artifacts.require("MockContract")
 const ERC20Interface = artifacts.require("ERC20")
 
-
-
 const truffleAssert = require("truffle-assertions")
 
 
@@ -73,7 +71,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
       await epochTokenLocker.updateDepositsBalance(user_1, ERC20.address)
-      assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 100)
+      assert.equal(await epochTokenLocker.getAvailableBalance(user_1, ERC20.address), 100)
       assert.equal(await epochTokenLocker.getPendingDepositAmount(user_1, ERC20.address), 0)
       assert.equal(await epochTokenLocker.getPendingDepositBatchNumber(user_1, ERC20.address), 0)
     })
@@ -98,7 +96,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
       await epochTokenLocker.updateDepositsBalance(user_1, ERC20.address)
-      assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 100)
+      assert.equal(await epochTokenLocker.getAvailableBalance(user_1, ERC20.address), 100)
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
@@ -119,7 +117,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
       await epochTokenLocker.updateDepositsBalance(user_1, ERC20.address)
-      assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 100)
+      assert.equal(await epochTokenLocker.getAvailableBalance(user_1, ERC20.address), 100)
   
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
       await truffleAssert.reverts(epochTokenLocker.withdraw(ERC20.address), "withdraw was not registered previously")
@@ -143,7 +141,7 @@ contract("EpochTokenLocker", async (accounts) => {
       assert.equal(await ERC20.invocationCountForCalldata.call(depositTransfer), 1)
     })
   })
-  describe("updateAndGetBalance", () => {  
+  describe("updateBalance", () => {  
     it("returns just the balance, if there are no pending deposits and withdraws", async () => {
       const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
       const ERC20 = await MockContract.new()
@@ -153,8 +151,8 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.increaseStateIndex()
       await epochTokenLocker.updateDepositsBalance(user_1, ERC20.address)
 
-      assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 100)
-      assert.equal(await epochTokenLocker.updateAndGetBalance.call(user_1, ERC20.address), 100)
+      assert.equal(await epochTokenLocker.getAvailableBalance(user_1, ERC20.address), 100)
+      assert.equal(await epochTokenLocker.updateBalance.call(user_1, ERC20.address), 100)
     })
     it("returns just the balance + pending deposit, if there are no withdraws", async () => {
       const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
@@ -163,7 +161,7 @@ contract("EpochTokenLocker", async (accounts) => {
       
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
-      assert.equal(await epochTokenLocker.updateAndGetBalance.call(user_1, ERC20.address), 100)
+      assert.equal(await epochTokenLocker.updateBalance.call(user_1, ERC20.address), 100)
     })
     it("returns just the balance + pending deposit - depending withdraws", async () => {
       const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
@@ -173,7 +171,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.requestWithdraw(ERC20.address, 50)
       await epochTokenLocker.increaseStateIndex()
-      assert.equal(await epochTokenLocker.updateAndGetBalance.call(user_1, ERC20.address), 50)
+      assert.equal(await epochTokenLocker.updateBalance.call(user_1, ERC20.address), 50)
     })
     it("returns just the balance + pending deposit - depending withdraws and protects overflows", async () => {
       const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
@@ -183,7 +181,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.requestWithdraw(ERC20.address, 150)
       await epochTokenLocker.increaseStateIndex()
-      assert.equal(await epochTokenLocker.updateAndGetBalance.call(user_1, ERC20.address), 0)
+      assert.equal(await epochTokenLocker.updateBalance.call(user_1, ERC20.address), 0)
     })
     it("returns just the balance + pending deposit if withdraw was made in same stateIndex", async () => {
       const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
@@ -193,7 +191,60 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
       await epochTokenLocker.requestWithdraw(ERC20.address, 150)
-      assert.equal(await epochTokenLocker.updateAndGetBalance.call(user_1, ERC20.address), 100)
+      assert.equal(await epochTokenLocker.updateBalance.call(user_1, ERC20.address), 100)
+    })
+  })
+  describe("getTotalBalance", () => {  
+    it("returns just the balance, if there are no pending deposits and withdraws", async () => {
+      const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
+      const ERC20 = await MockContract.new()
+      await ERC20.givenAnyReturnBool(true)
+    
+      await epochTokenLocker.deposit(ERC20.address, 100)
+      await epochTokenLocker.increaseStateIndex()
+      await epochTokenLocker.updateDepositsBalance(user_1, ERC20.address)
+
+      assert.equal( (await epochTokenLocker.getTotalBalance.call(user_1, ERC20.address)).toNumber(), 100)
+      assert.equal( (await epochTokenLocker.updateBalance.call(user_1, ERC20.address)).toNumber(), 100)
+    })
+    it("returns just the balance + pending deposit, if there are no withdraws", async () => {
+      const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
+      const ERC20 = await MockContract.new()
+      await ERC20.givenAnyReturnBool(true)
+      
+      await epochTokenLocker.deposit(ERC20.address, 100)
+      await epochTokenLocker.increaseStateIndex()
+      assert.equal(await epochTokenLocker.updateBalance.call(user_1, ERC20.address), 100)
+    })
+    it("returns just the balance + pending deposit - depending withdraws", async () => {
+      const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
+      const ERC20 = await MockContract.new()
+      await ERC20.givenAnyReturnBool(true)
+      
+      await epochTokenLocker.deposit(ERC20.address, 100)
+      await epochTokenLocker.requestWithdraw(ERC20.address, 50)
+      await epochTokenLocker.increaseStateIndex()
+      assert.equal(await epochTokenLocker.getTotalBalance.call(user_1, ERC20.address), 50)
+    })
+    it("returns just the balance + pending deposit - depending withdraws and protects overflows", async () => {
+      const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
+      const ERC20 = await MockContract.new()
+      await ERC20.givenAnyReturnBool(true)
+      
+      await epochTokenLocker.deposit(ERC20.address, 100)
+      await epochTokenLocker.requestWithdraw(ERC20.address, 150)
+      await epochTokenLocker.increaseStateIndex()
+      assert.equal(await epochTokenLocker.getTotalBalance.call(user_1, ERC20.address), 0)
+    })
+    it("returns just the balance + pending deposit if withdraw was made in same stateIndex", async () => {
+      const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
+      const ERC20 = await MockContract.new()
+      await ERC20.givenAnyReturnBool(true)
+      
+      await epochTokenLocker.deposit(ERC20.address, 100)
+      await epochTokenLocker.increaseStateIndex()
+      await epochTokenLocker.requestWithdraw(ERC20.address, 150)
+      assert.equal(await epochTokenLocker.getTotalBalance.call(user_1, ERC20.address), 100)
     })
   })
   describe("addBalance", () => {  
@@ -203,7 +254,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       await epochTokenLocker.addBalanceTest(user_1, ERC20.address, 100)
 
-      assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 100)
+      assert.equal(await epochTokenLocker.getAvailableBalance(user_1, ERC20.address), 100)
     })
   })
   describe("substractBalance", () => {  
@@ -214,7 +265,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.addBalanceTest(user_1, ERC20.address, 100)
       await epochTokenLocker.substractBalanceTest(user_1, ERC20.address, 50)
 
-      assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 50)
+      assert.equal(await epochTokenLocker.getAvailableBalance(user_1, ERC20.address), 50)
     })
     it("throws in case of underflow", async () => {
       const epochTokenLocker = await IntervalTokenStoreTestInterface.new()
