@@ -8,11 +8,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 // EpochTokenLocker saveguards tokens for applications with constant-balances during discrete epochs
 // It allows to deposit token which become credited in the next epoch and allows to request a token-withdraw
 // which becomes claimable after the current epoch expired.
-
-
 contract EpochTokenLocker {
     using SafeMath for uint;
-
 
     event Deposit(
         address user,
