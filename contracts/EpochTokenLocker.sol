@@ -9,6 +9,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 // It allows to deposit token which become credited in the next epoch and allows to request a token-withdraw
 // which becomes claimable after the current epoch expired.
 
+
 contract EpochTokenLocker {
     using SafeMath for uint;
 
@@ -19,7 +20,7 @@ contract EpochTokenLocker {
         uint stateIndex
     );
 
-    event withdrawRequest(
+    event WithdrawRequest(
         address user,
         address token,
         uint amount,
@@ -71,7 +72,7 @@ contract EpochTokenLocker {
 
     function requestWithdraw(address token, uint amount) public {
         balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: currentStateIndex });
-        emit withdrawRequest(msg.sender, token, amount, currentStateIndex);
+        emit WithdrawRequest(msg.sender, token, amount, currentStateIndex);
     }
 
     function withdraw(address token) public {
