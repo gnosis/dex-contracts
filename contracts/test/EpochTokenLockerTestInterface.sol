@@ -19,8 +19,4 @@ contract EpochTokenLockerTestInterface is EpochTokenLocker {
     function substractBalanceTest(address user, address token, uint amount) public {
         super.substractBalance(user, token, amount);
     }
-
-    function updateDepositsBalanceTest(address user, address token) public {
-        super.updateDepositsBalance(user, token);
-    }
 }

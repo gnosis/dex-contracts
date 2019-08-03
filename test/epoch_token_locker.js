@@ -50,32 +50,6 @@ contract("EpochTokenLocker", async (accounts) => {
       assert.equal(await epochTokenLocker.getPendingDepositBatchNumber(user_1, ERC20.address), 1)
     })
   })
-
-  describe("updateDepositsBalance", () => {
-    it("processes a deposit and will not process the pendingDeposit with same stateIndex", async () => {
-      const epochTokenLocker = await EpochTokenLockerTestInterface.new()
-      const ERC20 = await MockContract.new()
-      await ERC20.givenAnyReturnBool(true)
-
-      await epochTokenLocker.deposit(ERC20.address, 100)
-      await epochTokenLocker.updateDepositsBalanceTest(user_1, ERC20.address)
-      assert.equal(await epochTokenLocker.getPendingDepositAmount(user_1, ERC20.address), 100)
-      assert.equal(await epochTokenLocker.getPendingDepositBatchNumber(user_1, ERC20.address), 0)
-    })
-  
-    it("processes a deposit and will process the pendingDeposit with higher stateIndex", async () => {
-      const epochTokenLocker = await EpochTokenLockerTestInterface.new()
-      const ERC20 = await MockContract.new()
-      await ERC20.givenAnyReturnBool(true)
-  
-      await epochTokenLocker.deposit(ERC20.address, 100)
-      await epochTokenLocker.increaseStateIndex()
-      await epochTokenLocker.updateDepositsBalanceTest(user_1, ERC20.address)
-      assert.equal(await epochTokenLocker.getBalance.call(user_1, ERC20.address), 100)
-      assert.equal(await epochTokenLocker.getPendingDepositAmount(user_1, ERC20.address), 0)
-      assert.equal(await epochTokenLocker.getPendingDepositBatchNumber(user_1, ERC20.address), 0)
-    })
-  })
   describe("requestWithdraw", () => {  
     it("processes a withdraw request", async () => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
@@ -95,7 +69,6 @@ contract("EpochTokenLocker", async (accounts) => {
     
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
-      await epochTokenLocker.updateDepositsBalanceTest(user_1, ERC20.address)
       assert.equal(await epochTokenLocker.getBalance.call(user_1, ERC20.address), 100)
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
@@ -116,7 +89,6 @@ contract("EpochTokenLocker", async (accounts) => {
       
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
-      await epochTokenLocker.updateDepositsBalanceTest(user_1, ERC20.address)
       assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 100)
   
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
@@ -130,7 +102,6 @@ contract("EpochTokenLocker", async (accounts) => {
 
       await epochTokenLocker.deposit(ERC20.address, 50)
       await epochTokenLocker.increaseStateIndex()
-      await epochTokenLocker.updateDepositsBalanceTest(user_1, ERC20.address)
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
@@ -149,7 +120,7 @@ contract("EpochTokenLocker", async (accounts) => {
     
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
-      await epochTokenLocker.updateDepositsBalanceTest(user_1, ERC20.address)
+      //await epochTokenLocker.updateDepositsBalanceTest(user_1, ERC20.address)
 
       assert.equal( (await epochTokenLocker.getBalance.call(user_1, ERC20.address)).toNumber(), 100)
     })
