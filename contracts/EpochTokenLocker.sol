@@ -8,7 +8,6 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 // EpochTokenLocker saveguards tokens for applications with constant-balances during discrete epochs
 // It allows to deposit token which become credited in the next epoch and allows to request a token-withdraw
 // which becomes claimable after the current epoch expired.
-
 contract EpochTokenLocker {
     using SafeMath for uint;
 
@@ -19,7 +18,7 @@ contract EpochTokenLocker {
         uint stateIndex
     );
 
-    event withdrawRequest(
+    event WithdrawRequest(
         address user,
         address token,
         uint amount,
@@ -48,15 +47,6 @@ contract EpochTokenLocker {
 
     uint32 public currentStateIndex = 0;
 
-    function updateAndGetBalance(address user, address token) public returns(uint256) {
-        updateDepositsBalance(user, token);
-        uint balance = balanceStates[user][token].balance;
-        if (balanceStates[user][token].pendingWithdraws.stateIndex < currentStateIndex) {
-            balance -= Math.min(balanceStates[user][token].pendingWithdraws.amount, balance);
-        }
-        return balance;
-    }
-
     function deposit(address token, uint amount) public {
         updateDepositsBalance(msg.sender, token);
         require(
@@ -71,7 +61,7 @@ contract EpochTokenLocker {
 
     function requestWithdraw(address token, uint amount) public {
         balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: currentStateIndex });
-        emit withdrawRequest(msg.sender, token, amount, currentStateIndex);
+        emit WithdrawRequest(msg.sender, token, amount, currentStateIndex);
     }
 
     function withdraw(address token) public {
@@ -94,16 +84,6 @@ contract EpochTokenLocker {
         emit Withdraw(msg.sender, token, amount);
     }
 
-    function updateDepositsBalance(address user, address token) public {
-        if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
-            balanceStates[user][token].balance = balanceStates[user][token].balance.add(
-                balanceStates[user][token].pendingDeposits.amount
-            );
-
-            delete balanceStates[user][token].pendingDeposits;
-        }
-    }
-
     /**
      * view functions
      */
@@ -123,8 +103,15 @@ contract EpochTokenLocker {
         return balanceStates[user][token].pendingWithdraws.stateIndex;
     }
 
-    function getBalance(address user, address token) public view returns(uint) {
-        return balanceStates[user][token].balance;
+    function getBalance(address user, address token) public view returns(uint256) {
+        uint balance = balanceStates[user][token].balance;
+        if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
+            balance = balance.add(balanceStates[user][token].pendingDeposits.amount);
+        }
+        if (balanceStates[user][token].pendingWithdraws.stateIndex < currentStateIndex) {
+            balance -= Math.min(balanceStates[user][token].pendingWithdraws.amount, balance);
+        }
+        return balance;
     }
 
     /**
@@ -138,5 +125,15 @@ contract EpochTokenLocker {
     function substractBalance(address user, address token, uint amount) internal {
         updateDepositsBalance(msg.sender, token);
         balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
+    }
+
+    function updateDepositsBalance(address user, address token) private {
+        if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
+            balanceStates[user][token].balance = balanceStates[user][token].balance.add(
+                balanceStates[user][token].pendingDeposits.amount
+            );
+
+            delete balanceStates[user][token].pendingDeposits;
+        }
     }
 }
