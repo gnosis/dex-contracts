@@ -84,16 +84,6 @@ contract EpochTokenLocker {
         emit Withdraw(msg.sender, token, amount);
     }
 
-    function updateDepositsBalance(address user, address token) public {
-        if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
-            balanceStates[user][token].balance = balanceStates[user][token].balance.add(
-                balanceStates[user][token].pendingDeposits.amount
-            );
-
-            delete balanceStates[user][token].pendingDeposits;
-        }
-    }
-
     /**
      * view functions
      */
@@ -135,5 +125,15 @@ contract EpochTokenLocker {
     function substractBalance(address user, address token, uint amount) internal {
         updateDepositsBalance(msg.sender, token);
         balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
+    }
+
+    function updateDepositsBalance(address user, address token) private {
+        if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
+            balanceStates[user][token].balance = balanceStates[user][token].balance.add(
+                balanceStates[user][token].pendingDeposits.amount
+            );
+
+            delete balanceStates[user][token].pendingDeposits;
+        }
     }
 }
