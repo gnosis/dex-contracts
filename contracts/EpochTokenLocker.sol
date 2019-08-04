@@ -48,7 +48,6 @@ contract EpochTokenLocker {
     uint32 private currentStateIndex = 0;
 
     function deposit(address token, uint amount) public {
-        updateStateIndex();
         updateDepositsBalance(msg.sender, token);
         require(
             ERC20(token).transferFrom(msg.sender, address(this), amount),

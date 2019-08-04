@@ -6,6 +6,7 @@ const ERC20Interface = artifacts.require("ERC20")
 const truffleAssert = require("truffle-assertions")
 const { waitForNSeconds } = require("./utilities.js")
 
+
 contract("EpochTokenLocker", async (accounts) => {
   const [user_1] = accounts
 
@@ -19,6 +20,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.deposit(ERC20.address, 100)
       assert.equal(await epochTokenLocker.getPendingDepositAmount(user_1, ERC20.address), 100)
       assert.equal((await epochTokenLocker.getPendingDepositBatchNumber.call(user_1, ERC20.address)).toNumber(), currentStateIndex.toNumber())
+
     })
   
     it("throws, if transferFrom fails", async () => {
@@ -59,7 +61,6 @@ contract("EpochTokenLocker", async (accounts) => {
       await ERC20.givenAnyReturnBool(true)
       const currentStateIndex = await epochTokenLocker.getCurrentStateIndex.call()
 
-  
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
       assert.equal(await epochTokenLocker.getPendingWithdrawAmount(user_1, ERC20.address), 100)
       assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex.toNumber())
