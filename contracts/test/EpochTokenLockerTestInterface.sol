@@ -8,10 +8,6 @@ import "../EpochTokenLocker.sol";
 contract EpochTokenLockerTestInterface is EpochTokenLocker {
 
 
-    function increaseStateIndex() public {
-        currentStateIndex++;
-    }
-
     function addBalanceTest(address user, address token, uint amount) public {
         super.addBalance(user, token, amount);
     }

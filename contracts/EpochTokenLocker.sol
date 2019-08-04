@@ -45,9 +45,10 @@ contract EpochTokenLocker {
         uint32 stateIndex;
     }
 
-    uint32 public currentStateIndex = 0;
+    uint32 private currentStateIndex = 0;
 
     function deposit(address token, uint amount) public {
+        updateStateIndex();
         updateDepositsBalance(msg.sender, token);
         require(
             ERC20(token).transferFrom(msg.sender, address(this), amount),
@@ -60,6 +61,7 @@ contract EpochTokenLocker {
     }
 
     function requestWithdraw(address token, uint amount) public {
+        updateStateIndex();
         balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: currentStateIndex });
         emit WithdrawRequest(msg.sender, token, amount, currentStateIndex);
     }
@@ -103,12 +105,16 @@ contract EpochTokenLocker {
         return balanceStates[user][token].pendingWithdraws.stateIndex;
     }
 
+    function getCurrentStateIndex() public view returns(uint32) {
+        return uint32(now / 300);
+    }
+
     function getBalance(address user, address token) public view returns(uint256) {
         uint balance = balanceStates[user][token].balance;
-        if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
+        if (balanceStates[user][token].pendingDeposits.stateIndex < getCurrentStateIndex()) {
             balance = balance.add(balanceStates[user][token].pendingDeposits.amount);
         }
-        if (balanceStates[user][token].pendingWithdraws.stateIndex < currentStateIndex) {
+        if (balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentStateIndex()) {
             balance -= Math.min(balanceStates[user][token].pendingWithdraws.amount, balance);
         }
         return balance;
@@ -128,6 +134,7 @@ contract EpochTokenLocker {
     }
 
     function updateDepositsBalance(address user, address token) private {
+        updateStateIndex();
         if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
             balanceStates[user][token].balance = balanceStates[user][token].balance.add(
                 balanceStates[user][token].pendingDeposits.amount
@@ -135,5 +142,9 @@ contract EpochTokenLocker {
 
             delete balanceStates[user][token].pendingDeposits;
         }
+    }
+
+    function updateStateIndex() private {
+        currentStateIndex = getCurrentStateIndex();
     }
 }
