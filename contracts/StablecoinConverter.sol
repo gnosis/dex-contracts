@@ -16,7 +16,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16 sellToken,
         bool sellOrderFlag,
         uint32 validFrom,
-        uint32 validTill,
+        uint32 validUntil,
         uint256 buyAmount,
         uint256 sellAmount
     );
@@ -26,23 +26,27 @@ contract StablecoinConverter is EpochTokenLocker {
         uint id
     );
 
+    //outstanding volume of an order is encoded as buyAmount or sellAmount depending on sellOrderFlag
     struct Order {
         uint16 buyToken;
         uint16 sellToken;
         uint32 validFrom;  // order is valid from validFrom inclusively
-        uint32 validTill;  // order is valid till validTill inclusively
+        uint32 validUntil;  // order is valid till validUntil inclusively
         bool sellOrderFlag;
         uint128 buyAmount;
         uint128 sellAmount;
-                            // outstanding volume is encoded as buyAmount or sellAmount depending on sellOrderFlag
     }
 
     // User-> Order
     mapping(address => Order[]) public orders;
 
     IdToAddressBiMap.Data private registeredTokens;
-    uint constant public MAX_TOKENS = 2**16 - 1; //65536;65535
+    uint public MAX_TOKENS;
     uint16 public numTokens = 0;
+
+    constructor(uint maxTokens) public {
+        MAX_TOKENS = maxTokens;
+    }
 
     function addToken(address _tokenAddress) public {
         require(numTokens < MAX_TOKENS, "Max tokens reached");
@@ -57,7 +61,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16 buyToken,
         uint16 sellToken,
         bool sellOrderFlag,
-        uint32 validTill,
+        uint32 validUntil,
         uint128 buyAmount,
         uint128 sellAmount
     ) public returns (uint) {
@@ -65,7 +69,7 @@ contract StablecoinConverter is EpochTokenLocker {
             buyToken: buyToken,
             sellToken: sellToken,
             validFrom: getCurrentStateIndex() + 1,
-            validTill: validTill,
+            validUntil: validUntil,
             sellOrderFlag: sellOrderFlag,
             buyAmount: buyAmount,
             sellAmount: sellAmount
@@ -76,7 +80,7 @@ contract StablecoinConverter is EpochTokenLocker {
             sellToken,
             sellOrderFlag,
             getCurrentStateIndex() + 1,
-            validTill,
+            validUntil,
             buyAmount,
             sellAmount
         );
@@ -86,20 +90,20 @@ contract StablecoinConverter is EpochTokenLocker {
     function cancelOrder(
         uint id
     ) public {
-        orders[msg.sender][id].validTill = getCurrentStateIndex();
+        orders[msg.sender][id].validUntil = getCurrentStateIndex();
         emit OrderCancelation(msg.sender, id);
     }
 
-    function deleteOrder(
+    function freeStorageOfOrder(
         uint id
     ) public {
-        require(orders[msg.sender][id].validTill < getCurrentStateIndex(), "Order is still valid");
+        require(orders[msg.sender][id].validUntil < getCurrentStateIndex(), "Order is still valid");
         orders[msg.sender][id] = Order({
             buyToken: 0,
             sellToken: 0,
             sellOrderFlag: false,
             validFrom: 0,
-            validTill: 0,
+            validUntil: 0,
             buyAmount: 0,
             sellAmount: 0
         });
