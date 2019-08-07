@@ -5,12 +5,8 @@ import "@gnosis.pm/mock-contract/contracts/MockContract.sol";
 import "../EpochTokenLocker.sol";
 
 
-contract IntervalTokenStoreTestInterface is EpochTokenLocker {
+contract EpochTokenLockerTestInterface is EpochTokenLocker {
 
-
-    function increaseStateIndex() public {
-        currentStateIndex++;
-    }
 
     function addBalanceTest(address user, address token, uint amount) public {
         super.addBalance(user, token, amount);

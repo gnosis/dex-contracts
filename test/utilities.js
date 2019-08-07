@@ -167,6 +167,12 @@ const generateMerkleTree = memoize(_generateMerkleTree, {
   strategy: memoize.strategies.variadic
 })
 
+const sendTxAndGetReturnValue = async function(method, ...args) {
+  const result = await method.call(...args)
+  await method(...args)
+  return result
+}
+
 /**
  * Partitions arrary into chunks of size spacing
  * @param input: Array
@@ -193,5 +199,6 @@ module.exports = {
   countDuplicates,
   generateMerkleTree,
   partitionArray,
-  setupMultiCaller
+  setupMultiCaller,
+  sendTxAndGetReturnValue
 }

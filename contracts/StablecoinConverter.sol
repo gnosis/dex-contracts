@@ -3,301 +3,253 @@ pragma solidity ^0.5.0;
 import "./EpochTokenLocker.sol";
 import "./libraries/IdToAddressBiMap.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./libraries/IdToAddressBiMap.sol";
 
 
 contract StablecoinConverter is EpochTokenLocker {
     using SafeMath for uint;
+    using SafeMath for uint128;
     using BytesLib for bytes32;
 
     uint constant PRICE_NORM = 10000000000;
 
     event OrderPlacement(
         address owner,
-        address buyToken,
-        address sellToken,
+        uint16 buyToken,
+        uint16 sellToken,
+        bool sellOrderFlag,
         uint32 validFrom,
-        uint32 validTill,
+        uint32 validUntil,
         uint256 buyAmount,
         uint256 sellAmount
     );
 
     event OrderCancelation(
-        bytes32 id,
-        bytes32 newId,
-        uint32 newValidTill
+        address owner,
+        uint id
     );
 
-    // Bytes Id -> open order amount
-    mapping(bytes32 => uint) public orders;
-    uint public startTime;
+    //outstanding volume of an order is encoded as buyAmount or sellAmount depending on sellOrderFlag
+    struct Order {
+        uint16 buyToken;
+        uint16 sellToken;
+        uint32 validFrom;  // order is valid from validFrom inclusively
+        uint32 validUntil;  // order is valid till validUntil inclusively
+        bool sellOrderFlag;
+        uint128 buyAmount;
+        uint128 sellAmount;
+    }
 
-    constructor() public {
-        startTime = now;
+    // User-> Order
+    mapping(address => Order[]) public orders;
+
+    IdToAddressBiMap.Data private registeredTokens;
+    uint public MAX_TOKENS;
+    uint16 public numTokens = 0;
+
+    constructor(uint maxTokens) public {
+        MAX_TOKENS = maxTokens;
+    }
+
+    function addToken(address _tokenAddress) public {
+        require(numTokens < MAX_TOKENS, "Max tokens reached");
+        require(
+            IdToAddressBiMap.insert(registeredTokens, numTokens, _tokenAddress),
+            "Token already registered"
+        );
+        numTokens++;
     }
 
     function placeOrder(
-        address buyToken,
-        address sellToken,
+        uint16 buyToken,
+        uint16 sellToken,
         bool sellOrderFlag,
-        uint32 validTill,
-        uint256 buyAmount,
-        uint256 sellAmount
-    ) public returns (bytes32) {
-        bytes32 id = getOrderId(
-            msg.sender,
-            buyToken,
-            sellToken,
-            currentStateIndex + 1, // equals validFrom
-            validTill,
-            buyAmount,
-            sellAmount
-        );
-        orders[id] = sellAmount;
-
+        uint32 validUntil,
+        uint128 buyAmount,
+        uint128 sellAmount
+    ) public returns (uint) {
+        orders[msg.sender].push(Order({
+            buyToken: buyToken,
+            sellToken: sellToken,
+            validFrom: getCurrentStateIndex(),
+            validUntil: validUntil,
+            sellOrderFlag: sellOrderFlag,
+            buyAmount: buyAmount,
+            sellAmount: sellAmount
+        }));
         emit OrderPlacement(
             msg.sender,
             buyToken,
             sellToken,
-            currentStateIndex + 1,
-            validTill,
+            sellOrderFlag,
+            getCurrentStateIndex(),
+            validUntil,
             buyAmount,
             sellAmount
         );
-        return id;
+        return orders[msg.sender].length - 1;
     }
 
     function cancelOrder(
-        address buyToken,
-        address sellToken,
-        uint32 validFrom,
-        uint32 validTill,
-        uint256 buyAmount,
-        uint256 sellAmount
-    ) public returns (bytes32) {
-        bytes32 id = getOrderId(
-            msg.sender,
-            buyToken,
-            sellToken,
-            validFrom,
-            validTill,
-            buyAmount,
-            sellAmount
-        );
-        bytes32 newId = getOrderId(
-            msg.sender,
-            buyToken,
-            sellToken,
-            validFrom,
-            currentStateIndex,
-            buyAmount,
-            sellAmount
-        );
-        orders[newId] = orders[id];
-        orders[id] = 0;
-
-        emit OrderCancelation(
-            id,
-            newId,
-            currentStateIndex
-        );
-        return newId;
-    }
-
-    function deleteOrder(
-        address buyToken,
-        address sellToken,
-        uint32 validFrom,
-        uint32 validTill,
-        uint256 buyAmount,
-        uint256 sellAmount
+        uint id
     ) public {
-        bytes32 id = getOrderId(
-            msg.sender,
-            buyToken,
-            sellToken,
-            validFrom,
-            validTill,
-            buyAmount,
-            sellAmount
-            );
-        require(validTill < currentStateIndex, "Order is still valid");
-        orders[id] = 0;
+        orders[msg.sender][id].validUntil = getCurrentStateIndex() - 1;
+        emit OrderCancelation(msg.sender, id);
     }
 
-    function getOrderId(
-        address owner,
-        address buyToken,
-        address sellToken,
-        uint32 validFrom,
-        uint32 validTill,
-        uint256 buyAmount,
-        uint256 sellAmount
-    ) public pure returns (bytes32) {
-        return keccak256(
-            abi.encode(
-                owner,
-                buyToken,
-                sellToken,
-                validFrom,
-                validTill,
-                buyAmount,
-                sellAmount
-            )
-        );
+    function freeStorageOfOrder(
+        uint id
+    ) public {
+        require(orders[msg.sender][id].validUntil + 1 < getCurrentStateIndex(), "Order is still valid");
+        orders[msg.sender][id] = Order({
+            buyToken: 0,
+            sellToken: 0,
+            sellOrderFlag: false,
+            validFrom: 0,
+            validUntil: 0,
+            buyAmount: 0,
+            sellAmount: 0
+        });
     }
 
-    function updateStateIndex() public {
-        currentStateIndex = uint32((now - startTime)/300);
+    function tokenAddressToIdMap(address addr) public view returns (uint16) {
+        return IdToAddressBiMap.getId(registeredTokens, addr);
     }
 
-    mapping (uint => uint) public bestTradersUtility;
-    mapping( uint => SolutionDelta[]) public solutionDelta;
-    struct SolutionDelta {
-        bytes32 orderId;
-        uint volume;
+    function tokenIdToAddressMap(uint16 id) public view returns (address) {
+        return IdToAddressBiMap.getAddressAt(registeredTokens, id);
+    }
+
+    uint public previousSolutionBatchId;
+    TradeData[] public previousSolutionTrades;
+    uint[] public previousSolutionPrices;
+
+    struct TradeData {
         address owner;
-        address tokenBought;
-        uint buyVolume;
-        address tokenSold;
-        uint sellVolume;
+        uint volume;
+        uint16 orderId;
+        uint16 sellTokenPriceIndex; // index of sellToken in price array
+        uint16 buyTokenPriceIndex; // index of buyToken in price array
     }
+
     function submitSolution(
-        uint16 batchIndex,
+        uint32 batchIndex,
+        address[] memory owner,  //tradeData is submitted as arrays
+        uint16[] memory orderId,
+        uint[] memory volume,
+        uint16[] memory sellTokenPriceIndex,
+        uint16[] memory buyTokenPriceIndex,
         uint[] memory prices,
-        address[] memory tokenForPrice,
-        address[] memory owner,
-        uint8[] memory tokenIndex,
-            //uint8[] memory buyTokenIndex,
-            //uint8[] memory sellTokenIndex,
-        uint32[] memory validFrom,
-        uint32[] memory validTill,
-        uint256[] memory amountData
-            // uint256[] memory buyAmount,
-            // uint256[] memory sellAmount,
-            // uint256[] memory volume
+        uint16[] memory tokenIdForPrice
     ) public {
-        updateStateIndex();
         require(
-            batchIndex == currentStateIndex - 1,
+            batchIndex == getCurrentStateIndex() - 1,
             "Solutions are no longer accepted for this batch"
         );
-        int[] memory tokenConservation;
-        uint tradersUtility;
-        uint i = 0;
-        uint len = owner.length;
-        checkTradersUtility(
-            batchIndex, prices, tokenForPrice, owner, tokenIndex, validFrom, validTill, amountData
-        );
-        checkPriceConformity(prices);
-        checkNorm(prices);
+        // checkTradersUtility();
+        // checkPriceConformity(prices);
+        // checkNorm(prices);
+        int[] memory tokenConservation = new int[](prices.length);
         undoPreviousSolution(batchIndex);
-        // Do rest of the solution conformity checks
-        for(i = 0; i < len; i++){
-            require(validFrom[i] <= currentStateIndex, "Order is not yet valid");
-            require(validTill[i] > currentStateIndex, "Order is not yet valid");
+        uint len = owner.length;
+        for(uint i = 0; i < len; i++){
+            Order memory order = orders[owner[i]][orderId[i]];
             require(
-                prices[tokenIndex[2*i]].mul(amountData[3*i+1]) <= prices[tokenIndex[2*i+1]].mul(amountData[3*i]),
+                tokenIdForPrice[sellTokenPriceIndex[i]] == order.sellToken,
+                "sellTokenPriceIndex of order is incorrect"
+            );
+            require(
+                tokenIdForPrice[buyTokenPriceIndex[i]] == order.buyToken,
+                "BuyTokenPriceId of order is incorrect"
+            );
+            require(order.validFrom <= batchIndex, "Order is not yet valid");
+            require(order.validUntil >= batchIndex, "Order is no longer valid");
+            require(
+                prices[order.sellToken].mul(order.buyAmount) >= prices[order.buyToken].mul(order.sellAmount),
                 "limit price not met"
             );
-            bytes32 orderId = getOrderId(
-                owner[i],
-                tokenForPrice[tokenIndex[2*i]],
-                tokenForPrice[tokenIndex[2*i+1]],
-                validFrom[i],
-                validTill[i],
-                amountData[3*i],
-                amountData[3*i+1]
+            // Assume for now that we always have sellOrders if (!order.sellOrderFlag) {
+            uint sellVolume = volume[i];
+            uint buyVolume = volume[i].mul(prices[buyTokenPriceIndex[i]]) /
+                prices[sellTokenPriceIndex[i]];
+
+            orders[owner[i]][orderId[i]].buyAmount = uint128(
+                (order.sellAmount.sub(sellVolume))
+                .mul(order.buyAmount) / order.sellAmount
             );
-            require(
-                orders[orderId] >= amountData[3*i+2],
-                "Ordervolume not sufficient"
-            );
-            orders[orderId] = orders[orderId].sub(amountData[3*i+2]);
-            uint sellVolume = amountData[3*i+2];
-            uint buyVolume = amountData[3*i+2].mul(prices[tokenIndex[2*i+1]]) / prices[tokenIndex[2*i]];
-            tokenConservation[tokenIndex[2*i]] += int(buyVolume);
-            tokenConservation[tokenIndex[2*i+1]] -= int(sellVolume);
-            // checks that users have the sellVolume available is done indirectly in the next 2 lines
-            addBalance(owner[i], tokenForPrice[tokenIndex[2*i]], buyVolume);
-            substractBalance(owner[i], tokenForPrice[tokenIndex[2*i]], sellVolume);
+            orders[owner[i]][orderId[i]].sellAmount = uint128(order.sellAmount.sub(sellVolume));
+
+            tokenConservation[buyTokenPriceIndex[i]] += int(buyVolume);
+            tokenConservation[sellTokenPriceIndex[i]] -= int(sellVolume);
+            addBalance(owner[i], tokenIdToAddressMap(order.buyToken), buyVolume);
         }
-        for(i = 0; i < len; i++) {
+        checkTokenConservation(tokenConservation, buyTokenPriceIndex, sellTokenPriceIndex,len);
+        //doing the substracts after doing all additions, in order to avoid negative values
+        for(uint i = 0; i < len; i++) {
+            Order memory order = orders[owner[i]][orderId[i]];
+            substractBalance(owner[i], tokenIdToAddressMap(order.sellToken), volume[i]);
+        }
+        documentTrades(batchIndex, owner, orderId, volume, sellTokenPriceIndex, buyTokenPriceIndex, prices);
+    }
+
+    function checkTokenConservation(
+        int[] memory tokenConservation,
+        uint16[] memory buyTokenPriceIndex,
+        uint16[] memory sellTokenPriceIndex,
+        uint len
+    ) internal pure {
+        for(uint i = 0; i < len; i++) {
             require(
-                tokenConservation[tokenIndex[2*i]] == 0,
+                tokenConservation[buyTokenPriceIndex[i]] == 0,
                 "Token conservation does not hold for buyTokens"
             );
             require(
-                tokenConservation[tokenIndex[2*i+1]] == 0,
+                tokenConservation[sellTokenPriceIndex[i]] == 0,
                 "Token conservation does not hold for sellTokens"
             );
         }
     }
 
-    // solutionDelta[batchIndex].push( SolutionDelta({
-            //     orderId: orderId,
-            //     volume: amountData[3*i+2],
-            //     owner: owner[i],
-            //     tokenBought: tokenForPrice[tokenIndex[2*i]],
-            //     buyVolume: buyVolume,
-            //     tokenSold: tokenForPrice[tokenIndex[2*i]],
-            //     sellVolume: sellVolume
-            // }));
-
-    function checkPriceConformity(uint[] prices) public {
-        // check that all tokenForPrice are distinct, by checking that they are sorted
-        for(i = 0; i < tokenForPrice.length - 1; i++) {
-            require(
-                tokenForPrice[i]<tokenForPrice[i+1],
-                "token price references are not sorted"
-            );
+    function documentTrades(
+        uint batchIndex,
+        address[] memory owner,  //tradeData is submitted as arrays
+        uint16[] memory orderId,
+        uint[] memory volume,
+        uint16[] memory sellTokenPriceIndex,
+        uint16[] memory buyTokenPriceIndex,
+        uint[] memory prices
+    ) internal {
+        previousSolutionBatchId = batchIndex;
+        uint len = owner.length;
+        for(uint i = 0; i < len; i++) {
+            previousSolutionTrades.push(TradeData({
+                owner: owner[i],
+                orderId: orderId[i],
+                volume: volume[i],
+                sellTokenPriceIndex: sellTokenPriceIndex[i],
+                buyTokenPriceIndex: buyTokenPriceIndex[i]
+            }));
+            previousSolutionPrices.push(prices[i]);
         }
     }
 
-    function checkNorm(uint[] prices) public {
-        // check that price vector is normed.
-        uint priceNorm = 0;
-        for(i = 0; i < prices.length; i++) {
-            priceNorm += prices[i];
-        }
-        require(priceNorm == PRICE_NORM, "prices are not normed");
-    }
+    function undoPreviousSolution(uint batchIndex) internal {
+        if(previousSolutionBatchId == batchIndex) {
+            for(uint i = 0; i < previousSolutionTrades.length; i++){
+                Order memory order = orders[previousSolutionTrades[i].owner][previousSolutionTrades[i].orderId];
+                uint sellVolume = previousSolutionTrades[i].volume;
+                uint buyVolume = previousSolutionTrades[i].volume
+                    .mul(previousSolutionPrices[previousSolutionTrades[i].buyTokenPriceIndex]) /
+                    previousSolutionPrices[previousSolutionTrades[i].sellTokenPriceIndex];
 
-    function calculateTradersUtility(
-        uint16 batchIndex,
-        uint[] memory prices,
-        address[] memory tokenForPrice,
-        address[] memory owner,
-        uint8[] memory tokenIndex,
-        uint32[] memory validFrom,
-        uint32[] memory validTill,
-        uint256[] memory amountData
-    ) public {
-        for(i = 0; i < lowner.length; i++) {
-            uint tempTradersUtility = (prices[tokenIndex[2*i]].mul(amountData[3*i + 1])
-            .sub(prices[tokenIndex[2*i+1]].mul(amountData[3*i])));
-            tempTradersUtility += tempTradersUtility.mul(amountData[3*i + 2]) / amountData[3*i + 1] / prices[tokenIndex[2*i+1]];
-            tradersUtility += tempTradersUtility;
+                order.buyAmount = uint128(order.sellAmount.add(sellVolume).mul(order.buyAmount) / order.sellAmount);
+                order.sellAmount = uint128(order.sellAmount.add(sellVolume));
+                orders[previousSolutionTrades[i].owner][previousSolutionTrades[i].orderId] = order;
+                substractBalance(previousSolutionTrades[i].owner, tokenIdToAddressMap(order.buyToken), buyVolume);
+                addBalance(previousSolutionTrades[i].owner,tokenIdToAddressMap(order.sellToken), sellVolume);
+            }
         }
-        require(
-            tradersUtility > bestTradersUtility[currentStateIndex],
-            "Traders' utility is not surpassing previous one"
-        );
-        bestTradersUtility[currentStateIndex] = tradersUtility;
-    }
-    function undoPreviousSolution(uint batchIndex) public {
-        while(solutionDelta[batchIndex].length > 0){
-            orders[solutionDelta[batchIndex][0].orderId] += solutionDelta[batchIndex][0].volume;
-            substractBalance(
-                solutionDelta[batchIndex][0].owner,
-                solutionDelta[batchIndex][0].tokenBought,
-                solutionDelta[batchIndex][0].buyVolume
-            );
-            addBalance(
-                solutionDelta[batchIndex][0].owner,
-                solutionDelta[batchIndex][0].tokenSold,
-                solutionDelta[batchIndex][0].sellVolume
-            );
-            delete solutionDelta[batchIndex][0];
-        }
+        delete previousSolutionTrades;
+        delete previousSolutionPrices;
     }
 }
