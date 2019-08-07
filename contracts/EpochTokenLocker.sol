@@ -30,7 +30,7 @@ contract EpochTokenLocker {
         address token,
         uint amount
     );
-
+    uint32 constant public BATCH_TIME = 300;
     // User => Token => BalanceState
     mapping(address => mapping(address => BalanceState)) private balanceStates;
 
@@ -105,7 +105,7 @@ contract EpochTokenLocker {
     }
 
     function getCurrentStateIndex() public view returns(uint32) {
-        return uint32(now / 300);
+        return uint32(now / BATCH_TIME);
     }
 
     function getBalance(address user, address token) public view returns(uint256) {
