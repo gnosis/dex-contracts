@@ -12,10 +12,13 @@ const {
 contract("StablecoinConverter", async (accounts) => {
 
   const [user_1] = accounts 
+  let BATCH_TIME
   beforeEach(async () => {
     const lib1 = await IdToAddressBiMap.new()
-        
     await StablecoinConverter.link(IdToAddressBiMap, lib1.address)
+
+    const stablecoinConverter = await StablecoinConverter.new(2**16-1)
+    BATCH_TIME = (await stablecoinConverter.BATCH_TIME.call()).toNumber()
   })
 
   describe("placeOrder", () => { 
@@ -52,7 +55,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, 3, 10, 20)
       await stablecoinConverter.cancelOrder(id)
-      await waitForNSeconds(300)
+      await waitForNSeconds(BATCH_TIME)
       await stablecoinConverter.freeStorageOfOrder(id)
 
       assert.equal((await stablecoinConverter.orders(user_1, id)).sellAmount, 0, "sellAmount was stored incorrectly")
