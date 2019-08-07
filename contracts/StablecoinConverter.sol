@@ -14,7 +14,7 @@ contract StablecoinConverter is EpochTokenLocker {
         address owner,
         uint16 buyToken,
         uint16 sellToken,
-        bool sellOrderFlag,
+        bool isSellOrder,
         uint32 validFrom,
         uint32 validUntil,
         uint256 buyAmount,
@@ -26,13 +26,13 @@ contract StablecoinConverter is EpochTokenLocker {
         uint id
     );
 
-    //outstanding volume of an order is encoded as buyAmount or sellAmount depending on sellOrderFlag
+    //outstanding volume of an order is encoded as buyAmount or sellAmount depending on isSellOrder
     struct Order {
         uint16 buyToken;
         uint16 sellToken;
         uint32 validFrom;  // order is valid from auction collection period: validFrom inclusively
         uint32 validUntil;  // order is valid till auction collection period: validUntil inclusively
-        bool sellOrderFlag;
+        bool isSellOrder;
         uint128 buyAmount;
         uint128 sellAmount;
     }
@@ -60,7 +60,7 @@ contract StablecoinConverter is EpochTokenLocker {
     function placeOrder(
         uint16 buyToken,
         uint16 sellToken,
-        bool sellOrderFlag,
+        bool isSellOrder,
         uint32 validUntil,
         uint128 buyAmount,
         uint128 sellAmount
@@ -70,7 +70,7 @@ contract StablecoinConverter is EpochTokenLocker {
             sellToken: sellToken,
             validFrom: getCurrentStateIndex(),
             validUntil: validUntil,
-            sellOrderFlag: sellOrderFlag,
+            isSellOrder: isSellOrder,
             buyAmount: buyAmount,
             sellAmount: sellAmount
         }));
@@ -78,7 +78,7 @@ contract StablecoinConverter is EpochTokenLocker {
             msg.sender,
             buyToken,
             sellToken,
-            sellOrderFlag,
+            isSellOrder,
             getCurrentStateIndex(),
             validUntil,
             buyAmount,
@@ -101,7 +101,7 @@ contract StablecoinConverter is EpochTokenLocker {
         orders[msg.sender][id] = Order({
             buyToken: 0,
             sellToken: 0,
-            sellOrderFlag: false,
+            isSellOrder: false,
             validFrom: 0,
             validUntil: 0,
             buyAmount: 0,

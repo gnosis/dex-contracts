@@ -32,7 +32,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((orderResult.buyAmount).toNumber(), 10, "buyAmount was stored incorrectly")
       assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
       assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
-      assert.equal(orderResult.sellOrderFlag, true, "sellTokenFlag was stored incorrectly")
+      assert.equal(orderResult.isSellOrder, true, "sellTokenFlag was stored incorrectly")
       assert.equal((orderResult.validFrom).toNumber(), currentStateIndex.toNumber(), "validFrom was stored incorrectly")
       assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
     })
