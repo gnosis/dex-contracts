@@ -33,7 +33,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
       assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
       assert.equal(orderResult.sellOrderFlag, true, "sellTokenFlag was stored incorrectly")
-      assert.equal((orderResult.validFrom).toNumber(), currentStateIndex.toNumber() + 1, "validFrom was stored incorrectly")
+      assert.equal((orderResult.validFrom).toNumber(), currentStateIndex.toNumber(), "validFrom was stored incorrectly")
       assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
     })
   })
@@ -46,7 +46,7 @@ contract("StablecoinConverter", async (accounts) => {
       const currentStateIndex = await stablecoinConverter.getCurrentStateIndex()
       await stablecoinConverter.cancelOrder(id, {from: user_1})
 
-      assert.equal(((await stablecoinConverter.orders.call(user_1,id)).validUntil).toNumber(), currentStateIndex, "validUntil was stored incorrectly")
+      assert.equal(((await stablecoinConverter.orders.call(user_1,id)).validUntil).toNumber(), currentStateIndex - 1, "validUntil was stored incorrectly")
     })
   })
   describe("freeStorageOfOrder", () => {

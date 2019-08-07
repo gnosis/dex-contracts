@@ -13,9 +13,9 @@ contract("EpochTokenLocker", async (accounts) => {
   let BATCH_TIME
   beforeEach(async () => {
     const stablecoinConverter = await EpochTokenLocker.new()
-    BATCH_TIME = await stablecoinConverter.BATCH_TIME.call()
+    BATCH_TIME = (await stablecoinConverter.BATCH_TIME.call()).toNumber()
   })
-  
+
   describe("deposit", () => {
     it("processes a deposit and stores it in the pendingDeposits", async () => {
       const epochTokenLocker = await EpochTokenLocker.new()

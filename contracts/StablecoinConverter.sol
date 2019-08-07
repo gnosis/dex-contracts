@@ -30,8 +30,8 @@ contract StablecoinConverter is EpochTokenLocker {
     struct Order {
         uint16 buyToken;
         uint16 sellToken;
-        uint32 validFrom;  // order is valid from validFrom inclusively
-        uint32 validUntil;  // order is valid till validUntil inclusively
+        uint32 validFrom;  // order is valid from auction collection period: validFrom inclusively
+        uint32 validUntil;  // order is valid till auction collection period: validUntil inclusively
         bool sellOrderFlag;
         uint128 buyAmount;
         uint128 sellAmount;
@@ -68,7 +68,7 @@ contract StablecoinConverter is EpochTokenLocker {
         orders[msg.sender].push(Order({
             buyToken: buyToken,
             sellToken: sellToken,
-            validFrom: getCurrentStateIndex() + 1,
+            validFrom: getCurrentStateIndex(),
             validUntil: validUntil,
             sellOrderFlag: sellOrderFlag,
             buyAmount: buyAmount,
@@ -79,7 +79,7 @@ contract StablecoinConverter is EpochTokenLocker {
             buyToken,
             sellToken,
             sellOrderFlag,
-            getCurrentStateIndex() + 1,
+            getCurrentStateIndex(),
             validUntil,
             buyAmount,
             sellAmount
@@ -90,14 +90,14 @@ contract StablecoinConverter is EpochTokenLocker {
     function cancelOrder(
         uint id
     ) public {
-        orders[msg.sender][id].validUntil = getCurrentStateIndex();
+        orders[msg.sender][id].validUntil = getCurrentStateIndex() - 1;
         emit OrderCancelation(msg.sender, id);
     }
 
     function freeStorageOfOrder(
         uint id
     ) public {
-        require(orders[msg.sender][id].validUntil < getCurrentStateIndex(), "Order is still valid");
+        require(orders[msg.sender][id].validUntil + 1 < getCurrentStateIndex(), "Order is still valid");
         orders[msg.sender][id] = Order({
             buyToken: 0,
             sellToken: 0,
