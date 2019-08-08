@@ -41,7 +41,7 @@ contract StablecoinConverter is EpochTokenLocker {
     mapping(address => Order[]) public orders;
 
     IdToAddressBiMap.Data private registeredTokens;
-    uint public MAX_TOKENS;
+    uint public MAX_TOKENS; // solhint-disable-line
     uint16 public numTokens = 0;
 
     constructor(uint maxTokens) public {
