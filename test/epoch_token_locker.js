@@ -120,7 +120,6 @@ contract("EpochTokenLocker", async (accounts) => {
     
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.increaseStateIndex()
-      //await epochTokenLocker.updateDepositsBalanceTest(user_1, ERC20.address)
 
       assert.equal( (await epochTokenLocker.getBalance.call(user_1, ERC20.address)).toNumber(), 100)
     })
