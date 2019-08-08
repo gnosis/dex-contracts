@@ -98,15 +98,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint id
     ) public {
         require(orders[msg.sender][id].validUntil + 1 < getCurrentStateIndex(), "Order is still valid");
-        orders[msg.sender][id] = Order({
-            buyToken: 0,
-            sellToken: 0,
-            isSellOrder: false,
-            validFrom: 0,
-            validUntil: 0,
-            buyAmount: 0,
-            sellAmount: 0
-        });
+        delete orders[msg.sender][id];
     }
 
     function tokenAddressToIdMap(address addr) public view returns (uint16) {
