@@ -218,6 +218,8 @@ contract SnappAuction is SnappBase {
     function auctionSolutionBid(
         uint slot,
         bytes32 _currStateRoot,
+        bytes32 _orderHash,
+        uint128[] memory _standingOrderIndex,
         bytes32 proposedStateRoot,
         uint proposedObjectiveValue
     ) public {
@@ -225,7 +227,6 @@ contract SnappAuction is SnappBase {
             slot == 0 || auctions[slot-1].appliedAccountStateIndex != 0,
             "Previous auction not yet resolved!"
         );
-        require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
 
         // Ensure that auction batch is inactive, unprocessed and in correct phase for bidding
         require(auctions[slot].appliedAccountStateIndex == 0, "Auction already applied");
@@ -238,6 +239,9 @@ contract SnappAuction is SnappBase {
             block.timestamp < biddingStartTime(slot) + 3 minutes,
             "Bidding period for this auction has expired"
         );
+
+        require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
+        require(calculateOrderHash(slot, _standingOrderIndex) == _orderHash, "Order hash doesn't agree");
 
         // Ensure proposed value exceeds current max.
         require(
@@ -254,10 +258,8 @@ contract SnappAuction is SnappBase {
     function applyAuction(
         uint slot,
         bytes32 _currStateRoot,
-        bytes32 newStateRoot,                 // Only needed the case of fallback
-        bytes32 _orderHash,
-        uint128[] memory _standingOrderIndex,
-        bytes memory pricesAndVolumes         // Can be empty in the trivial case.
+        bytes32 newStateRoot,          // Only needed in the case of fallback
+        bytes memory pricesAndVolumes  // Can be empty in the trivial case.
     ) public onlyOwner() {
         // Auction related constraints (slot exists, is inactive, no previous auction pending and not already applied)
         require(slot != MAX_UINT && slot <= auctionIndex, "Requested auction slot does not exist");
@@ -266,7 +268,6 @@ contract SnappAuction is SnappBase {
 
         // State related constraints (order hash and state root agree)
         require(coreData.stateRoots[stateIndex()] == _currStateRoot, "Incorrect state root");
-        require(calculateOrderHash(slot, _standingOrderIndex) == _orderHash, "Order hash doesn't agree");
 
         // Phase related constraints
         require(
