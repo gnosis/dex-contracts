@@ -531,8 +531,7 @@ contract("SnappAuction", async (accounts) => {
     it("records winning bid and allows fallback applyAuction", async () => {
       const instance = await SnappAuction.new()
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
-      const order = encodeOrder(0, 1, 1, 1)
-      await instance.placeSellOrders(order, { from: user_1 })
+      await instance.placeSellOrder(0, 1, 1, 1, { from: user_1 })
 
       const slot = (await instance.auctionIndex.call()).toNumber()
       const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
@@ -542,18 +541,14 @@ contract("SnappAuction", async (accounts) => {
 
       // Wait for current order slot to be inactive
       await waitForNSeconds(181)
-      
       const current_state = await instance.getCurrentStateRoot()
       await instance.auctionSolutionBid(slot, current_state, new_state, 1)
       // Wait for bidding phase to pass
       await waitForNSeconds(181)
       // Wait for winner's chance to submit to pass (half a minute)
       await waitForNSeconds(91)
-
       // winner is owner in this context (and currently has to be)
-      await instance.applyAuction(
-        slot, current_state, new_state, orderhash, standingOrderIndexList, auctionSolution, { from: user_1 }
-      )
+      await instance.applyAuction(slot, current_state, new_state, orderhash, standingOrderIndexList, auctionSolution)
     })
 
     it("Reject: apply same slot twice", async () => {
