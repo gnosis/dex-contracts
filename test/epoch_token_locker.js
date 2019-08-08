@@ -183,7 +183,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 50)
     })
-    it("modifies the balance by substracting on behalf of someone else", async () => {
+    it("modifies the balance by subtracting on behalf of someone else", async () => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
