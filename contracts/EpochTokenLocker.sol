@@ -30,6 +30,7 @@ contract EpochTokenLocker {
         address token,
         uint amount
     );
+
     uint32 constant public BATCH_TIME = 300;
     // User => Token => BalanceState
     mapping(address => mapping(address => BalanceState)) private balanceStates;

@@ -1,6 +1,5 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const MockContract = artifacts.require("MockContract")
-
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
 const ERC20 = artifacts.require("ERC20")
 
@@ -34,7 +33,6 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
       assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
       assert.equal(orderResult.isSellOrder, true, "sellTokenFlag was stored incorrectly")
-
       assert.equal((orderResult.validFrom).toNumber(), currentStateIndex.toNumber(), "validFrom was stored incorrectly")
       assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
     })
@@ -52,6 +50,7 @@ contract("StablecoinConverter", async (accounts) => {
         (currentStateIndex.toNumber() - 1),
         "validUntil was stored incorrectly"
       )
+
     })
   })
   describe("freeStorageOfOrder", () => {

@@ -44,7 +44,8 @@ contract StablecoinConverter is EpochTokenLocker {
     mapping(address => Order[]) public orders;
 
     IdToAddressBiMap.Data private registeredTokens;
-    uint public MAX_TOKENS;
+
+    uint public MAX_TOKENS; // solhint-disable-line
     uint16 public numTokens = 0;
 
     constructor(uint maxTokens) public {
@@ -101,15 +102,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint id
     ) public {
         require(orders[msg.sender][id].validUntil + 1 < getCurrentStateIndex(), "Order is still valid");
-        orders[msg.sender][id] = Order({
-            buyToken: 0,
-            sellToken: 0,
-            isSellOrder: false,
-            validFrom: 0,
-            validUntil: 0,
-            buyAmount: 0,
-            sellAmount: 0
-        });
+        delete orders[msg.sender][id];
     }
 
     function tokenAddressToIdMap(address addr) public view returns (uint16) {
