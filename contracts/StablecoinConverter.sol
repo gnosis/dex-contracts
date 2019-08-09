@@ -7,7 +7,7 @@ import "./libraries/IdToAddressBiMap.sol";
 
 
 contract StablecoinConverter is EpochTokenLocker {
-    using SafeMath for uint;
+    using SafeMath for uint128;
     using BytesLib for bytes32;
 
     event OrderPlacement(
@@ -17,8 +17,8 @@ contract StablecoinConverter is EpochTokenLocker {
         bool isSellOrder,
         uint32 validFrom,
         uint32 validUntil,
-        uint256 buyAmount,
-        uint256 sellAmount
+        uint128 buyAmount,
+        uint128 sellAmount
     );
 
     event OrderCancelation(
@@ -41,6 +41,7 @@ contract StablecoinConverter is EpochTokenLocker {
     mapping(address => Order[]) public orders;
 
     IdToAddressBiMap.Data private registeredTokens;
+
     uint public MAX_TOKENS; // solhint-disable-line
     uint16 public numTokens = 0;
 
@@ -107,5 +108,66 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function tokenIdToAddressMap(uint16 id) public view returns (address) {
         return IdToAddressBiMap.getAddressAt(registeredTokens, id);
+    }
+
+    struct TradeData {
+        address owner;
+        uint volume;
+        uint16 orderId;
+    }
+
+    function submitSolution(
+        uint32 batchIndex,
+        address[] memory owner,  //tradeData is submitted as arrays
+        uint16[] memory orderId,
+        uint128[] memory volume,
+        uint128[] memory prices,
+        uint16[] memory tokenIdForPrice
+    ) public {
+        require(
+            batchIndex == getCurrentStateIndex() - 1,
+            "Solutions are no longer accepted for this batch"
+        );
+        // checkTradersUtility();
+        // checkPriceConformity(prices);
+        // checkNorm(prices);
+        uint len = owner.length;
+        for (uint i = 0; i < len; i++) {
+            Order memory order = orders[owner[i]][orderId[i]];
+            require(order.validFrom <= batchIndex, "Order is not yet valid");
+            require(order.validUntil >= batchIndex, "Order is no longer valid");
+            // Assume for now that we always have sellOrders
+            uint128 sellVolume = volume[i];
+            uint128 buyVolume = uint128(
+                volume[i].mul(prices[findPriceIndex(order.buyToken, tokenIdForPrice)]) /
+                prices[findPriceIndex(order.sellToken, tokenIdForPrice)]
+            );
+            require(
+                sellVolume.mul(order.buyAmount) >= buyVolume.mul(order.sellAmount),
+                "limit price not met"
+            );
+            require(order.sellAmount >= sellVolume, "sellVolume bigger than specified in order");
+            orders[owner[i]][orderId[i]].buyAmount = uint128(
+                order.sellAmount.sub(sellVolume)
+                .mul(order.buyAmount) / order.sellAmount
+            );
+            orders[owner[i]][orderId[i]].sellAmount = uint128(order.sellAmount.sub(sellVolume));
+            addBalance(owner[i], tokenIdToAddressMap(order.buyToken), buyVolume);
+        }
+        //doing the substracts after doing all additions, in order to avoid negative values
+        for (uint i = 0; i < len; i++) {
+            Order memory order = orders[owner[i]][orderId[i]];
+            substractBalance(owner[i], tokenIdToAddressMap(order.sellToken), volume[i]);
+        }
+    }
+
+    function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) public pure returns (uint) {
+        uint length = tokenIdForPrice.length;
+        for (uint i = 0; i < length; i++) {
+            if (tokenIdForPrice[i] == index) {
+                return i;
+            }
+        }
+        revert("Price not provided for token");
     }
 }
