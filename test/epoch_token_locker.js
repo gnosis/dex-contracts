@@ -7,7 +7,7 @@ const truffleAssert = require("truffle-assertions")
 
 
 contract("EpochTokenLocker", async (accounts) => {
-  const [user_1] = accounts
+  const [user_1, user_2] = accounts
 
   describe("deposit", () => {
     it("processes a deposit and stores it in the pendingDeposits", async () => {
@@ -182,6 +182,17 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.substractBalanceTest(user_1, ERC20.address, 50)
 
       assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 50)
+    })
+    it("modifies the balance by subtracting on behalf of someone else", async () => {
+      const epochTokenLocker = await EpochTokenLockerTestInterface.new()
+      const ERC20 = await MockContract.new()
+      await ERC20.givenAnyReturnBool(true)
+
+      await epochTokenLocker.deposit(ERC20.address, 100, {from: user_2})
+      await epochTokenLocker.increaseStateIndex()
+      await epochTokenLocker.substractBalanceTest(user_2, ERC20.address, 50)
+
+      assert.equal(await epochTokenLocker.getBalance(user_2, ERC20.address), 50)
     })
     it("throws in case of underflow", async () => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
