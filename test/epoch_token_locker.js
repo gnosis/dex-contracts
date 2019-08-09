@@ -207,7 +207,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await ERC20.givenAnyReturnBool(true)
 
       await epochTokenLocker.deposit(ERC20.address, 100, {from: user_2})
-      await epochTokenLocker.increaseStateIndex()
+      await waitForNSeconds(BATCH_TIME)
       await epochTokenLocker.substractBalanceTest(user_2, ERC20.address, 50)
 
       assert.equal(await epochTokenLocker.getBalance(user_2, ERC20.address), 50)
