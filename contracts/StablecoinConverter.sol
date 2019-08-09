@@ -142,7 +142,7 @@ contract StablecoinConverter is EpochTokenLocker {
             Order memory order = orders[owner[i]][orderId[i]];
             require(order.validFrom <= batchIndex, "Order is not yet valid");
             require(order.validUntil >= batchIndex, "Order is no longer valid");
-            // Assume for now that we always have sellOrders if (!order.isSellOrder) {
+            // Assume for now that we always have sellOrders
             uint128 sellVolume = volume[i];
             uint128 buyVolume = uint128(
                 volume[i].mul(prices[findPriceIndex(order.buyToken, tokenIdForPrice)]) /
@@ -154,7 +154,7 @@ contract StablecoinConverter is EpochTokenLocker {
             );
             require(order.sellAmount >= sellVolume, "sellVolume bigger than specified in order");
             orders[owner[i]][orderId[i]].buyAmount = uint128(
-                (order.sellAmount.sub(sellVolume))
+                order.sellAmount.sub(sellVolume)
                 .mul(order.buyAmount) / order.sellAmount
             );
             orders[owner[i]][orderId[i]].sellAmount = uint128(order.sellAmount.sub(sellVolume));
