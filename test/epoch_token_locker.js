@@ -12,8 +12,8 @@ contract("EpochTokenLocker", async (accounts) => {
 
   let BATCH_TIME
   beforeEach(async () => {
-    const stablecoinConverter = await EpochTokenLocker.new()
-    BATCH_TIME = (await stablecoinConverter.BATCH_TIME.call()).toNumber()
+    const instance = await EpochTokenLocker.new()
+    BATCH_TIME = (await instance.BATCH_TIME.call()).toNumber()
   })
 
   describe("deposit", () => {
