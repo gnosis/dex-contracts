@@ -133,9 +133,6 @@ contract StablecoinConverter is EpochTokenLocker {
             batchIndex == getCurrentStateIndex() - 1,
             "Solutions are no longer accepted for this batch"
         );
-        // checkTradersUtility();
-        // checkPriceConformity(prices);
-        // checkNorm(prices);
         undoPreviousSolution(batchIndex);
         uint len = owner.length;
         for (uint i = 0; i < len; i++) {
@@ -143,27 +140,27 @@ contract StablecoinConverter is EpochTokenLocker {
             require(order.validFrom <= batchIndex, "Order is not yet valid");
             require(order.validUntil >= batchIndex, "Order is no longer valid");
             // Assume for now that we always have sellOrders
-            uint128 sellVolume = volume[i];
-            uint128 buyVolume = uint128(
+            uint128 executedSellAmount = volume[i];
+            uint128 executedBuyAmount = uint128(
                 volume[i].mul(prices[findPriceIndex(order.buyToken, tokenIdForPrice)]) /
                 prices[findPriceIndex(order.sellToken, tokenIdForPrice)]
             );
             require(
-                sellVolume.mul(order.buyAmount) >= buyVolume.mul(order.sellAmount),
-                "limit price not met"
+                executedSellAmount.mul(order.buyAmount) >= executedBuyAmount.mul(order.sellAmount),
+                "limit price not satisfied"
             );
-            require(order.sellAmount >= sellVolume, "sellVolume bigger than specified in order");
+            require(order.sellAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             orders[owner[i]][orderId[i]].buyAmount = uint128(
-                order.sellAmount.sub(sellVolume)
+                order.sellAmount.sub(executedSellAmount)
                 .mul(order.buyAmount) / order.sellAmount
             );
-            orders[owner[i]][orderId[i]].sellAmount = uint128(order.sellAmount.sub(sellVolume));
-            addBalance(owner[i], tokenIdToAddressMap(order.buyToken), buyVolume);
+            orders[owner[i]][orderId[i]].sellAmount = uint128(order.sellAmount.sub(executedSellAmount));
+            addBalance(owner[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
         }
-        //doing the substracts after doing all additions, in order to avoid negative values
+        // doing all subtractions after all additions (in order to avoid negative values)
         for (uint i = 0; i < len; i++) {
             Order memory order = orders[owner[i]][orderId[i]];
-            substractBalance(owner[i], tokenIdToAddressMap(order.sellToken), volume[i]);
+            subtractBalance(owner[i], tokenIdToAddressMap(order.sellToken), volume[i]);
         }
         documentTrades(batchIndex, owner, orderId, volume, prices, tokenIdForPrice);
     }
@@ -214,7 +211,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 order.buyAmount = uint128(order.sellAmount.add(sellVolume).mul(order.buyAmount) / order.sellAmount);
                 order.sellAmount = uint128(order.sellAmount.add(sellVolume));
                 orders[previousSolutionTrades[i].owner][previousSolutionTrades[i].orderId] = order;
-                substractBalance(previousSolutionTrades[i].owner, tokenIdToAddressMap(order.buyToken), buyVolume);
+                subtractBalance(previousSolutionTrades[i].owner, tokenIdToAddressMap(order.buyToken), buyVolume);
                 addBalance(previousSolutionTrades[i].owner, tokenIdToAddressMap(order.sellToken), sellVolume);
             }
         }
@@ -222,3 +219,4 @@ contract StablecoinConverter is EpochTokenLocker {
         delete previousSolutionPrices;
     }
 }
+

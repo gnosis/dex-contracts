@@ -191,13 +191,13 @@ contract("EpochTokenLocker", async (accounts) => {
       assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 100)
     })
   })
-  describe("substractBalance", () => {  
-    it("modifies the balance by substracting", async () => {
+  describe("subtractBalance", () => {  
+    it("modifies the balance by subtracting", async () => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
       const ERC20 = await MockContract.new()
 
       await epochTokenLocker.addBalanceTest(user_1, ERC20.address, 100)
-      await epochTokenLocker.substractBalanceTest(user_1, ERC20.address, 50)
+      await epochTokenLocker.subtractBalanceTest(user_1, ERC20.address, 50)
 
       assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 50)
     })
@@ -208,7 +208,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       await epochTokenLocker.deposit(ERC20.address, 100, {from: user_2})
       await waitForNSeconds(BATCH_TIME)
-      await epochTokenLocker.substractBalanceTest(user_2, ERC20.address, 50)
+      await epochTokenLocker.subtractBalanceTest(user_2, ERC20.address, 50)
 
       assert.equal(await epochTokenLocker.getBalance(user_2, ERC20.address), 50)
     })
@@ -216,7 +216,7 @@ contract("EpochTokenLocker", async (accounts) => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
       const ERC20 = await MockContract.new()
   
-      await truffleAssert.reverts(epochTokenLocker.substractBalanceTest(user_1, ERC20.address, 50))
+      await truffleAssert.reverts(epochTokenLocker.subtractBalanceTest(user_1, ERC20.address, 50))
     })
   })
 })

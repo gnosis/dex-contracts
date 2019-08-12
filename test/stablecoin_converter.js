@@ -537,7 +537,7 @@ contract("StablecoinConverter", async (accounts) => {
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdForPrice),
-        "limit price not met"
+        "limit price not satisfied"
       )
     })
     it("throws, if sell volume is bigger than order volume", async () => {
@@ -570,7 +570,7 @@ contract("StablecoinConverter", async (accounts) => {
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdForPrice),
-        "sellVolume bigger than specified in order"
+        "executedSellAmount bigger than specified in order"
       )
     })
     it("throws, if sell volume is bigger than balance available", async () => {
