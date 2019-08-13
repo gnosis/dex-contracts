@@ -331,7 +331,7 @@ contract("StablecoinConverter", async (accounts) => {
         "Order is not yet valid"
       )
     })
-    it("throws, if order is not yet valid", async () => {
+    it("throws, if order is no longer valid", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2**16-1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
