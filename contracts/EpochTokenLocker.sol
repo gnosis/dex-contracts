@@ -62,7 +62,7 @@ contract EpochTokenLocker {
 
     function requestWithdraw(address token, uint amount) public {
         updateStateIndex();
-        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: currentStateIndex });
+        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: currentStateIndex + 1});
         emit WithdrawRequest(msg.sender, token, amount, currentStateIndex);
     }
 
