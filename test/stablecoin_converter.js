@@ -138,9 +138,9 @@ contract("StablecoinConverter", async (accounts) => {
       const volume = [10, 20]
       
       
-      const tokenIdForPrice = [0, 1]
+      const tokenIdsForPrice = [0, 1]
 
-      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdForPrice)
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdsForPrice)
       
       assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_1.address)).toNumber(), 0, "Sold tokens were not adjusted correctly")
       assert.equal(await stablecoinConverter.getBalance.call(user_1, erc20_2.address), 20, "Bought tokens were not adjusted correctly")
@@ -173,9 +173,9 @@ contract("StablecoinConverter", async (accounts) => {
       const volume = [10, 10]
       
       
-      const tokenIdForPrice = [0, 1]
+      const tokenIdsForPrice = [0, 1]
 
-      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdForPrice)
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdsForPrice)
       
       assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_1.address)).toNumber(), 0, "Sold tokens were not adjusted correctly")
       assert.equal(await stablecoinConverter.getBalance.call(user_1, erc20_2.address), 10, "Bought tokens were not adjusted correctly")
@@ -206,9 +206,9 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = [user_1, user_2]  //tradeData is submitted as arrays
       const orderId = [orderId1, orderId2]
       const volume = [5, 10]
-      const tokenIdForPrice = [0, 1]
+      const tokenIdsForPrice = [0, 1]
 
-      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdForPrice)
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdsForPrice)
       
       assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_1.address)).toNumber(), 5, "Sold tokens were not adjusted correctly")
       assert.equal(await stablecoinConverter.getBalance.call(user_1, erc20_2.address), 10, "Bought tokens were not adjusted correctly")
@@ -395,9 +395,9 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = [user_1, user_2, user_3]  //tradeData is submitted as arrays
       const orderId = [orderId1, orderId2, orderId3]
       const volume = [10, 10, 10]
-      const tokenIdForPrice = [0, 1, 2]
+      const tokenIdsForPrice = [0, 1, 2]
 
-      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdForPrice)
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdsForPrice)
       
       assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_1.address)).toNumber(), 0, "Sold tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), 0, "Sold tokens were not adjusted correctly")
@@ -432,11 +432,11 @@ contract("StablecoinConverter", async (accounts) => {
       const volume = [5, 10]
       
       
-      const tokenIdForPrice = [0, 1]
+      const tokenIdsForPrice = [0, 1]
 
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex - 1, owner, orderId, volume,  prices, tokenIdForPrice),
+        stablecoinConverter.submitSolution(batchIndex - 1, owner, orderId, volume,  prices, tokenIdsForPrice),
         "Solutions are no longer accepted for this batch"
       )
     })
@@ -464,15 +464,15 @@ contract("StablecoinConverter", async (accounts) => {
       const volume = [5, 10]
       
       
-      const tokenIdForPrice = [0, 1]
+      const tokenIdsForPrice = [0, 1]
 
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex - 1, owner, orderId, volume,  prices, tokenIdForPrice),
+        stablecoinConverter.submitSolution(batchIndex - 1, owner, orderId, volume,  prices, tokenIdsForPrice),
         "Order is not yet valid"
       )
     })
-    it("throws, if order is not yet valid", async () => {
+    it("throws, if order is no longer valid", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2**16-1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
@@ -499,11 +499,11 @@ contract("StablecoinConverter", async (accounts) => {
       const volume = [5, 10]
       
       
-      const tokenIdForPrice = [0, 1]
+      const tokenIdsForPrice = [0, 1]
 
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex + 1, owner, orderId, volume,  prices, tokenIdForPrice),
+        stablecoinConverter.submitSolution(batchIndex + 1, owner, orderId, volume,  prices, tokenIdsForPrice),
         "Order is no longer valid"
       )
     })
@@ -532,11 +532,11 @@ contract("StablecoinConverter", async (accounts) => {
       const volume = [5, 10]
       
       
-      const tokenIdForPrice = [0, 1]
+      const tokenIdsForPrice = [0, 1]
 
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdForPrice),
+        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdsForPrice),
         "limit price not satisfied"
       )
     })
@@ -565,11 +565,11 @@ contract("StablecoinConverter", async (accounts) => {
       const volume = [11, 10]
       
       
-      const tokenIdForPrice = [0, 1]
+      const tokenIdsForPrice = [0, 1]
 
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdForPrice),
+        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdsForPrice),
         "executedSellAmount bigger than specified in order"
       )
     })
@@ -601,6 +601,7 @@ contract("StablecoinConverter", async (accounts) => {
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdForPrice)
+
       )
     })
     it("reverts, if a trade touches a token, for which no price is provided", async () => {
@@ -627,6 +628,7 @@ contract("StablecoinConverter", async (accounts) => {
       const orderId = [orderId1, orderId2]
       const volume = [10, 20]      
       const tokenIdForPrice = [0, 0]
+
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume,  prices, tokenIdForPrice),
