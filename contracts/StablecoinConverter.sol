@@ -134,8 +134,9 @@ contract StablecoinConverter is EpochTokenLocker {
             "Solutions are no longer accepted for this batch"
         );
         undoPreviousSolution(batchIndex);
-        uint len = owners.length;
-        for (uint i = 0; i < len; i++) {
+        delete previousSolutionTrades;
+        delete previousSolutionPrices;
+        for (uint i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(order.validFrom <= batchIndex, "Order is not yet valid");
             require(order.validUntil >= batchIndex, "Order is no longer valid");
@@ -159,7 +160,7 @@ contract StablecoinConverter is EpochTokenLocker {
             addBalance(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
         }
         // doing all subtractions after all additions (in order to avoid negative values)
-        for (uint i = 0; i < len; i++) {
+        for (uint i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             subtractBalance(owners[i], tokenIdToAddressMap(order.sellToken), volumes[i]);
         }
@@ -167,8 +168,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function findPriceIndex(uint16 index, uint16[] memory tokenIdsForPrice) public pure returns (uint) {
-        uint length = tokenIdsForPrice.length;
-        for (uint i = 0; i < length; i++) {
+        for (uint i = 0; i < tokenIdsForPrice.length; i++) {
             if (tokenIdsForPrice[i] == index) {
                 return i;
             }
@@ -185,16 +185,14 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] memory tokenIdsForPrice
     ) internal {
         previousSolutionBatchId = batchIndex;
-        uint len = owners.length;
-        for (uint i = 0; i < len; i++) {
+        for (uint i = 0; i < owners.length; i++) {
             previousSolutionTrades.push(TradeData({
                 owner: owners[i],
                 orderId: orderIds[i],
                 volume: volumes[i]
             }));
         }
-        len = prices.length;
-        for (uint i = 0; i < len; i++) {
+        for (uint i = 0; i < prices.length; i++) {
             previousSolutionPrices.push(prices[i]);
             previousSolutionTokenIdForPrice.push(tokenIdsForPrice[i]);
         }
@@ -207,28 +205,22 @@ contract StablecoinConverter is EpochTokenLocker {
                 uint orderId = previousSolutionTrades[i].orderId;
                 Order memory order = orders[owner][orderId];
                 uint sellVolume = previousSolutionTrades[i].volume;
+                addBalance(owner, tokenIdToAddressMap(order.sellToken), sellVolume);
+            }
+            for (uint i = 0; i < previousSolutionTrades.length; i++) {
+                address owner = previousSolutionTrades[i].owner;
+                uint orderId = previousSolutionTrades[i].orderId;
+                Order memory order = orders[owner][orderId];
+                uint sellVolume = previousSolutionTrades[i].volume;
                 uint buyVolume = sellVolume
                     .mul(previousSolutionPrices[findPriceIndex(order.buyToken, previousSolutionTokenIdForPrice)]) /
                     previousSolutionPrices[findPriceIndex(order.sellToken, previousSolutionTokenIdForPrice)];
-                uint128 newSellAmount = uint128(order.sellAmount.add(sellVolume));
-                order.buyAmount = uint128(newSellAmount.mul(order.buyAmount) / order.sellAmount);
-                order.sellAmount = newSellAmount;
-
+                order.buyAmount = uint128(order.buyAmount.add(buyVolume));
+                order.sellAmount = uint128(order.sellAmount.add(sellVolume));
                 orders[owner][orderId] = order;
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
-                addBalance(owner, tokenIdToAddressMap(order.sellToken), sellVolume);
             }
-            // for (uint i = 0; i < previousSolutionTrades.length; i++) {
-            //     Order memory order = orders[previousSolutionTrades[i].owner][previousSolutionTrades[i].orderId];
-            //     uint sellVolume = previousSolutionTrades[i].volume;
-            //     uint buyVolume = sellVolume
-            //         .mul(previousSolutionPrices[findPriceIndex(order.buyToken, previousSolutionTokenIdForPrice)]) /
-            //         previousSolutionPrices[findPriceIndex(order.sellToken, previousSolutionTokenIdForPrice)];
-            //     subtractBalance(previousSolutionTrades[i].owner, tokenIdToAddressMap(order.buyToken), buyVolume);
-            // }
         }
-        delete previousSolutionTrades;
-        delete previousSolutionPrices;
     }
 }
 
