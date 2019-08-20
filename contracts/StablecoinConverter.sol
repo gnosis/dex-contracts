@@ -110,12 +110,13 @@ contract StablecoinConverter is EpochTokenLocker {
         return IdToAddressBiMap.getAddressAt(registeredTokens, id);
     }
 
+    mapping (uint16 => uint128) public currentPrices;
     struct TradeData {
         address owner;
         uint volume;
         uint16 orderIds;
     }
-    mapping (uint16 => uint128) public currentPrice;
+
     function submitSolution(
         uint32 batchIndex,
         address[] memory owners,  //tradeData is submitted as arrays
@@ -136,10 +137,10 @@ contract StablecoinConverter is EpochTokenLocker {
             require(order.validUntil >= batchIndex, "Order is no longer valid");
             // Assume for now that we always have sellOrders
             uint128 executedSellAmount = volumes[i];
-            require(currentPrice[order.sellToken] != 0, "prices are not allowed to be zero");
+            require(currentPrices[order.sellToken] != 0, "prices are not allowed to be zero");
             uint128 executedBuyAmount = uint128(
-                volumes[i].mul(currentPrice[order.buyToken]) /
-                currentPrice[order.sellToken]
+                volumes[i].mul(currentPrices[order.buyToken]) /
+                currentPrices[order.sellToken]
             );
             // Ensure executed price is not lower than the order price:
             //       executedSellAmount / executedBuyAmount >= order.sellAmount / order.buyAmount
@@ -168,12 +169,12 @@ contract StablecoinConverter is EpochTokenLocker {
         orders[owner][orderId].sellAmount = newSellAmount;
     }
 
-    function writeCurrentPrices(
+    function CurrentPrices(
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
         for (uint i = 0; i < tokenIdsForPrice.length; i++) {
-            currentPrice[tokenIdsForPrice[i]] = prices[i];
+            currentPrices[tokenIdsForPrice[i]] = prices[i];
         }
     }
 }
