@@ -640,7 +640,6 @@ contract("StablecoinConverter", async (accounts) => {
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdForPrice)
-
       )
     })
     it("reverts, if a trade touches a token, for which no price is provided", async () => {
@@ -666,12 +665,11 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = [user_1, user_2]  //tradeData is submitted as arrays
       const orderId = [orderId1, orderId2]
       const volume = [10, 20]
-      const tokenIdForPrice = [0, 0]
-
+      const tokenIdsForPrice = [0, 0]
 
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdForPrice),
-        "Price not provided for token"
+        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
+        "prices are not allowed to be zero"
       )
     })
   })
