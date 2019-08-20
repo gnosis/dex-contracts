@@ -959,14 +959,14 @@ contract("SnappAuction", async (accounts) => {
       // Wait for current order slot to be inactive
       await waitForNSeconds(181)
 
-      // reject Equal
-      await truffleAssert.reverts(
-        instance.auctionSolutionBid(current_slot, current_state, orderhash, standingOrderIndexList, new_state, 0),
-        "Proposed objective value is less than existing"
-      )
-
       await instance.auctionSolutionBid(
         current_slot, current_state, orderhash, standingOrderIndexList, new_state, low_objective
+      )
+
+      // reject Equal
+      await truffleAssert.reverts(
+        instance.auctionSolutionBid(current_slot, current_state, orderhash, standingOrderIndexList, new_state, low_objective),
+        "Proposed objective value is less than existing"
       )
 
       // reject less than
@@ -987,7 +987,14 @@ contract("SnappAuction", async (accounts) => {
       // Wait for current order slot to be inactive
       await waitForNSeconds(181)
 
-      await instance.auctionSolutionBid(slot, current_state, new_state, 0, { from: user_1 })
+      const AUCTION_RESERVED_ACCOUNTS = await instance.AUCTION_RESERVED_ACCOUNTS()
+      const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
+      standingOrderIndexList.fill(0)
+      const orderhash = await instance.calculateOrderHash(slot, standingOrderIndexList)
+
+      await instance.auctionSolutionBid(
+        slot, current_state, orderhash, standingOrderIndexList, new_state, 0, { from: user_1 }
+      )
 
       const auction_results = await instance.auctions(slot)
       assert.equal(auction_results.objectiveValue, 0)
