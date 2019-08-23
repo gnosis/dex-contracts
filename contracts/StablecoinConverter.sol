@@ -155,8 +155,11 @@ contract StablecoinConverter is EpochTokenLocker {
         }
         // doing all subtractions after all additions (in order to avoid negative values)
         for (uint i = 0; i < len; i++) {
-            Order memory order = orders[owners[i]][orderIds[i]];
-            subtractBalance(owners[i], tokenIdToAddressMap(order.sellToken), volumes[i]);
+            subtractBalance(
+                owners[i],
+                tokenIdToAddressMap(orders[owners[i]][orderIds[i]].sellToken),
+                volumes[i]
+            );
         }
     }
 
