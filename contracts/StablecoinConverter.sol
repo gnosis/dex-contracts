@@ -144,9 +144,9 @@ contract StablecoinConverter is EpochTokenLocker {
                 currentPrices[order.sellToken]
             );
             // Ensure executed price is not lower than the order price:
-            //       executedSellAmount / executedBuyAmount >= order.sellAmount / order.buyAmount
+            //       executedSellAmount / executedBuyAmount <= order.sellAmount / order.buyAmount
             require(
-                executedSellAmount.mul(order.buyAmount) >= executedBuyAmount.mul(order.sellAmount),
+                executedSellAmount.mul(order.buyAmount) <= executedBuyAmount.mul(order.sellAmount),
                 "limit price not satisfied"
             );
             require(order.sellAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
