@@ -245,7 +245,7 @@ contract SnappAuction is SnappBase {
 
         // Ensure proposed value exceeds current max.
         require(
-            proposedObjectiveValue > auctions[slot].objectiveValue,
+            auctions[slot].objectiveValue == 0 || proposedObjectiveValue > auctions[slot].objectiveValue,
             "Proposed objective value is less than existing"
         );
 
