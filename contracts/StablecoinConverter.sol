@@ -110,10 +110,13 @@ contract StablecoinConverter is EpochTokenLocker {
         return IdToAddressBiMap.getAddressAt(registeredTokens, id);
     }
 
-    uint public previousSolutionBatchId;
-    TradeData[] public previousSolutionTrades;
     mapping (uint16 => uint128) public currentPrices;
-    uint16[] public previousSolutionTokenIdForPrice;
+    PreviousSolutionData public previousSolution;
+    struct PreviousSolutionData {
+        uint batchId;
+        TradeData[] trades;
+        uint16[] tokenIdsForPrice;
+    }
 
     struct TradeData {
         address owner;
@@ -135,7 +138,7 @@ contract StablecoinConverter is EpochTokenLocker {
         );
         undoPreviousSolution(batchIndex);
         updateCurrentPrices(prices, tokenIdsForPrice);
-        delete previousSolutionTrades;
+        delete previousSolution.trades;
         for (uint i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(order.validFrom <= batchIndex, "Order is not yet valid");
@@ -165,7 +168,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 volumes[i]
             );
         }
-        documentTrades(batchIndex, owners, orderIds, volumes, prices, tokenIdsForPrice);
+        documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
 
     function updateRemainingOrder(
@@ -186,8 +189,8 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
-        for (uint i = 0; i < previousSolutionTokenIdForPrice.length; i++) {
-            currentPrices[previousSolutionTokenIdForPrice[i]] = 0;
+        for (uint i = 0; i < previousSolution.tokenIdsForPrice.length; i++) {
+            currentPrices[previousSolution.tokenIdsForPrice[i]] = 0;
         }
         for (uint i = 0; i < tokenIdsForPrice.length; i++) {
             currentPrices[tokenIdsForPrice[i]] = prices[i];
@@ -199,36 +202,33 @@ contract StablecoinConverter is EpochTokenLocker {
         address[] memory owners,  //tradeData is submitted as arrays
         uint16[] memory orderIds,
         uint128[] memory volumes,
-        uint128[] memory prices,
         uint16[] memory tokenIdsForPrice
     ) internal {
-        previousSolutionBatchId = batchIndex;
+        previousSolution.batchId = batchIndex;
         for (uint i = 0; i < owners.length; i++) {
-            previousSolutionTrades.push(TradeData({
+            previousSolution.trades.push(TradeData({
                 owner: owners[i],
                 orderId: orderIds[i],
                 volume: volumes[i]
             }));
         }
-        for (uint i = 0; i < prices.length; i++) {
-            previousSolutionTokenIdForPrice.push(tokenIdsForPrice[i]);
-        }
+        previousSolution.tokenIdsForPrice = tokenIdsForPrice;
     }
 
     function undoPreviousSolution(uint batchIndex) internal {
-        if (previousSolutionBatchId == batchIndex) {
-            for (uint i = 0; i < previousSolutionTrades.length; i++) {
-                address owner = previousSolutionTrades[i].owner;
-                uint orderId = previousSolutionTrades[i].orderId;
+        if (previousSolution.batchId == batchIndex) {
+            for (uint i = 0; i < previousSolution.trades.length; i++) {
+                address owner = previousSolution.trades[i].owner;
+                uint orderId = previousSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                uint sellVolume = previousSolutionTrades[i].volume;
+                uint sellVolume = previousSolution.trades[i].volume;
                 addBalance(owner, tokenIdToAddressMap(order.sellToken), sellVolume);
             }
-            for (uint i = 0; i < previousSolutionTrades.length; i++) {
-                address owner = previousSolutionTrades[i].owner;
-                uint orderId = previousSolutionTrades[i].orderId;
+            for (uint i = 0; i < previousSolution.trades.length; i++) {
+                address owner = previousSolution.trades[i].owner;
+                uint orderId = previousSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                uint sellVolume = previousSolutionTrades[i].volume;
+                uint sellVolume = previousSolution.trades[i].volume;
                 uint buyVolume = sellVolume
                     .mul(currentPrices[order.buyToken]) /
                     currentPrices[order.sellToken];

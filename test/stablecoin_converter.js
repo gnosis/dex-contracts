@@ -266,7 +266,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(await stablecoinConverter.getBalance.call(user_2, erc20_1.address), 10, "Bought tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), 0, "Sold tokens were not adjusted correctly")
     })
-    it("checks solution submission with 3 different solutions", async () => {
+    it("checks that the 2nd solution is also correctly documented and can be reverted by a 3rd solution", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
@@ -290,8 +290,6 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = [user_1, user_2]  //tradeData is submitted as arrays
       const orderId = [orderId1, orderId2]
       const volume = [5, 10]
-
-
       const tokenIdForPrice = [0, 1]
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdForPrice)
@@ -319,7 +317,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(await stablecoinConverter.getBalance.call(user_2, erc20_1.address), 10, "Bought tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), 0, "Sold tokens were not adjusted correctly")
     })
-    it("checks that solutiontrades are delete even if balances get temporarly negative while reverting ", async () => {
+    it("checks that solution trades are deleted even if balances get temporarily negative while reverting ", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
@@ -360,7 +358,7 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
 
     })
-    it("checks that trades documented from a previous trade are deleted, before new trades are documented", async () => {
+    it("checks that trades documented from a previous batch are deleted, before new trades are documented", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
