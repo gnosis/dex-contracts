@@ -162,7 +162,7 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 20, 10, { from: user_1 })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 10, 20, { from: user_1 })
       const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex + 1, 20, 20, { from: user_2 })
       // close auction
       await waitForNSeconds(BATCH_TIME)
@@ -561,7 +561,7 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex, 19, 10, { from: user_1 })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex, 21, 10, { from: user_1 })
       const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex, 10, 20, { from: user_2 })
       // close auction
       await waitForNSeconds(BATCH_TIME)
@@ -650,7 +650,7 @@ contract("StablecoinConverter", async (accounts) => {
       await erc20_1.givenAnyReturnBool(true)
       await erc20_2.givenAnyReturnBool(true)
 
-      await stablecoinConverter.deposit(erc20_1.address, 8, { from: user_1 })
+      await stablecoinConverter.deposit(erc20_1.address, 10, { from: user_1 })
       await stablecoinConverter.deposit(erc20_2.address, 20, { from: user_2 })
 
       await stablecoinConverter.addToken(erc20_1.address)
@@ -665,7 +665,7 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = [user_1, user_2]  //tradeData is submitted as arrays
       const orderId = [orderId1, orderId2]
       const volume = [10, 20]
-      const tokenIdsForPrice = [0, 0]
+      const tokenIdsForPrice = [1, 1]
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
