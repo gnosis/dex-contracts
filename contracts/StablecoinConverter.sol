@@ -271,7 +271,9 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function checkPriceOrdering(uint16[] memory tokenIdForPrice) private pure returns (bool) {
         for (uint i = 1; i < tokenIdForPrice.length; i++) {
-            require(tokenIdForPrice[i] > tokenIdForPrice[i - 1], "prices are not sorted");
+            if(tokenIdForPrice[i] <= tokenIdForPrice[i - 1]){
+                return false;
+            }
         }
         return true;
     }

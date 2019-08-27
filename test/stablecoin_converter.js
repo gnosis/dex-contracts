@@ -309,7 +309,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(await stablecoinConverter.getBalance.call(user_2, erc20_1.address), 10, "Bought tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), 0, "Sold tokens were not adjusted correctly")
     })
-    it("checks that solutiontrades are delete even if balances get temporarly negative while reverting ", async () => {
+    it("checks that solution trades are deleted even if balances get temporarily negative while reverting ", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
@@ -651,7 +651,7 @@ contract("StablecoinConverter", async (accounts) => {
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdForPrice)
       )
     })
-    it("reverts, if a trade touches a token, for which no price is provided in function findPriceIndex", async () => {
+    it("reverts, if a trade touches a token, for which no price is provided and hence the binary search for the price fails", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
@@ -711,7 +711,7 @@ contract("StablecoinConverter", async (accounts) => {
         "prices are not sorted"
       )
     })
-    it("reverts, if a trade touches a token, for which no price is provided", async () => {
+    it("reverts, if a trade touches a token, for which no price is provided and therefore would divide by 0", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
