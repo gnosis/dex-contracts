@@ -128,7 +128,7 @@ contract EpochTokenLocker {
         balanceStates[user][token].balance = balanceStates[user][token].balance.add(amount);
     }
 
-    function substractBalance(address user, address token, uint amount) internal {
+    function subtractBalance(address user, address token, uint amount) internal {
         updateDepositsBalance(user, token);
         balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
     }

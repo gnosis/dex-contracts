@@ -7,7 +7,7 @@ import "./libraries/IdToAddressBiMap.sol";
 
 
 contract StablecoinConverter is EpochTokenLocker {
-    using SafeMath for uint;
+    using SafeMath for uint128;
     using BytesLib for bytes32;
 
     event OrderPlacement(
@@ -17,8 +17,8 @@ contract StablecoinConverter is EpochTokenLocker {
         bool isSellOrder,
         uint32 validFrom,
         uint32 validUntil,
-        uint256 buyAmount,
-        uint256 sellAmount
+        uint128 buyAmount,
+        uint128 sellAmount
     );
 
     event OrderCancelation(
@@ -41,6 +41,7 @@ contract StablecoinConverter is EpochTokenLocker {
     mapping(address => Order[]) public orders;
 
     IdToAddressBiMap.Data private registeredTokens;
+
     uint public MAX_TOKENS; // solhint-disable-line
     uint16 public numTokens = 0;
 
@@ -107,5 +108,77 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function tokenIdToAddressMap(uint16 id) public view returns (address) {
         return IdToAddressBiMap.getAddressAt(registeredTokens, id);
+    }
+
+    mapping (uint16 => uint128) public currentPrices;
+
+    struct TradeData {
+        address owner;
+        uint volume;
+        uint16 orderIds;
+    }
+
+    function submitSolution(
+        uint32 batchIndex,
+        address[] memory owners,  //tradeData is submitted as arrays
+        uint16[] memory orderIds,
+        uint128[] memory volumes,
+        uint128[] memory prices,  //list of prices for touched token only
+        uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+    ) public {
+        require(
+            batchIndex == getCurrentStateIndex() - 1,
+            "Solutions are no longer accepted for this batch"
+        );
+        writeCurrentPrices(prices, tokenIdsForPrice);
+        uint len = owners.length;
+        for (uint i = 0; i < len; i++) {
+            Order memory order = orders[owners[i]][orderIds[i]];
+            require(order.validFrom <= batchIndex, "Order is not yet valid");
+            require(order.validUntil >= batchIndex, "Order is no longer valid");
+            // Assume for now that we always have sellOrders
+            uint128 executedSellAmount = volumes[i];
+            require(currentPrices[order.sellToken] != 0, "prices are not allowed to be zero");
+            uint128 executedBuyAmount = uint128(
+                volumes[i].mul(currentPrices[order.buyToken]) /
+                currentPrices[order.sellToken]
+            );
+            // Ensure executed price is not lower than the order price:
+            //       executedSellAmount / executedBuyAmount <= order.sellAmount / order.buyAmount
+            require(
+                executedSellAmount.mul(order.buyAmount) <= executedBuyAmount.mul(order.sellAmount),
+                "limit price not satisfied"
+            );
+            require(order.sellAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
+            updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
+            addBalance(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
+        }
+        // doing all subtractions after all additions (in order to avoid negative values)
+        for (uint i = 0; i < len; i++) {
+            subtractBalance(
+                owners[i],
+                tokenIdToAddressMap(orders[owners[i]][orderIds[i]].sellToken),
+                volumes[i]
+            );
+        }
+    }
+
+    function updateRemainingOrder(address owner, uint orderId, uint128 executedSellAmount) internal returns (uint) {
+        Order memory order = orders[owner][orderId];
+        uint128 newSellAmount = uint128(order.sellAmount.sub(executedSellAmount));
+        orders[owner][orderId].buyAmount = uint128(
+            newSellAmount
+            .mul(order.buyAmount) / order.sellAmount
+        );
+        orders[owner][orderId].sellAmount = newSellAmount;
+    }
+
+    function writeCurrentPrices(
+        uint128[] memory prices,  //list of prices for touched token only
+        uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+    ) internal {
+        for (uint i = 0; i < tokenIdsForPrice.length; i++) {
+            currentPrices[tokenIdsForPrice[i]] = prices[i];
+        }
     }
 }
