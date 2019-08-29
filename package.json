@@ -47,7 +47,6 @@
     "ethereumjs-util": "^6.0.0",
     "fast-memoize": "^2.5.1",
     "merkletreejs": "0.0.22",
-    "mongodb": "^3.1.13",
     "@gnosis.pm/mock-contract": "^3.0.7",
     "openzeppelin-solidity": "2.1.1",
     "solidity-bytes-utils": "0.0.8"
