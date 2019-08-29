@@ -9,25 +9,25 @@ const { encodePacked_16_8_128 } = require("../test/snapp_utils.js")
 const MerkleTree = require("merkletreejs")
 const { toHex } = require("../test/utilities.js")
 
-const MongoClient = require("mongodb").MongoClient
-const url = process.env.MONGO_URL ||  "mongodb://localhost:27017/"
-const dbName = process.env.DB_NAME || "dfusion2"
+const axios = require("axios")
+const url = process.env.GRAPH_URL || "http://localhost:8000/subgraphs/name/dfusion"
 
-const withdraw_search = async function(db_name, _slot, valid=null, a_id=null, t_id=null) {
-  const db = await MongoClient.connect(url)
-  const collectionName = "withdraws"
-  const dbo = db.db(db_name)
-  const query = { 
-    slot: parseInt(_slot)
-  }
-  if (a_id) query["accountId"] = parseInt(a_id)
-  if (t_id) query["tokenId"] = parseInt(t_id)
-  if (valid) query.valid = true
+const withdraw_search = async function (_slot, valid = null, a_id = null, t_id = null) {
+  let where_clause = `slot: ${_slot} `
+  if (a_id) where_clause += `accountId: ${parseInt(a_id)} `
+  if (t_id) where_clause += `tokenId: ${parseInt(t_id)} `
+  if (valid) where_clause += `valid: ${valid}`
 
-  console.log(`Querying ${collectionName} with`, query)
-  const res = await dbo.collection(collectionName).find(query).toArray()
-  db.close()
-  return res
+  const response = await axios.post(url, {
+    query: `query {
+              withdraws(where: { ${where_clause} }) {
+                id, accountId, tokenId, amount, slot, slotIndex, valid
+              }
+            }`
+  })
+  // GraphQL returns "bad" json in that keys are not surrounded by quotes ({"data": {}" vs {data: {}}).
+  // Therefore JSON.parse() fails, since this is only used in tests, using eval should be ok
+  return eval(response.data).data.withdraws
 }
 
 
@@ -38,7 +38,7 @@ module.exports = async (callback) => {
       callback("Error: This script requires arguments - <slot> <accountId> <tokenId>")
     }
     const [slot, accountId, tokenId] = arguments
-    
+
     const instance = await SnappAuction.deployed()
 
     // Verify account and token
@@ -55,14 +55,15 @@ module.exports = async (callback) => {
       callback(`Error: Requested slot ${slot} not been processed!`)
     }
 
-    const valid_withdrawals = await withdraw_search(dbName, slot, true, accountId, tokenId)
+    const valid_withdrawals = await withdraw_search(slot, true, accountId, tokenId)
+    console.log(valid_withdrawals)
     if (valid_withdrawals.length == 0) {
       callback(`Error: No valid withdraw found in slot ${slot}`)
     }
-    
+
     console.log("Reconstructing Merkle Tree from leaf nodes")
-    const all_withdraws = await withdraw_search(dbName, slot)
-    const withdraw_hashes = Array(2**7).fill(Buffer.alloc(32))
+    const all_withdraws = await withdraw_search(slot)
+    const withdraw_hashes = Array(2 ** 7).fill(Buffer.alloc(32))
     for (let i = 0; i < all_withdraws.length; i++) {
       const withdraw = all_withdraws[i]
       if (withdraw.valid) {
@@ -92,15 +93,15 @@ module.exports = async (callback) => {
 
         const token = await ERC20.at(token_address)
         const balance_before = await token.balanceOf(depositor)
-        
+
         await instance.claimWithdrawal(slot, toClaim.slotIndex, accountId, tokenId, toClaim.amount, proof)
-        
+
         const balance_after = await token.balanceOf(depositor)
         console.log(`Success! Balance of token ${tokenId} before claim: ${balance_before}, after claim: ${balance_after}`)
       }
     }
     callback()
-  } catch(error) {
+  } catch (error) {
     callback(error)
   }
 }
