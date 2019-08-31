@@ -651,7 +651,7 @@ contract("StablecoinConverter", async (accounts) => {
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdForPrice)
       )
     })
-    it("reverts, if a trade touches a token, for which no price is provided and hence the binary search for the price fails", async () => {
+    it("reverts, if price for buyToken not specified", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
@@ -711,7 +711,7 @@ contract("StablecoinConverter", async (accounts) => {
         "prices are not ordered by tokenId"
       )
     })
-    it("reverts, if a trade touches a token, for which no price is provided and therefore would divide by 0", async () => {
+    it("reverts, if price for sellToken not specified", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
