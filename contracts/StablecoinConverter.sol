@@ -121,7 +121,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     struct TradeData {
         address owner;
-        uint volume;
+        uint128 volume;
         uint16 orderId;
     }
 
@@ -149,8 +149,9 @@ contract StablecoinConverter is EpochTokenLocker {
             // Assume for now that we always have sellOrders
             uint128 executedSellAmount = volumes[i];
             require(currentPrices[order.sellToken] != 0, "prices are not allowed to be zero");
-            uint128 executedBuyAmount = uint128(
-                volumes[i].mul(currentPrices[order.buyToken]) /
+            uint128 executedBuyAmount = getExecutedBuyAmount(
+                volumes[i],
+                currentPrices[order.buyToken],
                 currentPrices[order.sellToken]
             );
             // Ensure executed price is not lower than the order price:
@@ -185,6 +186,17 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
+    function getExecutedBuyAmount(
+        uint128 executedSellAmount,
+        uint128 buyTokenPrice,
+        uint128 sellTokenPrice
+    ) internal pure returns (uint128) {
+        return uint128(
+            executedSellAmount.mul(buyTokenPrice) /
+            sellTokenPrice
+        );
+    }
+
     function updateRemainingOrder(
         address owner,
         uint orderId,
@@ -203,9 +215,6 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
-        for (uint i = 0; i < previousSolution.tokenIdsForPrice.length; i++) {
-            currentPrices[previousSolution.tokenIdsForPrice[i]] = 0;
-        }
         for (uint i = 0; i < tokenIdsForPrice.length; i++) {
             currentPrices[tokenIdsForPrice[i]] = prices[i];
         }
@@ -242,10 +251,12 @@ contract StablecoinConverter is EpochTokenLocker {
                 address owner = previousSolution.trades[i].owner;
                 uint orderId = previousSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                uint sellVolume = previousSolution.trades[i].volume;
-                uint buyVolume = sellVolume
-                    .mul(currentPrices[order.buyToken]) /
-                    currentPrices[order.sellToken];
+                uint128 sellVolume = previousSolution.trades[i].volume;
+                uint128 buyVolume = getExecutedBuyAmount(
+                    sellVolume,
+                    currentPrices[order.buyToken],
+                    currentPrices[order.sellToken]
+                );
                 order.buyAmount = uint128(order.buyAmount.add(buyVolume));
                 order.sellAmount = uint128(order.sellAmount.add(sellVolume));
                 orders[owner][orderId] = order;

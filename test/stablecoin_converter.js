@@ -178,7 +178,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(await stablecoinConverter.getBalance.call(user_2, erc20_1.address), 10, "Bought tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), 10, "Sold tokens were not adjusted correctly")
     })
-    it("places two orders, matches them partically and then checks correct order adjustments", async () => {
+    it("places two orders, matches them partially and then checks correct order adjustments", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
@@ -219,7 +219,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((orderResult2.sellAmount).toNumber(), 10, "sellAmount was stored incorrectly")
       assert.equal((orderResult2.buyAmount).toNumber(), 5, "buyAmount was stored incorrectly")
     })
-    it("places two orders and first matches them partically and then fully in a 2nd solution submission", async () => {
+    it("places two orders and first matches them partially and then fully in a 2nd solution submission", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
       const erc20_1 = await MockContract.new()
       const erc20_2 = await MockContract.new()
