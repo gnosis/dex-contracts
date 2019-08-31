@@ -147,8 +147,9 @@ contract StablecoinConverter is EpochTokenLocker {
             // Assume for now that we always have sellOrders
             uint128 executedSellAmount = volumes[i];
             require(currentPrices[order.sellToken] != 0, "prices are not allowed to be zero");
-            uint128 executedBuyAmount = uint128(
-                volumes[i].mul(currentPrices[order.buyToken]) /
+            uint128 executedBuyAmount = getExecutedBuyAmount(
+                volumes[i],
+                currentPrices[order.buyToken],
                 currentPrices[order.sellToken]
             );
             // Ensure executed price is not lower than the order price:
@@ -172,6 +173,16 @@ contract StablecoinConverter is EpochTokenLocker {
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
 
+    function getExecutedBuyAmount(
+        uint128 executedSellAmount,
+        uint128 buyTokenPrice,
+        uint128 sellTokenPrice
+    ) internal returns (uint128) {
+        return uint128(
+            executedSellAmount.mul(buyTokenPrice) /
+            sellTokenPrice
+        );
+    }
     function updateRemainingOrder(
         address owner,
         uint orderId,
@@ -230,9 +241,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 uint orderId = previousSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
                 uint sellVolume = previousSolution.trades[i].volume;
-                uint buyVolume = sellVolume
-                    .mul(currentPrices[order.buyToken]) /
-                    currentPrices[order.sellToken];
+                uint buyVolume = getExecutedBuyAmount(volumes[i], currentPrices[order.buyToken], currentPrices[order.sellToken]);
                 order.buyAmount = uint128(order.buyAmount.add(buyVolume));
                 order.sellAmount = uint128(order.sellAmount.add(sellVolume));
                 orders[owner][orderId] = order;
