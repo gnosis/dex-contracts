@@ -7,14 +7,14 @@ const { getArgumentsHelper } = require("./script_utilities.js")
 module.exports = async (callback) => {
   try {
     const arguments = getArgumentsHelper()
-    if (arguments.length != 1) {
-      callback("Error: This script requires arguments - <functionName>")
+    if (arguments.length < 1) {
+      callback("Error: This script requires arguments - <functionName> [..args]")
     }
-    const [functionName] = arguments
-    
+    const [functionName, ...args] = arguments
+
     const instance = await SnappAuction.deployed()
-    const info = await instance[functionName].call()
-    
+    const info = await instance[functionName].call(...args)
+
     console.log(info)
     callback()
   } catch (error) {

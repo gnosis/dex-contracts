@@ -119,6 +119,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] tokenIdsForPrice;
     }
 
+
     struct TradeData {
         address owner;
         uint volume;
@@ -197,13 +198,10 @@ contract StablecoinConverter is EpochTokenLocker {
         orders[owner][orderId].sellAmount = newSellAmount;
     }
 
-    function updateCurrentPrices(
+    function writeCurrentPrices(
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
-        for (uint i = 0; i < previousSolution.tokenIdsForPrice.length; i++) {
-            currentPrices[previousSolution.tokenIdsForPrice[i]] = 0;
-        }
         for (uint i = 0; i < tokenIdsForPrice.length; i++) {
             currentPrices[tokenIdsForPrice[i]] = prices[i];
         }
@@ -250,4 +248,3 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 }
-
