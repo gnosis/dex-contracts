@@ -183,6 +183,7 @@ contract StablecoinConverter is EpochTokenLocker {
             sellTokenPrice
         );
     }
+
     function updateRemainingOrder(
         address owner,
         uint orderId,
