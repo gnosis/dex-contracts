@@ -137,9 +137,11 @@ contract StablecoinConverter is EpochTokenLocker {
             batchIndex == getCurrentStateIndex() - 1,
             "Solutions are no longer accepted for this batch"
         );
+        require(checkPriceOrdering(tokenIdsForPrice), "prices are not ordered by tokenId");
         undoPreviousSolution(batchIndex);
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
+        int[] memory tokenConservation = new int[](prices.length);
         for (uint i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(order.validFrom <= batchIndex, "Order is not yet valid");
@@ -160,6 +162,8 @@ contract StablecoinConverter is EpochTokenLocker {
             );
             require(order.sellAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
+            tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] += int(executedBuyAmount);
+            tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] -= int(executedSellAmount);
             addBalance(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
         }
         // doing all subtractions after all additions (in order to avoid negative values)
@@ -170,7 +174,16 @@ contract StablecoinConverter is EpochTokenLocker {
                 volumes[i]
             );
         }
+        checkTokenConservation(tokenConservation);
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
+    }
+
+    function checkTokenConservation(
+        int[] memory tokenConservation
+    ) internal view {
+        for (uint i = 0; i < tokenConservation.length; i++) {
+            require(tokenConservation[i] == 0, "Token conservation does not hold");
+        }
     }
 
     function getExecutedBuyAmount(
@@ -250,5 +263,30 @@ contract StablecoinConverter is EpochTokenLocker {
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
             }
         }
+    }
+
+    function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
+        uint leftValue = 0;
+        uint rightValue = tokenIdForPrice.length - 1;
+        while (rightValue >= leftValue) {
+            uint middleValue = leftValue + (rightValue-leftValue) / 2;
+            if (tokenIdForPrice[middleValue] == index) {
+                return middleValue;
+            } else if (tokenIdForPrice[middleValue] < index) {
+                leftValue = middleValue + 1;
+            } else {
+                rightValue = middleValue - 1;
+            }
+        }
+        revert("Price not provided for token");
+    }
+
+    function checkPriceOrdering(uint16[] memory tokenIdForPrice) private pure returns (bool) {
+        for (uint i = 1; i < tokenIdForPrice.length; i++) {
+            if (tokenIdForPrice[i] <= tokenIdForPrice[i - 1]) {
+                return false;
+            }
+        }
+        return true;
     }
 }
