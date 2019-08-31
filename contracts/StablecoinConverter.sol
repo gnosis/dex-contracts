@@ -119,10 +119,9 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] tokenIdsForPrice;
     }
 
-
     struct TradeData {
         address owner;
-        uint volume;
+        uint128 volume;
         uint16 orderId;
     }
 
@@ -178,7 +177,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 executedSellAmount,
         uint128 buyTokenPrice,
         uint128 sellTokenPrice
-    ) internal returns (uint128) {
+    ) internal pure returns (uint128) {
         return uint128(
             executedSellAmount.mul(buyTokenPrice) /
             sellTokenPrice
@@ -198,7 +197,7 @@ contract StablecoinConverter is EpochTokenLocker {
         orders[owner][orderId].sellAmount = newSellAmount;
     }
 
-    function writeCurrentPrices(
+    function updateCurrentPrices(
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
@@ -238,8 +237,12 @@ contract StablecoinConverter is EpochTokenLocker {
                 address owner = previousSolution.trades[i].owner;
                 uint orderId = previousSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                uint sellVolume = previousSolution.trades[i].volume;
-                uint buyVolume = getExecutedBuyAmount(volumes[i], currentPrices[order.buyToken], currentPrices[order.sellToken]);
+                uint128 sellVolume = previousSolution.trades[i].volume;
+                uint128 buyVolume = getExecutedBuyAmount(
+                    sellVolume,
+                    currentPrices[order.buyToken],
+                    currentPrices[order.sellToken]
+                );
                 order.buyAmount = uint128(order.buyAmount.add(buyVolume));
                 order.sellAmount = uint128(order.sellAmount.add(sellVolume));
                 orders[owner][orderId] = order;
