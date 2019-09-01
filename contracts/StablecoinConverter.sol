@@ -35,6 +35,7 @@ contract StablecoinConverter is EpochTokenLocker {
         bool isSellOrder;
         uint128 buyAmount;
         uint128 sellAmount;
+        uint128 volume;
     }
 
     // User-> Order
@@ -73,7 +74,8 @@ contract StablecoinConverter is EpochTokenLocker {
             validUntil: validUntil,
             isSellOrder: isSellOrder,
             buyAmount: buyAmount,
-            sellAmount: sellAmount
+            sellAmount: sellAmount,
+            volume: sellAmount
         }));
         emit OrderPlacement(
             msg.sender,
@@ -180,7 +182,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function checkTokenConservation(
         int[] memory tokenConservation
-    ) internal view {
+    ) internal pure {
         for (uint i = 0; i < tokenConservation.length; i++) {
             require(tokenConservation[i] == 0, "Token conservation does not hold");
         }
@@ -200,15 +202,17 @@ contract StablecoinConverter is EpochTokenLocker {
     function updateRemainingOrder(
         address owner,
         uint orderId,
-        uint128 executedSellAmount
+        uint128 volume
     ) internal returns (uint) {
-        Order memory order = orders[owner][orderId];
-        uint128 newSellAmount = uint128(order.sellAmount.sub(executedSellAmount));
-        orders[owner][orderId].buyAmount = uint128(
-            newSellAmount
-            .mul(order.buyAmount) / order.sellAmount
-        );
-        orders[owner][orderId].sellAmount = newSellAmount;
+        orders[owner][orderId].volume = uint128(orders[owner][orderId].volume.sub(volume));
+    }
+
+    function revertRemainingOrder(
+        address owner,
+        uint orderId,
+        uint128 volume
+    ) internal returns (uint) {
+        orders[owner][orderId].volume = uint128(orders[owner][orderId].volume.add(volume));
     }
 
     function updateCurrentPrices(
@@ -257,9 +261,7 @@ contract StablecoinConverter is EpochTokenLocker {
                     currentPrices[order.buyToken],
                     currentPrices[order.sellToken]
                 );
-                order.buyAmount = uint128(order.buyAmount.add(buyVolume));
-                order.sellAmount = uint128(order.sellAmount.add(sellVolume));
-                orders[owner][orderId] = order;
+                revertRemainingOrder(owner, orderId, previousSolution.trades[i].volume);
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
             }
         }
