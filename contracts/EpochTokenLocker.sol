@@ -60,8 +60,8 @@ contract EpochTokenLocker {
             ERC20(token).transferFrom(msg.sender, address(this), amount),
             "Tokentransfer for deposit was not successful"
         );
-        balanceStates[msg.sender].balances[token].pendingDeposits.amount 
-            = balanceStates[msg.sender].balances[token].pendingDeposits.amount.add(amount);
+        balanceStates[msg.sender].balances[token].pendingDeposits.amount = balanceStates[msg.sender]
+            .balances[token].pendingDeposits.amount.add(amount);
         balanceStates[msg.sender].balances[token].pendingDeposits.stateIndex = currentStateIndex;
 
         if (!balanceStates[msg.sender].isAddedToGlobalAccountsList) {
@@ -73,9 +73,9 @@ contract EpochTokenLocker {
 
     function requestWithdraw(address token, uint amount) public {
         updateStateIndex();
-        balanceStates[msg.sender].balances[token].pendingWithdraws = PendingFlux({ 
-            amount: amount, 
-            stateIndex: currentStateIndex 
+        balanceStates[msg.sender].balances[token].pendingWithdraws = PendingFlux({
+            amount: amount,
+            stateIndex: currentStateIndex
         });
         emit WithdrawRequest(msg.sender, token, amount, currentStateIndex);
     }
