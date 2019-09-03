@@ -17,8 +17,8 @@ contract StablecoinConverter is EpochTokenLocker {
         bool isSellOrder,
         uint32 validFrom,
         uint32 validUntil,
-        uint128 buyAmount,
-        uint128 sellAmount
+        uint128 priceNominator,
+        uint128 priceDenominator
     );
 
     event OrderCancelation(
@@ -26,15 +26,15 @@ contract StablecoinConverter is EpochTokenLocker {
         uint id
     );
 
-    //outstanding remainingAmount of an order is encoded as buyAmount or sellAmount depending on isSellOrder
+    //outstanding remainingAmount of an order is encoded as priceNominator or priceDenominator depending on isSellOrder
     struct Order {
         uint16 buyToken;
         uint16 sellToken;
         uint32 validFrom;  // order is valid from auction collection period: validFrom inclusively
         uint32 validUntil;  // order is valid till auction collection period: validUntil inclusively
         bool isSellOrder;
-        uint128 buyAmount;
-        uint128 sellAmount;
+        uint128 priceNominator;
+        uint128 priceDenominator;
         uint128 remainingAmount;
     }
 
@@ -64,8 +64,8 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16 sellToken,
         bool isSellOrder,
         uint32 validUntil,
-        uint128 buyAmount,
-        uint128 sellAmount
+        uint128 priceNominator,
+        uint128 priceDenominator
     ) public returns (uint) {
         orders[msg.sender].push(Order({
             buyToken: buyToken,
@@ -73,9 +73,9 @@ contract StablecoinConverter is EpochTokenLocker {
             validFrom: getCurrentStateIndex(),
             validUntil: validUntil,
             isSellOrder: isSellOrder,
-            buyAmount: buyAmount,
-            sellAmount: sellAmount,
-            remainingAmount: sellAmount
+            priceNominator: priceNominator,
+            priceDenominator: priceDenominator,
+            remainingAmount: priceDenominator
         }));
         emit OrderPlacement(
             msg.sender,
@@ -84,8 +84,8 @@ contract StablecoinConverter is EpochTokenLocker {
             isSellOrder,
             getCurrentStateIndex(),
             validUntil,
-            buyAmount,
-            sellAmount
+            priceNominator,
+            priceDenominator
         );
         return orders[msg.sender].length - 1;
     }
@@ -157,12 +157,12 @@ contract StablecoinConverter is EpochTokenLocker {
                 currentPrices[order.sellToken]
             );
             // Ensure executed price is not lower than the order price:
-            //       executedSellAmount / executedBuyAmount <= order.sellAmount / order.buyAmount
+            //       executedSellAmount / executedBuyAmount <= order.priceDenominator / order.priceNominator
             require(
-                executedSellAmount.mul(order.buyAmount) <= executedBuyAmount.mul(order.sellAmount),
+                executedSellAmount.mul(order.priceNominator) <= executedBuyAmount.mul(order.priceDenominator),
                 "limit price not satisfied"
             );
-            require(order.sellAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
+            require(order.priceDenominator >= executedSellAmount, "executedSellAmount bigger than specified in order");
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
             tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] += int(executedBuyAmount);
             tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] -= int(executedSellAmount);
