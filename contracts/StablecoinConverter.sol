@@ -161,7 +161,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedSellAmount.mul(order.priceNumerator) <= executedBuyAmount.mul(order.priceDenominator),
                 "limit price not satisfied"
             );
-            require(order.priceDenominator >= executedSellAmount, "executedSellAmount bigger than specified in order");
+            require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
             tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] += int(executedBuyAmount);
             tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] -= int(executedSellAmount);
