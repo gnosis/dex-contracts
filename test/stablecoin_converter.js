@@ -1,13 +1,14 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const MockContract = artifacts.require("MockContract")
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
+const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
 const ERC20 = artifacts.require("ERC20")
 
 const truffleAssert = require("truffle-assertions")
 const {
   waitForNSeconds,
-  sendTxAndGetReturnValue } = require("./utilities.js")
-
+  sendTxAndGetReturnValue
+} = require("./utilities.js")
 
 contract("StablecoinConverter", async (accounts) => {
 
@@ -15,7 +16,9 @@ contract("StablecoinConverter", async (accounts) => {
   let BATCH_TIME
   beforeEach(async () => {
     const lib1 = await IdToAddressBiMap.new()
+    const lib2 = await IterableAppendOnlySet.new()
     await StablecoinConverter.link(IdToAddressBiMap, lib1.address)
+    await StablecoinConverter.link(IterableAppendOnlySet, lib2.address)
 
     const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
     BATCH_TIME = (await stablecoinConverter.BATCH_TIME.call()).toNumber()
@@ -743,6 +746,129 @@ contract("StablecoinConverter", async (accounts) => {
       )
     })
   })
+  describe("getEncodedAuctionElements", async () => {
+    it("returns all orders that are have ever been submitted", async () => {
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
+      const erc20_1 = await MockContract.new()
+      const erc20_2 = await MockContract.new()
+
+      await stablecoinConverter.addToken(erc20_1.address)
+      await stablecoinConverter.addToken(erc20_2.address)
+
+      const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+
+      await stablecoinConverter.placeOrder(1, 0, true, batchIndex, 20, 10, { from: user_1 })
+      await stablecoinConverter.placeOrder(0, 1, true, batchIndex + 10, 500, 400, { from: user_2 })
+
+      const auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements.length, 2)
+      assert.deepEqual(auctionElements[0], {
+        user: user_1.toLowerCase(),
+        buyTokenBalance: 0,
+        sellTokenBalance: 0,
+        buyToken: 1,
+        sellToken: 0,
+        validFrom: batchIndex,
+        validUntil: batchIndex,
+        isSellOrder: true,
+        buyAmount: 20,
+        sellAmount: 10,
+      })
+      assert.deepEqual(auctionElements[1], {
+        user: user_2.toLowerCase(),
+        buyTokenBalance: 0,
+        sellTokenBalance: 0,
+        buyToken: 0,
+        sellToken: 1,
+        validFrom: batchIndex,
+        validUntil: batchIndex + 10,
+        isSellOrder: true,
+        buyAmount: 500,
+        sellAmount: 400,
+      })
+    })
+    it("credits balance when it's valid", async () => {
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
+      const erc20_1 = await MockContract.new()
+      const erc20_2 = await MockContract.new()
+
+      await erc20_1.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+
+      await stablecoinConverter.addToken(erc20_1.address)
+      await stablecoinConverter.addToken(erc20_2.address)
+
+      const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+
+      await stablecoinConverter.deposit(erc20_1.address, 8, { from: user_1 })
+      await stablecoinConverter.deposit(erc20_2.address, 20, { from: user_1 })
+      await stablecoinConverter.placeOrder(0, 1, true, batchIndex, 20, 10, { from: user_1 })
+
+      let auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements[0].buyTokenBalance, 0)
+      assert.equal(auctionElements[0].sellTokenBalance, 0)
+
+      await waitForNSeconds(BATCH_TIME)
+
+      auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements[0].buyTokenBalance, 8)
+      assert.equal(auctionElements[0].sellTokenBalance, 20)
+    })
+    it("includes freed orders with empty fields", async () => {
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
+      const erc20_1 = await MockContract.new()
+      const erc20_2 = await MockContract.new()
+
+      await stablecoinConverter.addToken(erc20_1.address)
+      await stablecoinConverter.addToken(erc20_2.address)
+
+      const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+      await stablecoinConverter.placeOrder(1, 0, true, batchIndex + 10, 20, 10)
+      stablecoinConverter.cancelOrder(0)
+
+      let auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements.length, 1)
+      assert.equal(auctionElements[0].validFrom, batchIndex)
+
+      await waitForNSeconds(BATCH_TIME)
+
+      // Cancellation is active but not yet freed
+      auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements.length, 1)
+      assert.equal(auctionElements[0].validFrom, batchIndex)
+
+      await stablecoinConverter.freeStorageOfOrder(0)
+
+      auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements.length, 1)
+      assert.equal(auctionElements[0].validFrom, 0)
+    })
+    it("reverts if there are no orders", async () => {
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
+      await truffleAssert.reverts(stablecoinConverter.getEncodedAuctionElements())
+    })
+  })
 })
 
-
+const HEX_WORD_SIZE = 64
+function decodeAuctionElements(bytes) {
+  bytes = bytes.slice(2)
+  const result = []
+  while (bytes.length > 0) {
+    const element = bytes.slice(0, HEX_WORD_SIZE * 10)
+    bytes = bytes.slice(HEX_WORD_SIZE * 10)
+    result.push({
+      user: "0x" + element.slice(HEX_WORD_SIZE - 40, HEX_WORD_SIZE), // address is only 20 bytes
+      buyTokenBalance: parseInt(element.slice(HEX_WORD_SIZE, 2 * HEX_WORD_SIZE), 16),
+      sellTokenBalance: parseInt(element.slice(2 * HEX_WORD_SIZE, 3 * HEX_WORD_SIZE), 16),
+      buyToken: parseInt(element.slice(3 * HEX_WORD_SIZE, 4 * HEX_WORD_SIZE), 16),
+      sellToken: parseInt(element.slice(4 * HEX_WORD_SIZE, 5 * HEX_WORD_SIZE), 16),
+      validFrom: parseInt(element.slice(5 * HEX_WORD_SIZE, 6 * HEX_WORD_SIZE), 16),
+      validUntil: parseInt(element.slice(6 * HEX_WORD_SIZE, 7 * HEX_WORD_SIZE), 16),
+      isSellOrder: parseInt(element.slice(7 * HEX_WORD_SIZE, 8 * HEX_WORD_SIZE), 16) > 0,
+      buyAmount: parseInt(element.slice(8 * HEX_WORD_SIZE, 9 * HEX_WORD_SIZE), 16),
+      sellAmount: parseInt(element.slice(9 * HEX_WORD_SIZE, 10 * HEX_WORD_SIZE), 16),
+    })
+  }
+  return result
+}

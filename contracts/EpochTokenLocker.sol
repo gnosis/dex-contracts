@@ -31,15 +31,9 @@ contract EpochTokenLocker {
         uint amount
     );
 
-    struct AccountInformation {
-        bool isAddedToGlobalAccountsList;
-        mapping(address => BalanceState) balances;
-    }
-
     uint32 constant public BATCH_TIME = 300;
-    // User => AccountInformation
-    mapping(address => AccountInformation) private balanceStates;
-    address[] public allAccounts;
+    // User => Token => BalanceState
+    mapping(address => mapping(address => BalanceState)) private balanceStates;
 
     struct BalanceState {
         uint256 balance;
@@ -60,23 +54,15 @@ contract EpochTokenLocker {
             ERC20(token).transferFrom(msg.sender, address(this), amount),
             "Tokentransfer for deposit was not successful"
         );
-        balanceStates[msg.sender].balances[token].pendingDeposits.amount = balanceStates[msg.sender]
-            .balances[token].pendingDeposits.amount.add(amount);
-        balanceStates[msg.sender].balances[token].pendingDeposits.stateIndex = currentStateIndex;
-
-        if (!balanceStates[msg.sender].isAddedToGlobalAccountsList) {
-            allAccounts.push(msg.sender);
-            balanceStates[msg.sender].isAddedToGlobalAccountsList = true;
-        }
+        balanceStates[msg.sender][token].pendingDeposits.amount = balanceStates[msg.sender][token].pendingDeposits.amount
+            .add(amount);
+        balanceStates[msg.sender][token].pendingDeposits.stateIndex = currentStateIndex;
         emit Deposit(msg.sender, token, amount, currentStateIndex);
     }
 
     function requestWithdraw(address token, uint amount) public {
         updateStateIndex();
-        balanceStates[msg.sender].balances[token].pendingWithdraws = PendingFlux({
-            amount: amount,
-            stateIndex: currentStateIndex
-        });
+        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: currentStateIndex });
         emit WithdrawRequest(msg.sender, token, amount, currentStateIndex);
     }
 
@@ -84,17 +70,17 @@ contract EpochTokenLocker {
         updateDepositsBalance(msg.sender, token); // withdrawn amount might just be deposited before
 
         require(
-            balanceStates[msg.sender].balances[token].pendingWithdraws.stateIndex < currentStateIndex,
+            balanceStates[msg.sender][token].pendingWithdraws.stateIndex < currentStateIndex,
             "withdraw was not registered previously"
         );
 
         uint amount = Math.min(
-            balanceStates[msg.sender].balances[token].balance,
-            balanceStates[msg.sender].balances[token].pendingWithdraws.amount
+            balanceStates[msg.sender][token].balance,
+            balanceStates[msg.sender][token].pendingWithdraws.amount
         );
 
-        balanceStates[msg.sender].balances[token].balance = balanceStates[msg.sender].balances[token].balance.sub(amount);
-        delete balanceStates[msg.sender].balances[token].pendingWithdraws;
+        balanceStates[msg.sender][token].balance = balanceStates[msg.sender][token].balance.sub(amount);
+        delete balanceStates[msg.sender][token].pendingWithdraws;
 
         ERC20(token).transfer(msg.sender, amount);
         emit Withdraw(msg.sender, token, amount);
@@ -104,19 +90,19 @@ contract EpochTokenLocker {
      * view functions
      */
     function getPendingDepositAmount(address user, address token) public view returns(uint) {
-        return balanceStates[user].balances[token].pendingDeposits.amount;
+        return balanceStates[user][token].pendingDeposits.amount;
     }
 
     function getPendingDepositBatchNumber(address user, address token) public view returns(uint) {
-        return balanceStates[user].balances[token].pendingDeposits.stateIndex;
+        return balanceStates[user][token].pendingDeposits.stateIndex;
     }
 
     function getPendingWithdrawAmount(address user, address token) public view returns(uint) {
-        return balanceStates[user].balances[token].pendingWithdraws.amount;
+        return balanceStates[user][token].pendingWithdraws.amount;
     }
 
     function getPendingWithdrawBatchNumber(address user, address token) public view returns(uint) {
-        return balanceStates[user].balances[token].pendingWithdraws.stateIndex;
+        return balanceStates[user][token].pendingWithdraws.stateIndex;
     }
 
     function getCurrentStateIndex() public view returns(uint32) {
@@ -124,18 +110,14 @@ contract EpochTokenLocker {
     }
 
     function getBalance(address user, address token) public view returns(uint256) {
-        uint balance = balanceStates[user].balances[token].balance;
-        if (balanceStates[user].balances[token].pendingDeposits.stateIndex < getCurrentStateIndex()) {
-            balance = balance.add(balanceStates[user].balances[token].pendingDeposits.amount);
+        uint balance = balanceStates[user][token].balance;
+        if (balanceStates[user][token].pendingDeposits.stateIndex < getCurrentStateIndex()) {
+            balance = balance.add(balanceStates[user][token].pendingDeposits.amount);
         }
-        if (balanceStates[user].balances[token].pendingWithdraws.stateIndex < getCurrentStateIndex()) {
-            balance -= Math.min(balanceStates[user].balances[token].pendingWithdraws.amount, balance);
+        if (balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentStateIndex()) {
+            balance -= Math.min(balanceStates[user][token].pendingWithdraws.amount, balance);
         }
         return balance;
-    }
-
-    function getAllAccounts() public view returns (address[] memory) {
-        return allAccounts;
     }
 
     /**
@@ -143,22 +125,22 @@ contract EpochTokenLocker {
      */
     function addBalance(address user, address token, uint amount) internal {
         updateDepositsBalance(user, token);
-        balanceStates[user].balances[token].balance = balanceStates[user].balances[token].balance.add(amount);
+        balanceStates[user][token].balance = balanceStates[user][token].balance.add(amount);
     }
 
     function subtractBalance(address user, address token, uint amount) internal {
         updateDepositsBalance(user, token);
-        balanceStates[user].balances[token].balance = balanceStates[user].balances[token].balance.sub(amount);
+        balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
     }
 
     function updateDepositsBalance(address user, address token) private {
         updateStateIndex();
-        if (balanceStates[user].balances[token].pendingDeposits.stateIndex < currentStateIndex) {
-            balanceStates[user].balances[token].balance = balanceStates[user].balances[token].balance.add(
-                balanceStates[user].balances[token].pendingDeposits.amount
+        if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
+            balanceStates[user][token].balance = balanceStates[user][token].balance.add(
+                balanceStates[user][token].pendingDeposits.amount
             );
 
-            delete balanceStates[user].balances[token].pendingDeposits;
+            delete balanceStates[user][token].pendingDeposits;
         }
     }
 
