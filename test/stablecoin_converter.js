@@ -51,8 +51,8 @@ contract("StablecoinConverter", async (accounts) => {
       const id = await stablecoinConverter.placeOrder.call(0, 1, true, 3, 10, 20, { from: user_1 })
       await stablecoinConverter.placeOrder(0, 1, true, 3, 10, 20, { from: user_1 })
       const orderResult = (await stablecoinConverter.orders.call(user_1, id))
-      assert.equal((orderResult.sellAmount).toNumber(), 20, "sellAmount was stored incorrectly")
-      assert.equal((orderResult.buyAmount).toNumber(), 10, "buyAmount was stored incorrectly")
+      assert.equal((orderResult.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
+      assert.equal((orderResult.priceNominator).toNumber(), 10, "priceNominator was stored incorrectly")
       assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
       assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
       assert.equal(orderResult.isSellOrder, true, "sellTokenFlag was stored incorrectly")
@@ -88,7 +88,7 @@ contract("StablecoinConverter", async (accounts) => {
       await waitForNSeconds(BATCH_TIME)
       await stablecoinConverter.freeStorageOfOrder(id)
 
-      assert.equal((await stablecoinConverter.orders(user_1, id)).sellAmount, 0, "sellAmount was stored incorrectly")
+      assert.equal((await stablecoinConverter.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
     })
     it("fails to delete non-canceled order", async () => {
       const feeToken = await MockContract.new()
@@ -251,9 +251,12 @@ contract("StablecoinConverter", async (accounts) => {
       const orderResult1 = (await stablecoinConverter.orders.call(user_1, orderId1))
       const orderResult2 = (await stablecoinConverter.orders.call(user_2, orderId2))
 
-      assert.equal((orderResult1.volume).toNumber(), bT.orderOneSellAmount - volume[0], "sellAmount was stored incorrectly")
-
-      assert.equal((orderResult2.volume).toNumber(), bT.orderTwoSellAmount - volume[1], "sellAmount was stored incorrectly")
+      assert.equal((orderResult1.remainingAmount).toNumber(), bT.orderOneSellAmount - 10000, "remainingAmount was stored incorrectly")
+      assert.equal((orderResult1.priceDenominator).toNumber(), bT.orderOneSellAmount, "priceDenominator was stored incorrectly")
+      assert.equal((orderResult1.priceNominator).toNumber(), bT.orderOneBuyAmount, "priceNominator was stored incorrectly")
+      assert.equal((orderResult2.remainingAmount).toNumber(), bT.orderTwoSellAmount - feeSubtracted(5000), "remainingAmount was stored incorrectly")
+      assert.equal((orderResult2.priceDenominator).toNumber(), bT.orderTwoSellAmount, "priceDenominator was stored incorrectly")
+      assert.equal((orderResult2.priceNominator).toNumber(), bT.orderTwoBuyAmount, "priceNominator was stored incorrectly")
     })
     it("places two orders and first matches them partially and then fully in a 2nd solution submission", async () => {
       const feeToken = await MockContract.new()
@@ -849,6 +852,63 @@ contract("StablecoinConverter", async (accounts) => {
       stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
       "prices are not allowed to be zero"
     )
+  })
+  it("reverts with error instead of underflow, if findPriceIndex would underflow lower bound", async () => {
+    const feeToken = await MockContract.new()
+    const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+    const erc20_2 = await MockContract.new()
+
+    await feeToken.givenAnyReturnBool(true)
+    await erc20_2.givenAnyReturnBool(true)
+
+    await stablecoinConverter.deposit(feeToken.address, bT.deposit1, { from: user_1 })
+    await stablecoinConverter.deposit(erc20_2.address, bT.deposit2, { from: user_2 })
+
+    await stablecoinConverter.addToken(erc20_2.address)
+    const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+
+    const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, bT.secondToken, bT.firstToken, true, batchIndex + 1, bT.orderOneBuyAmount, bT.orderOneSellAmount, { from: user_1 })
+    const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, bT.firstToken, bT.secondToken, true, batchIndex + 1, bT.orderTwoBuyAmount, bT.orderTwoSellAmount, { from: user_2 })
+    // close auction
+    await waitForNSeconds(BATCH_TIME)
+
+    const prices = [20, 0]
+    const owner = [user_1, user_2]  //tradeData is submitted as arrays
+    const orderId = [orderId1, orderId2]
+    const volume = bT.volume
+    const tokenIdsForPrice = [2]
+
+    await truffleAssert.reverts(
+      stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
+      "Price not provided for token"
+    )
+  })
+  it("checks that findPriceIndex also works, if it decreases searchbounds - all other tests only increase", async () => {
+    const feeToken = await MockContract.new()
+    const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+    const erc20_2 = await MockContract.new()
+
+    await feeToken.givenAnyReturnBool(true)
+    await erc20_2.givenAnyReturnBool(true)
+
+    await stablecoinConverter.deposit(feeToken.address, bT.deposit1, { from: user_1 })
+    await stablecoinConverter.deposit(erc20_2.address, bT.deposit2, { from: user_2 })
+
+    await stablecoinConverter.addToken(erc20_2.address)
+    const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+
+    const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, bT.secondToken, bT.firstToken, true, batchIndex + 1, bT.orderOneBuyAmount, bT.orderOneSellAmount, { from: user_1 })
+    const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, bT.firstToken, bT.secondToken, true, batchIndex + 1, bT.orderTwoBuyAmount, bT.orderTwoSellAmount, { from: user_2 })
+    // close auction
+    await waitForNSeconds(BATCH_TIME)
+
+    const prices = [20, 10, 3, 4]
+    const owner = [user_1, user_2]  //tradeData is submitted as arrays
+    const orderId = [orderId1, orderId2]
+    const volume = bT.volume
+    const tokenIdsForPrice = [1, 2, 3]
+
+    await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
   })
 })
 
