@@ -34,7 +34,7 @@ contract StablecoinConverter is EpochTokenLocker {
         bool isSellOrder;
         uint128 priceNumerator;
         uint128 priceDenominator;
-        uint128 remainingAmount;
+        uint128 remainingAmount; // remainingAmount can either be a sellAmount or buyAmount, depending on the flag isSellOrder
     }
 
     // User-> Order
@@ -228,17 +228,17 @@ contract StablecoinConverter is EpochTokenLocker {
     function updateRemainingOrder(
         address owner,
         uint orderId,
-        uint128 volume
+        uint128 exectuedAmount
     ) internal returns (uint) {
-        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.sub(volume));
+        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.sub(exectuedAmount));
     }
 
     function revertRemainingOrder(
         address owner,
         uint orderId,
-        uint128 volume
+        uint128 exectuedAmount
     ) internal returns (uint) {
-        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(volume));
+        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(exectuedAmount));
     }
 
     function documentTrades(
