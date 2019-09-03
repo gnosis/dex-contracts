@@ -247,21 +247,21 @@ contract StablecoinConverter is EpochTokenLocker {
                 address owner = previousSolution.trades[i].owner;
                 uint orderId = previousSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                uint sellAmount = previousSolution.trades[i].volume;
-                addBalance(owner, tokenIdToAddressMap(order.sellToken), sellAmount);
+                uint sellVolume = previousSolution.trades[i].volume;
+                addBalance(owner, tokenIdToAddressMap(order.sellToken), sellVolume);
             }
             for (uint i = 0; i < previousSolution.trades.length; i++) {
                 address owner = previousSolution.trades[i].owner;
                 uint orderId = previousSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                uint128 sellAmount = previousSolution.trades[i].volume;
-                uint128 buyAmount = getExecutedBuyAmount(
-                    sellAmount,
+                uint128 sellVolume = previousSolution.trades[i].volume;
+                uint128 buyVolume = getExecutedBuyAmount(
+                    sellVolume,
                     currentPrices[order.buyToken],
                     currentPrices[order.sellToken]
                 );
-                revertRemainingOrder(owner, orderId, sellAmount);
-                subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
+                revertRemainingOrder(owner, orderId, sellVolume);
+                subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
             }
         }
     }
