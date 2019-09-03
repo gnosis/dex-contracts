@@ -26,7 +26,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint id
     );
 
-    //outstanding volume of an order is encoded as buyAmount or sellAmount depending on isSellOrder
+    //outstanding remainingAmount of an order is encoded as buyAmount or sellAmount depending on isSellOrder
     struct Order {
         uint16 buyToken;
         uint16 sellToken;
@@ -35,7 +35,7 @@ contract StablecoinConverter is EpochTokenLocker {
         bool isSellOrder;
         uint128 buyAmount;
         uint128 sellAmount;
-        uint128 volume;
+        uint128 remainingAmount;
     }
 
     // User-> Order
@@ -75,7 +75,7 @@ contract StablecoinConverter is EpochTokenLocker {
             isSellOrder: isSellOrder,
             buyAmount: buyAmount,
             sellAmount: sellAmount,
-            volume: sellAmount
+            remainingAmount: sellAmount
         }));
         emit OrderPlacement(
             msg.sender,
@@ -123,7 +123,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     struct TradeData {
         address owner;
-        uint128 volume;
+        uint128 remainingAmount;
         uint16 orderId;
     }
 
@@ -131,7 +131,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint32 batchIndex,
         address[] memory owners,  //tradeData is submitted as arrays
         uint16[] memory orderIds,
-        uint128[] memory volumes,
+        uint128[] memory remainingAmounts,
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
     ) public {
@@ -149,10 +149,10 @@ contract StablecoinConverter is EpochTokenLocker {
             require(order.validFrom <= batchIndex, "Order is not yet valid");
             require(order.validUntil >= batchIndex, "Order is no longer valid");
             // Assume for now that we always have sellOrders
-            uint128 executedSellAmount = volumes[i];
+            uint128 executedSellAmount = remainingAmounts[i];
             require(currentPrices[order.sellToken] != 0, "prices are not allowed to be zero");
             uint128 executedBuyAmount = getExecutedBuyAmount(
-                volumes[i],
+                remainingAmounts[i],
                 currentPrices[order.buyToken],
                 currentPrices[order.sellToken]
             );
@@ -173,11 +173,11 @@ contract StablecoinConverter is EpochTokenLocker {
             subtractBalance(
                 owners[i],
                 tokenIdToAddressMap(orders[owners[i]][orderIds[i]].sellToken),
-                volumes[i]
+                remainingAmounts[i]
             );
         }
         checkTokenConservation(tokenConservation);
-        documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
+        documentTrades(batchIndex, owners, orderIds, remainingAmounts, tokenIdsForPrice);
     }
 
     function checkTokenConservation(
@@ -202,17 +202,17 @@ contract StablecoinConverter is EpochTokenLocker {
     function updateRemainingOrder(
         address owner,
         uint orderId,
-        uint128 volume
+        uint128 remainingAmount
     ) internal returns (uint) {
-        orders[owner][orderId].volume = uint128(orders[owner][orderId].volume.sub(volume));
+        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.sub(remainingAmount));
     }
 
     function revertRemainingOrder(
         address owner,
         uint orderId,
-        uint128 volume
+        uint128 remainingAmount
     ) internal returns (uint) {
-        orders[owner][orderId].volume = uint128(orders[owner][orderId].volume.add(volume));
+        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(remainingAmount));
     }
 
     function updateCurrentPrices(
@@ -228,7 +228,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint batchIndex,
         address[] memory owners,  //tradeData is submitted as arrays
         uint16[] memory orderIds,
-        uint128[] memory volumes,
+        uint128[] memory remainingAmounts,
         uint16[] memory tokenIdsForPrice
     ) internal {
         previousSolution.batchId = batchIndex;
@@ -236,7 +236,7 @@ contract StablecoinConverter is EpochTokenLocker {
             previousSolution.trades.push(TradeData({
                 owner: owners[i],
                 orderId: orderIds[i],
-                volume: volumes[i]
+                remainingAmount: remainingAmounts[i]
             }));
         }
         previousSolution.tokenIdsForPrice = tokenIdsForPrice;
@@ -248,21 +248,21 @@ contract StablecoinConverter is EpochTokenLocker {
                 address owner = previousSolution.trades[i].owner;
                 uint orderId = previousSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                uint sellVolume = previousSolution.trades[i].volume;
-                addBalance(owner, tokenIdToAddressMap(order.sellToken), sellVolume);
+                uint sellremainingAmount = previousSolution.trades[i].remainingAmount;
+                addBalance(owner, tokenIdToAddressMap(order.sellToken), sellremainingAmount);
             }
             for (uint i = 0; i < previousSolution.trades.length; i++) {
                 address owner = previousSolution.trades[i].owner;
                 uint orderId = previousSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                uint128 sellVolume = previousSolution.trades[i].volume;
-                uint128 buyVolume = getExecutedBuyAmount(
-                    sellVolume,
+                uint128 sellremainingAmount = previousSolution.trades[i].remainingAmount;
+                uint128 buyremainingAmount = getExecutedBuyAmount(
+                    sellremainingAmount,
                     currentPrices[order.buyToken],
                     currentPrices[order.sellToken]
                 );
-                revertRemainingOrder(owner, orderId, previousSolution.trades[i].volume);
-                subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
+                revertRemainingOrder(owner, orderId, previousSolution.trades[i].remainingAmount);
+                subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyremainingAmount);
             }
         }
     }

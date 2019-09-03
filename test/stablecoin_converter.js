@@ -213,10 +213,10 @@ contract("StablecoinConverter", async (accounts) => {
       const orderResult1 = (await stablecoinConverter.orders.call(user_1, orderId1))
       const orderResult2 = (await stablecoinConverter.orders.call(user_2, orderId2))
 
-      assert.equal((orderResult1.volume).toNumber(), 5, "volume was stored incorrectly")
+      assert.equal((orderResult1.remainingAmount).toNumber(), 5, "volume was stored incorrectly")
       assert.equal((orderResult1.sellAmount).toNumber(), 10, "sellAmount was stored incorrectly")
       assert.equal((orderResult1.buyAmount).toNumber(), 20, "buyAmount was stored incorrectly")
-      assert.equal((orderResult2.volume).toNumber(), 10, "volume was stored incorrectly")
+      assert.equal((orderResult2.remainingAmount).toNumber(), 10, "volume was stored incorrectly")
       assert.equal((orderResult2.sellAmount).toNumber(), 20, "sellAmount was stored incorrectly")
       assert.equal((orderResult2.buyAmount).toNumber(), 10, "buyAmount was stored incorrectly")
     })
