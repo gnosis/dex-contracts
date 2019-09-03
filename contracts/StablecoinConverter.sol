@@ -26,7 +26,6 @@ contract StablecoinConverter is EpochTokenLocker {
         uint id
     );
 
-    //outstanding remainingAmount of an order is encoded as priceNominator or priceDenominator depending on isSellOrder
     struct Order {
         uint16 buyToken;
         uint16 sellToken;
@@ -248,21 +247,21 @@ contract StablecoinConverter is EpochTokenLocker {
                 address owner = previousSolution.trades[i].owner;
                 uint orderId = previousSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                uint sellremainingAmount = previousSolution.trades[i].remainingAmount;
-                addBalance(owner, tokenIdToAddressMap(order.sellToken), sellremainingAmount);
+                uint sellAmount = previousSolution.trades[i].remainingAmount;
+                addBalance(owner, tokenIdToAddressMap(order.sellToken), sellAmount);
             }
             for (uint i = 0; i < previousSolution.trades.length; i++) {
                 address owner = previousSolution.trades[i].owner;
                 uint orderId = previousSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                uint128 sellremainingAmount = previousSolution.trades[i].remainingAmount;
-                uint128 buyremainingAmount = getExecutedBuyAmount(
-                    sellremainingAmount,
+                uint128 sellAmount = previousSolution.trades[i].remainingAmount;
+                uint128 buyAmount = getExecutedBuyAmount(
+                    sellAmount,
                     currentPrices[order.buyToken],
                     currentPrices[order.sellToken]
                 );
-                revertRemainingOrder(owner, orderId, previousSolution.trades[i].remainingAmount);
-                subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyremainingAmount);
+                revertRemainingOrder(owner, orderId, sellAmount);
+                subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
             }
         }
     }
