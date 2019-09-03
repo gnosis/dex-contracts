@@ -29,7 +29,7 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.placeOrder(0, 1, true, 3, 10, 20, { from: user_1 })
       const orderResult = (await stablecoinConverter.orders.call(user_1, id))
       assert.equal((orderResult.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
-      assert.equal((orderResult.priceNominator).toNumber(), 10, "priceNominator was stored incorrectly")
+      assert.equal((orderResult.priceNumerator).toNumber(), 10, "priceNumerator was stored incorrectly")
       assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
       assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
       assert.equal(orderResult.isSellOrder, true, "sellTokenFlag was stored incorrectly")
@@ -215,10 +215,10 @@ contract("StablecoinConverter", async (accounts) => {
 
       assert.equal((orderResult1.remainingAmount).toNumber(), 5, "remainingAmount was stored incorrectly")
       assert.equal((orderResult1.priceDenominator).toNumber(), 10, "priceDenominator was stored incorrectly")
-      assert.equal((orderResult1.priceNominator).toNumber(), 20, "priceNominator was stored incorrectly")
+      assert.equal((orderResult1.priceNumerator).toNumber(), 20, "priceNumerator was stored incorrectly")
       assert.equal((orderResult2.remainingAmount).toNumber(), 10, "remainingAmount was stored incorrectly")
       assert.equal((orderResult2.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
-      assert.equal((orderResult2.priceNominator).toNumber(), 10, "priceNominator was stored incorrectly")
+      assert.equal((orderResult2.priceNumerator).toNumber(), 10, "priceNumerator was stored incorrectly")
     })
     it("places two orders and first matches them partially and then fully in a 2nd solution submission", async () => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1)
