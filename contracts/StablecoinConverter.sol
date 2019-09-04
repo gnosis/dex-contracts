@@ -44,7 +44,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     uint public MAX_TOKENS; // solhint-disable-line
     uint16 public numTokens = 0;
-    uint128 public feeDenominator;
+    uint128 public feeDenominator; // fee is (1 / feeDenominator)
 
     constructor(uint maxTokens, uint128 _feeDenominator, address feeToken) public {
         MAX_TOKENS = maxTokens;
