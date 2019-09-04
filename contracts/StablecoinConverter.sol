@@ -120,7 +120,6 @@ contract StablecoinConverter is EpochTokenLocker {
 
     struct AuctionData {
         int256 feeCollected;
-        address bestSolutionSubmitter;
     }
 
     struct PreviousSolutionData {
@@ -165,9 +164,8 @@ contract StablecoinConverter is EpochTokenLocker {
                 currentPrices[order.buyToken],
                 currentPrices[order.sellToken]
             );
-            executedBuyAmount = uint128(executedBuyAmount.mul(feeDenominator - 1) / feeDenominator);
-            tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] += int(executedBuyAmount);
-            tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] -= int(executedSellAmount);
+            tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] -= int(executedBuyAmount);
+            tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] += int(executedSellAmount);
             require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             // Ensure executed price is not lower than the order price:
             //       executedSellAmount / executedBuyAmount <= order.priceDenominator / order.priceNumerator
@@ -187,9 +185,8 @@ contract StablecoinConverter is EpochTokenLocker {
             );
         }
         int fee = tokenConservation[0];
-        require(fee < auctionData[batchIndex].feeCollected, "Fee is not higher than before");
+        require(fee > auctionData[batchIndex].feeCollected, "Fee is not higher than before");
         auctionData[batchIndex].feeCollected = fee;
-        auctionData[batchIndex].bestSolutionSubmitter = msg.sender;
         checkTokenConservation(tokenConservation);
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
@@ -206,9 +203,6 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory prices,  //list of prices for touched token only, frist price is fee Token price
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
-        for (uint i = 0; i < previousSolution.tokenIdsForPrice.length; i++) {
-            currentPrices[previousSolution.tokenIdsForPrice[i]] = 0;
-        }
         currentPrices[0] = prices[0];
         for (uint i = 0; i < tokenIdsForPrice.length; i++) {
             currentPrices[tokenIdsForPrice[i]] = prices[i + 1];
@@ -220,10 +214,16 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 buyTokenPrice,
         uint128 sellTokenPrice
     ) internal pure returns (uint128) {
-        return uint128(
+        uint128 buyAmount = uint128(
             executedSellAmount.mul(buyTokenPrice) /
             sellTokenPrice
         );
+        // executedBuyAmount = buyAmount * (1 - (1/feeDenominator)
+        //           = buyAmount - buyAmount/feeDenominator (*)
+        //           = (buyAmount * feeDenominator)/ feeDenominator - buyAmount/feeDenominator
+        //           = (buyAmount * feeDenominator - buyAmount) / feeDenominator
+        //           = (buyAmount* (feeDenominator - 1)/feeDenominator
+        return uint128(buyAmount.mul(feeDenominator - 1) / feeDenominator);
     }
 
     function updateRemainingOrder(
@@ -279,7 +279,6 @@ contract StablecoinConverter is EpochTokenLocker {
                     currentPrices[order.buyToken],
                     currentPrices[order.sellToken]
                 );
-                buyVolume = uint128(buyVolume.mul(feeDenominator - 1) / feeDenominator);
                 revertRemainingOrder(owner, orderId, sellVolume);
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
             }
@@ -309,7 +308,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function checkPriceOrdering(uint16[] memory tokenIdsForPrice) private pure returns (bool) {
-        require(tokenIdsForPrice[0] > 0, "price for fee token should not be overwritten");
+        require(tokenIdsForPrice[0] > 0, "fee token price index does not have to be specified");
         for (uint i = 1; i < tokenIdsForPrice.length; i++) {
             if (tokenIdsForPrice[i] <= tokenIdsForPrice[i - 1]) {
                 return false;

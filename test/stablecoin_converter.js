@@ -778,7 +778,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-        "price for fee token should not be overwritten"
+        "fee token price index does not have to be specified"
       )
     })
     it("reverts, if price of sellToken == 0", async () => {
