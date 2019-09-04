@@ -878,7 +878,7 @@ contract("StablecoinConverter", async (accounts) => {
 
     await truffleAssert.reverts(
       stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-      "Price not provided for token"
+      "Price not provided for token, underflow would have happened"
     )
   })
   it("checks that findPriceIndex also works, if it decreases the search bounds - all other tests only increase", async () => {

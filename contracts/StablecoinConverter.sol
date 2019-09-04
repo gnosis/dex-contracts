@@ -49,7 +49,7 @@ contract StablecoinConverter is EpochTokenLocker {
     constructor(uint maxTokens, uint128 _feeDenominator, address feeToken) public {
         MAX_TOKENS = maxTokens;
         feeDenominator = _feeDenominator;
-        addToken(feeToken);
+        addToken(feeToken); // fee Token will always have the token index 0
     }
 
     function addToken(address _tokenAddress) public {
@@ -142,6 +142,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory volumes,
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+                                          // tokenId for fee token does not need to be send, as it is always 0
     ) public {
         require(
             batchIndex == getCurrentStateIndex() - 1,
@@ -286,7 +287,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
-        // return fee token straight away
+        // return fee token
         if (index == 0) {
             return 0;
         }
@@ -300,7 +301,7 @@ contract StablecoinConverter is EpochTokenLocker {
             } else if (tokenIdForPrice[middleValue] < index) {
                 leftValue = middleValue + 1;
             } else {
-                require(middleValue > 0, "Price not provided for token");
+                require(middleValue > 0, "Price not provided for token, underflow would have happened");
                 rightValue = middleValue - 1;
             }
         }
