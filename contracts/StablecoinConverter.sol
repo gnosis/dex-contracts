@@ -137,7 +137,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory volumes,
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
-                                          // tokenId for fee token does not need to be send, as it is always 0
+                                          // fee token id not required since always 0
     ) public {
         require(
             batchIndex == getCurrentStateIndex() - 1,
