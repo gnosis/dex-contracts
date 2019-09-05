@@ -224,6 +224,9 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory prices,          // list of prices for touched tokens only, frist price is fee token price
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
+        for (uint i = 0; i < previousSolution.tokenIdsForPrice.length; i++) {
+            currentPrices[previousSolution.tokenIdsForPrice[i]] = 0;
+        }
         for (uint i = 0; i < tokenIdsForPrice.length; i++) {
             currentPrices[tokenIdsForPrice[i]] = prices[i];
         }

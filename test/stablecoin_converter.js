@@ -873,6 +873,52 @@ contract("StablecoinConverter", async (accounts) => {
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
     })
+    it("checks that currentPrices between different solutions are reset", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_2 = await MockContract.new()
+      const erc20_3 = await MockContract.new()
+
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+      await erc20_3.givenAnyReturnBool(true)
+
+
+      await stablecoinConverter.deposit(feeToken.address, 60000, { from: user_1 })
+      await stablecoinConverter.deposit(erc20_2.address, 60000, { from: user_2 })
+      await stablecoinConverter.deposit(erc20_3.address, 10000, { from: user_3 })
+
+      await stablecoinConverter.addToken(erc20_2.address)
+      await stablecoinConverter.addToken(erc20_3.address)
+
+      const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 59940, 60000, { from: user_1 })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 2, 1, true, batchIndex + 1, 9980, 9990, { from: user_2 })
+      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 2, true, batchIndex + 1, 9970, 9980, { from: user_3 })
+      const orderId4 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex + 1, feeSubtracted(59940), 59940, { from: user_2 })
+
+      // close auction
+      await waitForNSeconds(BATCH_TIME)
+
+      const prices = [10, 10, 10]
+      const owner = [user_1, user_2, user_3]
+      const orderId = [orderId1, orderId2, orderId3]
+      const volume = [10000, 9990, 9980]
+      const tokenIdsForPrice = [0, 1, 2]
+
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
+      assert.equal((await stablecoinConverter.currentPrices.call(2)).toNumber(), 10, "CurrentPrice were not adjusted correctly")
+
+      const prices2 = [10, 10]
+      const owner2 = [user_1, user_2]
+      const orderIds2 = [orderId1, orderId4]
+      const volume2 = [60000, 59940]
+      const tokenIdsForPrice2 = [0, 1]
+
+      await stablecoinConverter.submitSolution(batchIndex, owner2, orderIds2, volume2, prices2, tokenIdsForPrice2)
+      assert.equal((await stablecoinConverter.currentPrices.call(2)).toNumber(), 0, "CurrentPrice were not adjusted correctly")
+    })
   })
   describe("getEncodedAuctionElements", async () => {
     it("returns all orders that are have ever been submitted", async () => {
