@@ -764,27 +764,27 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(auctionElements.length, 2)
       assert.deepEqual(auctionElements[0], {
         user: user_1.toLowerCase(),
-        buyTokenBalance: 0,
         sellTokenBalance: 0,
         buyToken: 1,
         sellToken: 0,
         validFrom: batchIndex,
         validUntil: batchIndex,
         isSellOrder: true,
-        buyAmount: 20,
-        sellAmount: 10,
+        priceNumerator: 20,
+        priceDenominator: 10,
+        remainingAmount: 10,
       })
       assert.deepEqual(auctionElements[1], {
         user: user_2.toLowerCase(),
-        buyTokenBalance: 0,
         sellTokenBalance: 0,
         buyToken: 0,
         sellToken: 1,
         validFrom: batchIndex,
         validUntil: batchIndex + 10,
         isSellOrder: true,
-        buyAmount: 500,
-        sellAmount: 400,
+        priceNumerator: 500,
+        priceDenominator: 400,
+        remainingAmount: 400,
       })
     })
     it("credits balance when it's valid", async () => {
@@ -805,13 +805,11 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.placeOrder(0, 1, true, batchIndex, 20, 10, { from: user_1 })
 
       let auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
-      assert.equal(auctionElements[0].buyTokenBalance, 0)
       assert.equal(auctionElements[0].sellTokenBalance, 0)
 
       await waitForNSeconds(BATCH_TIME)
 
       auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
-      assert.equal(auctionElements[0].buyTokenBalance, 8)
       assert.equal(auctionElements[0].sellTokenBalance, 20)
     })
     it("includes freed orders with empty fields", async () => {
@@ -859,15 +857,15 @@ function decodeAuctionElements(bytes) {
     bytes = bytes.slice(HEX_WORD_SIZE * 10)
     result.push({
       user: "0x" + element.slice(HEX_WORD_SIZE - 40, HEX_WORD_SIZE), // address is only 20 bytes
-      buyTokenBalance: parseInt(element.slice(HEX_WORD_SIZE, 2 * HEX_WORD_SIZE), 16),
-      sellTokenBalance: parseInt(element.slice(2 * HEX_WORD_SIZE, 3 * HEX_WORD_SIZE), 16),
-      buyToken: parseInt(element.slice(3 * HEX_WORD_SIZE, 4 * HEX_WORD_SIZE), 16),
-      sellToken: parseInt(element.slice(4 * HEX_WORD_SIZE, 5 * HEX_WORD_SIZE), 16),
-      validFrom: parseInt(element.slice(5 * HEX_WORD_SIZE, 6 * HEX_WORD_SIZE), 16),
-      validUntil: parseInt(element.slice(6 * HEX_WORD_SIZE, 7 * HEX_WORD_SIZE), 16),
-      isSellOrder: parseInt(element.slice(7 * HEX_WORD_SIZE, 8 * HEX_WORD_SIZE), 16) > 0,
-      buyAmount: parseInt(element.slice(8 * HEX_WORD_SIZE, 9 * HEX_WORD_SIZE), 16),
-      sellAmount: parseInt(element.slice(9 * HEX_WORD_SIZE, 10 * HEX_WORD_SIZE), 16),
+      sellTokenBalance: parseInt(element.slice(1 * HEX_WORD_SIZE, 2 * HEX_WORD_SIZE), 16),
+      buyToken: parseInt(element.slice(2 * HEX_WORD_SIZE, 3 * HEX_WORD_SIZE), 16),
+      sellToken: parseInt(element.slice(3 * HEX_WORD_SIZE, 4 * HEX_WORD_SIZE), 16),
+      validFrom: parseInt(element.slice(4 * HEX_WORD_SIZE, 5 * HEX_WORD_SIZE), 16),
+      validUntil: parseInt(element.slice(5 * HEX_WORD_SIZE, 6 * HEX_WORD_SIZE), 16),
+      isSellOrder: parseInt(element.slice(6 * HEX_WORD_SIZE, 7 * HEX_WORD_SIZE), 16) > 0,
+      priceNumerator: parseInt(element.slice(7 * HEX_WORD_SIZE, 8 * HEX_WORD_SIZE), 16),
+      priceDenominator: parseInt(element.slice(8 * HEX_WORD_SIZE, 9 * HEX_WORD_SIZE), 16),
+      remainingAmount: parseInt(element.slice(9 * HEX_WORD_SIZE, 10 * HEX_WORD_SIZE), 16),
     })
   }
   return result
