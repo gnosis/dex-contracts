@@ -282,7 +282,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function checkForBestSolutionSubmission(int256 fee) private {
-        require(fee > currentFeeCollected, "Fee is not higher than before");
+        require(fee > currentFeeCollected, "Solution does not generate a higher fee than a previous solution");
         currentFeeCollected = fee;
     }
 

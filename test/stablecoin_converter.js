@@ -394,7 +394,7 @@ contract("StablecoinConverter", async (accounts) => {
       //Now reverting should not throw, only later due to fee criteria
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-        "Fee is not higher than before"
+        "Solution does not generate a higher fee than a previous solution"
       )
     })
     it("checks that trades documented from a previous trade are deleted and not considered for a new batchIndex", async () => {
