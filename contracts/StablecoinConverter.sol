@@ -203,7 +203,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function updateCurrentPrices(
-        uint128[] memory prices,  //list of prices for touched token only, frist price is fee Token price
+        uint128[] memory prices,          // list of prices for touched tokens only, frist price is fee token price
         uint16[] memory tokenIdsForPrice  // price[i + 1] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
         currentPrices[0] = prices[0];
