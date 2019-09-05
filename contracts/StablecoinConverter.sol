@@ -149,6 +149,7 @@ contract StablecoinConverter is EpochTokenLocker {
         } else {
             currentFeeCollected = 0;
         }
+        require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
         int[] memory tokenConservation = new int[](prices.length);
@@ -303,7 +304,6 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function checkPriceOrdering(uint16[] memory tokenIdsForPrice) private pure returns (bool) {
-        require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         for (uint i = 1; i < tokenIdsForPrice.length; i++) {
             if (tokenIdsForPrice[i] <= tokenIdsForPrice[i - 1]) {
                 return false;
