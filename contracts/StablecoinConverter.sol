@@ -2,13 +2,14 @@ pragma solidity ^0.5.0;
 
 import "./EpochTokenLocker.sol";
 import "./libraries/IdToAddressBiMap.sol";
+import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOnlySet.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
-import "./libraries/IdToAddressBiMap.sol";
 
 
 contract StablecoinConverter is EpochTokenLocker {
     using SafeMath for uint128;
     using BytesLib for bytes32;
+    using BytesLib for bytes;
 
     event OrderPlacement(
         address owner,
@@ -39,6 +40,10 @@ contract StablecoinConverter is EpochTokenLocker {
 
     // User-> Order
     mapping(address => Order[]) public orders;
+
+    // Iterable set of all users, required to collect auction information
+    IterableAppendOnlySet.Data private allUsers;
+    using IterableAppendOnlySet for IterableAppendOnlySet.Data;
 
     IdToAddressBiMap.Data private registeredTokens;
 
@@ -89,6 +94,7 @@ contract StablecoinConverter is EpochTokenLocker {
             buyAmount,
             sellAmount
         );
+        allUsers.insert(msg.sender);
         return orders[msg.sender].length - 1;
     }
 
@@ -114,6 +120,27 @@ contract StablecoinConverter is EpochTokenLocker {
         return IdToAddressBiMap.getAddressAt(registeredTokens, id);
     }
 
+    function getEncodedAuctionElements() public view returns (bytes memory elements) {
+        address user = allUsers.first();
+        bool stop = false;
+        while (!stop) {
+            for (uint i = 0; i < orders[user].length; i++) {
+                Order memory order = orders[user][i];
+                elements = elements.concat(encodeAuctionElement(
+                    user,
+                    getBalance(user, tokenIdToAddressMap(order.sellToken)),
+                    order
+                ));
+            }
+            if (user == allUsers.last) {
+                stop = true;
+            } else {
+                user = allUsers.next(user);
+            }
+        }
+        return elements;
+    }
+
     mapping (uint16 => uint128) public currentPrices;
     int256 public currentFeeCollected;
     PreviousSolutionData public previousSolution;
@@ -137,18 +164,14 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory volumes,
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
-                                          // fee token id not required since always 0
     ) public {
         require(
             batchIndex == getCurrentStateIndex() - 1,
             "Solutions are no longer accepted for this batch"
         );
         require(checkPriceOrdering(tokenIdsForPrice), "prices are not ordered by tokenId");
-        if (previousSolution.batchId == batchIndex) {
-            undoPreviousSolution();
-        } else {
-            currentFeeCollected = 0;
-        }
+        require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
+        undoPreviousSolution(batchIndex);
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
         int[] memory tokenConservation = new int[](prices.length);
@@ -184,7 +207,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 volumes[i]
             );
         }
-        checkForBestSolutionSubmission(tokenConservation[0]);
+        checkAndOverrideObjectiveValue(tokenConservation[0], batchIndex);
         checkTokenConservation(tokenConservation);
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
@@ -199,14 +222,13 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function updateCurrentPrices(
         uint128[] memory prices,          // list of prices for touched tokens only, frist price is fee token price
-        uint16[] memory tokenIdsForPrice  // price[i + 1] is the price for the token with tokenID tokenIdsForPrice[i]
+        uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
         for (uint i = 0; i < previousSolution.tokenIdsForPrice.length; i++) {
             currentPrices[previousSolution.tokenIdsForPrice[i]] = 0;
         }
-        currentPrices[0] = prices[0];
         for (uint i = 0; i < tokenIdsForPrice.length; i++) {
-            currentPrices[tokenIdsForPrice[i]] = prices[i + 1];
+            currentPrices[tokenIdsForPrice[i]] = prices[i];
         }
     }
 
@@ -220,10 +242,10 @@ contract StablecoinConverter is EpochTokenLocker {
             sellTokenPrice
         );
         // executedBuyAmount = buyAmount * (1 - (1/feeDenominator)
-        //           = buyAmount - buyAmount/feeDenominator (*)
-        //           = (buyAmount * feeDenominator)/ feeDenominator - buyAmount/feeDenominator
-        //           = (buyAmount * feeDenominator - buyAmount) / feeDenominator
-        //           = (buyAmount* (feeDenominator - 1)/feeDenominator
+        //                   = buyAmount - buyAmount/feeDenominator (*)
+        //                   = (buyAmount * feeDenominator)/ feeDenominator - buyAmount/feeDenominator
+        //                   = (buyAmount * feeDenominator - buyAmount) / feeDenominator
+        //                   = (buyAmount* (feeDenominator - 1)/feeDenominator
         return uint128(buyAmount.mul(feeDenominator - 1) / feeDenominator);
     }
 
@@ -261,50 +283,50 @@ contract StablecoinConverter is EpochTokenLocker {
         previousSolution.tokenIdsForPrice = tokenIdsForPrice;
     }
 
-    function undoPreviousSolution() internal {
-        for (uint i = 0; i < previousSolution.trades.length; i++) {
-            address owner = previousSolution.trades[i].owner;
-            uint orderId = previousSolution.trades[i].orderId;
-            Order memory order = orders[owner][orderId];
-            uint sellVolume = previousSolution.trades[i].volume;
-            addBalance(owner, tokenIdToAddressMap(order.sellToken), sellVolume);
-        }
-        for (uint i = 0; i < previousSolution.trades.length; i++) {
-            address owner = previousSolution.trades[i].owner;
-            uint orderId = previousSolution.trades[i].orderId;
-            Order memory order = orders[owner][orderId];
-            uint128 sellVolume = previousSolution.trades[i].volume;
-            uint128 buyVolume = getExecutedBuyAmount(
-                sellVolume,
-                currentPrices[order.buyToken],
-                currentPrices[order.sellToken]
-            );
-            revertRemainingOrder(owner, orderId, sellVolume);
-            subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
+    function undoPreviousSolution(uint32 batchIndex) internal {
+        if (previousSolution.batchId == batchIndex) {
+            for (uint i = 0; i < previousSolution.trades.length; i++) {
+                address owner = previousSolution.trades[i].owner;
+                uint orderId = previousSolution.trades[i].orderId;
+                Order memory order = orders[owner][orderId];
+                uint sellVolume = previousSolution.trades[i].volume;
+                addBalance(owner, tokenIdToAddressMap(order.sellToken), sellVolume);
+            }
+            for (uint i = 0; i < previousSolution.trades.length; i++) {
+                address owner = previousSolution.trades[i].owner;
+                uint orderId = previousSolution.trades[i].orderId;
+                Order memory order = orders[owner][orderId];
+                uint128 sellVolume = previousSolution.trades[i].volume;
+                uint128 buyVolume = getExecutedBuyAmount(
+                    sellVolume,
+                    currentPrices[order.buyToken],
+                    currentPrices[order.sellToken]
+                );
+                revertRemainingOrder(owner, orderId, sellVolume);
+                subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
+            }
         }
     }
 
-    function checkForBestSolutionSubmission(int256 fee) private {
+    function checkAndOverrideObjectiveValue(int256 fee, uint32 batchIndex) private {
+        if (previousSolution.batchId < batchIndex) {
+            currentFeeCollected = 0;
+        }
         require(fee > currentFeeCollected, "Solution does not generate a higher fee than a previous solution");
         currentFeeCollected = fee;
     }
 
     function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
-        // return fee token
-        if (index == 0) {
-            return 0;
-        }
         // binary search for the other tokens
         uint leftValue = 0;
         uint rightValue = tokenIdForPrice.length - 1;
         while (rightValue >= leftValue) {
             uint middleValue = leftValue + (rightValue-leftValue) / 2;
             if (tokenIdForPrice[middleValue] == index) {
-                return middleValue + 1;
+                return middleValue;
             } else if (tokenIdForPrice[middleValue] < index) {
                 leftValue = middleValue + 1;
             } else {
-                require(middleValue > 0, "Price not provided for token, underflow would have happened");
                 rightValue = middleValue - 1;
             }
         }
@@ -312,12 +334,29 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function checkPriceOrdering(uint16[] memory tokenIdsForPrice) private pure returns (bool) {
-        require(tokenIdsForPrice[0] > 0, "fee token price index does not have to be specified");
         for (uint i = 1; i < tokenIdsForPrice.length; i++) {
             if (tokenIdsForPrice[i] <= tokenIdsForPrice[i - 1]) {
                 return false;
             }
         }
         return true;
+    }
+
+    function encodeAuctionElement(
+        address user,
+        uint256 sellTokenBalance,
+        Order memory order
+    ) private pure returns (bytes memory element) {
+        element = abi.encode(user);
+        element = element.concat(abi.encode(sellTokenBalance));
+        element = element.concat(abi.encode(order.buyToken));
+        element = element.concat(abi.encode(order.sellToken));
+        element = element.concat(abi.encode(order.validFrom));
+        element = element.concat(abi.encode(order.validUntil));
+        element = element.concat(abi.encode(order.isSellOrder));
+        element = element.concat(abi.encode(order.priceNumerator));
+        element = element.concat(abi.encode(order.priceDenominator));
+        element = element.concat(abi.encode(order.remainingAmount));
+        return element;
     }
 }
