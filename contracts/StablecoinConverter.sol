@@ -2,13 +2,14 @@ pragma solidity ^0.5.0;
 
 import "./EpochTokenLocker.sol";
 import "./libraries/IdToAddressBiMap.sol";
+import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOnlySet.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
-import "./libraries/IdToAddressBiMap.sol";
 
 
 contract StablecoinConverter is EpochTokenLocker {
     using SafeMath for uint128;
     using BytesLib for bytes32;
+    using BytesLib for bytes;
 
     event OrderPlacement(
         address owner,
@@ -39,6 +40,10 @@ contract StablecoinConverter is EpochTokenLocker {
 
     // User-> Order
     mapping(address => Order[]) public orders;
+
+    // Iterable set of all users, required to collect auction information
+    IterableAppendOnlySet.Data private allUsers;
+    using IterableAppendOnlySet for IterableAppendOnlySet.Data;
 
     IdToAddressBiMap.Data private registeredTokens;
 
@@ -89,6 +94,7 @@ contract StablecoinConverter is EpochTokenLocker {
             buyAmount,
             sellAmount
         );
+        allUsers.insert(msg.sender);
         return orders[msg.sender].length - 1;
     }
 
@@ -112,6 +118,27 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function tokenIdToAddressMap(uint16 id) public view returns (address) {
         return IdToAddressBiMap.getAddressAt(registeredTokens, id);
+    }
+
+    function getEncodedAuctionElements() public view returns (bytes memory elements) {
+        address user = allUsers.first();
+        bool stop = false;
+        while (!stop) {
+            for (uint i = 0; i < orders[user].length; i++) {
+                Order memory order = orders[user][i];
+                elements = elements.concat(encodeAuctionElement(
+                    user,
+                    getBalance(user, tokenIdToAddressMap(order.sellToken)),
+                    order
+                ));
+            }
+            if (user == allUsers.last) {
+                stop = true;
+            } else {
+                user = allUsers.next(user);
+            }
+        }
+        return elements;
     }
 
     mapping (uint16 => uint128) public currentPrices;
@@ -310,5 +337,23 @@ contract StablecoinConverter is EpochTokenLocker {
             }
         }
         return true;
+    }
+
+    function encodeAuctionElement(
+        address user,
+        uint256 sellTokenBalance,
+        Order memory order
+    ) private pure returns (bytes memory element) {
+        element = abi.encode(user);
+        element = element.concat(abi.encode(sellTokenBalance));
+        element = element.concat(abi.encode(order.buyToken));
+        element = element.concat(abi.encode(order.sellToken));
+        element = element.concat(abi.encode(order.validFrom));
+        element = element.concat(abi.encode(order.validUntil));
+        element = element.concat(abi.encode(order.isSellOrder));
+        element = element.concat(abi.encode(order.priceNumerator));
+        element = element.concat(abi.encode(order.priceDenominator));
+        element = element.concat(abi.encode(order.remainingAmount));
+        return element;
     }
 }

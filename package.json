@@ -48,6 +48,7 @@
     "fast-memoize": "^2.5.1",
     "merkletreejs": "0.0.22",
     "@gnosis.pm/mock-contract": "^3.0.7",
+    "@gnosis.pm/solidity-data-structures": "^1.0.0",
     "openzeppelin-solidity": "2.1.1",
     "solidity-bytes-utils": "0.0.8"
   },

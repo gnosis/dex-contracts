@@ -1,27 +1,29 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const MockContract = artifacts.require("MockContract")
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
+const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
 const ERC20 = artifacts.require("ERC20")
 
 const truffleAssert = require("truffle-assertions")
 const {
   waitForNSeconds,
-  sendTxAndGetReturnValue } = require("./utilities.js")
+  sendTxAndGetReturnValue
+} = require("./utilities.js")
 
 const feeDenominator = 1000 // fee is (1 / feeDenominator)
 function feeSubtracted(x) {
   return Math.floor(x * (feeDenominator - 1) / feeDenominator)
 }
 
-
 contract("StablecoinConverter", async (accounts) => {
-
   const [user_1, user_2, user_3] = accounts
   let BATCH_TIME
   beforeEach(async () => {
-    const lib1 = await IdToAddressBiMap.new()
-    await StablecoinConverter.link(IdToAddressBiMap, lib1.address)
     const feeToken = await MockContract.new()
+    const lib1 = await IdToAddressBiMap.new()
+    const lib2 = await IterableAppendOnlySet.new()
+    await StablecoinConverter.link(IdToAddressBiMap, lib1.address)
+    await StablecoinConverter.link(IterableAppendOnlySet, lib2.address)
     const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
 
     BATCH_TIME = (await stablecoinConverter.BATCH_TIME.call()).toNumber()
@@ -814,64 +816,189 @@ contract("StablecoinConverter", async (accounts) => {
         "prices are not allowed to be zero"
       )
     })
+    it("reverts, if price of buyToken == 0", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_2 = await MockContract.new()
+
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+
+      await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
+      await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
+
+      await stablecoinConverter.addToken(erc20_2.address)
+      const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      // close auction
+      await waitForNSeconds(BATCH_TIME)
+
+      const prices = [0, 0]
+      const owner = basicTrade.solution.owners
+      const orderId = [orderId1, orderId2]
+      const volume = basicTrade.solution.volume
+      const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
+
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
+        "prices are not allowed to be zero"
+      )
+    })
+    it("checks that findPriceIndex also works, if it decreases the search bounds - all other tests only increase", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_2 = await MockContract.new()
+
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+
+      await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
+      await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
+
+      await stablecoinConverter.addToken(erc20_2.address)
+      const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      // close auction
+      await waitForNSeconds(BATCH_TIME)
+
+      const prices = [20, 10, 3, 4]
+      const owner = basicTrade.solution.owners
+      const orderId = [orderId1, orderId2]
+      const volume = basicTrade.solution.volume
+      const tokenIdsForPrice = [0, 1, 2, 3]
+
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
+    })
   })
-  it("reverts, if price of buyToken == 0", async () => {
-    const feeToken = await MockContract.new()
-    const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-    const erc20_2 = await MockContract.new()
+  describe("getEncodedAuctionElements", async () => {
+    it("returns all orders that are have ever been submitted", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_1 = await MockContract.new()
+      const erc20_2 = await MockContract.new()
 
-    await feeToken.givenAnyReturnBool(true)
-    await erc20_2.givenAnyReturnBool(true)
+      await stablecoinConverter.addToken(erc20_1.address)
+      await stablecoinConverter.addToken(erc20_2.address)
 
-    await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
-    await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
+      const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
 
-    await stablecoinConverter.addToken(erc20_2.address)
-    const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+      await stablecoinConverter.placeOrder(1, 0, true, batchIndex, 20, 10, { from: user_1 })
+      await stablecoinConverter.placeOrder(0, 1, true, batchIndex + 10, 500, 400, { from: user_2 })
 
-    const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-    const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
-    // close auction
-    await waitForNSeconds(BATCH_TIME)
+      const auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements.length, 2)
+      assert.deepEqual(auctionElements[0], {
+        user: user_1.toLowerCase(),
+        sellTokenBalance: 0,
+        buyToken: 1,
+        sellToken: 0,
+        validFrom: batchIndex,
+        validUntil: batchIndex,
+        isSellOrder: true,
+        priceNumerator: 20,
+        priceDenominator: 10,
+        remainingAmount: 10,
+      })
+      assert.deepEqual(auctionElements[1], {
+        user: user_2.toLowerCase(),
+        sellTokenBalance: 0,
+        buyToken: 0,
+        sellToken: 1,
+        validFrom: batchIndex,
+        validUntil: batchIndex + 10,
+        isSellOrder: true,
+        priceNumerator: 500,
+        priceDenominator: 400,
+        remainingAmount: 400,
+      })
+    })
+    it("credits balance when it's valid", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_1 = await MockContract.new()
+      const erc20_2 = await MockContract.new()
 
-    const prices = [0, 0]
-    const owner = basicTrade.solution.owners
-    const orderId = [orderId1, orderId2]
-    const volume = basicTrade.solution.volume
-    const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
+      await erc20_1.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
 
-    await truffleAssert.reverts(
-      stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-      "prices are not allowed to be zero"
-    )
-  })
-  it("checks that findPriceIndex also works, if it decreases the search bounds - all other tests only increase", async () => {
-    const feeToken = await MockContract.new()
-    const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-    const erc20_2 = await MockContract.new()
+      await stablecoinConverter.addToken(erc20_1.address)
+      await stablecoinConverter.addToken(erc20_2.address)
 
-    await feeToken.givenAnyReturnBool(true)
-    await erc20_2.givenAnyReturnBool(true)
+      const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
 
-    await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
-    await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
+      await stablecoinConverter.deposit(erc20_1.address, 8, { from: user_1 })
+      await stablecoinConverter.deposit(erc20_2.address, 20, { from: user_1 })
+      await stablecoinConverter.placeOrder(1, 2, true, batchIndex, 20, 10, { from: user_1 })
 
-    await stablecoinConverter.addToken(erc20_2.address)
-    const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+      let auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements[0].sellTokenBalance, 0)
 
-    const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-    const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
-    // close auction
-    await waitForNSeconds(BATCH_TIME)
+      await waitForNSeconds(BATCH_TIME)
 
-    const prices = [20, 10, 3, 4]
-    const owner = basicTrade.solution.owners
-    const orderId = [orderId1, orderId2]
-    const volume = basicTrade.solution.volume
-    const tokenIdsForPrice = [0, 1, 2, 3]
+      auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements[0].sellTokenBalance, 20)
+    })
+    it("includes freed orders with empty fields", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_1 = await MockContract.new()
+      const erc20_2 = await MockContract.new()
 
-    await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
+      await stablecoinConverter.addToken(erc20_1.address)
+      await stablecoinConverter.addToken(erc20_2.address)
+
+      const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+      await stablecoinConverter.placeOrder(1, 0, true, batchIndex + 10, 20, 10)
+      stablecoinConverter.cancelOrder(0)
+
+      let auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements.length, 1)
+      assert.equal(auctionElements[0].validFrom, batchIndex)
+
+      await waitForNSeconds(BATCH_TIME)
+
+      // Cancellation is active but not yet freed
+      auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements.length, 1)
+      assert.equal(auctionElements[0].validFrom, batchIndex)
+
+      await stablecoinConverter.freeStorageOfOrder(0)
+
+      auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.equal(auctionElements.length, 1)
+      assert.equal(auctionElements[0].validFrom, 0)
+    })
+    it("reverts if there are no orders", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      await truffleAssert.reverts(stablecoinConverter.getEncodedAuctionElements())
+    })
   })
 })
 
-
+const HEX_WORD_SIZE = 64
+function decodeAuctionElements(bytes) {
+  bytes = bytes.slice(2)
+  const result = []
+  while (bytes.length > 0) {
+    const element = bytes.slice(0, HEX_WORD_SIZE * 10)
+    bytes = bytes.slice(HEX_WORD_SIZE * 10)
+    result.push({
+      user: "0x" + element.slice(HEX_WORD_SIZE - 40, HEX_WORD_SIZE), // address is only 20 bytes
+      sellTokenBalance: parseInt(element.slice(1 * HEX_WORD_SIZE, 2 * HEX_WORD_SIZE), 16),
+      buyToken: parseInt(element.slice(2 * HEX_WORD_SIZE, 3 * HEX_WORD_SIZE), 16),
+      sellToken: parseInt(element.slice(3 * HEX_WORD_SIZE, 4 * HEX_WORD_SIZE), 16),
+      validFrom: parseInt(element.slice(4 * HEX_WORD_SIZE, 5 * HEX_WORD_SIZE), 16),
+      validUntil: parseInt(element.slice(5 * HEX_WORD_SIZE, 6 * HEX_WORD_SIZE), 16),
+      isSellOrder: parseInt(element.slice(6 * HEX_WORD_SIZE, 7 * HEX_WORD_SIZE), 16) > 0,
+      priceNumerator: parseInt(element.slice(7 * HEX_WORD_SIZE, 8 * HEX_WORD_SIZE), 16),
+      priceDenominator: parseInt(element.slice(8 * HEX_WORD_SIZE, 9 * HEX_WORD_SIZE), 16),
+      remainingAmount: parseInt(element.slice(9 * HEX_WORD_SIZE, 10 * HEX_WORD_SIZE), 16),
+    })
+  }
+  return result
+}
