@@ -37,7 +37,7 @@ contract("StablecoinConverter", async (accounts) => {
       { sellToken: 0, buyToken: 1, sellAmount: 20000, buyAmount: feeSubtracted(10000), user: user_1 },
       { sellToken: 1, buyToken: 0, sellAmount: feeSubtracted(10000), buyAmount: feeSubtracted(feeSubtracted(10000) * 2), user: user_2 }
     ],
-    solution: { prices: [20, 10], owners: [user_1, user_2], volume: [20000, feeSubtracted(10000)], tokenIdsForPrice: [1] }
+    solution: { prices: [20, 10], owners: [user_1, user_2], volume: [20000, feeSubtracted(10000)], tokenIdsForPrice: [0, 1] }
   }
 
   describe("placeOrder", () => {
@@ -468,7 +468,7 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = [user_1, user_2, user_3]  //tradeData is submitted as arrays
       const orderId = [orderId1, orderId2, orderId3]
       const volume = [10000, 9990, 9980]
-      const tokenIdsForPrice = [1, 2]
+      const tokenIdsForPrice = [0, 1, 2]
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
 
@@ -744,7 +744,7 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
       const volume = basicTrade.solution.volume
-      const tokenIdsForPrice = [1, 1]
+      const tokenIdsForPrice = [0, 1, 1]
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
@@ -774,11 +774,11 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
       const volume = basicTrade.solution.volume
-      const tokenIdsForPrice = [0, 1]
+      const tokenIdsForPrice = [1]
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-        "fee token price index does not have to be specified"
+        "fee token price has to be specified"
       )
     })
     it("reverts, if price of sellToken == 0", async () => {
@@ -807,7 +807,7 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
       const volume = [10, 19]
-      const tokenIdsForPrice = [2]
+      const tokenIdsForPrice = [0, 2]
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
@@ -845,36 +845,6 @@ contract("StablecoinConverter", async (accounts) => {
       "prices are not allowed to be zero"
     )
   })
-  it("reverts with error instead of underflow, if findPriceIndex would underflow lower bound", async () => {
-    const feeToken = await MockContract.new()
-    const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-    const erc20_2 = await MockContract.new()
-
-    await feeToken.givenAnyReturnBool(true)
-    await erc20_2.givenAnyReturnBool(true)
-
-    await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
-    await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
-
-    await stablecoinConverter.addToken(erc20_2.address)
-    const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
-
-    const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-    const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
-    // close auction
-    await waitForNSeconds(BATCH_TIME)
-
-    const prices = basicTrade.solution.prices
-    const owner = basicTrade.solution.owners
-    const orderId = [orderId1, orderId2]
-    const volume = basicTrade.solution.volume
-    const tokenIdsForPrice = [2]
-
-    await truffleAssert.reverts(
-      stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-      "Price not provided for token, underflow would have happened"
-    )
-  })
   it("checks that findPriceIndex also works, if it decreases the search bounds - all other tests only increase", async () => {
     const feeToken = await MockContract.new()
     const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -898,7 +868,7 @@ contract("StablecoinConverter", async (accounts) => {
     const owner = basicTrade.solution.owners
     const orderId = [orderId1, orderId2]
     const volume = basicTrade.solution.volume
-    const tokenIdsForPrice = [1, 2, 3]
+    const tokenIdsForPrice = [0, 1, 2, 3]
 
     await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
   })

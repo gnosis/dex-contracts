@@ -201,9 +201,8 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory prices,          // list of prices for touched tokens only, frist price is fee token price
         uint16[] memory tokenIdsForPrice  // price[i + 1] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
-        currentPrices[0] = prices[0];
         for (uint i = 0; i < tokenIdsForPrice.length; i++) {
-            currentPrices[tokenIdsForPrice[i]] = prices[i + 1];
+            currentPrices[tokenIdsForPrice[i]] = prices[i];
         }
     }
 
@@ -287,21 +286,16 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
-        // return fee token
-        if (index == 0) {
-            return 0;
-        }
         // binary search for the other tokens
         uint leftValue = 0;
         uint rightValue = tokenIdForPrice.length - 1;
         while (rightValue >= leftValue) {
             uint middleValue = leftValue + (rightValue-leftValue) / 2;
             if (tokenIdForPrice[middleValue] == index) {
-                return middleValue + 1;
+                return middleValue;
             } else if (tokenIdForPrice[middleValue] < index) {
                 leftValue = middleValue + 1;
             } else {
-                require(middleValue > 0, "Price not provided for token, underflow would have happened");
                 rightValue = middleValue - 1;
             }
         }
@@ -309,7 +303,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function checkPriceOrdering(uint16[] memory tokenIdsForPrice) private pure returns (bool) {
-        require(tokenIdsForPrice[0] > 0, "fee token price index does not have to be specified");
+        require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         for (uint i = 1; i < tokenIdsForPrice.length; i++) {
             if (tokenIdsForPrice[i] <= tokenIdsForPrice[i - 1]) {
                 return false;
