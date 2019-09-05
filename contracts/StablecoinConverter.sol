@@ -189,11 +189,6 @@ contract StablecoinConverter is EpochTokenLocker {
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
 
-    function checkForBestSolutionSubmission(int256 fee) private {
-        require(fee > currentFeeCollected, "Fee is not higher than before");
-        currentFeeCollected = fee;
-    }
-
     function checkTokenConservation(
         int[] memory tokenConservation
     ) internal pure {
@@ -284,6 +279,11 @@ contract StablecoinConverter is EpochTokenLocker {
             revertRemainingOrder(owner, orderId, sellVolume);
             subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
         }
+    }
+
+    function checkForBestSolutionSubmission(int256 fee) private {
+        require(fee > currentFeeCollected, "Fee is not higher than before");
+        currentFeeCollected = fee;
     }
 
     function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
