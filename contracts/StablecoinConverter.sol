@@ -122,6 +122,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint batchId;
         TradeData[] trades;
         uint16[] tokenIdsForPrice;
+        address solutionSubmitter;
     }
 
     struct TradeData {
@@ -185,8 +186,13 @@ contract StablecoinConverter is EpochTokenLocker {
             );
         }
         checkForBestSolutionSubmission(tokenConservation[0]);
+        grantRewardToSolutionSubmitter();
         checkTokenConservation(tokenConservation);
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
+    }
+
+    function grantRewardToSolutionSubmitter() internal {
+        addBalance(msg.sender, tokenIdToAddressMap(0), uint(currentFeeCollected) / 2);
     }
 
     function checkTokenConservation(
@@ -259,6 +265,7 @@ contract StablecoinConverter is EpochTokenLocker {
             }));
         }
         previousSolution.tokenIdsForPrice = tokenIdsForPrice;
+        previousSolution.solutionSubmitter = msg.sender;
     }
 
     function undoPreviousSolution() internal {
@@ -282,6 +289,8 @@ contract StablecoinConverter is EpochTokenLocker {
             revertRemainingOrder(owner, orderId, sellVolume);
             subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
         }
+        // substract granted fees:
+        subtractBalance(previousSolution.solutionSubmitter, tokenIdToAddressMap(0), uint(currentFeeCollected) / 2);
     }
 
     function checkForBestSolutionSubmission(int256 fee) private {
