@@ -49,9 +49,12 @@ contract StablecoinConverter is EpochTokenLocker {
 
     uint public MAX_TOKENS; // solhint-disable-line
     uint16 public numTokens = 0;
+    uint128 public feeDenominator; // fee is (1 / feeDenominator)
 
-    constructor(uint maxTokens) public {
+    constructor(uint maxTokens, uint128 _feeDenominator, address feeToken) public {
         MAX_TOKENS = maxTokens;
+        feeDenominator = _feeDenominator;
+        addToken(feeToken); // fee Token will always have the token index 0
     }
 
     function addToken(address _tokenAddress) public {
@@ -139,6 +142,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     mapping (uint16 => uint128) public currentPrices;
+    int256 public currentFeeCollected;
     PreviousSolutionData public previousSolution;
 
     struct PreviousSolutionData {
@@ -166,6 +170,7 @@ contract StablecoinConverter is EpochTokenLocker {
             "Solutions are no longer accepted for this batch"
         );
         require(checkPriceOrdering(tokenIdsForPrice), "prices are not ordered by tokenId");
+        require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         undoPreviousSolution(batchIndex);
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
@@ -182,16 +187,16 @@ contract StablecoinConverter is EpochTokenLocker {
                 currentPrices[order.buyToken],
                 currentPrices[order.sellToken]
             );
+            tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] -= int(executedBuyAmount);
+            tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] += int(executedSellAmount);
+            require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             // Ensure executed price is not lower than the order price:
             //       executedSellAmount / executedBuyAmount <= order.priceDenominator / order.priceNumerator
             require(
                 executedSellAmount.mul(order.priceNumerator) <= executedBuyAmount.mul(order.priceDenominator),
                 "limit price not satisfied"
             );
-            require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
-            tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] += int(executedBuyAmount);
-            tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] -= int(executedSellAmount);
             addBalance(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
         }
         // doing all subtractions after all additions (in order to avoid negative values)
@@ -202,6 +207,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 volumes[i]
             );
         }
+        checkAndOverrideObjectiveValue(tokenConservation[0], batchIndex);
         checkTokenConservation(tokenConservation);
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
@@ -209,8 +215,17 @@ contract StablecoinConverter is EpochTokenLocker {
     function checkTokenConservation(
         int[] memory tokenConservation
     ) internal pure {
-        for (uint i = 0; i < tokenConservation.length; i++) {
+        for (uint i = 1; i < tokenConservation.length; i++) {
             require(tokenConservation[i] == 0, "Token conservation does not hold");
+        }
+    }
+
+    function updateCurrentPrices(
+        uint128[] memory prices,          // list of prices for touched tokens only, frist price is fee token price
+        uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+    ) internal {
+        for (uint i = 0; i < tokenIdsForPrice.length; i++) {
+            currentPrices[tokenIdsForPrice[i]] = prices[i];
         }
     }
 
@@ -218,11 +233,17 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 executedSellAmount,
         uint128 buyTokenPrice,
         uint128 sellTokenPrice
-    ) internal pure returns (uint128) {
-        return uint128(
+    ) internal view returns (uint128) {
+        uint128 buyAmount = uint128(
             executedSellAmount.mul(buyTokenPrice) /
             sellTokenPrice
         );
+        // executedBuyAmount = buyAmount * (1 - (1/feeDenominator)
+        //                   = buyAmount - buyAmount/feeDenominator (*)
+        //                   = (buyAmount * feeDenominator)/ feeDenominator - buyAmount/feeDenominator
+        //                   = (buyAmount * feeDenominator - buyAmount) / feeDenominator
+        //                   = (buyAmount* (feeDenominator - 1)/feeDenominator
+        return uint128(buyAmount.mul(feeDenominator - 1) / feeDenominator);
     }
 
     function updateRemainingOrder(
@@ -239,15 +260,6 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 exectuedAmount
     ) internal returns (uint) {
         orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(exectuedAmount));
-    }
-
-    function updateCurrentPrices(
-        uint128[] memory prices,  //list of prices for touched token only
-        uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
-    ) internal {
-        for (uint i = 0; i < tokenIdsForPrice.length; i++) {
-            currentPrices[tokenIdsForPrice[i]] = prices[i];
-        }
     }
 
     function documentTrades(
@@ -268,7 +280,7 @@ contract StablecoinConverter is EpochTokenLocker {
         previousSolution.tokenIdsForPrice = tokenIdsForPrice;
     }
 
-    function undoPreviousSolution(uint batchIndex) internal {
+    function undoPreviousSolution(uint32 batchIndex) internal {
         if (previousSolution.batchId == batchIndex) {
             for (uint i = 0; i < previousSolution.trades.length; i++) {
                 address owner = previousSolution.trades[i].owner;
@@ -293,7 +305,16 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
+    function checkAndOverrideObjectiveValue(int256 fee, uint32 batchIndex) private {
+        if (previousSolution.batchId < batchIndex) {
+            currentFeeCollected = 0;
+        }
+        require(fee > currentFeeCollected, "Solution does not generate a higher fee than a previous solution");
+        currentFeeCollected = fee;
+    }
+
     function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
+        // binary search for the other tokens
         uint leftValue = 0;
         uint rightValue = tokenIdForPrice.length - 1;
         while (rightValue >= leftValue) {
@@ -309,9 +330,9 @@ contract StablecoinConverter is EpochTokenLocker {
         revert("Price not provided for token");
     }
 
-    function checkPriceOrdering(uint16[] memory tokenIdForPrice) private pure returns (bool) {
-        for (uint i = 1; i < tokenIdForPrice.length; i++) {
-            if (tokenIdForPrice[i] <= tokenIdForPrice[i - 1]) {
+    function checkPriceOrdering(uint16[] memory tokenIdsForPrice) private pure returns (bool) {
+        for (uint i = 1; i < tokenIdsForPrice.length; i++) {
+            if (tokenIdsForPrice[i] <= tokenIdsForPrice[i - 1]) {
                 return false;
             }
         }
