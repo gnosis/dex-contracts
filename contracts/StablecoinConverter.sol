@@ -137,19 +137,14 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory volumes,
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
-                                          // fee token id not required since always 0
     ) public {
         require(
             batchIndex == getCurrentStateIndex() - 1,
             "Solutions are no longer accepted for this batch"
         );
         require(checkPriceOrdering(tokenIdsForPrice), "prices are not ordered by tokenId");
-        if (previousSolution.batchId == batchIndex) {
-            undoPreviousSolution();
-        } else {
-            currentFeeCollected = 0;
-        }
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
+        undoPreviousSolution(batchIndex);
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
         int[] memory tokenConservation = new int[](prices.length);
@@ -185,7 +180,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 volumes[i]
             );
         }
-        checkForBestSolutionSubmission(tokenConservation[0]);
+        checkAndOverrideObjectiveValue(tokenConservation[0], batchIndex);
         checkTokenConservation(tokenConservation);
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
@@ -200,7 +195,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function updateCurrentPrices(
         uint128[] memory prices,          // list of prices for touched tokens only, frist price is fee token price
-        uint16[] memory tokenIdsForPrice  // price[i + 1] is the price for the token with tokenID tokenIdsForPrice[i]
+        uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
         for (uint i = 0; i < tokenIdsForPrice.length; i++) {
             currentPrices[tokenIdsForPrice[i]] = prices[i];
@@ -217,10 +212,10 @@ contract StablecoinConverter is EpochTokenLocker {
             sellTokenPrice
         );
         // executedBuyAmount = buyAmount * (1 - (1/feeDenominator)
-        //           = buyAmount - buyAmount/feeDenominator (*)
-        //           = (buyAmount * feeDenominator)/ feeDenominator - buyAmount/feeDenominator
-        //           = (buyAmount * feeDenominator - buyAmount) / feeDenominator
-        //           = (buyAmount* (feeDenominator - 1)/feeDenominator
+        //                   = buyAmount - buyAmount/feeDenominator (*)
+        //                   = (buyAmount * feeDenominator)/ feeDenominator - buyAmount/feeDenominator
+        //                   = (buyAmount * feeDenominator - buyAmount) / feeDenominator
+        //                   = (buyAmount* (feeDenominator - 1)/feeDenominator
         return uint128(buyAmount.mul(feeDenominator - 1) / feeDenominator);
     }
 
@@ -258,30 +253,35 @@ contract StablecoinConverter is EpochTokenLocker {
         previousSolution.tokenIdsForPrice = tokenIdsForPrice;
     }
 
-    function undoPreviousSolution() internal {
-        for (uint i = 0; i < previousSolution.trades.length; i++) {
-            address owner = previousSolution.trades[i].owner;
-            uint orderId = previousSolution.trades[i].orderId;
-            Order memory order = orders[owner][orderId];
-            uint sellVolume = previousSolution.trades[i].volume;
-            addBalance(owner, tokenIdToAddressMap(order.sellToken), sellVolume);
-        }
-        for (uint i = 0; i < previousSolution.trades.length; i++) {
-            address owner = previousSolution.trades[i].owner;
-            uint orderId = previousSolution.trades[i].orderId;
-            Order memory order = orders[owner][orderId];
-            uint128 sellVolume = previousSolution.trades[i].volume;
-            uint128 buyVolume = getExecutedBuyAmount(
-                sellVolume,
-                currentPrices[order.buyToken],
-                currentPrices[order.sellToken]
-            );
-            revertRemainingOrder(owner, orderId, sellVolume);
-            subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
+    function undoPreviousSolution(uint32 batchIndex) internal {
+        if (previousSolution.batchId == batchIndex) {
+            for (uint i = 0; i < previousSolution.trades.length; i++) {
+                address owner = previousSolution.trades[i].owner;
+                uint orderId = previousSolution.trades[i].orderId;
+                Order memory order = orders[owner][orderId];
+                uint sellVolume = previousSolution.trades[i].volume;
+                addBalance(owner, tokenIdToAddressMap(order.sellToken), sellVolume);
+            }
+            for (uint i = 0; i < previousSolution.trades.length; i++) {
+                address owner = previousSolution.trades[i].owner;
+                uint orderId = previousSolution.trades[i].orderId;
+                Order memory order = orders[owner][orderId];
+                uint128 sellVolume = previousSolution.trades[i].volume;
+                uint128 buyVolume = getExecutedBuyAmount(
+                    sellVolume,
+                    currentPrices[order.buyToken],
+                    currentPrices[order.sellToken]
+                );
+                revertRemainingOrder(owner, orderId, sellVolume);
+                subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
+            }
         }
     }
 
-    function checkForBestSolutionSubmission(int256 fee) private {
+    function checkAndOverrideObjectiveValue(int256 fee, uint32 batchIndex) private {
+        if (previousSolution.batchId < batchIndex) {
+            currentFeeCollected = 0;
+        }
         require(fee > currentFeeCollected, "Solution does not generate a higher fee than a previous solution");
         currentFeeCollected = fee;
     }
