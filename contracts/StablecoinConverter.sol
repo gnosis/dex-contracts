@@ -142,13 +142,14 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     mapping (uint16 => uint128) public currentPrices;
-    int256 public currentFeeCollected;
     PreviousSolutionData public previousSolution;
 
     struct PreviousSolutionData {
         uint batchId;
         TradeData[] trades;
         uint16[] tokenIdsForPrice;
+        address solutionSubmitter;
+        int256 currentFeeCollected;
     }
 
     struct TradeData {
@@ -164,13 +165,14 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory volumes,
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+                                          // fee token id not required since always 0
     ) public {
         require(
             batchIndex == getCurrentStateIndex() - 1,
             "Solutions are no longer accepted for this batch"
         );
-        require(checkPriceOrdering(tokenIdsForPrice), "prices are not ordered by tokenId");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
+        require(checkPriceOrdering(tokenIdsForPrice), "prices are not ordered by tokenId");
         undoPreviousSolution(batchIndex);
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
@@ -208,8 +210,13 @@ contract StablecoinConverter is EpochTokenLocker {
             );
         }
         checkAndOverrideObjectiveValue(tokenConservation[0], batchIndex);
+        grantRewardToSolutionSubmitter();
         checkTokenConservation(tokenConservation);
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
+    }
+
+    function grantRewardToSolutionSubmitter() internal {
+        addBalance(msg.sender, tokenIdToAddressMap(0), uint(previousSolution.currentFeeCollected) / 2);
     }
 
     function checkTokenConservation(
@@ -281,6 +288,7 @@ contract StablecoinConverter is EpochTokenLocker {
             }));
         }
         previousSolution.tokenIdsForPrice = tokenIdsForPrice;
+        previousSolution.solutionSubmitter = msg.sender;
     }
 
     function undoPreviousSolution(uint32 batchIndex) internal {
@@ -305,15 +313,21 @@ contract StablecoinConverter is EpochTokenLocker {
                 revertRemainingOrder(owner, orderId, sellVolume);
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
             }
+            // substract granted fees:
+            subtractBalance(
+                previousSolution.solutionSubmitter,
+                tokenIdToAddressMap(0),
+                uint(previousSolution.currentFeeCollected) / 2
+            );
         }
     }
 
     function checkAndOverrideObjectiveValue(int256 fee, uint32 batchIndex) private {
         if (previousSolution.batchId < batchIndex) {
-            currentFeeCollected = 0;
+            previousSolution.currentFeeCollected = 0;
         }
-        require(fee > currentFeeCollected, "Solution does not generate a higher fee than a previous solution");
-        currentFeeCollected = fee;
+        require(fee > previousSolution.currentFeeCollected, "Solution does not generate a higher fee than a previous solution");
+        previousSolution.currentFeeCollected = fee;
     }
 
     function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
