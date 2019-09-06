@@ -199,7 +199,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.requestWithdraw(ERC20.address, 100, { from: user_1 })
       await epochTokenLocker.addBalanceAndPostponeWithdrawTest(user_1, ERC20.address, 100)
 
-      assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex, "state index was falsely updated")
+      assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex, "State index updated incorrectly during call to addBalanceAndPostponeWithdrawTest")
     })
     it("postpones a withdrawRequest for a current epoch", async () => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
@@ -209,7 +209,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await waitForNSeconds(BATCH_TIME + 1)
       await epochTokenLocker.addBalanceAndPostponeWithdrawTest(user_1, ERC20.address, 100)
 
-      assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex + 1, "state index was falsely updated")
+      assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex + 1, "State index not updated during call to addBalanceAndPostponeWithdrawTest")
     })
   })
   describe("subtractBalance", () => {
