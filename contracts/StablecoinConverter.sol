@@ -142,7 +142,6 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     mapping (uint16 => uint128) public currentPrices;
-    int256 public currentFeeCollected;
     PreviousSolutionData public previousSolution;
 
     struct PreviousSolutionData {
@@ -150,6 +149,7 @@ contract StablecoinConverter is EpochTokenLocker {
         TradeData[] trades;
         uint16[] tokenIdsForPrice;
         address solutionSubmitter;
+        int256 currentFeeCollected;
     }
 
     struct TradeData {
@@ -216,7 +216,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function grantRewardToSolutionSubmitter() internal {
-        addBalance(msg.sender, tokenIdToAddressMap(0), uint(currentFeeCollected) / 2);
+        addBalance(msg.sender, tokenIdToAddressMap(0), uint(previousSolution.currentFeeCollected) / 2);
     }
 
     function checkTokenConservation(
@@ -314,21 +314,20 @@ contract StablecoinConverter is EpochTokenLocker {
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyVolume);
             }
             // substract granted fees:
-            subtractBalance(previousSolution.solutionSubmitter, tokenIdToAddressMap(0), uint(currentFeeCollected) / 2);
+            subtractBalance(
+                previousSolution.solutionSubmitter,
+                tokenIdToAddressMap(0),
+                uint(previousSolution.currentFeeCollected) / 2
+            );
         }
-    }
-
-    function checkForBestSolutionSubmission(int256 fee) private {
-        require(fee > currentFeeCollected, "Solution does not generate a higher fee than a previous solution");
-        currentFeeCollected = fee;
     }
 
     function checkAndOverrideObjectiveValue(int256 fee, uint32 batchIndex) private {
         if (previousSolution.batchId < batchIndex) {
-            currentFeeCollected = 0;
+            previousSolution.currentFeeCollected = 0;
         }
-        require(fee > currentFeeCollected, "Solution does not generate a higher fee than a previous solution");
-        currentFeeCollected = fee;
+        require(fee > previousSolution.currentFeeCollected, "Solution does not generate a higher fee than a previous solution");
+        previousSolution.currentFeeCollected = fee;
     }
 
     function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
