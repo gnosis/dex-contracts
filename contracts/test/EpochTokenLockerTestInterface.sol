@@ -12,6 +12,10 @@ contract EpochTokenLockerTestInterface is EpochTokenLocker {
         super.addBalance(user, token, amount);
     }
 
+    function addBalanceAndPostponeWithdrawTest(address user, address token, uint amount) public {
+        super.addBalanceAndPostponeWithdraw(user, token, amount);
+    }
+
     function subtractBalanceTest(address user, address token, uint amount) public {
         super.subtractBalance(user, token, amount);
     }

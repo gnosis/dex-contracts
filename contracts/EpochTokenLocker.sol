@@ -123,6 +123,14 @@ contract EpochTokenLocker {
     /**
      * internal functions
      */
+    function addBalanceAndPostponeWithdraw(address user, address token, uint amount) internal {
+        updateStateIndex();
+        if (balanceStates[user][token].pendingWithdraws.stateIndex < currentStateIndex) {
+            balanceStates[user][token].pendingWithdraws.stateIndex = currentStateIndex;
+        }
+        addBalance(user, token, amount);
+    }
+
     function addBalance(address user, address token, uint amount) internal {
         updateDepositsBalance(user, token);
         balanceStates[user][token].balance = balanceStates[user][token].balance.add(amount);
