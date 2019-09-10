@@ -7,7 +7,7 @@ const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
 
 module.exports = async function (deployer, network) {
   let fee_token
-  if (network == "development") {
+  if (network == "development" || network == "coverage") {
     await deployer.deploy(ERC20Mintable)
     fee_token = await ERC20Mintable.deployed()
   } else {
