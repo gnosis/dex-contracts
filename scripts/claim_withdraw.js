@@ -14,7 +14,7 @@ const url = process.env.GRAPH_URL || "http://localhost:8000/subgraphs/name/dfusi
 
 const withdraw_search = async function (_slot, valid = null, a_id = null, t_id = null) {
   let where_clause = `slot: ${_slot} `
-  if (a_id) where_clause += `accountId: ${parseInt(a_id)} `
+  if (a_id) where_clause += `accountId: "${parseInt(a_id).toString(16).padStart(40, "0")}" `
   if (t_id) where_clause += `tokenId: ${parseInt(t_id)} `
   if (valid) where_clause += `valid: ${valid}`
 
