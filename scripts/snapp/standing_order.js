@@ -3,8 +3,8 @@ const SnappAuction = artifacts.require("SnappAuction")
 const {
   getArgumentsHelper,
   getOrderData
-} = require("./script_utilities.js")
-const { encodeOrder } = require("../test/snapp_utils.js")
+} = require("../script_utilities.js")
+const { encodeOrder } = require("../../test/snapp_utils.js")
 
 module.exports = async (callback) => {
   try {
@@ -21,11 +21,11 @@ module.exports = async (callback) => {
     )
     const tx = await instance.placeStandingSellOrder(packedOrder, { from: sender })
     const batch_index = tx.logs[0].args.currentBatchIndex.toNumber()
-  
+
     const order_hash = (await instance.getStandingOrderHash(accountId, batch_index))
     console.log("Standing Sell Order placed: BatchIndex %s - Hash %s", batch_index, order_hash)
     callback()
-  } catch(error) {
+  } catch (error) {
     callback(error)
   }
 }

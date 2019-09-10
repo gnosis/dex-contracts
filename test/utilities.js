@@ -30,7 +30,7 @@ const assertRejects = async (q, msg) => {
  * 3.) ERC20Mintable token
  * 4.) amount to be funded
  */
-const fundAccounts = async function(minter, accounts, token, amount) {
+const fundAccounts = async function (minter, accounts, token, amount) {
   for (let i = 0; i < accounts.length; i++) {
     await token.mint(accounts[i], amount, { from: minter })
   }
@@ -44,7 +44,7 @@ const fundAccounts = async function(minter, accounts, token, amount) {
  * 3.) ERC20Mintable token
  * 4.) amount to be approved
  */
-const approveContract = async function(contract, accounts, token, value) {
+const approveContract = async function (contract, accounts, token, value) {
   for (let i = 0; i < accounts.length; i++) {
     await token.approve(contract.address, value, { from: accounts[i] })
   }
@@ -56,7 +56,7 @@ const approveContract = async function(contract, accounts, token, value) {
  * 1.) contract to register account
  * 2.) list of accounts
  */
-const openAccounts = async function(contract, accounts) {
+const openAccounts = async function (contract, accounts) {
   for (let i = 0; i < accounts.length; i++) {
     await contract.openAccount(i, { from: accounts[i] })
   }
@@ -69,7 +69,7 @@ const openAccounts = async function(contract, accounts) {
  * 2.) owner of contract
  * 3.) number of tokens to be registered 
  */
-const registerTokens = async function(token_artifact, contract, token_owner, numTokens) {
+const registerTokens = async function (token_artifact, contract, token_owner, numTokens) {
   const res = []
   const owner = await contract.owner()
   for (let i = 0; i < numTokens; i++) {
@@ -89,7 +89,7 @@ const registerTokens = async function(token_artifact, contract, token_owner, num
  * 4.) number of tokens to be registered
  * @returns {Array} tokens
  */
-const setupEnvironment = async function(token_artifact, contract, token_owner, accounts, numTokens) {
+const setupEnvironment = async function (token_artifact, contract, token_owner, accounts, numTokens) {
   const tokens = await registerTokens(token_artifact, contract, token_owner, numTokens)
   const amount = "300000000000000000000"
   for (let i = 0; i < tokens.length; i++) {
@@ -108,13 +108,13 @@ const setupEnvironment = async function(token_artifact, contract, token_owner, a
  * @param tokens: tokens that multiCaller will have balance in
  * @param multiCaller: contract address 
  */
-const setupMultiCaller = async function(snappInstance, tokenOwner, tokens, multiCaller) {
+const setupMultiCaller = async function (snappInstance, tokenOwner, tokens, multiCaller) {
   const amount = "300000000000000000000"
   for (let i = 0; i < tokens.length; i++) {
     await fundAccounts(tokenOwner, [multiCaller.address], tokens[i], amount)
-    
+
     const approveCalldata = tokens[i].contract.methods.approve(snappInstance.address, amount).encodeABI()
-    await multiCaller.executeWithCalldata(tokens[i].address, 1, approveCalldata) 
+    await multiCaller.executeWithCalldata(tokens[i].address, 1, approveCalldata)
   }
   const openAccountCallData = snappInstance.contract.methods.openAccount(11).encodeABI()
   await multiCaller.executeWithCalldata(snappInstance.address, 1, openAccountCallData)
@@ -123,7 +123,7 @@ const setupMultiCaller = async function(snappInstance, tokenOwner, tokens, multi
 const jsonrpc = "2.0"
 const id = 0
 const send = function (method, params, web3Provider) {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     web3Provider.currentProvider.send({ id, jsonrpc, method, params }, (error, result) => {
       if (error) {
         reject(error)
@@ -135,19 +135,19 @@ const send = function (method, params, web3Provider) {
 }
 
 // Wait for n blocks to pass
-const waitForNSeconds = async function(seconds, web3Provider=web3) {
+const waitForNSeconds = async function (seconds, web3Provider = web3) {
   await send("evm_increaseTime", [seconds], web3Provider)
   await send("evm_mine", [], web3Provider)
 }
 
-const toHex = function(buffer) {
+const toHex = function (buffer) {
   buffer = buffer.toString("hex")
   if (buffer.substring(0, 2) == "0x")
     return buffer
   return "0x" + buffer.toString("hex")
 }
 
-const countDuplicates = function(obj, num) {
+const countDuplicates = function (obj, num) {
   obj[num] = (++obj[num] || 1)
   return obj
 }
@@ -156,10 +156,10 @@ const countDuplicates = function(obj, num) {
  * Given a sequence of index1, elements1, ..., indexN elementN this function returns 
  * the corresponding MerkleTree of height 7.
  */
-const _generateMerkleTree = function(...args) {
-  const txs = Array(2**7).fill(sha256(0x0))
-  for (let i=0; i<args.length; i+=2) {
-    txs[args[i]] = args[i+1]
+const _generateMerkleTree = function (...args) {
+  const txs = Array(2 ** 7).fill(sha256(0x0))
+  for (let i = 0; i < args.length; i += 2) {
+    txs[args[i]] = args[i + 1]
   }
   return new MerkleTree(txs, sha256)
 }
@@ -167,7 +167,7 @@ const generateMerkleTree = memoize(_generateMerkleTree, {
   strategy: memoize.strategies.variadic
 })
 
-const sendTxAndGetReturnValue = async function(method, ...args) {
+const sendTxAndGetReturnValue = async function (method, ...args) {
   const result = await method.call(...args)
   await method(...args)
   return result

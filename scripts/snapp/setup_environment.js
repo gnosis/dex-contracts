@@ -1,9 +1,9 @@
 const SnappAuction = artifacts.require("SnappAuction")
 const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
-const { getArgumentsHelper } = require("./script_utilities.js")
-const { setupEnvironment } = require("../test/utilities.js")
+const { getArgumentsHelper } = require("../script_utilities.js")
+const { setupEnvironment } = require("../../test/utilities.js")
 
-module.exports = async function(callback) {
+module.exports = async function (callback) {
   try {
     const arguments = getArgumentsHelper()
     if (arguments.length > 2) {
@@ -15,7 +15,7 @@ module.exports = async function(callback) {
     const accounts = await web3.eth.getAccounts()
     const token_owner = accounts[1]
     console.log(`Beginning environment setup with ${numAccounts} accounts and ${numTokens} tokens`)
-    await setupEnvironment(ERC20Mintable, instance, token_owner, accounts.slice(0, numAccounts), numTokens)
+    await setupEnvironment(ERC20Mintable, instance, token_owner, accounts.slice(0, numAccounts), numTokens, true)
     console.log("Environment setup complete")
     callback()
   } catch (error) {

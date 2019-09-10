@@ -1,13 +1,13 @@
 const SnappAuction = artifacts.require("SnappAuction")
 const ERC20 = artifacts.require("ERC20")
 const zero_address = 0x0
-const { getArgumentsHelper } = require("./script_utilities.js")
+const { getArgumentsHelper } = require("../script_utilities.js")
 
 // Merkle Requirements
 const { sha256 } = require("ethereumjs-util")
 const { encodePacked_16_8_128 } = require("../test/snapp_utils.js")
 const MerkleTree = require("merkletreejs")
-const { toHex } = require("../test/utilities.js")
+const { toHex } = require("../../test/utilities.js")
 
 const axios = require("axios")
 const url = process.env.GRAPH_URL || "http://localhost:8000/subgraphs/name/dfusion"
