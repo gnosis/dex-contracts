@@ -1,5 +1,5 @@
 
-const getArgumentsHelper = function() {
+const getArgumentsHelper = function () {
   const arguments = process.argv.slice(4)
   const index = arguments.indexOf("--network")
   if (index > -1) {
@@ -8,7 +8,7 @@ const getArgumentsHelper = function() {
   return arguments
 }
 
-const getOrderData = async function(instance, callback, web3) {
+const getOrderData = async function (instance, callback, web3) {
   const arguments = getArgumentsHelper()
   if (arguments.length != 5) {
     callback("Error: This script requires arguments - <accountId> <buyToken> <sellToken> <minBuy> <maxSell>")
@@ -35,7 +35,26 @@ const getOrderData = async function(instance, callback, web3) {
   return [buyToken, sellToken, minBuy, maxSell, sender]
 }
 
+const invokeViewFunction = async function (contract, callback) {
+  try {
+    const arguments = getArgumentsHelper()
+    if (arguments.length < 1) {
+      callback("Error: This script requires arguments - <functionName> [..args]")
+    }
+    const [functionName, ...args] = arguments
+
+    const instance = await contract.deployed()
+    const info = await instance[functionName].call(...args)
+
+    console.log(info)
+    callback()
+  } catch (error) {
+    callback(error)
+  }
+}
+
 module.exports = {
   getArgumentsHelper,
-  getOrderData
+  getOrderData,
+  invokeViewFunction
 }
