@@ -1,5 +1,5 @@
 const SnappAuction = artifacts.require("SnappAuction")
-const { getArgumentsHelper } = require("./script_utilities.js")
+const { getArgumentsHelper } = require("../script_utilities.js")
 
 module.exports = async (callback) => {
   try {
@@ -8,7 +8,7 @@ module.exports = async (callback) => {
       callback("Error: This script requires arguments - <slot> <new state root>")
     }
     const [slot, new_state] = arguments
-    
+
     const instance = await SnappAuction.deployed()
     const curr_state = await instance.getCurrentStateRoot()
 
