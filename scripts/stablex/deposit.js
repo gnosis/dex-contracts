@@ -1,4 +1,4 @@
-const SnappAuction = artifacts.require("SnappAuction")
+const StablecoinConverter = artifacts.require("StablecoinConverter")
 const ERC20 = artifacts.require("ERC20.sol")
 const { getArgumentsHelper } = require("../script_utilities.js")
 
@@ -13,11 +13,9 @@ module.exports = async (callback) => {
     const [accountId, tokenId, amount_arg] = arguments
     const amount = new web3.utils.BN(web3.utils.toWei(amount_arg))
 
-    const instance = await SnappAuction.deployed()
-    const depositor = await instance.accountToPublicKeyMap.call(accountId)
-    if (depositor == zero_address) {
-      callback(`Error: No account registerd at index ${accountId}`)
-    }
+    const instance = await StablecoinConverter.deployed()
+    const accounts = await web3.eth.getAccounts()
+    const depositor = await accounts[accountId]
 
     const token_address = await instance.tokenIdToAddressMap.call(tokenId)
     if (token_address == zero_address) {
@@ -30,12 +28,8 @@ module.exports = async (callback) => {
       callback(`Error: Depositor has insufficient balance ${depositor_balance} < ${amount}.`)
     }
 
-    const tx = await instance.deposit(tokenId, amount, { from: depositor })
-    const slot = tx.logs[0].args.slot.toNumber()
-    const slot_index = tx.logs[0].args.slotIndex.toNumber()
-
-    const deposit_hash = (await instance.getDepositHash(slot))
-    console.log("Deposit successful: Slot %s - Index %s - Hash %s", slot, slot_index, deposit_hash)
+    await instance.deposit(token_address, amount, { from: depositor })
+    console.log("Deposit successful")
     callback()
   } catch (error) {
     callback(error)
