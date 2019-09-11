@@ -34,7 +34,7 @@ const withdraw_search = async function (_slot, valid = null, a_id = null, t_id =
 
 module.exports = async (callback) => {
   try {
-    if (!argv.accountId || !argv.tokenId || !argv.slot) {
+    if ([argv.accountId, argv.tokenId, argv.slot].indexOf != -1) {
       callback("Error: This script requires arguments: --slot, --accountId, --tokenId")
     }
 

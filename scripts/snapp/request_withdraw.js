@@ -4,7 +4,7 @@ const zero_address = 0x0
 
 module.exports = async (callback) => {
   try {
-    if (!argv.accountId || !argv.tokenId || !argv.amount) {
+    if ([argv.accountId, argv.tokenId, argv.amount].indexOf != -1) {
       callback("Error: This script requires arguments: --accountId, --tokenId, --amount")
     }
 

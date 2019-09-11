@@ -3,7 +3,7 @@ const argv = require("yargs").argv
 
 module.exports = async (callback) => {
   try {
-    if (!argv.slot || !argv.newStateRoot) {
+    if ([argv.slot, argv.newStateRoot].indexOf != -1) {
       callback("Error: This script requires arguments: --slot, --newStateRoot")
     }
 
