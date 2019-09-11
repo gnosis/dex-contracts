@@ -1208,6 +1208,6 @@ function decodeAuctionElements(bytes) {
 }
 
 const closeAuction = async (instance) => {
-  const time_remaining = await instance.getSecondsRemainingInBatch()
+  const time_remaining = (await instance.getSecondsRemainingInBatch()).toNumber()
   await waitForNSeconds(time_remaining + 1)
 }
