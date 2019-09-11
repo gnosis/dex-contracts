@@ -1,15 +1,15 @@
 const BN = require("bn.js")
 const SnappAuction = artifacts.require("SnappAuction")
 const {
-  getArgumentsHelper,
   getOrderData
 } = require("../script_utilities.js")
 const { encodeOrder } = require("../../test/snapp_utils.js")
+const argv = require("yargs").argv
 
 module.exports = async (callback) => {
   try {
     const instance = await SnappAuction.deployed()
-    const accountId = getArgumentsHelper()[0]
+    const accountId = argv.accountId
     if (accountId >= await instance.AUCTION_RESERVED_ACCOUNTS()) {
       callback(`Error: Account is not eligible for ${accountId} standing orders`)
     }

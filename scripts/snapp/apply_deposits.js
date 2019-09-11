@@ -1,23 +1,22 @@
 const SnappAuction = artifacts.require("SnappAuction")
-const { getArgumentsHelper } = require("../script_utilities.js")
+const argv = require("yargs").argv
 
 module.exports = async (callback) => {
   try {
-    const arguments = getArgumentsHelper()
-    if (arguments.length != 2) {
-      callback("Error: This script requires arguments - <slot> <new state root>")
+    if (!argv.slot || !argv.newStateRoot) {
+      callback("Error: This script requires arguments: --slot, --newStateRoot")
     }
-    const [slot, new_state] = arguments
 
     const instance = await SnappAuction.deployed()
     const curr_state = await instance.getCurrentStateRoot()
 
-    if (await instance.hasDepositBeenApplied(slot)) {
+    if (await instance.hasDepositBeenApplied(argv.slot)) {
       callback("Error: Requested deposit slot has already been applied")
     }
 
-    console.log("Current slot for: %d with curr_state %s and new_state %s", slot, curr_state, new_state)
-    await instance.applyDeposits(slot, curr_state, new_state, await instance.getDepositHash(slot))
+    console.log("Current slot for: %d with curr_state %s and new_state %s", argv.slot, curr_state, argv.new_state)
+    const deposit_hash = await instance.getDepositHash(argv.slot)
+    await instance.applyDeposits(argv.slot, curr_state, argv.new_state, deposit_hash)
     console.log("Successfully applied Deposits!")
     callback()
   } catch (error) {

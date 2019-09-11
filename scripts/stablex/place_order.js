@@ -1,24 +1,23 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
-const { getArgumentsHelper } = require("../script_utilities.js")
 const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
+const argv = require("yargs").argv
 
 module.exports = async (callback) => {
   try {
-    const arguments = getArgumentsHelper()
-    if (arguments.length != 6) {
-      callback("Error: This script requires arguments - <accountId> <buyToken> <sellToken> <minBuy> <maxSell> <valid for>")
+    if (!argv.accountId || !argv.buyToken || !argv.sellToken || !argv.minBuy || !argv.maxSell || !argv.validFor) {
+      callback("Error: This script requires arguments: --accountId, --buyToken, --sellToken, --minBuy, --maxSell, --valid for")
     }
-    const [accountId, buyToken, sellToken, minBuyArg, maxSellArg, validForString] = arguments
-    const minBuy = web3.utils.toWei(minBuyArg)
-    const maxSell = web3.utils.toWei(maxSellArg)
+    const account = accounts[argv.accountId]
+    const minBuy = web3.utils.toWei(argv.minBuy)
+    const maxSell = web3.utils.toWei(argv.maxSell)
 
     const instance = await StablecoinConverter.deployed()
     const accounts = await web3.eth.getAccounts()
 
     const batch_index = (await instance.getCurrentStateIndex.call()).toNumber()
-    const valid_until = batch_index + parseInt(validForString)
+    const valid_until = batch_index + parseInt(argv.validFor)
 
-    const id = await sendTxAndGetReturnValue(instance.placeOrder, buyToken, sellToken, true, valid_until, minBuy, maxSell, { from: accounts[accountId] })
+    const id = await sendTxAndGetReturnValue(instance.placeOrder, argv.buyToken, argv.sellToken, true, valid_until, minBuy, maxSell, { from: account })
 
     console.log(`Placed Limit Sell Order successfully with ID ${id}. Valid from batch ${batch_index} until batch: ${valid_until}`)
     callback()
