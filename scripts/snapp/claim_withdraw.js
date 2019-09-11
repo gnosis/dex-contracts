@@ -6,7 +6,7 @@ const zero_address = 0x0
 
 // Merkle Requirements
 const { sha256 } = require("ethereumjs-util")
-const { encodePacked_16_8_128 } = require("../test/snapp_utils.js")
+const { encodePacked_16_8_128 } = require("../../test/snapp_utils.js")
 const MerkleTree = require("merkletreejs")
 const { toHex } = require("../../test/utilities.js")
 

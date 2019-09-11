@@ -14,7 +14,7 @@ module.exports = async (callback) => {
       callback(`Error: Account is not eligible for ${accountId} standing orders`)
     }
 
-    const [buyToken, sellToken, minBuy, maxSell, sender] = await getOrderData(instance, callback, web3)
+    const [buyToken, sellToken, minBuy, maxSell, sender] = await getOrderData(instance, callback, web3, argv)
 
     const packedOrder = encodeOrder(
       new BN(buyToken, 10), new BN(sellToken, 10), new BN(minBuy, 10), new BN(maxSell, 10)
