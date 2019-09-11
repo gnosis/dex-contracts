@@ -6,7 +6,7 @@ const zero_address = 0x0
 
 module.exports = async (callback) => {
   try {
-    if ([argv.accountId, argv.tokenId, argv.amount].indexOf != -1) {
+    if ([argv.accountId, argv.tokenId, argv.amount].indexOf(undefined) != -1) {
       callback("Error: This script requires arguments: --accountId, --tokenId, --depositAmount")
     }
     const amount = web3.utils.toWei(new web3.utils.BN(argv.amount))

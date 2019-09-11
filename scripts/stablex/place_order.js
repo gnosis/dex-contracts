@@ -4,7 +4,7 @@ const argv = require("yargs").argv
 
 module.exports = async (callback) => {
   try {
-    if ([argv.accountId, argv.buyToken, argv.sellToken, argv.minBuy, argv.maxSell, argv.validFor].indexOf != -1) {
+    if ([argv.accountId, argv.buyToken, argv.sellToken, argv.minBuy, argv.maxSell, argv.validFor].indexOf(undefined) != -1) {
       callback("Error: This script requires arguments: --accountId, --buyToken, --sellToken, --minBuy, --maxSell, --valid for")
     }
     const account = accounts[argv.accountId]

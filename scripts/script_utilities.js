@@ -9,7 +9,7 @@ const getArgumentsHelper = function () {
 }
 
 const getOrderData = async function (instance, callback, web3, argv) {
-  if ([argv.accountId, argv.buyToken, argv.sellToken, argv.minBuyArg, argv.maxSellArg].indexOf != -1) {
+  if ([argv.accountId, argv.buyToken, argv.sellToken, argv.minBuyArg, argv.maxSellArg].indexOf(undefined) != -1) {
     callback("Error: This script requires the following arguments: --accountId, --buyToken, --sellToken, --minBuy, --maxSell")
   }
 

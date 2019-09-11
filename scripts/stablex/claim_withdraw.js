@@ -5,7 +5,7 @@ const argv = require("yargs").argv
 
 module.exports = async (callback) => {
   try {
-    if ([argv.accountId, argv.tokenId].indexOf != -1) {
+    if ([argv.accountId, argv.tokenId].indexOf(undefined) != -1) {
       callback("Error: This script requires arguments: --accountId, --tokenId")
     }
 
