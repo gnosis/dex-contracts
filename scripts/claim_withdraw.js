@@ -14,7 +14,7 @@ const url = process.env.GRAPH_URL || "http://localhost:8000/subgraphs/name/dfusi
 
 const withdraw_search = async function (_slot, valid = null, a_id = null, t_id = null) {
   let where_clause = `slot: ${_slot} `
-  if (a_id) where_clause += `accountId: ${parseInt(a_id)} `
+  if (a_id) where_clause += `accountId: "${parseInt(a_id).toString(16).padStart(40, "0")}" `
   if (t_id) where_clause += `tokenId: ${parseInt(t_id)} `
   if (valid) where_clause += `valid: ${valid}`
 
@@ -67,7 +67,7 @@ module.exports = async (callback) => {
     for (let i = 0; i < all_withdraws.length; i++) {
       const withdraw = all_withdraws[i]
       if (withdraw.valid) {
-        withdraw_hashes[i] = encodePacked_16_8_128(withdraw.accountId, withdraw.tokenId, parseInt(withdraw.amount))
+        withdraw_hashes[i] = encodePacked_16_8_128(parseInt(withdraw.accountId, 16), withdraw.tokenId, parseInt(withdraw.amount))
       }
     }
     const tree = new MerkleTree(withdraw_hashes, sha256)
