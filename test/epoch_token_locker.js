@@ -227,7 +227,7 @@ contract("EpochTokenLocker", async (accounts) => {
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
 
-      await epochTokenLocker.addBalanceTest(user_2, ERC20.address, 100)
+      await epochTokenLocker.deposit(ERC20.address, 100, { from: user_2 })
       await waitForNSeconds(BATCH_TIME)
       await epochTokenLocker.subtractBalanceTest(user_2, ERC20.address, 50)
 
