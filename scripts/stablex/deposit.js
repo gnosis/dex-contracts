@@ -9,7 +9,7 @@ module.exports = async (callback) => {
     if ([argv.accountId, argv.tokenId, argv.amount].indexOf(undefined) != -1) {
       callback("Error: This script requires arguments: --accountId, --tokenId, --amount")
     }
-    const amount = web3.utils.toWei(new web3.utils.BN(argv.amount))
+    const amount = web3.utils.toWei(String(argv.amount))
 
     const instance = await StablecoinConverter.deployed()
     const accounts = await web3.eth.getAccounts()

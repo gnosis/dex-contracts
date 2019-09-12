@@ -13,8 +13,8 @@ const getOrderData = async function (instance, callback, web3, argv) {
     callback("Error: This script requires the following arguments: --accountId, --buyToken, --sellToken, --minBuy, --maxSell")
   }
 
-  const minBuy = web3.utils.toWei(new web3.utils.BN(argv.minBuy))
-  const maxSell = web3.utils.toWei(new web3.utils.BN(argv.maxSell))
+  const minBuy = web3.utils.toWei(String(argv.minBuy))
+  const maxSell = web3.utils.toWei(String(argv.maxSell))
 
   const sender = await instance.accountToPublicKeyMap.call(argv.accountId)
   if (sender == 0x0) {

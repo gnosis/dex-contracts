@@ -9,7 +9,7 @@ module.exports = async (callback) => {
     if ([argv.accountId, argv.tokenId, argv.amount].indexOf(undefined) != -1) {
       callback("Error: This script requires arguments: --accountId, --tokenId, --depositAmount")
     }
-    const amount = web3.utils.toWei(new web3.utils.BN(argv.amount))
+    const amount = web3.utils.toWei(String(argv.amount))
 
     const instance = await SnappAuction.deployed()
     const depositor = await instance.accountToPublicKeyMap.call(argv.accountId)

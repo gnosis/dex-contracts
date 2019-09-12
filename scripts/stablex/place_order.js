@@ -8,8 +8,8 @@ module.exports = async (callback) => {
       callback("Error: This script requires arguments: --accountId, --buyToken, --sellToken, --minBuy, --maxSell, --valid for")
     }
     const account = accounts[argv.accountId]
-    const minBuy = web3.utils.toWei(new web3.utils.BN(argv.minBuy))
-    const maxSell = web3.utils.toWei(new web3.utils.BN(argv.maxSell))
+    const minBuy = web3.utils.toWei(String(argv.minBuy))
+    const maxSell = web3.utils.toWei(String(argv.maxSell))
 
     const instance = await StablecoinConverter.deployed()
     const accounts = await web3.eth.getAccounts()
