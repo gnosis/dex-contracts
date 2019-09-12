@@ -108,7 +108,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder(id), "Order is still valid")
     })
   })
-  describe("addToken()", () => {
+  describe("addToken", () => {
     it("feeToken is set by default", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -150,7 +150,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(stablecoinConverter.addToken((await ERC20.new()).address), "Max tokens reached")
     })
   })
-  describe("submitSolution()", () => {
+  describe("submitSolution", () => {
     it("places two orders and matches them in a solution with traders' Utility == 0", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
