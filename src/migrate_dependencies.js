@@ -1,11 +1,9 @@
-
 async function migrate({
   artifacts,
   deployer,
   network,
 }) {
   if (network === "development" || network == "coverage") {
-
     // deploy DevDependencies
     const Dependencies = artifacts.require("./DevDependencies.sol")
     await deployer.deploy(Dependencies)

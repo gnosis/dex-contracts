@@ -1,5 +1,3 @@
-/*eslint no-undef: "off"*/
-
 async function migrate({
   artifacts,
   deployer
