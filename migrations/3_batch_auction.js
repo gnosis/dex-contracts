@@ -1,16 +1,16 @@
 /*eslint no-undef: "off"*/
 
-const BiMap = artifacts.require("IdToAddressBiMap.sol")
-const SnappBaseCore = artifacts.require("SnappBaseCore.sol")
-const SnappAuction = artifacts.require("SnappAuction.sol")
+const migrateSnappAuction = require("../src/migration_scripts_snappAuction/migrate_snapp_auction")
+const argv = require("../src/migration_utilities")
+
 
 module.exports = async function (deployer) {
-  await deployer.deploy(BiMap)
-
-  await deployer.link(BiMap, SnappBaseCore)
-  await deployer.deploy(SnappBaseCore)
-
-  await deployer.link(BiMap, SnappAuction)
-  await deployer.link(SnappBaseCore, SnappAuction)
-  await deployer.deploy(SnappAuction)
+  if (!argv.onlyMigrateStableX) {
+    return migrateSnappAuction({
+      artifacts,
+      deployer
+    })
+  } else {
+    return
+  }
 }
