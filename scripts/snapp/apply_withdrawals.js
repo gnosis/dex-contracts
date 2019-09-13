@@ -1,12 +1,21 @@
 const SnappAuction = artifacts.require("SnappAuction")
-const argv = require("yargs").argv
+const argv = require("yargs")
+  .option("slot", {
+    describe: "Withdraw slot to apply"
+  })
+  .option("newStateRoot", {
+    describe: "Updated account state after applying withdraws"
+  })
+  .option("merkleRoot", {
+    describe: "The merkle root of valid withdraw requests that were applied in this transition"
+  })
+  .demand(["slot", "newStateRoot", "merkleRoot"])
+  .help(false)
+  .version(false)
+  .argv
 
 module.exports = async (callback) => {
   try {
-    if ([argv.slot, argv.merkleRoot, argv.newStateRoot].indexOf(undefined) != -1) {
-      callback("Error: This script requires arguments: --slot, --merkleRoot, --newStateRoot")
-    }
-
     const instance = await SnappAuction.deployed()
 
     const state_index = (await instance.stateIndex.call()).toNumber()

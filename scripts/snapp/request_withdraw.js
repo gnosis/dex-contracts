@@ -1,13 +1,22 @@
 const SnappAuction = artifacts.require("SnappAuction")
-const argv = require("yargs").argv
 const zero_address = 0x0
+const argv = require("yargs")
+  .option("accountId", {
+    describe: "Withdrawers's account index"
+  })
+  .option("tokenId", {
+    describe: "Token to withdraw"
+  })
+  .option("amount", {
+    describe: "Amount in to withdraw (in 10**18 WEI, e.g. 1 = 1 ETH)"
+  })
+  .demand(["accountId", "tokenId", "amount"])
+  .help(false)
+  .version(false)
+  .argv
 
 module.exports = async (callback) => {
   try {
-    if ([argv.accountId, argv.tokenId, argv.amount].indexOf(undefined) != -1) {
-      callback("Error: This script requires arguments: --accountId, --tokenId, --amount")
-    }
-
     const amount = web3.utils.toWei(String(argv.amount))
 
     const instance = await SnappAuction.deployed()

@@ -1,12 +1,31 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
-const argv = require("yargs").argv
+const argv = require("yargs")
+  .option("accountId", {
+    describe: "Account index of the order placer"
+  })
+  .option("sellToken", {
+    describe: "Token to be sold"
+  })
+  .option("buyToken", {
+    describe: "token to be bought"
+  })
+  .option("minBuy", {
+    describe: "minimum amount to be bought (in 10**18 WEI of buyToken, e.g. 1 = 1ETH)"
+  })
+  .option("maxSell", {
+    describe: "minimum amount to be sold (in 10**18 WEI of sellToken, e.g. 1 = 1ETH)"
+  })
+  .option("validFor", {
+    describe: "the number of auctions for which this orders is valid"
+  })
+  .demand(["accountId", "sellToken", "buyToken", "minBuy", "maxSell", "validFor"])
+  .help(false)
+  .version(false)
+  .argv
 
 module.exports = async (callback) => {
   try {
-    if ([argv.accountId, argv.buyToken, argv.sellToken, argv.minBuy, argv.maxSell, argv.validFor].indexOf(undefined) != -1) {
-      callback("Error: This script requires arguments: --accountId, --buyToken, --sellToken, --minBuy, --maxSell, --valid for")
-    }
     const account = accounts[argv.accountId]
     const minBuy = web3.utils.toWei(String(argv.minBuy))
     const maxSell = web3.utils.toWei(String(argv.maxSell))

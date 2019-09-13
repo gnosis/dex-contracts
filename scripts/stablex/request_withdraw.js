@@ -1,6 +1,19 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const zero_address = 0x0
-const argv = require("yargs").argv
+const argv = require("yargs")
+  .option("accountId", {
+    describe: "Withdrawers's account index"
+  })
+  .option("tokenId", {
+    describe: "Token to withdraw"
+  })
+  .option("amount", {
+    describe: "Amount in to withdraw (in 10**18 WEI, e.g. 1 = 1 ETH)"
+  })
+  .demand(["accountId", "tokenId", "amount"])
+  .help(false)
+  .version(false)
+  .argv
 
 module.exports = async (callback) => {
   try {

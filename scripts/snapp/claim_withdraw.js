@@ -1,6 +1,19 @@
 const SnappAuction = artifacts.require("SnappAuction")
 const ERC20 = artifacts.require("ERC20")
-const argv = require("yargs").argv
+const argv = require("yargs")
+  .option("accountId", {
+    describe: "Claimer's account index"
+  })
+  .option("tokenId", {
+    describe: "Token to claim"
+  })
+  .option("slot", {
+    describe: "The slot in which the to be claimed withdraw was requested"
+  })
+  .demand(["accountId", "tokenId", "slot"])
+  .help(false)
+  .version(false)
+  .argv
 
 const zero_address = 0x0
 
@@ -31,13 +44,8 @@ const withdraw_search = async function (_slot, valid = null, a_id = null, t_id =
   return eval(response.data).data.withdraws
 }
 
-
 module.exports = async (callback) => {
   try {
-    if ([argv.accountId, argv.tokenId, argv.slot].indexOf(undefined) != -1) {
-      callback("Error: This script requires arguments: --slot, --accountId, --tokenId")
-    }
-
     const instance = await SnappAuction.deployed()
 
     // Verify account and token
