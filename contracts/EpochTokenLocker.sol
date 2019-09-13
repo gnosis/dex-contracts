@@ -109,6 +109,10 @@ contract EpochTokenLocker {
         return uint32(now / BATCH_TIME);
     }
 
+    function getSecondsRemainingInBatch() public view returns(uint) {
+        return BATCH_TIME - (now % BATCH_TIME);
+    }
+
     function getBalance(address user, address token) public view returns(uint256) {
         uint balance = balanceStates[user][token].balance;
         if (balanceStates[user][token].pendingDeposits.stateIndex < getCurrentStateIndex()) {

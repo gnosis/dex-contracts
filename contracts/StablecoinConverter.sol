@@ -47,7 +47,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     IdToAddressBiMap.Data private registeredTokens;
 
-    uint public MAX_TOKENS; // solhint-disable-line
+    uint public MAX_TOKENS;  // solhint-disable var-name-mixedcase
     uint16 public numTokens = 0;
     uint128 public feeDenominator; // fee is (1 / feeDenominator)
 
@@ -145,7 +145,7 @@ contract StablecoinConverter is EpochTokenLocker {
     PreviousSolutionData public previousSolution;
 
     struct PreviousSolutionData {
-        uint batchId;
+        uint32 batchId;
         TradeData[] trades;
         uint16[] tokenIdsForPrice;
         address solutionSubmitter;
@@ -273,7 +273,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function documentTrades(
-        uint batchIndex,
+        uint32 batchIndex,
         address[] memory owners,  //tradeData is submitted as arrays
         uint16[] memory orderIds,
         uint128[] memory volumes,

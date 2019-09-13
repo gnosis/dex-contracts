@@ -30,7 +30,26 @@ const getOrderData = async function (instance, callback, web3, argv) {
   return [argv.buyToken, argv.sellToken, minBuy, maxSell, sender]
 }
 
+const invokeViewFunction = async function (contract, callback) {
+  try {
+    const arguments = getArgumentsHelper()
+    if (arguments.length < 1) {
+      callback("Error: This script requires arguments - <functionName> [..args]")
+    }
+    const [functionName, ...args] = arguments
+
+    const instance = await contract.deployed()
+    const info = await instance[functionName].call(...args)
+
+    console.log(info)
+    callback()
+  } catch (error) {
+    callback(error)
+  }
+}
+
 module.exports = {
   getArgumentsHelper,
-  getOrderData
+  getOrderData,
+  invokeViewFunction
 }
