@@ -1,4 +1,4 @@
-/* eslint no-undef: "error" */
+/*eslint no-undef: "off"*/
 
 const migrateDependencies = require("../src/migrate_dependencies.js")
 
