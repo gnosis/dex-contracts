@@ -1,11 +1,25 @@
 const SnappAuction = artifacts.require("SnappAuction")
 const ERC20 = artifacts.require("ERC20")
+const argv = require("yargs")
+  .option("accountId", {
+    describe: "Claimer's account index"
+  })
+  .option("tokenId", {
+    describe: "Token to claim"
+  })
+  .option("slot", {
+    describe: "The slot in which the to be claimed withdraw was requested"
+  })
+  .demand(["accountId", "tokenId", "slot"])
+  .help(false)
+  .version(false)
+  .argv
+
 const zero_address = 0x0
-const { getArgumentsHelper } = require("../script_utilities.js")
 
 // Merkle Requirements
 const { sha256 } = require("ethereumjs-util")
-const { encodePacked_16_8_128 } = require("../test/snapp_utils.js")
+const { encodePacked_16_8_128 } = require("../../test/snapp_utils.js")
 const MerkleTree = require("merkletreejs")
 const { toHex } = require("../../test/utilities.js")
 
@@ -30,39 +44,32 @@ const withdraw_search = async function (_slot, valid = null, a_id = null, t_id =
   return eval(response.data).data.withdraws
 }
 
-
 module.exports = async (callback) => {
   try {
-    const arguments = getArgumentsHelper()
-    if (arguments.length != 3) {
-      callback("Error: This script requires arguments - <slot> <accountId> <tokenId>")
-    }
-    const [slot, accountId, tokenId] = arguments
-
     const instance = await SnappAuction.deployed()
 
     // Verify account and token
-    const depositor = await instance.accountToPublicKeyMap.call(accountId)
+    const depositor = await instance.accountToPublicKeyMap.call(argv.accountId)
     if (depositor == zero_address) {
-      callback(`Error: No account registerd at index ${accountId}`)
+      callback(`Error: No account registerd at index ${argv.accountId}`)
     }
-    const token_address = await instance.tokenIdToAddressMap.call(tokenId)
+    const token_address = await instance.tokenIdToAddressMap.call(argv.tokenId)
     if (token_address == zero_address) {
-      callback(`Error: No token registered at index ${tokenId}`)
+      callback(`Error: No token registered at index ${argv.tokenId}`)
     }
 
-    if (await instance.isPendingWithdrawActive(slot)) {
-      callback(`Error: Requested slot ${slot} not been processed!`)
+    if (await instance.isPendingWithdrawActive(argv.slot)) {
+      callback(`Error: Requested slot ${argv.slot} not been processed!`)
     }
 
-    const valid_withdrawals = await withdraw_search(slot, true, accountId, tokenId)
+    const valid_withdrawals = await withdraw_search(argv.slot, true, argv.accountId, argv.tokenId)
     console.log(valid_withdrawals)
     if (valid_withdrawals.length == 0) {
-      callback(`Error: No valid withdraw found in slot ${slot}`)
+      callback(`Error: No valid withdraw found in slot ${argv.slot}`)
     }
 
     console.log("Reconstructing Merkle Tree from leaf nodes")
-    const all_withdraws = await withdraw_search(slot)
+    const all_withdraws = await withdraw_search(argv.slot)
     const withdraw_hashes = Array(2 ** 7).fill(Buffer.alloc(32))
     for (let i = 0; i < all_withdraws.length; i++) {
       const withdraw = all_withdraws[i]
@@ -71,7 +78,7 @@ module.exports = async (callback) => {
       }
     }
     const tree = new MerkleTree(withdraw_hashes, sha256)
-    const claimable_root = await instance.getClaimableWithdrawHash(slot)
+    const claimable_root = await instance.getClaimableWithdrawHash(argv.slot)
     // Verify merkle roots agree
     if (claimable_root != toHex(tree.getRoot())) {
       callback(`Merkle Roots disagree: ${claimable_root} != ${toHex(tree.getRoot())}`)
@@ -79,11 +86,11 @@ module.exports = async (callback) => {
 
     for (let i = 0; i < valid_withdrawals.length; i++) {
       const toClaim = valid_withdrawals[i]
-      if (await instance.hasWithdrawBeenClaimed.call(slot, toClaim.slotIndex)) {
+      if (await instance.hasWithdrawBeenClaimed.call(argv.slot, toClaim.slotIndex)) {
         console.log("Already claimed:", toClaim)
       } else {
         console.log("Attempting to claim:", toClaim)
-        const leaf = encodePacked_16_8_128(accountId, tokenId, parseInt(toClaim.amount))
+        const leaf = encodePacked_16_8_128(argv.accountId, argv.tokenId, parseInt(toClaim.amount))
         const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
 
         // Could also check if leaf if contained in withdraw_hashes
@@ -94,10 +101,10 @@ module.exports = async (callback) => {
         const token = await ERC20.at(token_address)
         const balance_before = await token.balanceOf(depositor)
 
-        await instance.claimWithdrawal(slot, toClaim.slotIndex, accountId, tokenId, toClaim.amount, proof)
+        await instance.claimWithdrawal(argv.slot, toClaim.slotIndex, argv.accountId, argv.tokenId, toClaim.amount, proof)
 
         const balance_after = await token.balanceOf(depositor)
-        console.log(`Success! Balance of token ${tokenId} before claim: ${balance_before}, after claim: ${balance_after}`)
+        console.log(`Success! Balance of token ${argv.tokenId} before claim: ${balance_before}, after claim: ${balance_after}`)
       }
     }
     callback()

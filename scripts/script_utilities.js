@@ -8,31 +8,26 @@ const getArgumentsHelper = function () {
   return arguments
 }
 
-const getOrderData = async function (instance, callback, web3) {
-  const arguments = getArgumentsHelper()
-  if (arguments.length != 5) {
-    callback("Error: This script requires arguments - <accountId> <buyToken> <sellToken> <minBuy> <maxSell>")
-  }
-  const [accountId, buyToken, sellToken, minBuy_arg, maxSell_arg] = arguments
-  const minBuy = web3.utils.toWei(minBuy_arg)
-  const maxSell = web3.utils.toWei(maxSell_arg)
+const getOrderData = async function (instance, callback, web3, argv) {
+  const minBuy = web3.utils.toWei(String(argv.minBuy))
+  const maxSell = web3.utils.toWei(String(argv.maxSell))
 
-  const sender = await instance.accountToPublicKeyMap.call(accountId)
+  const sender = await instance.accountToPublicKeyMap.call(argv.accountId)
   if (sender == 0x0) {
-    callback(`Error: No account registerd at index ${accountId}`)
+    callback(`Error: No account registerd at index ${argv.accountId}`)
   }
 
-  const buyTokenAddress = await instance.tokenIdToAddressMap.call(buyToken)
+  const buyTokenAddress = await instance.tokenIdToAddressMap.call(argv.buyToken)
   if (buyTokenAddress == 0x0) {
-    callback(`Error: No token registered at index ${buyToken}`)
+    callback(`Error: No token registered at index ${argv.buyToken}`)
   }
 
-  const sellTokenAddress = await instance.tokenIdToAddressMap.call(sellToken)
+  const sellTokenAddress = await instance.tokenIdToAddressMap.call(argv.sellToken)
   if (sellTokenAddress == 0x0) {
-    callback(`Error: No token registered at index ${sellToken}`)
+    callback(`Error: No token registered at index ${argv.sellToken}`)
   }
 
-  return [buyToken, sellToken, minBuy, maxSell, sender]
+  return [argv.buyToken, argv.sellToken, minBuy, maxSell, sender]
 }
 
 const invokeViewFunction = async function (contract, callback) {

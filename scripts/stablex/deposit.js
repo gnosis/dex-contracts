@@ -1,25 +1,33 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const ERC20 = artifacts.require("ERC20.sol")
-const { getArgumentsHelper } = require("../script_utilities.js")
+const argv = require("yargs")
+  .option("accountId", {
+    describe: "Depositor's account index"
+  })
+  .option("tokenId", {
+    describe: "Token to deposit"
+  })
+  .option("amount", {
+    describe: "Amount in to deposit (in 10**18 WEI, e.g. 1 = 1 ETH)"
+  })
+  .demand(["accountId", "tokenId", "amount"])
+  .help(false)
+  .version(false)
+  .argv
 
 const zero_address = 0x0
 
 module.exports = async (callback) => {
   try {
-    const arguments = getArgumentsHelper()
-    if (arguments.length != 3) {
-      callback("Error: This script requires arguments - <accountId> <tokenId> <depositAmount>")
-    }
-    const [accountId, tokenId, amount_arg] = arguments
-    const amount = new web3.utils.BN(web3.utils.toWei(amount_arg))
+    const amount = web3.utils.toWei(String(argv.amount))
 
     const instance = await StablecoinConverter.deployed()
     const accounts = await web3.eth.getAccounts()
-    const depositor = await accounts[accountId]
+    const depositor = await accounts[argv.accountId]
 
-    const token_address = await instance.tokenIdToAddressMap.call(tokenId)
+    const token_address = await instance.tokenIdToAddressMap.call(argv.tokenId)
     if (token_address == zero_address) {
-      callback(`Error: No token registered at index ${tokenId}`)
+      callback(`Error: No token registered at index ${argv.tokenId}`)
     }
 
     const token = await ERC20.at(token_address)
