@@ -149,7 +149,8 @@ contract StablecoinConverter is EpochTokenLocker {
         TradeData[] trades;
         uint16[] tokenIdsForPrice;
         address solutionSubmitter;
-        int256 currentFeeCollected;
+        uint256 feeReward;
+        uint256 objectiveValue;
     }
 
     struct TradeData {
@@ -209,14 +210,23 @@ contract StablecoinConverter is EpochTokenLocker {
                 volumes[i]
             );
         }
-        checkAndOverrideObjectiveValue(tokenConservation[0], batchIndex);
-        grantRewardToSolutionSubmitter();
+        checkAndOverrideObjectiveValue(uint(tokenConservation[0]));
+        grantRewardToSolutionSubmitter(uint(tokenConservation[0]) / 2);
         checkTokenConservation(tokenConservation);
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
 
-    function grantRewardToSolutionSubmitter() internal {
-        addBalanceAndPostponeWithdraw(msg.sender, tokenIdToAddressMap(0), uint(previousSolution.currentFeeCollected) / 2);
+    function getCurrentObjectiveValue() public view returns(uint) {
+        if (previousSolution.batchId == getCurrentStateIndex() - 1) {
+            return previousSolution.objectiveValue;
+        } else {
+            return 0;
+        }
+    }
+
+    function grantRewardToSolutionSubmitter(uint feeReward) internal {
+        previousSolution.feeReward = feeReward;
+        addBalanceAndPostponeWithdraw(msg.sender, tokenIdToAddressMap(0), feeReward);
     }
 
     function checkTokenConservation(
@@ -317,17 +327,17 @@ contract StablecoinConverter is EpochTokenLocker {
             subtractBalance(
                 previousSolution.solutionSubmitter,
                 tokenIdToAddressMap(0),
-                uint(previousSolution.currentFeeCollected) / 2
+                previousSolution.feeReward
             );
         }
     }
 
-    function checkAndOverrideObjectiveValue(int256 fee, uint32 batchIndex) private {
-        if (previousSolution.batchId < batchIndex) {
-            previousSolution.currentFeeCollected = 0;
-        }
-        require(fee > previousSolution.currentFeeCollected, "Solution does not generate a higher fee than a previous solution");
-        previousSolution.currentFeeCollected = fee;
+    function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
+        require(
+            newObjectiveValue > getCurrentObjectiveValue(),
+            "Solution does not have a higher objective value than a previous solution"
+        );
+        previousSolution.objectiveValue = newObjectiveValue;
     }
 
     function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
