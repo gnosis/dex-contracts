@@ -3,16 +3,16 @@ async function migrate({
   deployer,
   network,
 }) {
-  if (network === "development" || network == "coverage") {
+  if (network === "development" || network == "coverage" || network == "development-fork") {
     // deploy DevDependencies
-    const Dependencies = artifacts.require("./DevDependencies.sol")
+    const Dependencies = artifacts.require("./DevDependencies")
     await deployer.deploy(Dependencies)
 
     // deploy libraries
-    const BiMap = artifacts.require("IdToAddressBiMap.sol")
+    const BiMap = artifacts.require("IdToAddressBiMap")
     await deployer.deploy(BiMap)
 
-    const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet.sol")
+    const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
     await deployer.deploy(IterableAppendOnlySet)
   } else {
     // eslint-disable-next-line no-console
