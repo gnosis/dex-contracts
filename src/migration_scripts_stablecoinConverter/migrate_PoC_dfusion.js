@@ -14,9 +14,9 @@ async function migrate({
     const TokenGNO = artifacts.require("@gnosis.pm/gno-token/build/TokenGNO.json")
     fee_token = await TokenGNO.deployed()
   }
-  const StablecoinConverter = artifacts.require("StablecoinConverter")
-  const BiMap = artifacts.require("IdToAddressBiMap")
-  const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
+  const StablecoinConverter = artifacts.require("@gnosis.pm/solidity-data-structures/contract/build/StablecoinConverter")
+  const BiMap = artifacts.require("@gnosis.pm/solidity-data-structures/contract/build/IdToAddressBiMap")
+  const IterableAppendOnlySet = artifacts.require("@gnosis.pm/solidity-data-structures/contract/build/IterableAppendOnlySet")
   //linking libraries
   await deployer.link(BiMap, StablecoinConverter)
   await deployer.link(IterableAppendOnlySet, StablecoinConverter)

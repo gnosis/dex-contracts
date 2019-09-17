@@ -2,7 +2,7 @@ async function migrate({
   artifacts,
   deployer
 }) {
-  const BiMap = artifacts.require("IdToAddressBiMap.sol")
+  const BiMap = artifacts.require("@gnosis.pm/solidity-data-structures/contract/build/IdToAddressBiMap")
   const SnappBaseCore = artifacts.require("SnappBaseCore.sol")
   const SnappAuction = artifacts.require("SnappAuction.sol")
 

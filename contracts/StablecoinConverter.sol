@@ -1,7 +1,7 @@
 pragma solidity ^0.5.0;
 
 import "./EpochTokenLocker.sol";
-import "./libraries/IdToAddressBiMap.sol";
+import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOnlySet.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 

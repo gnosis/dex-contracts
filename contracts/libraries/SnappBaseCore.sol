@@ -1,8 +1,8 @@
 pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "./IdToAddressBiMap.sol";
-import "./Merkle.sol";
+import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
+import "@gnosis.pm/solidity-data-structures/contracts/libraries/Merkle.sol";
 import "../SnappBase.sol";
 
 

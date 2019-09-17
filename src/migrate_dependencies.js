@@ -9,10 +9,10 @@ async function migrate({
     await deployer.deploy(Dependencies)
 
     // deploy libraries
-    const BiMap = artifacts.require("IdToAddressBiMap")
+    const BiMap = artifacts.require("@gnosis.pm/solidity-data-structures/contract/build/IdToAddressBiMap")
     await deployer.deploy(BiMap)
 
-    const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
+    const IterableAppendOnlySet = artifacts.require("@gnosis.pm/solidity-data-structures/contract/build/IterableAppendOnlySet")
     await deployer.deploy(IterableAppendOnlySet)
   } else {
     // eslint-disable-next-line no-console

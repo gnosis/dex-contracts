@@ -2,7 +2,7 @@ pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./libraries/SnappBaseCore.sol";
-import "./libraries/IdToAddressBiMap.sol";
+import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 
 
 contract SnappBase is Ownable {
