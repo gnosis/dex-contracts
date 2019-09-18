@@ -1249,24 +1249,23 @@ contract("StablecoinConverter", async (accounts) => {
   })
 })
 
-const HEX_WORD_SIZE = 64
 function decodeAuctionElements(bytes) {
-  bytes = bytes.slice(2)
   const result = []
+  bytes = bytes.slice(2) // cutting of 0x
   while (bytes.length > 0) {
-    const element = bytes.slice(0, HEX_WORD_SIZE * 10)
-    bytes = bytes.slice(HEX_WORD_SIZE * 10)
+    const element = bytes.slice(0, 113 * 2)
+    bytes = bytes.slice(113 * 2)
     result.push({
-      user: "0x" + element.slice(HEX_WORD_SIZE - 40, HEX_WORD_SIZE), // address is only 20 bytes
-      sellTokenBalance: parseInt(element.slice(1 * HEX_WORD_SIZE, 2 * HEX_WORD_SIZE), 16),
-      buyToken: parseInt(element.slice(2 * HEX_WORD_SIZE, 3 * HEX_WORD_SIZE), 16),
-      sellToken: parseInt(element.slice(3 * HEX_WORD_SIZE, 4 * HEX_WORD_SIZE), 16),
-      validFrom: parseInt(element.slice(4 * HEX_WORD_SIZE, 5 * HEX_WORD_SIZE), 16),
-      validUntil: parseInt(element.slice(5 * HEX_WORD_SIZE, 6 * HEX_WORD_SIZE), 16),
-      isSellOrder: parseInt(element.slice(6 * HEX_WORD_SIZE, 7 * HEX_WORD_SIZE), 16) > 0,
-      priceNumerator: parseInt(element.slice(7 * HEX_WORD_SIZE, 8 * HEX_WORD_SIZE), 16),
-      priceDenominator: parseInt(element.slice(8 * HEX_WORD_SIZE, 9 * HEX_WORD_SIZE), 16),
-      remainingAmount: parseInt(element.slice(9 * HEX_WORD_SIZE, 10 * HEX_WORD_SIZE), 16),
+      user: "0x" + element.slice(0, 20 * 2), // address is only 20 bytes
+      sellTokenBalance: parseInt(element.slice(20 * 2 + 1, 52 * 2), 16),
+      buyToken: parseInt(element.slice(52 * 2 + 1, 54 * 2), 16),
+      sellToken: parseInt(element.slice(54 * 2 + 1, 56 * 2), 16),
+      validFrom: parseInt(element.slice(56 * 2 + 1, 60 * 2), 16),
+      validUntil: parseInt(element.slice(60 * 2 + 1, 64 * 2), 16),
+      isSellOrder: parseInt(element.slice(64 * 2 + 1, 65 * 2), 16) > 0,
+      priceNumerator: parseInt(element.slice(65 * 2 + 1, 81 * 2), 16),
+      priceDenominator: parseInt(element.slice(81 * 2 + 1, 97 * 2), 16),
+      remainingAmount: parseInt(element.slice(97 * 2 + 1, 113 * 2), 16),
     })
   }
   return result

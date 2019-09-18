@@ -371,16 +371,16 @@ contract StablecoinConverter is EpochTokenLocker {
         uint256 sellTokenBalance,
         Order memory order
     ) private pure returns (bytes memory element) {
-        element = abi.encode(user);
-        element = element.concat(abi.encode(sellTokenBalance));
-        element = element.concat(abi.encode(order.buyToken));
-        element = element.concat(abi.encode(order.sellToken));
-        element = element.concat(abi.encode(order.validFrom));
-        element = element.concat(abi.encode(order.validUntil));
-        element = element.concat(abi.encode(order.isSellOrder));
-        element = element.concat(abi.encode(order.priceNumerator));
-        element = element.concat(abi.encode(order.priceDenominator));
-        element = element.concat(abi.encode(order.remainingAmount));
+        element = abi.encodePacked(user);
+        element = element.concat(abi.encodePacked(sellTokenBalance));
+        element = element.concat(abi.encodePacked(order.buyToken));
+        element = element.concat(abi.encodePacked(order.sellToken));
+        element = element.concat(abi.encodePacked(order.validFrom));
+        element = element.concat(abi.encodePacked(order.validUntil));
+        element = element.concat(abi.encodePacked(order.isSellOrder));
+        element = element.concat(abi.encodePacked(order.priceNumerator));
+        element = element.concat(abi.encodePacked(order.priceDenominator));
+        element = element.concat(abi.encodePacked(order.remainingAmount));
         return element;
     }
 }
