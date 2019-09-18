@@ -26,12 +26,12 @@ const argv = require("yargs")
 
 module.exports = async (callback) => {
   try {
-    const account = accounts[argv.accountId]
     const minBuy = web3.utils.toWei(String(argv.minBuy))
     const maxSell = web3.utils.toWei(String(argv.maxSell))
 
     const instance = await StablecoinConverter.deployed()
     const accounts = await web3.eth.getAccounts()
+    const account = accounts[argv.accountId]
 
     const batch_index = (await instance.getCurrentStateIndex.call()).toNumber()
     const valid_until = batch_index + parseInt(argv.validFor)
