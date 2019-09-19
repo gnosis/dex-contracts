@@ -10,11 +10,7 @@ const argv = require("yargs")
   .argv
 
 function isMigrationRequired(network) {
-  if (network === "development" || network == "coverage" || network == "developmentdocker" || network == "development-fork") {
-    return true
-  } else {
-    return false
-  }
+  return (network === "development" || network == "coverage" || network == "developmentdocker")
 }
 module.exports = {
   argv,
