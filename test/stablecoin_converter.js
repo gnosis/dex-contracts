@@ -1249,24 +1249,30 @@ contract("StablecoinConverter", async (accounts) => {
   })
 })
 
-const HEX_WORD_SIZE = 64
+
+const ADDRESS_WIDTH = 20 * 2
+const UINT256_WIDTH = 32 * 2
+const UINT16_WIDTH = 2 * 2
+const UINT32_WIDTH = 4 * 2
+const UINT128_WIDTH = 16 * 2
+
 function decodeAuctionElements(bytes) {
-  bytes = bytes.slice(2)
   const result = []
+  bytes = bytes.slice(2) // cutting of 0x
   while (bytes.length > 0) {
-    const element = bytes.slice(0, HEX_WORD_SIZE * 10)
-    bytes = bytes.slice(HEX_WORD_SIZE * 10)
+    const element = bytes.slice(0, 113 * 2).split("")
+    bytes = bytes.slice(113 * 2)
     result.push({
-      user: "0x" + element.slice(HEX_WORD_SIZE - 40, HEX_WORD_SIZE), // address is only 20 bytes
-      sellTokenBalance: parseInt(element.slice(1 * HEX_WORD_SIZE, 2 * HEX_WORD_SIZE), 16),
-      buyToken: parseInt(element.slice(2 * HEX_WORD_SIZE, 3 * HEX_WORD_SIZE), 16),
-      sellToken: parseInt(element.slice(3 * HEX_WORD_SIZE, 4 * HEX_WORD_SIZE), 16),
-      validFrom: parseInt(element.slice(4 * HEX_WORD_SIZE, 5 * HEX_WORD_SIZE), 16),
-      validUntil: parseInt(element.slice(5 * HEX_WORD_SIZE, 6 * HEX_WORD_SIZE), 16),
-      isSellOrder: parseInt(element.slice(6 * HEX_WORD_SIZE, 7 * HEX_WORD_SIZE), 16) > 0,
-      priceNumerator: parseInt(element.slice(7 * HEX_WORD_SIZE, 8 * HEX_WORD_SIZE), 16),
-      priceDenominator: parseInt(element.slice(8 * HEX_WORD_SIZE, 9 * HEX_WORD_SIZE), 16),
-      remainingAmount: parseInt(element.slice(9 * HEX_WORD_SIZE, 10 * HEX_WORD_SIZE), 16),
+      user: "0x" + element.splice(0, ADDRESS_WIDTH).join(""), // address is only 20 bytes
+      sellTokenBalance: parseInt(element.splice(0, UINT256_WIDTH).join(""), 16),
+      buyToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
+      sellToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
+      validFrom: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
+      validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
+      isSellOrder: parseInt(element.splice(0, 2).join(""), 16) > 0,
+      priceNumerator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
+      priceDenominator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
+      remainingAmount: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
     })
   }
   return result
