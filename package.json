@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "truffle test",
-    "coverage": "./node_modules/.bin/solidity-coverage",
+    "coverage": "export GAS_LIMIT=0xfffffffffff && ./node_modules/.bin/solidity-coverage",
     "lint": "./node_modules/.bin/eslint .",
     "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\""
   },
