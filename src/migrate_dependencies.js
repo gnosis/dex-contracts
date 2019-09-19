@@ -1,9 +1,11 @@
+const { isMigrationRequired } = require("./migration_utilities.js")
+
 async function migrate({
   artifacts,
   deployer,
   network,
 }) {
-  if (network === "development" || network == "coverage" || network == "development-fork") {
+  if (isMigrationRequired(network)) {
     // deploy DevDependencies
     const Dependencies = artifacts.require("./DevDependencies")
     await deployer.deploy(Dependencies)

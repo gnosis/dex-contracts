@@ -1,3 +1,5 @@
+const { isMigrationRequired } = require("../migration_utilities.js")
+
 async function migrate({
   artifacts,
   deployer,
@@ -6,12 +8,12 @@ async function migrate({
   maxTokens = 2 ** 16 - 1
 }) {
   let fee_token
-  if (network == "development" || network == "coverage") {
+  if (isMigrationRequired(network)) {
     const ERC20Mintable = artifacts.require("ERC20Mintable")
     await deployer.deploy(ERC20Mintable)
     fee_token = await ERC20Mintable.deployed()
   } else {
-    const TokenGNO = artifacts.require("@gnosis.pm/gno-token/build/TokenGNO.json")
+    const TokenGNO = artifacts.require("@gnosis.pm/gno-token/build/contracts/TokenGNO.json")
     fee_token = await TokenGNO.deployed()
   }
   const StablecoinConverter = artifacts.require("StablecoinConverter")
