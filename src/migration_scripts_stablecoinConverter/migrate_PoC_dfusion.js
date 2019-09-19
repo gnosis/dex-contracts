@@ -13,13 +13,12 @@ async function migrate({
     await deployer.deploy(ERC20Mintable)
     fee_token = await ERC20Mintable.deployed()
   } else {
-    const TokenGNO = getDependency(artifacts, network, deployer, "TokenGNO", "@gnosis.pm/gno-token/build/contracts/TokenGNO.json")
+    const TokenGNO = getDependency(artifacts, network, deployer, "@gnosis.pm/gno-token/build/contracts/TokenGNO.json")
     fee_token = await TokenGNO.deployed()
   }
   const StablecoinConverter = artifacts.require("StablecoinConverter")
-  const BiMap = getDependency(artifacts, network, deployer, "BiMap", "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap")
-  const IterableAppendOnlySet = getDependency(artifacts, network, deployer, "IterableAppendOnlySet", "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet")
-
+  const BiMap = getDependency(artifacts, network, deployer, "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap")
+  const IterableAppendOnlySet = getDependency(artifacts, network, deployer, "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet")
   //linking libraries
   await deployer.link(BiMap, StablecoinConverter)
   await deployer.link(IterableAppendOnlySet, StablecoinConverter)

@@ -9,11 +9,11 @@ const argv = require("yargs")
   .version(false)
   .argv
 
-function getDependency(artifacts, network, deployer, name, path) {
+function getDependency(artifacts, network, deployer, path) {
   let Contract
 
   if (network === "development" || network === "coverage") {
-    Contract = artifacts.require(name)
+    Contract = artifacts.require(path)
   } else {
     const contract = require("truffle-contract")
 
