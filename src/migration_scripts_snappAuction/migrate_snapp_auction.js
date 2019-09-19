@@ -1,8 +1,11 @@
+const { getDependency } = require("../migration_utilities.js")
+
 async function migrate({
   artifacts,
+  network,
   deployer
 }) {
-  const BiMap = artifacts.require("@gnosis.pm/solidity-data-structures/contract/build/IdToAddressBiMap")
+  const BiMap = getDependency(artifacts, network, deployer, "BiMap", "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap")
   const SnappBaseCore = artifacts.require("SnappBaseCore.sol")
   const SnappAuction = artifacts.require("SnappAuction.sol")
 

@@ -9,4 +9,30 @@ const argv = require("yargs")
   .version(false)
   .argv
 
-module.exports = argv
+function getDependency(artifacts, network, deployer, name, path) {
+  let Contract
+
+  if (network === "development" || network === "coverage") {
+    Contract = artifacts.require(name)
+  } else {
+    const contract = require("truffle-contract")
+
+    Contract = contract(require(path))
+    Contract.setProvider(deployer.provider)
+    Contract.setNetwork(network2id[network.replace("-fork", "")])
+  }
+  return Contract
+}
+
+const network2id = {
+  mainnet: 1,
+  kovan: 42,
+  rinkeby: 4,
+  ropsten: 3
+}
+
+module.exports = {
+  argv,
+  network2id,
+  getDependency
+}
