@@ -1249,23 +1249,30 @@ contract("StablecoinConverter", async (accounts) => {
   })
 })
 
+
+const ADDRESS_WIDTH = 20 * 2
+const UINT256_WIDTH = 32 * 2
+const UINT16_WIDTH = 2 * 2
+const UINT32_WIDTH = 4 * 2
+const UINT128_WIDTH = 16 * 2
+
 function decodeAuctionElements(bytes) {
   const result = []
   bytes = bytes.slice(2) // cutting of 0x
   while (bytes.length > 0) {
-    const element = bytes.slice(0, 113 * 2)
+    const element = bytes.slice(0, 113 * 2).split("")
     bytes = bytes.slice(113 * 2)
     result.push({
-      user: "0x" + element.slice(0, 20 * 2), // address is only 20 bytes
-      sellTokenBalance: parseInt(element.slice(20 * 2 + 1, 52 * 2), 16),
-      buyToken: parseInt(element.slice(52 * 2 + 1, 54 * 2), 16),
-      sellToken: parseInt(element.slice(54 * 2 + 1, 56 * 2), 16),
-      validFrom: parseInt(element.slice(56 * 2 + 1, 60 * 2), 16),
-      validUntil: parseInt(element.slice(60 * 2 + 1, 64 * 2), 16),
-      isSellOrder: parseInt(element.slice(64 * 2 + 1, 65 * 2), 16) > 0,
-      priceNumerator: parseInt(element.slice(65 * 2 + 1, 81 * 2), 16),
-      priceDenominator: parseInt(element.slice(81 * 2 + 1, 97 * 2), 16),
-      remainingAmount: parseInt(element.slice(97 * 2 + 1, 113 * 2), 16),
+      user: "0x" + element.splice(0, ADDRESS_WIDTH).join(""), // address is only 20 bytes
+      sellTokenBalance: parseInt(element.splice(0, UINT256_WIDTH).join(""), 16),
+      buyToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
+      sellToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
+      validFrom: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
+      validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
+      isSellOrder: parseInt(element.splice(0, 2).join(""), 16) > 0,
+      priceNumerator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
+      priceDenominator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
+      remainingAmount: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
     })
   }
   return result
