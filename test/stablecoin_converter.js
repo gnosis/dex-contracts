@@ -883,7 +883,7 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
       const volume = [10, 9]
-      const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
+      const tokenIdsForPrice = [0, 2]
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
@@ -950,7 +950,7 @@ contract("StablecoinConverter", async (accounts) => {
         "fee token price has to be specified"
       )
     })
-    it("reverts, if price of sellToken == 0", async () => {
+    it("reverts, if price of buyToken == 0", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const erc20_2 = await MockContract.new()
@@ -976,14 +976,14 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
       const volume = [10, 19]
-      const tokenIdsForPrice = [0, 2]
+      const tokenIdsForPrice = [0, 1]
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
         "prices are not allowed to be zero"
       )
     })
-    it("reverts, if price of buyToken == 0", async () => {
+    it("reverts, if price of sellToken == 0", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const erc20_2 = await MockContract.new()

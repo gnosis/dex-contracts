@@ -183,7 +183,7 @@ contract StablecoinConverter is EpochTokenLocker {
             require(order.validUntil >= batchIndex, "Order is no longer valid");
             // Assume for now that we always have sellOrders
             uint128 executedSellAmount = volumes[i];
-            require(currentPrices[order.sellToken] != 0, "prices are not allowed to be zero");
+            require(currentPrices[order.buyToken] != 0, "prices are not allowed to be zero");
             uint128 executedBuyAmount = getExecutedBuyAmount(
                 executedSellAmount,
                 currentPrices[order.buyToken],
