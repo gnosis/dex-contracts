@@ -425,51 +425,19 @@ contract("StablecoinConverter", async (accounts) => {
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(user_1, feeToken.address)).toNumber(),
-        basicTrade.deposits[0].amount - volume[0],
-        "Sold tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(user_1, erc20_2.address)).toNumber(),
-        feeSubtracted(volume[0] * prices[0] / prices[1]),
-        "Bought tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(),
-        basicTrade.deposits[1].amount - volume[1],
-        "Sold tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(),
-        feeSubtracted(volume[1] * prices[1] / prices[0]),
-        "Bought tokens were not adjusted correctly"
-      )
+      assert.equal((await stablecoinConverter.getBalance.call(user_1, feeToken.address)).toNumber(), basicTrade.deposits[0].amount - volume[0], "Sold tokens were not adjusted correctly")
+      assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_2.address)).toNumber(), feeSubtracted(volume[0] * prices[0] / prices[1]), "Bought tokens were not adjusted correctly")
+      assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), basicTrade.deposits[1].amount - volume[1], "Sold tokens were not adjusted correctly")
+      assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(), feeSubtracted(volume[1] * prices[1] / prices[0]), "Bought tokens were not adjusted correctly")
 
       await waitForNSeconds(BATCH_TIME)
 
       await stablecoinConverter.submitSolution(batchIndex + 1, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(user_1, feeToken.address)).toNumber(),
-        basicTrade.deposits[0].amount - 2 * volume[0],
-        "Sold tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(user_1, erc20_2.address)).toNumber(),
-        2 * feeSubtracted(volume[0] * prices[0] / prices[1]),
-        "Bought tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(),
-        basicTrade.deposits[1].amount - 2 * volume[1],
-        "Sold tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(),
-        2 * feeSubtracted(volume[1] * prices[1] / prices[0]),
-        "Bought tokens were not adjusted correctly"
-      )
+      assert.equal((await stablecoinConverter.getBalance.call(user_1, feeToken.address)).toNumber(), basicTrade.deposits[0].amount - 2 * volume[0], "Sold tokens were not adjusted correctly")
+      assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_2.address)).toNumber(), 2 * feeSubtracted(volume[0] * prices[0] / prices[1]), "Bought tokens were not adjusted correctly")
+      assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), basicTrade.deposits[1].amount - 2 * volume[1], "Sold tokens were not adjusted correctly")
+      assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(), 2 * feeSubtracted(volume[1] * prices[1] / prices[0]), "Bought tokens were not adjusted correctly")
     })
     it("settles a ring trade between 3 tokens", async () => {
       const feeToken = await MockContract.new()
