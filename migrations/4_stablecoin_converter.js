@@ -1,23 +1,16 @@
 /*eslint no-undef: "off"*/
 
-const BiMap = artifacts.require("IdToAddressBiMap.sol")
-const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet.sol")
-const StablecoinConverter = artifacts.require("StablecoinConverter.sol")
-const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
+const argv = require("../src/migration_utilities")
+const migrateStablecoinConverter = require("../src/migration_scripts_stablecoinConverter/migrate_PoC_dfusion")
 
 module.exports = async function (deployer, network) {
-  let fee_token
-  if (network == "development" || network == "coverage") {
-    await deployer.deploy(ERC20Mintable)
-    fee_token = await ERC20Mintable.deployed()
+  if (!argv.onlyMigrateSnappAuction) {
+    return migrateStablecoinConverter({
+      artifacts,
+      deployer,
+      network
+    })
   } else {
-    throw (`No migration found for network "${network}"`)
+    return
   }
-
-  await deployer.deploy(BiMap)
-  await deployer.deploy(IterableAppendOnlySet)
-
-  await deployer.link(BiMap, StablecoinConverter)
-  await deployer.link(IterableAppendOnlySet, StablecoinConverter)
-  await deployer.deploy(StablecoinConverter, 2 ** 16 - 1, 1000, fee_token.address)
 }

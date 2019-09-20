@@ -1,7 +1,11 @@
 /*eslint no-undef: "off"*/
 
-const Dependencies = artifacts.require("./DevDependencies.sol")
+const migrateDependencies = require("../src/migrate_dependencies.js")
 
-module.exports = function(deployer) {
-  deployer.deploy(Dependencies)
+module.exports = function (deployer, network) {
+  return migrateDependencies({
+    artifacts,
+    deployer,
+    network
+  })
 }
