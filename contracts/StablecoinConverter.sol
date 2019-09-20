@@ -77,7 +77,7 @@ contract StablecoinConverter is EpochTokenLocker {
         orders[msg.sender].push(Order({
             buyToken: buyToken,
             sellToken: sellToken,
-            validFrom: getCurrentStateIndex(),
+            validFrom: getCurrentBatchId(),
             validUntil: validUntil,
             isSellOrder: isSellOrder,
             priceNumerator: buyAmount,
@@ -89,7 +89,7 @@ contract StablecoinConverter is EpochTokenLocker {
             buyToken,
             sellToken,
             isSellOrder,
-            getCurrentStateIndex(),
+            getCurrentBatchId(),
             validUntil,
             buyAmount,
             sellAmount
@@ -101,14 +101,14 @@ contract StablecoinConverter is EpochTokenLocker {
     function cancelOrder(
         uint id
     ) public {
-        orders[msg.sender][id].validUntil = getCurrentStateIndex() - 1;
+        orders[msg.sender][id].validUntil = getCurrentBatchId() - 1;
         emit OrderCancelation(msg.sender, id);
     }
 
     function freeStorageOfOrder(
         uint id
     ) public {
-        require(orders[msg.sender][id].validUntil + 1 < getCurrentStateIndex(), "Order is still valid");
+        require(orders[msg.sender][id].validUntil + 1 < getCurrentBatchId(), "Order is still valid");
         delete orders[msg.sender][id];
     }
 
@@ -169,7 +169,7 @@ contract StablecoinConverter is EpochTokenLocker {
                                           // fee token id not required since always 0
     ) public {
         require(
-            batchIndex == getCurrentStateIndex() - 1,
+            batchIndex == getCurrentBatchId() - 1,
             "Solutions are no longer accepted for this batch"
         );
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
@@ -217,7 +217,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function getCurrentObjectiveValue() public view returns(uint) {
-        if (previousSolution.batchId == getCurrentStateIndex() - 1) {
+        if (previousSolution.batchId == getCurrentBatchId() - 1) {
             return previousSolution.objectiveValue;
         } else {
             return 0;
