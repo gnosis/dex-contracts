@@ -184,9 +184,9 @@ contract StablecoinConverter is EpochTokenLocker {
             require(order.validUntil >= batchIndex, "Order is no longer valid");
             // Assume for now that we always have sellOrders
             uint128 executedSellAmount = volumes[i];
-            require(currentPrices[order.sellToken] != 0, "prices are not allowed to be zero");
+            require(currentPrices[order.buyToken] != 0, "prices are not allowed to be zero");
             uint128 executedBuyAmount = getExecutedBuyAmount(
-                volumes[i],
+                executedSellAmount,
                 currentPrices[order.buyToken],
                 currentPrices[order.sellToken]
             );
@@ -254,15 +254,12 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 buyTokenPrice,
         uint128 sellTokenPrice
     ) internal view returns (uint128) {
-        uint128 buyAmount = uint128(
-            executedSellAmount.mul(buyTokenPrice) /
-            sellTokenPrice
-        );
-        // executedBuyAmount = buyAmount * (1 - (1/feeDenominator)
+        uint128 buyAmount = uint128(executedSellAmount.mul(sellTokenPrice) / buyTokenPrice);
+        // executedBuyAmount = buyAmount * (1 - (1/feeDenominator))
         //                   = buyAmount - buyAmount/feeDenominator (*)
         //                   = (buyAmount * feeDenominator)/ feeDenominator - buyAmount/feeDenominator
         //                   = (buyAmount * feeDenominator - buyAmount) / feeDenominator
-        //                   = (buyAmount* (feeDenominator - 1)/feeDenominator
+        //                   = (buyAmount * (feeDenominator - 1)/feeDenominator
         return uint128(buyAmount.mul(feeDenominator - 1) / feeDenominator);
     }
 
