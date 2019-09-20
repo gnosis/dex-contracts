@@ -46,8 +46,6 @@ contract EpochTokenLocker {
         uint32 stateIndex;
     }
 
-    uint32 private currentStateIndex = 0;
-
     function deposit(address token, uint amount) public {
         updateDepositsBalance(msg.sender, token);
         require(
@@ -56,21 +54,20 @@ contract EpochTokenLocker {
         );
         balanceStates[msg.sender][token].pendingDeposits.amount = balanceStates[msg.sender][token].pendingDeposits.amount
             .add(amount);
-        balanceStates[msg.sender][token].pendingDeposits.stateIndex = currentStateIndex;
-        emit Deposit(msg.sender, token, amount, currentStateIndex);
+        balanceStates[msg.sender][token].pendingDeposits.stateIndex = getCurrentBatchId();
+        emit Deposit(msg.sender, token, amount, getCurrentBatchId());
     }
 
     function requestWithdraw(address token, uint amount) public {
-        updateStateIndex();
-        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: currentStateIndex });
-        emit WithdrawRequest(msg.sender, token, amount, currentStateIndex);
+        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: getCurrentBatchId() });
+        emit WithdrawRequest(msg.sender, token, amount, getCurrentBatchId());
     }
 
     function withdraw(address token) public {
         updateDepositsBalance(msg.sender, token); // withdrawn amount might just be deposited before
 
         require(
-            balanceStates[msg.sender][token].pendingWithdraws.stateIndex < currentStateIndex,
+            balanceStates[msg.sender][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
             "withdraw was not registered previously"
         );
 
@@ -105,7 +102,7 @@ contract EpochTokenLocker {
         return balanceStates[user][token].pendingWithdraws.stateIndex;
     }
 
-    function getCurrentStateIndex() public view returns(uint32) {
+    function getCurrentBatchId() public view returns(uint32) {
         return uint32(now / BATCH_TIME);
     }
 
@@ -115,10 +112,10 @@ contract EpochTokenLocker {
 
     function getBalance(address user, address token) public view returns(uint256) {
         uint balance = balanceStates[user][token].balance;
-        if (balanceStates[user][token].pendingDeposits.stateIndex < getCurrentStateIndex()) {
+        if (balanceStates[user][token].pendingDeposits.stateIndex < getCurrentBatchId()) {
             balance = balance.add(balanceStates[user][token].pendingDeposits.amount);
         }
-        if (balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentStateIndex()) {
+        if (balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId()) {
             balance -= Math.min(balanceStates[user][token].pendingWithdraws.amount, balance);
         }
         return balance;
@@ -128,9 +125,8 @@ contract EpochTokenLocker {
      * internal functions
      */
     function addBalanceAndPostponeWithdraw(address user, address token, uint amount) internal {
-        updateStateIndex();
-        if (balanceStates[user][token].pendingWithdraws.stateIndex < currentStateIndex) {
-            balanceStates[user][token].pendingWithdraws.stateIndex = currentStateIndex;
+        if (balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId()) {
+            balanceStates[user][token].pendingWithdraws.stateIndex = getCurrentBatchId();
         }
         addBalance(user, token, amount);
     }
@@ -146,17 +142,12 @@ contract EpochTokenLocker {
     }
 
     function updateDepositsBalance(address user, address token) private {
-        updateStateIndex();
-        if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
+        if (balanceStates[user][token].pendingDeposits.stateIndex < getCurrentBatchId()) {
             balanceStates[user][token].balance = balanceStates[user][token].balance.add(
                 balanceStates[user][token].pendingDeposits.amount
             );
 
             delete balanceStates[user][token].pendingDeposits;
         }
-    }
-
-    function updateStateIndex() private {
-        currentStateIndex = getCurrentStateIndex();
     }
 }

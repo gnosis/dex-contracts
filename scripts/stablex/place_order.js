@@ -33,7 +33,7 @@ module.exports = async (callback) => {
     const accounts = await web3.eth.getAccounts()
     const account = accounts[argv.accountId]
 
-    const batch_index = (await instance.getCurrentStateIndex.call()).toNumber()
+    const batch_index = (await instance.getCurrentBatchId.call()).toNumber()
     const valid_until = batch_index + parseInt(argv.validFor)
 
     const id = await sendTxAndGetReturnValue(instance.placeOrder, argv.buyToken, argv.sellToken, true, valid_until, minBuy, maxSell, { from: account })

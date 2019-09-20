@@ -21,7 +21,7 @@ contract("EpochTokenLocker", async (accounts) => {
       const epochTokenLocker = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
-      const currentStateIndex = await epochTokenLocker.getCurrentStateIndex.call()
+      const currentStateIndex = await epochTokenLocker.getCurrentBatchId.call()
 
       await epochTokenLocker.deposit(ERC20.address, 100)
       assert.equal(await epochTokenLocker.getPendingDepositAmount(user_1, ERC20.address), 100)
@@ -53,7 +53,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.deposit(ERC20.address, 100)
       await waitForNSeconds(BATCH_TIME)
       await epochTokenLocker.deposit(ERC20.address, 200)
-      const currentStateIndex = await epochTokenLocker.getCurrentStateIndex.call()
+      const currentStateIndex = await epochTokenLocker.getCurrentBatchId.call()
 
 
       assert.equal(await epochTokenLocker.getPendingDepositAmount(user_1, ERC20.address), 200)
@@ -65,7 +65,7 @@ contract("EpochTokenLocker", async (accounts) => {
       const epochTokenLocker = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
-      const currentStateIndex = await epochTokenLocker.getCurrentStateIndex.call()
+      const currentStateIndex = await epochTokenLocker.getCurrentBatchId.call()
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
       assert.equal(await epochTokenLocker.getPendingWithdrawAmount(user_1, ERC20.address), 100)
@@ -195,7 +195,7 @@ contract("EpochTokenLocker", async (accounts) => {
     it("does not postpone a withdrawRequest for a future epoch", async () => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
       const ERC20 = await MockContract.new()
-      const currentStateIndex = await epochTokenLocker.getCurrentStateIndex.call()
+      const currentStateIndex = await epochTokenLocker.getCurrentBatchId.call()
       await epochTokenLocker.requestWithdraw(ERC20.address, 100, { from: user_1 })
       await epochTokenLocker.addBalanceAndPostponeWithdrawTest(user_1, ERC20.address, 100)
 
@@ -204,7 +204,7 @@ contract("EpochTokenLocker", async (accounts) => {
     it("postpones a withdrawRequest for a current epoch", async () => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
       const ERC20 = await MockContract.new()
-      const currentStateIndex = (await epochTokenLocker.getCurrentStateIndex.call()).toNumber()
+      const currentStateIndex = (await epochTokenLocker.getCurrentBatchId.call()).toNumber()
       await epochTokenLocker.requestWithdraw(ERC20.address, 100, { from: user_1 })
       await waitForNSeconds(BATCH_TIME + 1)
       await epochTokenLocker.addBalanceAndPostponeWithdrawTest(user_1, ERC20.address, 100)

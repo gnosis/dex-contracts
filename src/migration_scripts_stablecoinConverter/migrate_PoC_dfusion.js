@@ -19,6 +19,7 @@ async function migrate({
   const StablecoinConverter = artifacts.require("StablecoinConverter")
   const BiMap = getDependency(artifacts, network, deployer, "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap")
   const IterableAppendOnlySet = getDependency(artifacts, network, deployer, "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet")
+
   //linking libraries
   await deployer.link(BiMap, StablecoinConverter)
   await deployer.link(IterableAppendOnlySet, StablecoinConverter)
