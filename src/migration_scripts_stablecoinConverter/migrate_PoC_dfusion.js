@@ -1,4 +1,4 @@
-const { getDependency } = require("../migration_utilities.js")
+const { isMigrationRequired, getDependency } = require("../migration_utilities.js")
 
 async function migrate({
   artifacts,
@@ -8,7 +8,7 @@ async function migrate({
   maxTokens = 2 ** 16 - 1
 }) {
   let fee_token
-  if (network == "development" || network == "coverage") {
+  if (isMigrationRequired(network)) {
     const ERC20Mintable = artifacts.require("ERC20Mintable")
     await deployer.deploy(ERC20Mintable)
     fee_token = await ERC20Mintable.deployed()

@@ -9,6 +9,13 @@ const argv = require("yargs")
   .version(false)
   .argv
 
+const network2id = {
+  mainnet: 1,
+  kovan: 42,
+  rinkeby: 4,
+  ropsten: 3
+}
+
 function getDependency(artifacts, network, deployer, path) {
   let Contract
 
@@ -24,15 +31,12 @@ function getDependency(artifacts, network, deployer, path) {
   return Contract
 }
 
-const network2id = {
-  mainnet: 1,
-  kovan: 42,
-  rinkeby: 4,
-  ropsten: 3
+function isMigrationRequired(network) {
+  return (network === "development" || network === "coverage" || network === "developmentdocker")
 }
 
 module.exports = {
   argv,
-  network2id,
+  isMigrationRequired,
   getDependency
 }
