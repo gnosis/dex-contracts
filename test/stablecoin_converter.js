@@ -397,7 +397,7 @@ contract("StablecoinConverter", async (accounts) => {
       //Now reverting should not throw, only later due to fee criteria
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter }),
-        "Solution does not generate a higher fee than a previous solution"
+        "Solution does not have a higher objective value than a previous solution"
       )
     })
     it("checks that trades documented from a previous trade are deleted and not considered for a new batchIndex", async () => {
@@ -1077,6 +1077,71 @@ contract("StablecoinConverter", async (accounts) => {
         "withdraw was not registered previously"
       )
     })
+    it("checks that the objective value is stored correctly and updated after a new solution submission", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_2 = await MockContract.new()
+
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+
+      await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
+      await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
+
+      await stablecoinConverter.addToken(erc20_2.address)
+      const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+
+      await closeAuction(stablecoinConverter)
+
+      const prices = basicTrade.solution.prices
+      const owner = basicTrade.solution.owners
+      const orderId = [orderId1, orderId2]
+      const volume = [8000, feeSubtracted(4000)]
+      const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
+
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
+
+      assert.equal((await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber(), 16, "Objective value is not stored correct")
+
+      const volume2 = basicTrade.solution.volume
+
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume2, prices, tokenIdsForPrice, { from: solutionSubmitter })
+      assert.equal((await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber(), 40, "Objective value is not stored correct after a second solution submission")
+    })
+    it("checks that the objective value is returned correctly after getting into a new batch", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_2 = await MockContract.new()
+
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+
+      await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
+      await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
+
+      await stablecoinConverter.addToken(erc20_2.address)
+      const batchIndex = (await stablecoinConverter.getCurrentStateIndex.call()).toNumber()
+
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+
+      await closeAuction(stablecoinConverter)
+
+      const prices = basicTrade.solution.prices
+      const owner = basicTrade.solution.owners
+      const orderId = [orderId1, orderId2]
+      const volume = [8000, feeSubtracted(4000)]
+      const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
+
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
+
+      await closeAuction(stablecoinConverter)
+
+      assert.equal((await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber(), 0, "Objective value is not returned correct")
+    })
   })
   describe("getEncodedAuctionElements", async () => {
     it("returns all orders that are have ever been submitted", async () => {
@@ -1184,24 +1249,30 @@ contract("StablecoinConverter", async (accounts) => {
   })
 })
 
-const HEX_WORD_SIZE = 64
+
+const ADDRESS_WIDTH = 20 * 2
+const UINT256_WIDTH = 32 * 2
+const UINT16_WIDTH = 2 * 2
+const UINT32_WIDTH = 4 * 2
+const UINT128_WIDTH = 16 * 2
+
 function decodeAuctionElements(bytes) {
-  bytes = bytes.slice(2)
   const result = []
+  bytes = bytes.slice(2) // cutting of 0x
   while (bytes.length > 0) {
-    const element = bytes.slice(0, HEX_WORD_SIZE * 10)
-    bytes = bytes.slice(HEX_WORD_SIZE * 10)
+    const element = bytes.slice(0, 113 * 2).split("")
+    bytes = bytes.slice(113 * 2)
     result.push({
-      user: "0x" + element.slice(HEX_WORD_SIZE - 40, HEX_WORD_SIZE), // address is only 20 bytes
-      sellTokenBalance: parseInt(element.slice(1 * HEX_WORD_SIZE, 2 * HEX_WORD_SIZE), 16),
-      buyToken: parseInt(element.slice(2 * HEX_WORD_SIZE, 3 * HEX_WORD_SIZE), 16),
-      sellToken: parseInt(element.slice(3 * HEX_WORD_SIZE, 4 * HEX_WORD_SIZE), 16),
-      validFrom: parseInt(element.slice(4 * HEX_WORD_SIZE, 5 * HEX_WORD_SIZE), 16),
-      validUntil: parseInt(element.slice(5 * HEX_WORD_SIZE, 6 * HEX_WORD_SIZE), 16),
-      isSellOrder: parseInt(element.slice(6 * HEX_WORD_SIZE, 7 * HEX_WORD_SIZE), 16) > 0,
-      priceNumerator: parseInt(element.slice(7 * HEX_WORD_SIZE, 8 * HEX_WORD_SIZE), 16),
-      priceDenominator: parseInt(element.slice(8 * HEX_WORD_SIZE, 9 * HEX_WORD_SIZE), 16),
-      remainingAmount: parseInt(element.slice(9 * HEX_WORD_SIZE, 10 * HEX_WORD_SIZE), 16),
+      user: "0x" + element.splice(0, ADDRESS_WIDTH).join(""), // address is only 20 bytes
+      sellTokenBalance: parseInt(element.splice(0, UINT256_WIDTH).join(""), 16),
+      buyToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
+      sellToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
+      validFrom: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
+      validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
+      isSellOrder: parseInt(element.splice(0, 2).join(""), 16) > 0,
+      priceNumerator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
+      priceDenominator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
+      remainingAmount: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
     })
   }
   return result
