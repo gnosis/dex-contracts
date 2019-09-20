@@ -9,11 +9,10 @@ const argv = require("yargs")
   .version(false)
   .argv
 
-const network2id = {
-  mainnet: 1,
-  kovan: 42,
-  rinkeby: 4,
-  ropsten: 3
+
+function getNetworkId(name) {
+  const { NETWORK_IDS } = require("@gnosis.pm/util-contracts/src/util/networkUtils")
+  return NETWORK_IDS[name.replace("-fork", "")].network_id
 }
 
 function getDependency(artifacts, network, deployer, path) {
@@ -26,7 +25,7 @@ function getDependency(artifacts, network, deployer, path) {
 
     Contract = contract(require(path))
     Contract.setProvider(deployer.provider)
-    Contract.setNetwork(network2id[network.replace("-fork", "")])
+    Contract.setNetwork(getNetworkId(network))
   }
   return Contract
 }

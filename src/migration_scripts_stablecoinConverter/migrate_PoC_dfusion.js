@@ -13,7 +13,7 @@ async function migrate({
     await deployer.deploy(ERC20Mintable)
     fee_token = await ERC20Mintable.deployed()
   } else {
-    const TokenGNO = getDependency(artifacts, network, deployer, "@gnosis.pm/gno-token/build/contracts/TokenGNO.json")
+    const TokenGNO = getDependency(artifacts, network, deployer, "@gnosis.pm/gno-token/build/contracts/TokenGNO")
     fee_token = await TokenGNO.deployed()
   }
   const StablecoinConverter = artifacts.require("StablecoinConverter")
