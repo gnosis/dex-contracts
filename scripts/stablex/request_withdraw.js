@@ -17,10 +17,6 @@ const argv = require("yargs")
 
 module.exports = async (callback) => {
   try {
-    if (!argv.accountId || !argv.tokenId || !argv.amount) {
-      callback("Error: This script requires arguments: --accountId, --tokenId, --amount")
-    }
-
     const amount = web3.utils.toWei(String(argv.amount))
 
     const instance = await StablecoinConverter.deployed()

@@ -19,7 +19,7 @@ module.exports = async function (callback) {
     const accounts = await web3.eth.getAccounts()
     console.log(`Beginning environment setup with ${argv.numAccounts} accounts and ${argv.numTokens} tokens`)
 
-    const amount = "300000000000000000000"
+    const amount = web3.utils.toWei("3000")
 
     // Create and register tokens (feeToken is already registered)
     const tokens = [await ERC20Mintable.deployed()]
