@@ -46,8 +46,6 @@ contract EpochTokenLocker {
         uint32 stateIndex;
     }
 
-    uint32 private currentStateIndex = 0;
-
     function deposit(address token, uint amount) public {
         updateDepositsBalance(msg.sender, token);
         require(
@@ -56,21 +54,20 @@ contract EpochTokenLocker {
         );
         balanceStates[msg.sender][token].pendingDeposits.amount = balanceStates[msg.sender][token].pendingDeposits.amount
             .add(amount);
-        balanceStates[msg.sender][token].pendingDeposits.stateIndex = currentStateIndex;
-        emit Deposit(msg.sender, token, amount, currentStateIndex);
+        balanceStates[msg.sender][token].pendingDeposits.stateIndex = getCurrentStateIndex();
+        emit Deposit(msg.sender, token, amount, getCurrentStateIndex());
     }
 
     function requestWithdraw(address token, uint amount) public {
-        updateStateIndex();
-        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: currentStateIndex });
-        emit WithdrawRequest(msg.sender, token, amount, currentStateIndex);
+        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: getCurrentStateIndex() });
+        emit WithdrawRequest(msg.sender, token, amount, getCurrentStateIndex());
     }
 
     function withdraw(address token) public {
         updateDepositsBalance(msg.sender, token); // withdrawn amount might just be deposited before
 
         require(
-            balanceStates[msg.sender][token].pendingWithdraws.stateIndex < currentStateIndex,
+            balanceStates[msg.sender][token].pendingWithdraws.stateIndex < getCurrentStateIndex(),
             "withdraw was not registered previously"
         );
 
@@ -128,9 +125,8 @@ contract EpochTokenLocker {
      * internal functions
      */
     function addBalanceAndPostponeWithdraw(address user, address token, uint amount) internal {
-        updateStateIndex();
-        if (balanceStates[user][token].pendingWithdraws.stateIndex < currentStateIndex) {
-            balanceStates[user][token].pendingWithdraws.stateIndex = currentStateIndex;
+        if (balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentStateIndex()) {
+            balanceStates[user][token].pendingWithdraws.stateIndex = getCurrentStateIndex();
         }
         addBalance(user, token, amount);
     }
@@ -146,17 +142,12 @@ contract EpochTokenLocker {
     }
 
     function updateDepositsBalance(address user, address token) private {
-        updateStateIndex();
-        if (balanceStates[user][token].pendingDeposits.stateIndex < currentStateIndex) {
+        if (balanceStates[user][token].pendingDeposits.stateIndex < getCurrentStateIndex()) {
             balanceStates[user][token].balance = balanceStates[user][token].balance.add(
                 balanceStates[user][token].pendingDeposits.amount
             );
 
             delete balanceStates[user][token].pendingDeposits;
         }
-    }
-
-    function updateStateIndex() private {
-        currentStateIndex = getCurrentStateIndex();
     }
 }
