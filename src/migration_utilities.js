@@ -18,7 +18,7 @@ function getNetworkId(name) {
 function getDependency(artifacts, network, deployer, path) {
   let Contract
 
-  if (network === "development" || network === "coverage") {
+  if (isDevelopmentNetwork(network)) {
     Contract = artifacts.require(path)
   } else {
     const contract = require("truffle-contract")
@@ -30,12 +30,12 @@ function getDependency(artifacts, network, deployer, path) {
   return Contract
 }
 
-function isMigrationRequired(network) {
+function isDevelopmentNetwork(network) {
   return (network === "development" || network === "coverage" || network === "developmentdocker")
 }
 
 module.exports = {
   argv,
-  isMigrationRequired,
-  getDependency
+  getDependency,
+  isDevelopmentNetwork
 }
