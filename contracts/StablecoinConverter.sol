@@ -254,7 +254,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 buyTokenPrice,
         uint128 sellTokenPrice
     ) internal view returns (uint128) {
-        uint128 buyAmount = uint128(executedSellAmount.mul(sellTokenPrice) / buyTokenPrice);
+        uint128 buyAmount = uint128(ceiledDiv(executedSellAmount.mul(sellTokenPrice), buyTokenPrice));
         // executedBuyAmount = buyAmount * (1 - (1/feeDenominator))
         //                   = buyAmount - buyAmount/feeDenominator (*)
         //                   = (buyAmount * feeDenominator)/ feeDenominator - buyAmount/feeDenominator
@@ -379,5 +379,9 @@ contract StablecoinConverter is EpochTokenLocker {
         element = element.concat(abi.encodePacked(order.priceDenominator));
         element = element.concat(abi.encodePacked(order.remainingAmount));
         return element;
+    }
+
+    function ceiledDiv(uint256 dividend, uint256 divisor) private pure returns (uint256) {
+        return dividend.add(divisor).sub(1).div(divisor);
     }
 }
