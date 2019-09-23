@@ -20,7 +20,7 @@ contract("StablecoinConverter", async (accounts) => {
 
   const [user_1, user_2, user_3, solutionSubmitter] = accounts
   let BATCH_TIME
-  beforeEach(async () => {
+  before(async () => {
     const feeToken = await MockContract.new()
     const lib1 = await IdToAddressBiMap.new()
     const lib2 = await IterableAppendOnlySet.new()
