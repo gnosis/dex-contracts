@@ -1,4 +1,4 @@
-const { isDevelopmentNetwork } = require("../migration_utilities.js")
+const { isDevelopmentNetwork, getDependency } = require("../migration_utilities.js")
 
 async function migrate({
   artifacts,
@@ -13,12 +13,13 @@ async function migrate({
     await deployer.deploy(ERC20Mintable)
     fee_token = await ERC20Mintable.deployed()
   } else {
-    const TokenGNO = artifacts.require("@gnosis.pm/gno-token/build/contracts/TokenGNO.json")
+    const TokenGNO = getDependency(artifacts, network, deployer, "@gnosis.pm/gno-token/build/contracts/TokenGNO")
     fee_token = await TokenGNO.deployed()
   }
   const StablecoinConverter = artifacts.require("StablecoinConverter")
-  const BiMap = artifacts.require("IdToAddressBiMap")
-  const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
+  const BiMap = getDependency(artifacts, network, deployer, "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap")
+  const IterableAppendOnlySet = getDependency(artifacts, network, deployer, "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet")
+
   //linking libraries
   await deployer.link(BiMap, StablecoinConverter)
   await deployer.link(IterableAppendOnlySet, StablecoinConverter)
