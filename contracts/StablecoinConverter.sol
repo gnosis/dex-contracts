@@ -163,7 +163,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint32 batchIndex,
         address[] memory owners,  //tradeData is submitted as arrays
         uint16[] memory orderIds,
-        uint128[] memory volumes,
+        uint128[] memory buyAmounts,
         uint128[] memory prices,  //list of prices for touched token only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
                                           // fee token id not required since always 0
@@ -183,10 +183,10 @@ contract StablecoinConverter is EpochTokenLocker {
             require(order.validFrom <= batchIndex, "Order is not yet valid");
             require(order.validUntil >= batchIndex, "Order is no longer valid");
             // Assume for now that we always have sellOrders
-            uint128 executedSellAmount = volumes[i];
-            require(currentPrices[order.buyToken] != 0, "prices are not allowed to be zero");
-            uint128 executedBuyAmount = getExecutedBuyAmount(
-                executedSellAmount,
+            uint128 executedBuyAmount = buyAmounts[i];
+            require(currentPrices[order.sellToken] != 0, "prices are not allowed to be zero");
+            uint128 executedSellAmount = getExecutedSellAmount(
+                executedBuyAmount,
                 currentPrices[order.buyToken],
                 currentPrices[order.sellToken]
             );
@@ -249,18 +249,20 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
-    function getExecutedBuyAmount(
-        uint128 executedSellAmount,
+    function getExecutedSellAmount(
+        uint128 executedBuyAmount,
         uint128 buyTokenPrice,
         uint128 sellTokenPrice
     ) internal view returns (uint128) {
-        uint128 buyAmount = uint128(executedSellAmount.mul(sellTokenPrice) / buyTokenPrice);
-        // executedBuyAmount = buyAmount * (1 - (1/feeDenominator))
-        //                   = buyAmount - buyAmount/feeDenominator (*)
-        //                   = (buyAmount * feeDenominator)/ feeDenominator - buyAmount/feeDenominator
-        //                   = (buyAmount * feeDenominator - buyAmount) / feeDenominator
-        //                   = (buyAmount * (feeDenominator - 1)/feeDenominator
-        return uint128(buyAmount.mul(feeDenominator - 1) / feeDenominator);
+        uint128 sellAmount = uint128(executedBuyAmount.mul(buyTokenPrice) / sellTokenPrice);
+        // executedSellAmount * p[sellToken] * (1-phi) == executedBuyAmount * p[buyToken]
+        // phi = 1 / feeDenominator (since we only have integers)
+        // executedSellAmount = (executedBuyAmount * p[buyToken] / p[sellToken]) * (1 / (1 - phi))
+        // executedSellAmount = sellAmount * (1 / (1 - phi))
+        // executedSellAmount = sellAmount * (1 / (1 - 1 / feeDenominator))
+        // executedSellAmount = sellAmount * (feeDenominator / (feeDenominator - 1))
+        //                    = (sellAmount * feeDenominator) / (feeDenominator - 1)
+        return uint128(sellAmount.mul(feeDenominator) / (feeDenominator - 1));
     }
 
     function updateRemainingOrder(
