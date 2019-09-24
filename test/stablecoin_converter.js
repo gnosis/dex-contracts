@@ -17,7 +17,7 @@ function feeSubtracted(x) {
 }
 
 function feeAdded(x) {
-  return Math.ceil(x * (feeDenominator) / (feeDenominator - 1))
+  return Math.floor(x * (feeDenominator) / (feeDenominator - 1))
 }
 
 function getSellVolume(x, priceNumerator, priceDenominator) {
@@ -40,9 +40,9 @@ contract("StablecoinConverter", async (accounts) => {
   })
 
   // Basic Trade used in most of the tests:
-  // Trade for user_1: amount of token_1 sold: feeAdded(20000), amount of token_2 bought: 10000,
+  // Trade for user_1: amount of token_1 sold: 20020, amount of token_2 bought: 10000,
   // Trade for user_2: amount of token_2 sold: 10000, amount of token_1 bought: feeSubtracted(10000) * 2
-  // ==> Token conservation holds for token_2, and fee token == token_1 has negative balance of 21
+  // ==> Token conservation holds for token_2, and fee token == token_1 has negative balance of 40
 
   const basicTrade = {
     deposits: [{ amount: feeAdded(20000), token: 0, user: user_1 }, { amount: feeAdded(10000) * 2, token: 1, user: user_2 }],
@@ -365,9 +365,9 @@ contract("StablecoinConverter", async (accounts) => {
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
       const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 10000, feeAdded(10000), { from: user_1 })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex + 1, 10000, feeAdded(10000), { from: user_2 })
-      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 10000, feeAdded(10000), { from: user_2 })
-      const orderId4 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex + 1, 10000, feeAdded(10000), { from: user_3 })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex + 1, 9990, feeAdded(9990), { from: user_2 })
+      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 9981, feeAdded(9981), { from: user_2 })
+      const orderId4 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex + 1, 9972, feeAdded(9972), { from: user_3 })
 
 
       await closeAuction(stablecoinConverter)
