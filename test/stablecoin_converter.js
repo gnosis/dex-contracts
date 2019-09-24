@@ -17,7 +17,7 @@ function feeSubtracted(x) {
 }
 
 function feeAdded(x) {
-  return Math.floor(x * (feeDenominator) / (feeDenominator - 1))
+  return Math.ceil(x * (feeDenominator) / (feeDenominator - 1))
 }
 
 function getSellVolume(x, priceNumerator, priceDenominator) {
