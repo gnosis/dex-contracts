@@ -11,7 +11,7 @@ contract StablecoinConverter is EpochTokenLocker {
     using BytesLib for bytes32;
     using BytesLib for bytes;
 
-    uint constant MAX_UINT128 = 340282366920938463463374607431768211455;
+    uint constant MAX_UINT128 = 2**128 - 1;
 
     event OrderPlacement(
         address owner,
@@ -263,16 +263,16 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 sellTokenPrice
     ) internal view returns (uint128) {
         // executedSellAmount = sellAmount * (1 - (1/feeDenominator))
-        //                   = sellAmount - sellAmount/feeDenominator (*)
-        //                   = (sellAmount * feeDenominator)/ feeDenominator - sellAmount/feeDenominator
-        //                   = (sellAmount * feeDenominator - sellAmount) / feeDenominator
-        //                   = (sellAmount * (feeDenominator - 1)/feeDenominator
-        //                   = (executedBuyAmount * buyTokenPrice / sellTokenPrice) * (feeDenominator - 1) / feeDenominator
-        //                   in order to minimize rounding errors, the order is switched
-        //                   = (executedBuyAmount * buyTokenPrice / feeDenominator) * (feeDenominator - 1) / sellTokenPrice
+        //                    = sellAmount - sellAmount/feeDenominator
+        //                    = (sellAmount * feeDenominator) / feeDenominator - sellAmount/feeDenominator
+        //                    = (sellAmount * feeDenominator - sellAmount) / feeDenominator
+        //                    = (sellAmount * (feeDenominator - 1)) /feeDenominator
+        //                    = (executedBuyAmount * buyTokenPrice / sellTokenPrice) * (feeDenominator - 1) / feeDenominator
+        //                    in order to minimize rounding errors, the order is switched
+        //                    = (executedBuyAmount * buyTokenPrice / feeDenominator) * (feeDenominator - 1) / sellTokenPrice
         uint256 sellAmount = (uint256(executedBuyAmount).mul(buyTokenPrice) / (feeDenominator - 1))
             .mul(feeDenominator) / sellTokenPrice;
-        require(sellAmount < MAX_UINT128, "downcasting from u256 to u128 would change the value");
+        require(sellAmount < MAX_UINT128, "sellAmount too large");
         return uint128(sellAmount);
     }
 

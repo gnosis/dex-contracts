@@ -1136,7 +1136,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-        "downcasting from u256 to u128 would change the value"
+        "sellAmount too large"
       )
     })
 
