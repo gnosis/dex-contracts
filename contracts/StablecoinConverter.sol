@@ -11,6 +11,8 @@ contract StablecoinConverter is EpochTokenLocker {
     using BytesLib for bytes32;
     using BytesLib for bytes;
 
+    uint constant MAX_UINT128 = 340282366920938463463374607431768211455;
+
     event OrderPlacement(
         address owner,
         uint16 buyToken,
@@ -265,7 +267,13 @@ contract StablecoinConverter is EpochTokenLocker {
         //                   = (sellAmount * feeDenominator)/ feeDenominator - sellAmount/feeDenominator
         //                   = (sellAmount * feeDenominator - sellAmount) / feeDenominator
         //                   = (sellAmount * (feeDenominator - 1)/feeDenominator
-        return uint128((executedBuyAmount.mul(buyTokenPrice) / (feeDenominator - 1)).mul(feeDenominator) / sellTokenPrice);
+        //                   = (executedBuyAmount * buyTokenPrice / sellTokenPrice) * (feeDenominator - 1) / feeDenominator
+        //                   in order to minimize rounding errors, the order is switched
+        //                   = (executedBuyAmount * buyTokenPrice / feeDenominator) * (feeDenominator - 1) / sellTokenPrice
+        uint256 sellAmount = (uint256(executedBuyAmount).mul(buyTokenPrice) / (feeDenominator - 1))
+            .mul(feeDenominator) / sellTokenPrice;
+        require(sellAmount < MAX_UINT128, "downcasting from u256 to u128 would change the value");
+        return uint128(sellAmount);
     }
 
     function updateRemainingOrder(
