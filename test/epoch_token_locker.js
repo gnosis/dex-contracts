@@ -11,7 +11,7 @@ contract("EpochTokenLocker", async (accounts) => {
   const [user_1, user_2] = accounts
 
   let BATCH_TIME
-  beforeEach(async () => {
+  before(async () => {
     const instance = await EpochTokenLocker.new()
     BATCH_TIME = (await instance.BATCH_TIME.call()).toNumber()
   })
