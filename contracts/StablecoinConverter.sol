@@ -123,21 +123,23 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function getEncodedAuctionElements() public view returns (bytes memory elements) {
-        address user = allUsers.first();
-        bool stop = false;
-        while (!stop) {
-            for (uint i = 0; i < orders[user].length; i++) {
-                Order memory order = orders[user][i];
-                elements = elements.concat(encodeAuctionElement(
-                    user,
-                    getBalance(user, tokenIdToAddressMap(order.sellToken)),
-                    order
-                ));
-            }
-            if (user == allUsers.last) {
-                stop = true;
-            } else {
-                user = allUsers.next(user);
+        if (allUsers.size() > 0) {
+            address user = allUsers.first();
+            bool stop = false;
+            while (!stop) {
+                for (uint i = 0; i < orders[user].length; i++) {
+                    Order memory order = orders[user][i];
+                    elements = elements.concat(encodeAuctionElement(
+                        user,
+                        getBalance(user, tokenIdToAddressMap(order.sellToken)),
+                        order
+                    ));
+                }
+                if (user == allUsers.last) {
+                    stop = true;
+                } else {
+                    user = allUsers.next(user);
+                }
             }
         }
         return elements;

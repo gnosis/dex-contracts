@@ -1236,10 +1236,12 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, 0)
     })
-    it("reverts if there are no orders", async () => {
+    it("returns empty list if there are no orders", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      await truffleAssert.reverts(stablecoinConverter.getEncodedAuctionElements())
+      const auctionElements = await stablecoinConverter.getEncodedAuctionElements()
+
+      assert.equal(auctionElements, null)
     })
   })
 })
