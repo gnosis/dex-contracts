@@ -182,7 +182,7 @@ contract StablecoinConverter is EpochTokenLocker {
         int[] memory tokenConservation = new int[](prices.length);
         for (uint i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
-            require(checkOrderValidity(order, batchIndex), "Order is not valid");
+            require(checkOrderValidity(order, batchIndex), "Order is invalid");
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
             updateTokenConservation(tokenConservation, order, tokenIdsForPrice, executedBuyAmount, executedSellAmount);
             require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
@@ -332,10 +332,9 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] memory tokenIdsForPrice,
         uint128 buyAmount,
         uint128 sellAmount
-    ) private pure returns(int[] memory) {
+    ) private {
         tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] -= int(buyAmount);
         tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] += int(sellAmount);
-        return tokenConservation;
     }
 
     function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {

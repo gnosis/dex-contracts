@@ -536,7 +536,7 @@ contract("StablecoinConverter", async (accounts) => {
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex - 1, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter }),
-        "Order is not valid"
+        "Order is invalid"
       )
     })
     it("throws, if order is no longer valid", async () => {
@@ -567,7 +567,7 @@ contract("StablecoinConverter", async (accounts) => {
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex + 1, owner, orderId, volume, prices, tokenIdsForPrice),
-        "Order is not valid"
+        "Order is invalid"
       )
     })
     it("throws, if limit price is not met for an order", async () => {
