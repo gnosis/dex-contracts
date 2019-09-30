@@ -20,10 +20,10 @@ const zero_address = 0x0
 module.exports = async (callback) => {
   try {
     const amount = web3.utils.toWei(String(argv.amount))
-    console.log(amount)
+
     const instance = await StablecoinConverter.deployed()
     const accounts = await web3.eth.getAccounts()
-    const depositor = await accounts[argv.accountId]
+    const approver = await accounts[argv.accountId]
 
     const token_address = await instance.tokenIdToAddressMap.call(argv.tokenId)
     if (token_address == zero_address) {
@@ -31,15 +31,10 @@ module.exports = async (callback) => {
     }
 
     const token = await ERC20.at(token_address)
-    const depositor_balance = (await token.balanceOf.call(depositor))
-    if (depositor_balance.lt(amount)) {
-      callback(`Error: Depositor has insufficient balance ${depositor_balance} < ${amount}.`)
-    }
 
-    await instance.deposit(token_address, amount, { from: depositor })
-    const tradeable_at = await instance.getPendingDepositBatchNumber(depositor, token_address)
+    await token.approve(instance.address, amount, { from: approver })
 
-    console.log(`Deposit successful. Can be traded as of batch ${tradeable_at}`)
+    console.log("Approval successful for token: ", token_address)
     callback()
   } catch (error) {
     callback(error)

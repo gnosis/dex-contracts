@@ -1,13 +1,17 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
-const { getArgumentsHelper } = require("../script_utilities.js")
+const argv = require("yargs")
+  .option("tokenAddress", {
+    describe: "Address of the token to be added"
+  })
+  .demand(["tokenAddress"])
+  .help(false)
+  .version(false)
+  .argv
 
 module.exports = async function (callback) {
   try {
-    const arguments = getArgumentsHelper()
-    if (arguments.length != 1) {
-      callback("Error: This script requires arguments - <token address>")
-    }
-    const token_address = arguments[0]
+    const token_address = argv.tokenAddress.toString()
+
     const instance = await StablecoinConverter.deployed()
 
     await instance.addToken(token_address)
