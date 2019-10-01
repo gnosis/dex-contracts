@@ -20,7 +20,6 @@ const zero_address = 0x0
 module.exports = async (callback) => {
   try {
     const amount = web3.utils.toWei(String(argv.amount))
-    console.log(amount)
     const instance = await StablecoinConverter.deployed()
     const accounts = await web3.eth.getAccounts()
     const depositor = await accounts[argv.accountId]
