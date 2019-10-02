@@ -9,8 +9,8 @@
   "scripts": {
     "test": "truffle test",
     "coverage": "./node_modules/.bin/solidity-coverage",
-    "networks-extract": "node src/manage_network_info/extract_network_info.js",
-    "networks-inject": "node src/manage_network_info/inject_network_info.js",
+    "networks-extract": "CONF_FILE='../../../../../src/manage_network_info/conf.js' node node_modules/@gnosis.pm/util-contracts/src/extract_network_info.js",
+    "networks-inject": "CONF_FILE='../../../../../src/manage_network_info/conf.js' node node_modules/@gnosis.pm/util-contracts/src/inject_network_info.js",
     "networks-reset": "mkdir -p build/contracts && npx truffle networks --clean && npm run networks-inject",
     "lint": "./node_modules/.bin/eslint .",
     "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\""
