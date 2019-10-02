@@ -35,6 +35,11 @@ module.exports = async (callback) => {
       callback(`Error: Depositor has insufficient balance ${depositor_balance} < ${amount}.`)
     }
 
+    const allowance = (await token.allowance.call(depositor, instance.address)).toString()
+    if (allowance < amount) {
+      await token.approve(instance.address, amount, { from: depositor })
+    }
+
     await instance.deposit(token_address, amount, { from: depositor })
     const tradeable_at = await instance.getPendingDepositBatchNumber(depositor, token_address)
 
