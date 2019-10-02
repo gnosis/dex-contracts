@@ -59,28 +59,32 @@ contract EpochTokenLocker {
     }
 
     function requestWithdraw(address token, uint amount) public {
+        // first process old pendingWithdraw, as otherwise balances might increase for currentBatchId - 1
+        if (hasValidWithdrawRequest(msg.sender, token)) {
+            withdraw(token, msg.sender);
+        }
         balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: getCurrentBatchId() });
         emit WithdrawRequest(msg.sender, token, amount, getCurrentBatchId());
     }
 
-    function withdraw(address token) public {
-        updateDepositsBalance(msg.sender, token); // withdrawn amount might just be deposited before
+    function withdraw(address token, address owner) public {
+        updateDepositsBalance(owner, token); // withdrawn amount might just be deposited before
 
         require(
-            balanceStates[msg.sender][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
+            balanceStates[owner][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
             "withdraw was not registered previously"
         );
 
         uint amount = Math.min(
-            balanceStates[msg.sender][token].balance,
-            balanceStates[msg.sender][token].pendingWithdraws.amount
+            balanceStates[owner][token].balance,
+            balanceStates[owner][token].pendingWithdraws.amount
         );
 
-        balanceStates[msg.sender][token].balance = balanceStates[msg.sender][token].balance.sub(amount);
-        delete balanceStates[msg.sender][token].pendingWithdraws;
+        balanceStates[owner][token].balance = balanceStates[owner][token].balance.sub(amount);
+        delete balanceStates[owner][token].pendingWithdraws;
 
-        ERC20(token).transfer(msg.sender, amount);
-        emit Withdraw(msg.sender, token, amount);
+        ERC20(token).transfer(owner, amount);
+        emit Withdraw(owner, token, amount);
     }
 
     /**
@@ -124,9 +128,14 @@ contract EpochTokenLocker {
     /**
      * internal functions
      */
+    function hasValidWithdrawRequest(address user, address token) internal view returns(bool) {
+        return balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId() &&
+            balanceStates[user][token].pendingWithdraws.stateIndex > 0;
+    }
+
     function addBalanceAndPostponeWithdraw(address user, address token, uint amount) internal {
-        if (balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId()) {
-            balanceStates[user][token].pendingWithdraws.stateIndex = getCurrentBatchId();
+        if (hasValidWithdrawRequest(user, token)) {
+            withdraw(token, user);
         }
         addBalance(user, token, amount);
     }

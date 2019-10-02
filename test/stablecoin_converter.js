@@ -1002,11 +1002,10 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
-
-      await truffleAssert.reverts(
-        stablecoinConverter.withdraw(erc20_2.address, { from: basicTrade.deposits[0].user }),
-        "withdraw was not registered previously"
-      )
+      const token = await ERC20.new()
+      const withdrawTransfer = token.contract.methods.transfer(basicTrade.deposits[0].user, 0).encodeABI()
+      assert.equal(await erc20_2.invocationCountForCalldata.call(withdrawTransfer), 1)
+      assert.equal((await stablecoinConverter.getPendingWithdrawBatchNumber(solutionSubmitter, feeToken.address)).toNumber(), 0)
     })
     it("checks that credited feeToken reward can not be withdrawn in same batch as the solution submission", async () => {
       const feeToken = await MockContract.new()
@@ -1035,11 +1034,8 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
+      assert.equal((await stablecoinConverter.getPendingWithdrawBatchNumber(solutionSubmitter, feeToken.address)).toNumber(), 0)
 
-      await truffleAssert.reverts(
-        stablecoinConverter.withdraw(feeToken.address, { from: solutionSubmitter }),
-        "withdraw was not registered previously"
-      )
     })
     it("checks that the objective value is stored correctly and updated after a new solution submission", async () => {
       const feeToken = await MockContract.new()
