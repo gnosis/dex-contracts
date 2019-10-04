@@ -270,17 +270,17 @@ contract StablecoinConverter is EpochTokenLocker {
     function updateRemainingOrder(
         address owner,
         uint orderId,
-        uint128 exectuedAmount
+        uint128 executedAmount
     ) internal returns (uint) {
-        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.sub(exectuedAmount));
+        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.sub(executedAmount));
     }
 
     function revertRemainingOrder(
         address owner,
         uint orderId,
-        uint128 exectuedAmount
+        uint128 executedAmount
     ) internal returns (uint) {
-        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(exectuedAmount));
+        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(executedAmount));
     }
 
     function documentTrades(
