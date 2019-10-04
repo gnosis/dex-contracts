@@ -2,7 +2,7 @@ const assert = require("assert")
 const BN = require("bn.js")
 
 // returns boolean array of length num filled with false 
-// except for those indicies in true_list
+// except for those indices in true_list
 const falseArray = function(num, true_list) {
   const res = []
   for (let i=0; i < num; i++) {
