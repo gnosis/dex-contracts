@@ -3,25 +3,6 @@ const { sha256 } = require("ethereumjs-util")
 const memoize = require("fast-memoize")
 const MerkleTree = require("merkletreejs")
 
-/*
- How to avoid using try/catch blocks with promises' that could fail using async/await
- - https://blog.grossman.io/how-to-write-async-await-without-try-catch-blocks-in-javascript/
- */
-const assertRejects = async (q, msg) => {
-  let res, catchFlag = false
-  try {
-    res = await q
-    // checks if there was a Log event and its argument l contains string "R<number>"
-    catchFlag = res.logs && !!res.logs.find(log => log.event === "Log" && /\bR(\d+\.?)+/.test(log.args.l))
-  } catch (e) {
-    catchFlag = true
-  } finally {
-    if (!catchFlag) {
-      assert.fail(res, null, msg)
-    }
-  }
-}
-
 /**
  * funds accounts with specified value for Mintable Token
  * The object consists of:
@@ -51,7 +32,7 @@ const approveContract = async function (contract, accounts, token, value) {
 }
 
 /**
- * opens accounts at their index + 1 on contract
+ * Opens accounts at their index + 1 on contract
  * The object consists of:
  * 1.) contract to register account
  * 2.) list of accounts
@@ -63,7 +44,7 @@ const openAccounts = async function (contract, accounts) {
 }
 
 /**
- * depoloys and registers tokens on contract 
+ * Deploys and registers tokens on contract
  * The object consists of:
  * 1.) contract to register account
  * 2.) owner of contract
@@ -81,7 +62,7 @@ const registerTokens = async function (token_artifact, contract, token_owner, nu
 }
 
 /**
- * deploys tokens, funds opens accounts, approves contract for transfer and opens accounts 
+ * Deploys tokens, funds opens accounts, approves contract for transfer and opens accounts
  * The object consists of:
  * 1.) BatchAuction Contract
  * 2.) desired token owner (ideally not contract owner)
@@ -135,6 +116,11 @@ const send = function (method, params, web3Provider) {
 }
 
 // Wait for n blocks to pass
+/**
+ * Wait for n (evm) seconds to pass
+ * @param seconds: int
+ * @param web3Provider: potentially different in contract tests and system end-to-end testing.
+ */
 const waitForNSeconds = async function (seconds, web3Provider = web3) {
   await send("evm_increaseTime", [seconds], web3Provider)
   await send("evm_mine", [], web3Provider)
@@ -174,7 +160,7 @@ const sendTxAndGetReturnValue = async function (method, ...args) {
 }
 
 /**
- * Partitions arrary into chunks of size spacing
+ * Partitions array into chunks of size spacing
  * @param input: Array
  * @param spacing: int
  * @returns {Array}
@@ -188,7 +174,6 @@ function partitionArray(input, spacing) {
 }
 
 module.exports = {
-  assertRejects,
   waitForNSeconds,
   fundAccounts,
   approveContract,
