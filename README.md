@@ -17,6 +17,21 @@ Checkout the [Formal Specification](https://github.com/gnosis/dex-research/blob/
 
 Checkout our [wiki](https://github.com/gnosis/dex-contracts/wiki/Script-Usage-Examples)
 
+
+# Deployment Process
+
+For the deployment of the contracts into an official network, follow this steps:
+
+1. Make sure that all depended contracts and libraries - e.g. BytesLib - has been deployed to the intended network and that their network information is available in the npm modules 
+
+2. Run the following commands
+```
+npm install                         // This installs all dependencies
+npx truffle build                   // This builds the contracts
+npx truffle migrate --network NETWORKNAME --reset
+npm run networks-extract            // extracts deployed addresses to networks.json
+```
+
 # Contributions
 Our continuoius integration is running several linters which must pass in order to make a contribution to this repo. For your convenience there is a `pre-commit` hook file contained in the project's root directory. You can make your life easier by executing the following command after cloning this project (it will ensure your changes pass linting before allowing commits).
 
