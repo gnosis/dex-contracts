@@ -20,7 +20,6 @@ const zero_address = 0x0
 module.exports = async (callback) => {
   try {
     const amount = web3.utils.toWei(String(argv.amount))
-
     const instance = await StablecoinConverter.deployed()
     const accounts = await web3.eth.getAccounts()
     const depositor = await accounts[argv.accountId]
@@ -34,6 +33,11 @@ module.exports = async (callback) => {
     const depositor_balance = (await token.balanceOf.call(depositor))
     if (depositor_balance.lt(amount)) {
       callback(`Error: Depositor has insufficient balance ${depositor_balance} < ${amount}.`)
+    }
+
+    const allowance = (await token.allowance.call(depositor, instance.address)).toString()
+    if (allowance < amount) {
+      await token.approve(instance.address, amount, { from: depositor })
     }
 
     await instance.deposit(token_address, amount, { from: depositor })
