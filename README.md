@@ -32,8 +32,22 @@ npx truffle migrate --network NETWORKNAME --reset
 npm run networks-extract            // extracts deployed addresses to networks.json
 ```
 
+# Retrieving previous deployments
+
+In order to use the previously deployed contracts, which are documented in the network.json file, the following steps are necessary:
+
+1. Build the contracts:
+```
+npx truffle compile
+```
+
+2. Inject address from network.json into the builds:
+```
+npm run networks-inject 
+```
+
 # Contributions
-Our continuoius integration is running several linters which must pass in order to make a contribution to this repo. For your convenience there is a `pre-commit` hook file contained in the project's root directory. You can make your life easier by executing the following command after cloning this project (it will ensure your changes pass linting before allowing commits).
+Our continuous integration is running several linters which must pass in order to make a contribution to this repo. For your convenience there is a `pre-commit` hook file contained in the project's root directory. You can make your life easier by executing the following command after cloning this project (it will ensure your changes pass linting before allowing commits).
 
 ```bash
 cp pre-commit .git/hooks/
