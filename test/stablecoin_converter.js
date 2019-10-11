@@ -7,7 +7,8 @@ const ERC20 = artifacts.require("ERC20")
 const truffleAssert = require("truffle-assertions")
 const {
   waitForNSeconds,
-  sendTxAndGetReturnValue
+  sendTxAndGetReturnValue,
+  decodeAuctionElements
 } = require("./utilities.js")
 
 const feeDenominator = 1000 // fee is (1 / feeDenominator)
@@ -1247,33 +1248,6 @@ contract("StablecoinConverter", async (accounts) => {
 })
 
 
-const ADDRESS_WIDTH = 20 * 2
-const UINT256_WIDTH = 32 * 2
-const UINT16_WIDTH = 2 * 2
-const UINT32_WIDTH = 4 * 2
-const UINT128_WIDTH = 16 * 2
-
-function decodeAuctionElements(bytes) {
-  const result = []
-  bytes = bytes.slice(2) // cutting of 0x
-  while (bytes.length > 0) {
-    const element = bytes.slice(0, 113 * 2).split("")
-    bytes = bytes.slice(113 * 2)
-    result.push({
-      user: "0x" + element.splice(0, ADDRESS_WIDTH).join(""), // address is only 20 bytes
-      sellTokenBalance: parseInt(element.splice(0, UINT256_WIDTH).join(""), 16),
-      buyToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
-      sellToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
-      validFrom: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
-      validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
-      isSellOrder: parseInt(element.splice(0, 2).join(""), 16) > 0,
-      priceNumerator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
-      priceDenominator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
-      remainingAmount: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
-    })
-  }
-  return result
-}
 
 const closeAuction = async (instance) => {
   const time_remaining = (await instance.getSecondsRemainingInBatch()).toNumber()
