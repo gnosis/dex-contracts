@@ -4,19 +4,24 @@ pragma solidity ^0.5.0;
 import "@gnosis.pm/mock-contract/contracts/MockContract.sol";
 import "../EpochTokenLocker.sol";
 
-
 contract EpochTokenLockerTestInterface is EpochTokenLocker {
-
-
-    function addBalanceTest(address user, address token, uint amount) public {
+    function addBalanceTest(address user, address token, uint256 amount)
+        public
+    {
         super.addBalance(user, token, amount);
     }
 
-    function addBalanceAndPostponeWithdrawTest(address user, address token, uint amount) public {
+    function addBalanceAndPostponeWithdrawTest(
+        address user,
+        address token,
+        uint256 amount
+    ) public {
         super.addBalanceAndPostponeWithdraw(user, token, amount);
     }
 
-    function subtractBalanceTest(address user, address token, uint amount) public {
+    function subtractBalanceTest(address user, address token, uint256 amount)
+        public
+    {
         super.subtractBalance(user, token, amount);
     }
 }
