@@ -25,6 +25,8 @@
         "no-simple-event-func-name": true,
         "not-rely-on-time": false,
         "prettier/prettier": "error",
-        "no-empty-blocks": "off"
+        "no-empty-blocks": "off",
+        "two-lines-top-level-separator": "warn",
+        "bracket-align": "warn"
     }
 }

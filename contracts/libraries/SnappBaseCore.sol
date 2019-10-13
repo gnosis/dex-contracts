@@ -21,6 +21,7 @@ library SnappBaseCore {
         uint256 slot,
         uint16 slotIndex
     );
+
     event Deposit(
         uint16 accountId,
         uint8 tokenId,
@@ -28,12 +29,14 @@ library SnappBaseCore {
         uint256 slot,
         uint16 slotIndex
     );
+
     event StateTransition(
         uint8 transitionType,
         uint256 stateIndex,
         bytes32 stateHash,
         uint256 slot
     );
+
     event SnappInitialization(
         bytes32 stateHash,
         uint8 maxTokens,
