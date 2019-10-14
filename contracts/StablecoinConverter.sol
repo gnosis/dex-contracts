@@ -154,7 +154,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] tokenIdsForPrice;
         address solutionSubmitter;
         uint256 feeReward;
-        uint256 objectiveValue;
+        int objectiveValue;
     }
 
     struct TradeData {
@@ -165,10 +165,10 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function submitSolution(
         uint32 batchIndex,
-        address[] memory owners,  //tradeData is submitted as arrays
+        address[] memory owners,  // tradeData is submitted as arrays
         uint16[] memory orderIds,
         uint128[] memory volumes,
-        uint128[] memory prices,  //list of prices for touched token only
+        uint128[] memory prices,  // list of prices for touched tokens only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
                                           // fee token id not required since always 0
     ) public {
@@ -209,7 +209,17 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedSellAmount
             );
         }
-        checkAndOverrideObjectiveValue(uint(tokenConservation[0]));
+        // Now that all trades have settled (without over/under-flow), we compute objective values.
+        int utility = 0;
+        int disregardedUtility = 0;
+        for (uint i = 0; i < owners.length; i++) {
+            Order memory order = orders[owners[i]][orderIds[i]];
+            (uint128 execBuyAmt, uint128 execSellAmt) = getTradedAmounts(volumes[i], order);
+            utility += evaluateUtility(execBuyAmt, execSellAmt, order);
+            disregardedUtility += evaluateDisrgardedUtility(execSellAmt, order);
+        }
+        int objectiveValue = utility - disregardedUtility;
+        checkAndOverrideObjectiveValue(objectiveValue);
         grantRewardToSolutionSubmitter(uint(tokenConservation[0]) / 2);
         checkTokenConservation(tokenConservation);
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
@@ -221,6 +231,20 @@ contract StablecoinConverter is EpochTokenLocker {
         } else {
             return 0;
         }
+    }
+
+    function evaluateUtility(uint128 execBuy, uint128 execSell, Order memory order) internal returns(int) {
+        // Utility = ((execBuyAmt * order.sellAmt - execSellAmt * order.buyAmt) * price.buyToken) / order.sellAmt
+        return ((execBuy * order.sellAmount - execSell * order.buyAmount) * currentPrices[order.buyToken]) / order.sellAmount;
+    }
+
+    function evaluateDisregardedUtility(uint128 execSell, Order memory order) internal returns(int) {
+        // |disregardedUtility| = maxUtility - actualUtility
+        // where maxUtility is the utility achieved when executedSellAmount == order.sellAmount. That is,
+        // maxUtility = ((execBuyAmt * order.sellAmt - order.sellAmt * order.buyAmt) * price.buyToken) / order.sellAmt
+        //            = (execBuyAmt - order.buyAmount) * price.buyToken <---- This reduction not used in final formula.
+        // So, after simplification
+        return ((execSell - order.sellAmount) * currentPrices[order.buyToken] * order.buyAmount) / order.sellAmount;
     }
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
@@ -285,7 +309,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function documentTrades(
         uint32 batchIndex,
-        address[] memory owners,  //tradeData is submitted as arrays
+        address[] memory owners,  // tradeData is submitted as arrays
         uint16[] memory orderIds,
         uint128[] memory volumes,
         uint16[] memory tokenIdsForPrice
@@ -319,7 +343,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 revertRemainingOrder(owner, orderId, sellAmount);
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
             }
-            // substract granted fees:
+            // subtract granted fees:
             subtractBalance(
                 previousSolution.solutionSubmitter,
                 tokenIdToAddressMap(0),
@@ -339,7 +363,7 @@ contract StablecoinConverter is EpochTokenLocker {
         tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] += int(sellAmount);
     }
 
-    function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
+    function checkAndOverrideObjectiveValue(int newObjectiveValue) private {
         require(
             newObjectiveValue > getCurrentObjectiveValue(),
             "Solution does not have a higher objective value than a previous solution"
