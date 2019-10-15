@@ -32,7 +32,7 @@ contract StablecoinConverter is EpochTokenLocker {
     struct Order {
         uint16 buyToken;
         uint16 sellToken;
-        uint32 validFrom;  // order is valid from auction collection period: validFrom inclusively
+        uint32 validFrom;   // order is valid from auction collection period: validFrom inclusively
         uint32 validUntil;  // order is valid till auction collection period: validUntil inclusively
         bool isSellOrder;
         uint128 priceNumerator;
@@ -182,10 +182,15 @@ contract StablecoinConverter is EpochTokenLocker {
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
         int[] memory tokenConservation = new int[](prices.length);
+        int utility = 0;
+        int disregardedUtility = 0;
         for (uint i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(checkOrderValidity(order, batchIndex), "Order is invalid");
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
+            // accumulate objective values before updateRemainingOrder
+            utility += evaluateUtility(executedBuyAmount, executedSellAmount, order);
+            disregardedUtility += evaluateDisregardedUtility(executedSellAmount, order);
             updateTokenConservation(tokenConservation, order, tokenIdsForPrice, executedBuyAmount, executedSellAmount);
             require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             // Ensure executed price is not lower than the order price:
@@ -209,15 +214,6 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedSellAmount
             );
         }
-        // Now that all trades have settled (without over/under-flow), we compute objective values.
-        int utility = 0;
-        int disregardedUtility = 0;
-        for (uint i = 0; i < owners.length; i++) {
-            Order memory order = orders[owners[i]][orderIds[i]];
-            (uint128 execBuyAmt, uint128 execSellAmt) = getTradedAmounts(volumes[i], order);
-            utility += evaluateUtility(execBuyAmt, execSellAmt, order);
-            disregardedUtility += evaluateDisrgardedUtility(execSellAmt, order);
-        }
         int objectiveValue = utility - disregardedUtility;
         checkAndOverrideObjectiveValue(objectiveValue);
         grantRewardToSolutionSubmitter(uint(tokenConservation[0]) / 2);
@@ -225,7 +221,7 @@ contract StablecoinConverter is EpochTokenLocker {
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
 
-    function getCurrentObjectiveValue() public view returns(uint) {
+    function getCurrentObjectiveValue() public view returns(int) {
         if (previousSolution.batchId == getCurrentBatchId() - 1) {
             return previousSolution.objectiveValue;
         } else {
@@ -233,18 +229,22 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
-    function evaluateUtility(uint128 execBuy, uint128 execSell, Order memory order) internal returns(int) {
+    function evaluateUtility(uint128 execBuy, uint128 execSell, Order memory order) internal view returns(int) {
         // Utility = ((execBuyAmt * order.sellAmt - execSellAmt * order.buyAmt) * price.buyToken) / order.sellAmt
-        return ((execBuy * order.sellAmount - execSell * order.buyAmount) * currentPrices[order.buyToken]) / order.sellAmount;
+        uint128 buyAmount = order.priceNumerator;
+        uint128 sellAmount = order.priceDenominator;
+        return ((execBuy * sellAmount - execSell * buyAmount) * currentPrices[order.buyToken]) / sellAmount;
     }
 
-    function evaluateDisregardedUtility(uint128 execSell, Order memory order) internal returns(int) {
+    function evaluateDisregardedUtility(uint128 execSell, Order memory order) internal view returns(int) {
         // |disregardedUtility| = maxUtility - actualUtility
-        // where maxUtility is the utility achieved when executedSellAmount == order.sellAmount. That is,
+        // where maxUtility is the utility achieved when execSellAmount == order.sellAmount. That is,
         // maxUtility = ((execBuyAmt * order.sellAmt - order.sellAmt * order.buyAmt) * price.buyToken) / order.sellAmt
         //            = (execBuyAmt - order.buyAmount) * price.buyToken <---- This reduction not used in final formula.
         // So, after simplification
-        return ((execSell - order.sellAmount) * currentPrices[order.buyToken] * order.buyAmount) / order.sellAmount;
+        uint128 buyAmount = order.priceNumerator;
+        uint128 sellAmount = order.priceDenominator;
+        return ((execSell - sellAmount) * currentPrices[order.buyToken] * buyAmount) / sellAmount;
     }
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
@@ -358,7 +358,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] memory tokenIdsForPrice,
         uint128 buyAmount,
         uint128 sellAmount
-    ) private {
+    ) private pure {
         tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] -= int(buyAmount);
         tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] += int(sellAmount);
     }
