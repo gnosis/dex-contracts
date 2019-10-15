@@ -163,8 +163,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 volume;
         uint16 orderId;
     }
-    event DebugUtility(int u, int du);
-    event DebugExecutedAmts(uint128 exBuy, uint128 exSell);
+
     function submitSolution(
         uint32 batchIndex,
         address[] memory owners,  // tradeData is submitted as arrays
@@ -191,10 +190,8 @@ contract StablecoinConverter is EpochTokenLocker {
             require(checkOrderValidity(order, batchIndex), "Order is invalid");
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
             // accumulate objective values before updateRemainingOrder
-            emit DebugExecutedAmts(executedBuyAmount, executedSellAmount);
             utility += evaluateUtility(executedBuyAmount, executedSellAmount, order);
             disregardedUtility += evaluateDisregardedUtility(executedSellAmount, order);
-            emit DebugUtility(utility, disregardedUtility);
             updateTokenConservation(tokenConservation, order, tokenIdsForPrice, executedBuyAmount, executedSellAmount);
             require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             // Ensure executed price is not lower than the order price:
@@ -232,11 +229,10 @@ contract StablecoinConverter is EpochTokenLocker {
             return MIN_INT;
         }
     }
-    event DebugBuySellAmounts(uint128 buy, uint128 sell);
+
     function evaluateUtility(uint128 execBuy, uint128 execSell, Order memory order) internal returns(int) {
         // Utility = ((execBuyAmt * order.sellAmt - execSellAmt * order.buyAmt) * price.buyToken) / order.sellAmt
         (uint128 buyAmount, uint128 sellAmount) = getBuySellAmounts(order);
-        emit DebugBuySellAmounts(buyAmount, sellAmount);
         return ((execBuy * sellAmount - execSell * buyAmount) * currentPrices[order.buyToken]) / sellAmount;
     }
 
@@ -374,13 +370,12 @@ contract StablecoinConverter is EpochTokenLocker {
         tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] -= int(buyAmount);
         tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] += int(sellAmount);
     }
-    event DebugObjective(int x, int y);
+
     function checkAndOverrideObjectiveValue(int newObjectiveValue) private {
         require(
             newObjectiveValue > getCurrentObjectiveValue(),
             "Solution does not have a higher objective value than a previous solution"
         );
-        emit DebugObjective(getCurrentObjectiveValue(), newObjectiveValue);
         previousSolution.objectiveValue = newObjectiveValue;
     }
 
