@@ -32,8 +32,8 @@ contract StablecoinConverter is EpochTokenLocker {
     struct Order {
         uint16 buyToken;
         uint16 sellToken;
-        uint32 validFrom;  // order is valid from auction collection period: validFrom inclusively
-        uint32 validUntil;  // order is valid till auction collection period: validUntil inclusively
+        uint32 validFrom;   // order is valid from auction collection period: validFrom inclusive
+        uint32 validUntil;  // order is valid till auction collection period: validUntil inclusive
         bool isSellOrder;
         uint128 priceNumerator;
         uint128 priceDenominator;
@@ -165,10 +165,10 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function submitSolution(
         uint32 batchIndex,
-        address[] memory owners,  //tradeData is submitted as arrays
+        address[] memory owners,          // tradeData is submitted as arrays
         uint16[] memory orderIds,
         uint128[] memory volumes,
-        uint128[] memory prices,  //list of prices for touched token only
+        uint128[] memory prices,          // list of prices for touched tokens only
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
                                           // fee token id not required since always 0
     ) public {
@@ -285,7 +285,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function documentTrades(
         uint32 batchIndex,
-        address[] memory owners,  //tradeData is submitted as arrays
+        address[] memory owners,  // tradeData is submitted as arrays
         uint16[] memory orderIds,
         uint128[] memory volumes,
         uint16[] memory tokenIdsForPrice
@@ -319,7 +319,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 revertRemainingOrder(owner, orderId, sellAmount);
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
             }
-            // substract granted fees:
+            // subtract granted fees:
             subtractBalance(
                 previousSolution.solutionSubmitter,
                 tokenIdToAddressMap(0),
@@ -334,7 +334,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] memory tokenIdsForPrice,
         uint128 buyAmount,
         uint128 sellAmount
-    ) private {
+    ) private pure {
         tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] -= int(buyAmount);
         tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] += int(sellAmount);
     }
@@ -348,7 +348,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function getTradedAmounts(uint128 volume, Order memory order) private view returns (uint128, uint128) {
-        // ToDo: implement logic also for buyOrders
+        // TODO: implement logic also for buyOrders
         uint128 executedBuyAmount = volume;
         require(currentPrices[order.sellToken] != 0, "prices are not allowed to be zero");
         uint128 executedSellAmount = getExecutedSellAmount(

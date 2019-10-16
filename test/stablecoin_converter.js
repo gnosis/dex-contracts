@@ -53,7 +53,7 @@ contract("StablecoinConverter", async (accounts) => {
     solution: { prices: [1, 2], owners: [user_1, user_2], volume: [10000, feeSubtracted(10000) * 2], tokenIdsForPrice: [0, 1] }
   }
 
-  describe("placeOrder", () => {
+  describe("placeOrder()", () => {
     it("places Orders and checks parameters", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -71,7 +71,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
     })
   })
-  describe("cancelOrder", () => {
+  describe("cancelOrder()", () => {
     it("places orders, then cancels it and orders status", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -88,7 +88,7 @@ contract("StablecoinConverter", async (accounts) => {
 
     })
   })
-  describe("freeStorageOfOrder", () => {
+  describe("freeStorageOfOrder()", () => {
     it("places a order, then cancels and deletes it", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -117,7 +117,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder(id), "Order is still valid")
     })
   })
-  describe("addToken", () => {
+  describe("addToken()", () => {
     it("feeToken is set by default", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -159,7 +159,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(stablecoinConverter.addToken((await ERC20.new()).address), "Max tokens reached")
     })
   })
-  describe("submitSolution", () => {
+  describe("submitSolution()", () => {
     it("places two orders and matches them in a solution with traders' Utility == 0", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -191,7 +191,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), basicTrade.deposits[1].amount - getSellVolume(volume[1], prices[1], prices[0]), "Sold tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(), volume[1], "Bought tokens were not adjusted correctly")
     })
-    it("places two orders and matches them in a solution with traders' Utility >0", async () => {
+    it("places two orders and matches them in a solution with Utility > 0", async () => {
 
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -289,6 +289,7 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
       const volume = [4000, feeSubtracted(4000) * 2]
+
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
@@ -1138,7 +1139,7 @@ contract("StablecoinConverter", async (accounts) => {
     })
 
   })
-  describe("getEncodedAuctionElements", async () => {
+  describe("getEncodedAuctionElements()", async () => {
     it("returns all orders that are have ever been submitted", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
