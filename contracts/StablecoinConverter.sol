@@ -369,7 +369,6 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function checkAndOverrideObjectiveValue(int newObjectiveValue) private {
-        emit Debug(getCurrentObjectiveValue(), newObjectiveValue, newObjectiveValue > getCurrentObjectiveValue());
         require(
             newObjectiveValue > getCurrentObjectiveValue(),
             "Solution does not have a higher objective value than a previous solution"
