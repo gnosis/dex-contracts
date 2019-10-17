@@ -191,7 +191,7 @@ contract StablecoinConverter is EpochTokenLocker {
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
             // accumulate objective values before updateRemainingOrder
             utility += evaluateUtility(executedBuyAmount, executedSellAmount, order);
-            disregardedUtility += evaluateDisregardedUtility(executedSellAmount, order);
+            disregardedUtility += evaluateDisregardedUtility(executedBuyAmount, executedSellAmount, order);
             updateTokenConservation(tokenConservation, order, tokenIdsForPrice, executedBuyAmount, executedSellAmount);
             require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             // Ensure executed price is not lower than the order price:
@@ -232,21 +232,19 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function evaluateUtility(uint128 execBuy, uint128 execSell, Order memory order) internal view returns(int) {
         // Utility = ((execBuyAmt * order.sellAmt - execSellAmt * order.buyAmt) * price.buyToken) / order.sellAmt
-        (uint128 buyAmount, uint128 sellAmount) = getBuySellAmounts(order);
-        return ((execBuy * sellAmount - execSell * buyAmount) * currentPrices[order.buyToken]) / sellAmount;
+        (uint128 buyAmount, uint128 sellAmount) = getBuyAndSellAmounts(order);
+        return (execBuy - (execSell * buyAmount) / sellAmount) * currentPrices[order.buyToken];
     }
 
-    function evaluateDisregardedUtility(uint128 execSell, Order memory order) internal view returns(int) {
+    function evaluateDisregardedUtility(uint128 execBuy, uint128 execSell, Order memory order) internal view returns(int) {
         // |disregardedUtility| = maxUtility - actualUtility
-        // where maxUtility is the utility achieved when execSellAmount == order.sellAmount. That is,
-        // maxUtility = ((execBuyAmt * order.sellAmt - order.sellAmt * order.buyAmt) * price.buyToken) / order.sellAmt
-        //            = (execBuyAmt - order.buyAmount) * price.buyToken <---- This reduction not used in final formula.
-        // So, after simplification
-        (uint128 buyAmount, uint128 sellAmount) = getBuySellAmounts(order);
-        return (((sellAmount - execSell) * currentPrices[order.buyToken]) * buyAmount) / sellAmount;
+        // where maxUtility is the utility achieved when execSellAmount == order.sellAmount.
+        (, uint128 sellAmount) = getBuyAndSellAmounts(order);
+        int maxUtil = evaluateUtility(execBuy, sellAmount, order);
+        return maxUtil - evaluateUtility(execBuy, execSell, order);
     }
 
-    function getBuySellAmounts(Order memory order) internal pure returns(uint128, uint128) {
+    function getBuyAndSellAmounts(Order memory order) internal pure returns(uint128, uint128) {
         // Recall that, initially
         // priceNumerator: buyAmount
         // priceDenominator: sellAmount
