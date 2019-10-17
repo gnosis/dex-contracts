@@ -191,7 +191,7 @@ contract StablecoinConverter is EpochTokenLocker {
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
             // accumulate objective values before updateRemainingOrder
             utility += evaluateUtility(executedBuyAmount, executedSellAmount, order);
-            disregardedUtility += evaluateDisregardedUtility(executedBuyAmount, executedSellAmount, order);
+            disregardedUtility += evaluateDisregardedUtility(executedSellAmount, order);
             updateTokenConservation(tokenConservation, order, tokenIdsForPrice, executedBuyAmount, executedSellAmount);
             require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             // Ensure executed price is not lower than the order price:
@@ -230,21 +230,20 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
-    function evaluateUtility(uint128 execBuy, uint128 execSell, Order memory order) internal view returns(int) {
+    function evaluateUtility(uint128 execBuy, uint128 execSell, Order memory order) internal returns(int) {
         // Utility = ((execBuyAmt * order.sellAmt - execSellAmt * order.buyAmt) * price.buyToken) / order.sellAmt
         (uint128 buyAmount, uint128 sellAmount) = getBuyAndSellAmounts(order);
-        return (execBuy - (execSell * buyAmount) / sellAmount) * currentPrices[order.buyToken];
+        return (execBuy - ((execSell * buyAmount) / sellAmount)) * currentPrices[order.buyToken];
     }
 
-    function evaluateDisregardedUtility(uint128 execBuy, uint128 execSell, Order memory order) internal view returns(int) {
+    function evaluateDisregardedUtility(uint128 execSell, Order memory order) internal returns(int) {
         // |disregardedUtility| = maxUtility - actualUtility
         // where maxUtility is the utility achieved when execSellAmount == order.sellAmount.
-        (, uint128 sellAmount) = getBuyAndSellAmounts(order);
-        int maxUtil = evaluateUtility(execBuy, sellAmount, order);
-        return maxUtil - evaluateUtility(execBuy, execSell, order);
+        (uint128 buyAmount, uint128 sellAmount) = getBuyAndSellAmounts(order);
+        return (((sellAmount - execSell) * currentPrices[order.buyToken]) * buyAmount) / sellAmount;
     }
 
-    function getBuyAndSellAmounts(Order memory order) internal pure returns(uint128, uint128) {
+    function getBuyAndSellAmounts(Order memory order) internal returns(uint128, uint128) {
         // Recall that, initially
         // priceNumerator: buyAmount
         // priceDenominator: sellAmount
@@ -289,7 +288,7 @@ contract StablecoinConverter is EpochTokenLocker {
         //                    = (sellAmount * feeDenominator - sellAmount) / feeDenominator
         //                    = (sellAmount * (feeDenominator - 1)) /feeDenominator
         //                    = (executedBuyAmount * buyTokenPrice / sellTokenPrice) * (feeDenominator - 1) / feeDenominator
-        //                    in order to minimize rounding errors, the order is switched
+        // in order to minimize rounding errors, the order is switched
         //                    = (executedBuyAmount * buyTokenPrice / feeDenominator) * (feeDenominator - 1) / sellTokenPrice
         uint256 sellAmount = (uint256(executedBuyAmount).mul(buyTokenPrice) / (feeDenominator - 1))
             .mul(feeDenominator) / sellTokenPrice;
@@ -368,8 +367,9 @@ contract StablecoinConverter is EpochTokenLocker {
         tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] -= int(buyAmount);
         tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] += int(sellAmount);
     }
-
+    event Debug(int currVal, int newVal, bool isGood);
     function checkAndOverrideObjectiveValue(int newObjectiveValue) private {
+        emit Debug(getCurrentObjectiveValue(), newObjectiveValue, newObjectiveValue > getCurrentObjectiveValue());
         require(
             newObjectiveValue > getCurrentObjectiveValue(),
             "Solution does not have a higher objective value than a previous solution"

@@ -333,16 +333,12 @@ contract("StablecoinConverter", async (accounts) => {
       const orderId = [orderId1, orderId2]
       const volume = [5000, feeSubtracted(5000) * 2]
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
-
-
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
       const volume2 = [6000, feeSubtracted(6000) * 2]
-
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume2, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
       const volume3 = basicTrade.solution.volume
-
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume3, prices, tokenIdsForPrice, { from: solutionSubmitter })
       assert.equal((await stablecoinConverter.getBalance.call(user_1, feeToken.address)).toNumber(), basicTrade.deposits[0].amount - getSellVolume(volume3[0], prices[0], prices[1]), "Sold tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_2.address)).toNumber(), volume3[0], "Bought tokens were not adjusted correctly")
@@ -1068,19 +1064,16 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
-
       const tradeUtilities = [
         evaluateTradeUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, 4000, 8000, prices[1]),
         evaluateTradeUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, 7992, 4000, prices[0])
       ]
       const totalUtility = tradeUtilities.reduce((a, b) => a + b, 0)
-
       const disregardedUtilites = [
         disregardedUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, 4000, 8000, prices[1]),
         disregardedUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, 7992, 4000, prices[0])
       ]
       const totalDisregardedUtility = disregardedUtilites.reduce((a, b) => a + b, 0)
-
       const actualObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
       assert.equal(actualObjectiveValue, totalUtility - totalDisregardedUtility, "Objective value is not stored correct")
 
@@ -1088,8 +1081,17 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume2, prices, tokenIdsForPrice, { from: solutionSubmitter })
       const actualObjectiveValue2 = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
 
-      const expectedObjectiveValue = 0  // Both orders were fully executed at the requested limit prices.
-      assert.equal(actualObjectiveValue2, expectedObjectiveValue, "Objective value is not stored correct after a second solution submission")
+      const tradeUtilities2 = [
+        evaluateTradeUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, 10000, 20000, prices[1]),
+        evaluateTradeUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, 19980, 10000, prices[0])
+      ]
+      const totalUtility2 = tradeUtilities2.reduce((a, b) => a + b, 0)
+      const disregardedUtilites2 = [
+        disregardedUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, 10000, 20000, prices[1]),
+        disregardedUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, 19980, 10000, prices[0])
+      ]
+      const totalDisregardedUtility2 = disregardedUtilites2.reduce((a, b) => a + b, 0)
+      assert.equal(actualObjectiveValue2, totalUtility2 - totalDisregardedUtility2, "Objective value is not stored correct after a second solution submission")
     })
     it("checks that the objective value is returned correctly after getting into a new batch", async () => {
       const feeToken = await MockContract.new()
@@ -1293,7 +1295,7 @@ function decodeAuctionElements(bytes) {
 }
 
 function evaluateTradeUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken) {
-  return Math.floor(((executedBuyAmount * sellAmount - executedSellAmount * buyAmount) * priceBuyToken) / sellAmount)
+  return (executedBuyAmount - Math.floor((executedSellAmount * buyAmount) / sellAmount)) * priceBuyToken
 }
 
 function disregardedUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken) {
