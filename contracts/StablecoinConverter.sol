@@ -367,7 +367,7 @@ contract StablecoinConverter is EpochTokenLocker {
         tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] -= int(buyAmount);
         tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] += int(sellAmount);
     }
-    event Debug(int currVal, int newVal, bool isGood);
+
     function checkAndOverrideObjectiveValue(int newObjectiveValue) private {
         emit Debug(getCurrentObjectiveValue(), newObjectiveValue, newObjectiveValue > getCurrentObjectiveValue());
         require(
