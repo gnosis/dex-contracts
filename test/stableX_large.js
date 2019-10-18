@@ -1,6 +1,8 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const MockContract = artifacts.require("MockContract")
 
+const truffleAssert = require("truffle-assertions")
+
 const {
   waitForNSeconds,
   sendTxAndGetReturnValue
@@ -26,12 +28,12 @@ contract("StablecoinConverter", async (accounts) => {
   // ==> Token conservation holds for token_2, and fee token == token_1 has negative balance of 40
 
   const basicTrade = {
-    deposits: [{ amount: feeAdded(200000), token: 0, user: user_1 }, { amount: feeAdded(100000) * 2, token: 1, user: user_2 }],
+    deposits: [{ amount: feeAdded(2000000), token: 0, user: user_1 }, { amount: feeAdded(1000000) * 2, token: 1, user: user_2 }],
     orders: [
-      { sellToken: 0, buyToken: 1, sellAmount: feeAdded(200000), buyAmount: 100000, user: user_1 },
-      { sellToken: 1, buyToken: 0, sellAmount: feeAdded(100000), buyAmount: feeSubtracted(100000) * 2, user: user_2 }
+      { sellToken: 0, buyToken: 1, sellAmount: feeAdded(2000000), buyAmount: 1000000, user: user_1 },
+      { sellToken: 1, buyToken: 0, sellAmount: feeAdded(1000000), buyAmount: feeSubtracted(1000000) * 2, user: user_2 }
     ],
-    solution: { prices: [1, 2], owners: [user_1, user_2], volume: [100000, feeSubtracted(100000) * 2], tokenIdsForPrice: [0, 1] }
+    solution: { prices: [1, 2], owners: [user_1, user_2], volume: [1000000, feeSubtracted(1000000) * 2], tokenIdsForPrice: [0, 1] }
   }
 
   let stablecoinConverter
@@ -61,7 +63,7 @@ contract("StablecoinConverter", async (accounts) => {
     tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
   })
 
-  describe("submit Large solutions", () => {
+  describe("submit single solutions", () => {
     it("filling 10 orders", async () => {
       const halfNumTouched = 5
       const owner = Array(halfNumTouched).fill(seedOwners[0]).concat(Array(halfNumTouched).fill(seedOwners[1]))
@@ -86,24 +88,37 @@ contract("StablecoinConverter", async (accounts) => {
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
-    it("submits 1 competing solution with 20 touched", async () => {
-      const halfNumTouched = 10
+    it("fails when trying to fill 80 orders", async () => {
+      const halfNumTouched = 40
+      const specialSeedVolumes = [100000, feeSubtracted(100000) * 2]
+
+      const owner = Array(halfNumTouched).fill(seedOwners[0]).concat(Array(halfNumTouched).fill(seedOwners[1]))
+      const orderId = Array(halfNumTouched).fill(orderId1).concat(Array(halfNumTouched).fill(orderId2))
+      const volume = Array(halfNumTouched).fill(specialSeedVolumes[0] / halfNumTouched).concat(Array(halfNumTouched).fill(specialSeedVolumes[1] / halfNumTouched))
+      await truffleAssert.fails(
+        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter }),
+        "out of gas"
+      )
+    })
+  })
+  describe("submit competing solutions", () => {
+    it("submits 1 competing solution with 10 touched", async () => {
+      const halfNumTouched = 5
       const owner = Array(halfNumTouched).fill(seedOwners[0]).concat(Array(halfNumTouched).fill(seedOwners[1]))
       const orderIds = Array(halfNumTouched).fill(orderId1).concat(Array(halfNumTouched).fill(orderId2))
+
       const volume = Array(halfNumTouched).fill(seedVolumes[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes[1] / halfNumTouched))
       await stablecoinConverter.submitSolution(batchIndex, owner, orderIds, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
       const seedVolumes2 = [100000, feeSubtracted(100000) * 2]
-
-      const owner2 = Array(halfNumTouched).fill(seedOwners[0]).concat(Array(halfNumTouched).fill(seedOwners[1]))
-      const orderIds2 = Array(halfNumTouched).fill(orderId1).concat(Array(halfNumTouched).fill(orderId2))
       const volume2 = Array(halfNumTouched).fill(seedVolumes2[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes2[1] / halfNumTouched))
-      await stablecoinConverter.submitSolution(batchIndex, owner2, orderIds2, volume2, prices, tokenIdsForPrice, { from: solutionSubmitter })
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderIds, volume2, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
-    it("submits 2 competing solutions with 20 touched", async () => {
-      const halfNumTouched = 10
+    it("submits 2 competing solutions with 10 touched", async () => {
+      const halfNumTouched = 5
       const owner = Array(halfNumTouched).fill(seedOwners[0]).concat(Array(halfNumTouched).fill(seedOwners[1]))
       const orderIds = Array(halfNumTouched).fill(orderId1).concat(Array(halfNumTouched).fill(orderId2))
+
       const volume = Array(halfNumTouched).fill(seedVolumes[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes[1] / halfNumTouched))
       await stablecoinConverter.submitSolution(batchIndex, owner, orderIds, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
@@ -115,6 +130,49 @@ contract("StablecoinConverter", async (accounts) => {
       const seedVolumes3 = [100000, feeSubtracted(100000) * 2]
       const volume3 = Array(halfNumTouched).fill(seedVolumes3[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes3[1] / halfNumTouched))
       await stablecoinConverter.submitSolution(batchIndex, owner, orderIds, volume3, prices, tokenIdsForPrice, { from: solutionSubmitter })
+    })
+    it("submits 1 competing solution with 20 touched", async () => {
+      const halfNumTouched = 10
+      const owner = Array(halfNumTouched).fill(seedOwners[0]).concat(Array(halfNumTouched).fill(seedOwners[1]))
+      const orderIds = Array(halfNumTouched).fill(orderId1).concat(Array(halfNumTouched).fill(orderId2))
+
+      const volume = Array(halfNumTouched).fill(seedVolumes[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes[1] / halfNumTouched))
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderIds, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
+
+      const seedVolumes2 = [100000, feeSubtracted(100000) * 2]
+      const volume2 = Array(halfNumTouched).fill(seedVolumes2[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes2[1] / halfNumTouched))
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderIds, volume2, prices, tokenIdsForPrice, { from: solutionSubmitter })
+    })
+    it("submits 2 competing solutions with 20 touched", async () => {
+      const halfNumTouched = 10
+      const owner = Array(halfNumTouched).fill(seedOwners[0]).concat(Array(halfNumTouched).fill(seedOwners[1]))
+      const orderIds = Array(halfNumTouched).fill(orderId1).concat(Array(halfNumTouched).fill(orderId2))
+
+      const volume = Array(halfNumTouched).fill(seedVolumes[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes[1] / halfNumTouched))
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderIds, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
+
+      const seedVolumes2 = [50000, feeSubtracted(50000) * 2]
+      const volume2 = Array(halfNumTouched).fill(seedVolumes2[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes2[1] / halfNumTouched))
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderIds, volume2, prices, tokenIdsForPrice, { from: solutionSubmitter })
+
+      const seedVolumes3 = [100000, feeSubtracted(100000) * 2]
+      const volume3 = Array(halfNumTouched).fill(seedVolumes3[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes3[1] / halfNumTouched))
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderIds, volume3, prices, tokenIdsForPrice, { from: solutionSubmitter })
+    })
+    it("fails on competing solution with 40 touched", async () => {
+      const halfNumTouched = 20
+      const owner = Array(halfNumTouched).fill(seedOwners[0]).concat(Array(halfNumTouched).fill(seedOwners[1]))
+      const orderIds = Array(halfNumTouched).fill(orderId1).concat(Array(halfNumTouched).fill(orderId2))
+
+      const volume = Array(halfNumTouched).fill(seedVolumes[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes[1] / halfNumTouched))
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderIds, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
+
+      const seedVolumes2 = [100000, feeSubtracted(100000) * 2]
+      const volume2 = Array(halfNumTouched).fill(seedVolumes2[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes2[1] / halfNumTouched))
+      await truffleAssert.fails(
+        stablecoinConverter.submitSolution(batchIndex, owner, orderIds, volume2, prices, tokenIdsForPrice, { from: solutionSubmitter }),
+        "out of gas"
+      )
     })
   })
 })
