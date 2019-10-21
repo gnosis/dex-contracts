@@ -179,6 +179,7 @@ contract StablecoinConverter is EpochTokenLocker {
         );
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         require(checkPriceOrdering(tokenIdsForPrice), "prices are not ordered by tokenId");
+        require(owners.length <= 25, "Max number of touched orders is 25");
         undoPreviousSolution(batchIndex);
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
