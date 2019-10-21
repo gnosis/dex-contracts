@@ -291,7 +291,6 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
       const volume = [4000, feeSubtracted(4000) * 2]
-
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
