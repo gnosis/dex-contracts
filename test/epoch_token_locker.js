@@ -204,15 +204,15 @@ contract("EpochTokenLocker", async (accounts) => {
       assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 100)
     })
   })
-  describe("addBalanceAndPostponeWithdraw", () => {
+  describe("addBalanceAndProcessDueWithdraw", () => {
     it("does not postpone a withdrawRequest for a future epoch", async () => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
       const ERC20 = await MockContract.new()
       const currentStateIndex = await epochTokenLocker.getCurrentBatchId.call()
       await epochTokenLocker.requestWithdraw(ERC20.address, 100, { from: user_1 })
-      await epochTokenLocker.addBalanceAndPostponeWithdrawTest(user_1, ERC20.address, 100)
+      await epochTokenLocker.addBalanceAndProcessDueWithdrawTest(user_1, ERC20.address, 100)
 
-      assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex, "State index updated incorrectly during call to addBalanceAndPostponeWithdrawTest")
+      assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex, "State index updated incorrectly during call to addBalanceAndProcessDueWithdrawTest")
     })
     it("does the withdraw for a current epoch, and does not postpone any request", async () => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
@@ -221,7 +221,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100, { from: user_1 })
       await waitForNSeconds(BATCH_TIME + 1)
-      await epochTokenLocker.addBalanceAndPostponeWithdrawTest(user_1, ERC20.address, 100)
+      await epochTokenLocker.addBalanceAndProcessDueWithdrawTest(user_1, ERC20.address, 100)
       const token = await ERC20Interface.new()
       const withdrawTransfer = token.contract.methods.transfer(accounts[0], 0).encodeABI()
       assert.equal(await ERC20.invocationCountForCalldata.call(withdrawTransfer), 1)

@@ -195,7 +195,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 "limit price not satisfied"
             );
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
-            addBalanceAndPostponeWithdraw(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
+            addBalanceAndProcessDueWithdraw(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
         }
         // doing all subtractions after all additions (in order to avoid negative values)
         for (uint i = 0; i < owners.length; i++) {
@@ -225,7 +225,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
         previousSolution.feeReward = feeReward;
-        addBalanceAndPostponeWithdraw(msg.sender, tokenIdToAddressMap(0), feeReward);
+        addBalanceAndProcessDueWithdraw(msg.sender, tokenIdToAddressMap(0), feeReward);
     }
 
     function checkTokenConservation(

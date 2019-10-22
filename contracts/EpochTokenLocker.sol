@@ -125,15 +125,15 @@ contract EpochTokenLocker {
         return balance;
     }
 
-    /**
-     * internal functions
-     */
-    function hasValidWithdrawRequest(address user, address token) internal view returns(bool) {
+    function hasValidWithdrawRequest(address user, address token) public view returns(bool) {
         return balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId() &&
             balanceStates[user][token].pendingWithdraws.stateIndex > 0;
     }
 
-    function addBalanceAndPostponeWithdraw(address user, address token, uint amount) internal {
+    /**
+     * internal functions
+     */
+    function addBalanceAndProcessDueWithdraw(address user, address token, uint amount) internal {
         if (hasValidWithdrawRequest(user, token)) {
             withdraw(token, user);
         }
