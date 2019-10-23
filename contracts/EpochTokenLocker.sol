@@ -141,7 +141,7 @@ contract EpochTokenLocker {
     /**
      * internal functions
      */
-    function addBalanceAndProcessDueWithdraw(address user, address token, uint amount) internal {
+    function addBalanceAndBlockWithdrawForThisBatch(address user, address token, uint amount) internal {
         if (hasValidWithdrawRequest(user, token)) {
             hasCreditedBalance[user][token][getCurrentBatchId()] = true;
         }

@@ -142,7 +142,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100, { from: user_1 })
       await waitForNSeconds(BATCH_TIME + 1)
-      await epochTokenLocker.addBalanceAndProcessDueWithdrawTest(user_1, ERC20.address, 100)
+      await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(user_1, ERC20.address, 100)
 
       const batchId = await epochTokenLocker.getCurrentBatchId.call()
       assert.equal(await epochTokenLocker.hasCreditedBalance.call(user_1, ERC20.address, batchId), true)
@@ -220,15 +220,15 @@ contract("EpochTokenLocker", async (accounts) => {
       assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 100)
     })
   })
-  describe("addBalanceAndProcessDueWithdraw", () => {
+  describe("addBalanceAndBlockWithdrawForThisBatch", () => {
     it("does not postpone a withdrawRequest for a future epoch", async () => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
       const ERC20 = await MockContract.new()
       const currentStateIndex = await epochTokenLocker.getCurrentBatchId.call()
       await epochTokenLocker.requestWithdraw(ERC20.address, 100, { from: user_1 })
-      await epochTokenLocker.addBalanceAndProcessDueWithdrawTest(user_1, ERC20.address, 100)
+      await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(user_1, ERC20.address, 100)
 
-      assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex, "State index updated incorrectly during call to addBalanceAndProcessDueWithdrawTest")
+      assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex, "State index updated incorrectly during call to addBalanceAndBlockWithdrawForThisBatchTest")
     })
     it("blocks withdraws for this epoch", async () => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
@@ -238,7 +238,7 @@ contract("EpochTokenLocker", async (accounts) => {
       const currentStateIndex = await epochTokenLocker.getCurrentBatchId.call()
       await epochTokenLocker.requestWithdraw(ERC20.address, 100, { from: user_1 })
       await waitForNSeconds(BATCH_TIME + 1)
-      await epochTokenLocker.addBalanceAndProcessDueWithdrawTest(user_1, ERC20.address, 100)
+      await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(user_1, ERC20.address, 100)
 
       const batchId = await epochTokenLocker.getCurrentBatchId.call()
       assert.equal(await epochTokenLocker.hasCreditedBalance.call(user_1, ERC20.address, batchId), true)
