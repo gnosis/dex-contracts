@@ -41,7 +41,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 remainingAmount; // remainingAmount can either be a sellAmount or buyAmount, depending on the flag isSellOrder
     }
 
-    // User-> Order
+    // User -> Order
     mapping(address => Order[]) public orders;
 
     // Iterable set of all users, required to collect auction information
@@ -155,7 +155,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] tokenIdsForPrice;
         address solutionSubmitter;
         uint256 feeReward;
-        int objectiveValue;
+        uint objectiveValue;
     }
 
     struct TradeData {
@@ -163,7 +163,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 volume;
         uint16 orderId;
     }
-
+    event DebugUtil(uint128 a, uint128 b);
     function submitSolution(
         uint32 batchIndex,
         address[] memory owners,          // tradeData is submitted as arrays
@@ -183,15 +183,15 @@ contract StablecoinConverter is EpochTokenLocker {
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
         int[] memory tokenConservation = new int[](prices.length);
-        int utility = 0;
-        int disregardedUtility = 0;
+        uint utility = 0;
         for (uint i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(checkOrderValidity(order, batchIndex), "Order is invalid");
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
-            // accumulate objective values before updateRemainingOrder
-            utility += evaluateUtility(executedBuyAmount, executedSellAmount, order);
-            disregardedUtility += evaluateDisregardedUtility(executedSellAmount, order);
+            // accumulate utility before updateRemainingOrder
+            emit DebugUtil(executedBuyAmount, executedSellAmount);
+            utility = utility.add(evaluateUtility(executedBuyAmount, executedSellAmount, order));
+            emit DebugUtil(evaluateUtility(executedBuyAmount, executedSellAmount, order), 0);
             updateTokenConservation(tokenConservation, order, tokenIdsForPrice, executedBuyAmount, executedSellAmount);
             require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             // Ensure executed price is not lower than the order price:
@@ -215,33 +215,49 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedSellAmount
             );
         }
-        int objectiveValue = utility - disregardedUtility;
-        checkAndOverrideObjectiveValue(objectiveValue);
+        // uint disregardedUtility = 0;
+        // for (uint i = 0; i < owners.length; i++) {
+        //     disregardedUtility = disregardedUtility.add(
+        //         evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
+        //     );
+        // }
+        // require(utility >= disregardedUtility, "Solution must be better than trivial");
+        // Could add numTouchedOrders to objective so all non-trivial solutions are better than nothing!
+        // checkAndOverrideObjectiveValue(utility - disregardedUtility);
+        checkAndOverrideObjectiveValue(utility);
         grantRewardToSolutionSubmitter(uint(tokenConservation[0]) / 2);
         checkTokenConservation(tokenConservation);
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
 
-    function getCurrentObjectiveValue() public view returns(int) {
+    function getCurrentObjectiveValue() public view returns(uint) {
         if (previousSolution.batchId == getCurrentBatchId() - 1) {
             return previousSolution.objectiveValue;
         } else {
-            return MIN_INT;
+            return 0;
         }
     }
 
-    function evaluateUtility(uint128 execBuy, uint128 execSell, Order memory order) internal view returns(int) {
+    function evaluateUtility(uint128 execBuy, uint128 execSell, Order memory order) internal view returns(uint128) {
         // Utility = ((execBuyAmt * order.sellAmt - execSellAmt * order.buyAmt) * price.buyToken) / order.sellAmt
         (uint128 buyAmount, uint128 sellAmount) = getBuyAndSellAmounts(order);
         return (execBuy - ((execSell * buyAmount) / sellAmount)) * currentPrices[order.buyToken];
     }
 
-    function evaluateDisregardedUtility(uint128 execSell, Order memory order) internal view returns(int) {
-        // |disregardedUtility| = maxUtility - actualUtility
-        // where maxUtility is the utility achieved when execSellAmount == order.sellAmount.
-        (uint128 buyAmount, uint128 sellAmount) = getBuyAndSellAmounts(order);
-        return (((sellAmount - execSell) * currentPrices[order.buyToken]) * buyAmount) / sellAmount;
-    }
+    // function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint) {
+    //     // |disregardedUtility| = maxUtility - actualUtility
+    //     // where maxUtility is the utility achieved when execSellAmount == order.sellAmount.
+    //     // (((sellAmount - execSell) * currentPrices[order.buyToken]) * buyAmount) / sellAmount;
+    //     // Balances and orders have all been updated so: sellAmount - execSell == order.remainingAmount.
+    //     // For security reasons, we take the minimum of this with the user's token balance.
+    //     (uint128 buyAmount, uint128 sellAmount) = getBuyAndSellAmounts(order);
+    //     uint correctRemaining = Math.min(
+    //         uint(order.remainingAmount),
+    //         getBalance(user, tokenIdToAddressMap(order.sellToken))
+    //     );
+    //     // TODO - use SafeCast
+    //     return ((uint128(correctRemaining) * currentPrices[order.buyToken]) * buyAmount) / sellAmount;
+    // }
 
     function getBuyAndSellAmounts(Order memory order) internal pure returns(uint128, uint128) {
         // Recall that, initially
@@ -368,7 +384,7 @@ contract StablecoinConverter is EpochTokenLocker {
         tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] += int(sellAmount);
     }
 
-    function checkAndOverrideObjectiveValue(int newObjectiveValue) private {
+    function checkAndOverrideObjectiveValue(uint newObjectiveValue) private {
         require(
             newObjectiveValue > getCurrentObjectiveValue(),
             "Solution does not have a higher objective value than a previous solution"
