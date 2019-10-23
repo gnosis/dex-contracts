@@ -689,39 +689,6 @@ contract("StablecoinConverter", async (accounts) => {
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
       )
     })
-    it("reverts, if findPriceIndex does not find the token, as it is not supplied", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      const erc20_2 = await MockContract.new()
-      const erc20_3 = await MockContract.new()
-
-      await feeToken.givenAnyReturnBool(true)
-      await erc20_2.givenAnyReturnBool(true)
-      await erc20_3.givenAnyReturnBool(true)
-      await stablecoinConverter.deposit(feeToken.address, 10000, { from: user_1 })
-      await stablecoinConverter.deposit(erc20_2.address, 10000, { from: user_2 })
-      await stablecoinConverter.deposit(erc20_3.address, 10000, { from: user_1 })
-
-      await stablecoinConverter.addToken(erc20_2.address)
-      await stablecoinConverter.addToken(erc20_3.address)
-
-      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 2, 1, true, batchIndex, 5000, 10000, { from: user_1 })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 2, true, batchIndex, 5000, 10000, { from: user_2 })
-
-      await closeAuction(stablecoinConverter)
-      const prices = [10000, 10000, 10000]
-      const owner = basicTrade.solution.owners
-      const orderId = [orderId1, orderId2]
-      const volume = [5000, feeSubtracted(5000)]
-      const tokenIdsForPrice = [0, 1]
-
-      await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-        "Price not provided for token"
-      )
-    })
     it("reverts, if tokenIds for prices are not sorted", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
