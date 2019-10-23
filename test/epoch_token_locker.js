@@ -97,7 +97,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
       await waitForNSeconds(BATCH_TIME)
-      await epochTokenLocker.withdraw(ERC20.address, user_1)
+      await epochTokenLocker.withdraw(ERC20.address)
 
       assert.equal(await epochTokenLocker.getPendingWithdrawAmount(user_1, ERC20.address), 0)
       assert.equal(await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address), 0)
@@ -116,7 +116,7 @@ contract("EpochTokenLocker", async (accounts) => {
       assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 100)
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
-      await truffleAssert.reverts(epochTokenLocker.withdraw(ERC20.address, user_1), "withdraw was not registered previously")
+      await truffleAssert.reverts(epochTokenLocker.withdraw(ERC20.address), "withdraw was not registered previously")
     })
     it("processes a withdraw request and withdraws only available amounts", async () => {
       const epochTokenLocker = await EpochTokenLocker.new()
@@ -129,7 +129,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
       await waitForNSeconds(BATCH_TIME)
-      await epochTokenLocker.withdraw(ERC20.address, user_1)
+      await epochTokenLocker.withdraw(ERC20.address)
 
       const token = await ERC20Interface.new()
       const depositTransfer = token.contract.methods.transfer(accounts[0], 50).encodeABI()
@@ -147,7 +147,7 @@ contract("EpochTokenLocker", async (accounts) => {
       const batchId = await epochTokenLocker.getCurrentBatchId.call()
       assert.equal(await epochTokenLocker.hasCreditedBalance.call(user_1, ERC20.address, batchId), true)
       await truffleAssert.reverts(
-        epochTokenLocker.withdraw(ERC20.address, user_1),
+        epochTokenLocker.withdraw(ERC20.address),
         "withdraw is not possible, due to new credit in this batchId"
       )
     })
