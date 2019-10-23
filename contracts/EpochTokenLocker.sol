@@ -35,6 +35,9 @@ contract EpochTokenLocker {
     // User => Token => BalanceState
     mapping(address => mapping(address => BalanceState)) private balanceStates;
 
+    // user => token => batchId => wasCredidet
+    mapping(address => mapping (address => mapping(uint => bool ))) public hasCreditedBalance;
+
     struct BalanceState {
         uint256 balance;
         PendingFlux pendingDeposits; // deposits will be credited in any next epoch, i.e. currentStateIndex > stateIndex
@@ -73,6 +76,11 @@ contract EpochTokenLocker {
         require(
             balanceStates[owner][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
             "withdraw was not registered previously"
+        );
+
+        require(
+            ! hasCreditedBalance[owner][token][getCurrentBatchId()],
+            "withdraw is not possible, due to new credit in this batchId"
         );
 
         uint amount = Math.min(
@@ -135,7 +143,7 @@ contract EpochTokenLocker {
      */
     function addBalanceAndProcessDueWithdraw(address user, address token, uint amount) internal {
         if (hasValidWithdrawRequest(user, token)) {
-            withdraw(token, user);
+            hasCreditedBalance[user][token][getCurrentBatchId()] = true;
         }
         addBalance(user, token, amount);
     }
