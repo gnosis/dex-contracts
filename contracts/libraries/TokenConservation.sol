@@ -15,6 +15,14 @@ library TokenConservation {
         self[findPriceIndex(sellToken, tokenIdsForPrice)] += int(sellAmount);
     }
 
+    function checkTokenConservation(
+        int[] memory self
+    ) internal pure {
+        for (uint i = 1; i < self.length; i++) {
+            require(self[i] == 0, "Token conservation does not hold");
+        }
+    }
+
     function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
         // binary search for the other tokens
         uint leftValue = 0;
@@ -30,13 +38,5 @@ library TokenConservation {
             }
         }
         revert("Price not provided for token");
-    }
-
-    function checkTokenConservation(
-        int[] memory self
-    ) internal pure {
-        for (uint i = 1; i < self.length; i++) {
-            require(self[i] == 0, "Token conservation does not hold");
-        }
     }
 }

@@ -6,6 +6,7 @@ import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOn
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
 
+
 contract StablecoinConverter is EpochTokenLocker {
     using SafeMath for uint128;
     using BytesLib for bytes32;
