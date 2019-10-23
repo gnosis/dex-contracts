@@ -1002,10 +1002,7 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
-      const token = await ERC20.new()
-      const withdrawTransfer = token.contract.methods.transfer(basicTrade.deposits[0].user, 0).encodeABI()
-      assert.equal(await erc20_2.invocationCountForCalldata.call(withdrawTransfer), 1)
-      assert.equal((await stablecoinConverter.getPendingWithdrawBatchNumber(solutionSubmitter, feeToken.address)).toNumber(), 0)
+      assert.equal(await stablecoinConverter.hasCreditedBalance.call(basicTrade.orders[0].user, erc20_2.address, batchIndex + 1), true)
     })
     it("checks that credited feeToken reward can not be withdrawn in same batch as the solution submission", async () => {
       const feeToken = await MockContract.new()
@@ -1034,8 +1031,7 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
-      assert.equal((await stablecoinConverter.getPendingWithdrawBatchNumber(solutionSubmitter, feeToken.address)).toNumber(), 0)
-
+      assert.equal(await stablecoinConverter.hasCreditedBalance.call(solutionSubmitter, feeToken.address, batchIndex + 1), true)
     })
     it("checks that the objective value is stored correctly and updated after a new solution submission", async () => {
       const feeToken = await MockContract.new()
