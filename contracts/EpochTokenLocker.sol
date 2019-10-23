@@ -79,7 +79,7 @@ contract EpochTokenLocker {
         );
 
         require(
-            ! hasCreditedBalance[owner][token][getCurrentBatchId()],
+            !hasCreditedBalance[owner][token][getCurrentBatchId()],
             "withdraw is not possible, due to new credit in this batchId"
         );
 
