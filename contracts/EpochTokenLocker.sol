@@ -116,7 +116,7 @@ contract EpochTokenLocker {
             balance = balance.add(balanceStates[user][token].pendingDeposits.amount);
         }
         if (balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId()) {
-            balance -= Math.min(balanceStates[user][token].pendingWithdraws.amount, balance);
+            balance = balance.sub(Math.min(balanceStates[user][token].pendingWithdraws.amount, balance));
         }
         return balance;
     }

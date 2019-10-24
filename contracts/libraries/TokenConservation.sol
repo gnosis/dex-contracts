@@ -1,7 +1,9 @@
 pragma solidity ^0.5.0;
+import "openzeppelin-solidity/contracts/drafts/SignedSafeMath.sol";
 
 
 library TokenConservation {
+    using SignedSafeMath for int256;
 
     function updateTokenConservation(
         int[] memory self,
@@ -11,8 +13,10 @@ library TokenConservation {
         uint128 buyAmount,
         uint128 sellAmount
     ) internal pure {
-        self[findPriceIndex(buyToken, tokenIdsForPrice)] -= int(buyAmount);
-        self[findPriceIndex(sellToken, tokenIdsForPrice)] += int(sellAmount);
+        uint buyTokenIndex = findPriceIndex(buyToken, tokenIdsForPrice);
+        uint sellTokenIndex = findPriceIndex(sellToken, tokenIdsForPrice);
+        self[buyTokenIndex] = self[buyTokenIndex].sub(int(buyAmount));
+        self[sellTokenIndex] = self[sellTokenIndex].add(int(sellAmount));
     }
 
     function checkTokenConservation(
