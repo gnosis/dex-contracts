@@ -1,7 +1,8 @@
-const { BN, constants, shouldFail } = require("openzeppelin-test-helpers")
+const { BN, constants } = require("openzeppelin-test-helpers")
 const { MAX_INT256, MIN_INT256 } = constants
 
 const SignedSafeMathMock = artifacts.require("SignedSafeMathMock")
+const truffleAssert = require("truffle-assertions")
 
 contract("SignedSafeMath", function () {
   beforeEach(async function () {
@@ -9,14 +10,13 @@ contract("SignedSafeMath", function () {
   })
 
   async function testCommutative(fn, lhs, rhs, expected) {
-    (await fn(lhs, rhs)).should.be.bignumber.equal(expected)
-    // eslint-disable-next-line no-unexpected-multiline
-    (await fn(rhs, lhs)).should.be.bignumber.equal(expected)
+    assert.equal((await fn(lhs, rhs)).toString(), expected.toString())
+    assert.equal((await fn(rhs, lhs)).toString(), expected.toString())
   }
 
   async function testFailsCommutative(fn, lhs, rhs, reason) {
-    await shouldFail.reverting.withMessage(fn(lhs, rhs), reason)
-    await shouldFail.reverting.withMessage(fn(rhs, lhs), reason)
+    await truffleAssert.reverts(fn(lhs, rhs), reason)
+    await truffleAssert.reverts(fn(rhs, lhs), reason)
   }
 
   describe("add", function () {
@@ -55,7 +55,7 @@ contract("SignedSafeMath", function () {
       const b = new BN("1234")
 
       const result = await this.safeMath.sub(a, b)
-      result.should.be.bignumber.equal(a.sub(b))
+      assert.equal(result.toString(), a.sub(b).toString())
     })
 
     it("subtracts correctly if it does not overflow and the result is negative", async function () {
@@ -63,21 +63,21 @@ contract("SignedSafeMath", function () {
       const b = new BN("5678")
 
       const result = await this.safeMath.sub(a, b)
-      result.should.be.bignumber.equal(a.sub(b))
+      assert.equal(result.toString(), a.sub(b).toString())
     })
 
     it("reverts on positive subtraction overflow", async function () {
       const a = MAX_INT256
       const b = new BN("-1")
 
-      await shouldFail.reverting.withMessage(this.safeMath.sub(a, b), "SignedSafeMath: subtraction overflow")
+      await truffleAssert.reverts(this.safeMath.sub(a, b), "SignedSafeMath: subtraction overflow")
     })
 
     it("reverts on negative subtraction overflow", async function () {
       const a = MIN_INT256
       const b = new BN("1")
 
-      await shouldFail.reverting.withMessage(this.safeMath.sub(a, b), "SignedSafeMath: subtraction overflow")
+      await truffleAssert.reverts(this.safeMath.sub(a, b), "SignedSafeMath: subtraction overflow")
     })
   })
 })
