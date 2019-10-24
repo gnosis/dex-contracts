@@ -36,7 +36,7 @@ contract EpochTokenLocker {
     mapping(address => mapping(address => BalanceState)) private balanceStates;
 
     // user => token => batchId => wasCredidet
-    mapping(address => mapping (address => mapping(uint => bool ))) public hasCreditedBalance;
+    mapping(address => mapping (address => mapping(uint => bool))) public hasCreditedBalance;
 
     struct BalanceState {
         uint256 balance;
