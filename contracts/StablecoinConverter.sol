@@ -42,7 +42,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 remainingAmount; // remainingAmount can either be a sellAmount or buyAmount, depending on the flag isSellOrder
     }
 
-    // User-> Order
+    // User -> Order
     mapping(address => Order[]) public orders;
 
     // Iterable set of all users, required to collect auction information
@@ -184,10 +184,13 @@ contract StablecoinConverter is EpochTokenLocker {
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
         int[] memory tokenConservation = new int[](prices.length);
+        uint utility = 0;
         for (uint i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(checkOrderValidity(order, batchIndex), "Order is invalid");
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
+            // accumulate utility before updateRemainingOrder
+            utility = utility.add(evaluateUtility(executedBuyAmount, order));
             tokenConservation.updateTokenConservation(
                 order.buyToken,
                 order.sellToken,
@@ -217,7 +220,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedSellAmount
             );
         }
-        checkAndOverrideObjectiveValue(uint(tokenConservation[0]));
+        checkAndOverrideObjectiveValue(utility);
         grantRewardToSolutionSubmitter(uint(tokenConservation[0]) / 2);
         tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
@@ -229,6 +232,12 @@ contract StablecoinConverter is EpochTokenLocker {
         } else {
             return 0;
         }
+    }
+
+    function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
+        // Utility = ((execBuyAmt * order.sellAmt - preFeeSell * order.buyAmt) * price.buyToken) / order.sellAmt
+        uint128 preFeeSell = uint128(execBuy.mul(currentPrices[order.buyToken]).div(currentPrices[order.sellToken]));
+        return (execBuy - ((preFeeSell * order.priceNumerator) / order.priceDenominator)) * currentPrices[order.buyToken];
     }
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
