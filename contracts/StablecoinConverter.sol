@@ -218,7 +218,6 @@ contract StablecoinConverter is EpochTokenLocker {
             disregardedUtility = disregardedUtility.add(
                 evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
             );
-            emit DebugUtil(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]), 0);
         }
         require(utility >= disregardedUtility, "Solution must be better than trivial");
         checkAndOverrideObjectiveValue(utility - disregardedUtility);
