@@ -4,12 +4,14 @@ import "./EpochTokenLocker.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOnlySet.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "./libraries/TokenConservation.sol";
 
 
 contract StablecoinConverter is EpochTokenLocker {
     using SafeMath for uint128;
     using BytesLib for bytes32;
     using BytesLib for bytes;
+    using TokenConservation for int[];
 
     uint constant private MAX_UINT128 = 2**128 - 1;
     int constant private MIN_INT = int256(uint256(1) << 255);
@@ -190,7 +192,13 @@ contract StablecoinConverter is EpochTokenLocker {
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
             // accumulate utility before updateRemainingOrder
             utility = utility.add(evaluateUtility(executedBuyAmount, order));
-            updateTokenConservation(tokenConservation, order, tokenIdsForPrice, executedBuyAmount, executedSellAmount);
+            tokenConservation.updateTokenConservation(
+                order.buyToken,
+                order.sellToken,
+                tokenIdsForPrice,
+                executedBuyAmount,
+                executedSellAmount
+            );
             require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             // Ensure executed price is not lower than the order price:
             //       executedSellAmount / executedBuyAmount <= order.priceDenominator / order.priceNumerator
@@ -222,7 +230,7 @@ contract StablecoinConverter is EpochTokenLocker {
         require(utility >= disregardedUtility, "Solution must be better than trivial");
         checkAndOverrideObjectiveValue(utility - disregardedUtility);
         grantRewardToSolutionSubmitter(uint(tokenConservation[0]) / 2);
-        checkTokenConservation(tokenConservation);
+        tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
 
@@ -260,14 +268,6 @@ contract StablecoinConverter is EpochTokenLocker {
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
         previousSolution.feeReward = feeReward;
         addBalanceAndPostponeWithdraw(msg.sender, tokenIdToAddressMap(0), feeReward);
-    }
-
-    function checkTokenConservation(
-        int[] memory tokenConservation
-    ) internal pure {
-        for (uint i = 1; i < tokenConservation.length; i++) {
-            require(tokenConservation[i] == 0, "Token conservation does not hold");
-        }
     }
 
     function updateCurrentPrices(
@@ -362,18 +362,7 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
-    function updateTokenConservation(
-        int[] memory tokenConservation,
-        Order memory order,
-        uint16[] memory tokenIdsForPrice,
-        uint128 buyAmount,
-        uint128 sellAmount
-    ) private pure {
-        tokenConservation[findPriceIndex(order.buyToken, tokenIdsForPrice)] -= int(buyAmount);
-        tokenConservation[findPriceIndex(order.sellToken, tokenIdsForPrice)] += int(sellAmount);
-    }
-
-    function checkAndOverrideObjectiveValue(uint newObjectiveValue) private {
+    function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
         require(
             newObjectiveValue > getCurrentObjectiveValue(),
             "Solution does not have a higher objective value than a previous solution"
@@ -395,23 +384,6 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function checkOrderValidity(Order memory order, uint batchIndex) private pure returns (bool) {
         return order.validFrom <= batchIndex && order.validUntil >= batchIndex;
-    }
-
-    function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
-        // binary search for the other tokens
-        uint leftValue = 0;
-        uint rightValue = tokenIdForPrice.length - 1;
-        while (rightValue >= leftValue) {
-            uint middleValue = leftValue + (rightValue-leftValue) / 2;
-            if (tokenIdForPrice[middleValue] == index) {
-                return middleValue;
-            } else if (tokenIdForPrice[middleValue] < index) {
-                leftValue = middleValue + 1;
-            } else {
-                rightValue = middleValue - 1;
-            }
-        }
-        revert("Price not provided for token");
     }
 
     function checkPriceOrdering(uint16[] memory tokenIdsForPrice) private pure returns (bool) {
