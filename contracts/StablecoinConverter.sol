@@ -163,7 +163,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 volume;
         uint16 orderId;
     }
-    event DebugUtil(uint128 a, uint128 b);
+
     function submitSolution(
         uint32 batchIndex,
         address[] memory owners,          // tradeData is submitted as arrays
@@ -189,9 +189,7 @@ contract StablecoinConverter is EpochTokenLocker {
             require(checkOrderValidity(order, batchIndex), "Order is invalid");
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
             // accumulate utility before updateRemainingOrder
-            emit DebugUtil(executedBuyAmount, executedSellAmount);
-            utility = utility.add(evaluateUtility(executedBuyAmount, executedSellAmount, order));
-            emit DebugUtil(evaluateUtility(executedBuyAmount, executedSellAmount, order), 0);
+            utility = utility.add(evaluateUtility(executedBuyAmount, order));
             updateTokenConservation(tokenConservation, order, tokenIdsForPrice, executedBuyAmount, executedSellAmount);
             require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             // Ensure executed price is not lower than the order price:
@@ -215,16 +213,15 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedSellAmount
             );
         }
-        // uint disregardedUtility = 0;
-        // for (uint i = 0; i < owners.length; i++) {
-        //     disregardedUtility = disregardedUtility.add(
-        //         evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
-        //     );
-        // }
-        // require(utility >= disregardedUtility, "Solution must be better than trivial");
-        // Could add numTouchedOrders to objective so all non-trivial solutions are better than nothing!
-        // checkAndOverrideObjectiveValue(utility - disregardedUtility);
-        checkAndOverrideObjectiveValue(utility);
+        uint disregardedUtility = 0;
+        for (uint i = 0; i < owners.length; i++) {
+            disregardedUtility = disregardedUtility.add(
+                evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
+            );
+            emit DebugUtil(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]), 0);
+        }
+        require(utility >= disregardedUtility, "Solution must be better than trivial");
+        checkAndOverrideObjectiveValue(utility - disregardedUtility);
         grantRewardToSolutionSubmitter(uint(tokenConservation[0]) / 2);
         checkTokenConservation(tokenConservation);
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
@@ -238,34 +235,27 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
-    function evaluateUtility(uint128 execBuy, uint128 execSell, Order memory order) internal view returns(uint128) {
-        // Utility = ((execBuyAmt * order.sellAmt - execSellAmt * order.buyAmt) * price.buyToken) / order.sellAmt
-        (uint128 buyAmount, uint128 sellAmount) = getBuyAndSellAmounts(order);
-        return (execBuy - ((execSell * buyAmount) / sellAmount)) * currentPrices[order.buyToken];
+    function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
+        // Utility = ((execBuyAmt * order.sellAmt - preFeeSell * order.buyAmt) * price.buyToken) / order.sellAmt
+        uint128 preFeeSell = uint128(execBuy.mul(currentPrices[order.buyToken]).div(currentPrices[order.sellToken]));
+        return (execBuy - ((preFeeSell * order.priceNumerator) / order.priceDenominator)) * currentPrices[order.buyToken];
     }
 
-    // function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint) {
-    //     // |disregardedUtility| = maxUtility - actualUtility
-    //     // where maxUtility is the utility achieved when execSellAmount == order.sellAmount.
-    //     // (((sellAmount - execSell) * currentPrices[order.buyToken]) * buyAmount) / sellAmount;
-    //     // Balances and orders have all been updated so: sellAmount - execSell == order.remainingAmount.
-    //     // For security reasons, we take the minimum of this with the user's token balance.
-    //     (uint128 buyAmount, uint128 sellAmount) = getBuyAndSellAmounts(order);
-    //     uint correctRemaining = Math.min(
-    //         uint(order.remainingAmount),
-    //         getBalance(user, tokenIdToAddressMap(order.sellToken))
-    //     );
-    //     // TODO - use SafeCast
-    //     return ((uint128(correctRemaining) * currentPrices[order.buyToken]) * buyAmount) / sellAmount;
-    // }
-
-    function getBuyAndSellAmounts(Order memory order) internal pure returns(uint128, uint128) {
-        // Recall that, initially
-        // priceNumerator: buyAmount
-        // priceDenominator: sellAmount
-        // remainingAmount: sellAmount
-        // and remainingAmount is updated everytime this order is touched.
-        return ((order.remainingAmount * order.priceNumerator) / order.priceDenominator, order.remainingAmount);
+    function evaluateDisregardedUtility(Order memory order, address user) internal returns(uint128) {
+        // |disregardedUtility| = maxUtility - actualUtility
+        // where maxUtility is the utility achieved when execSellAmount == order.sellAmount.
+        // (((sellAmount - execSell) * currentPrices[order.buyToken]) * buyAmount) / sellAmount;
+        // Balances and orders have all been updated so: sellAmount - execSell == order.remainingAmount.
+        // For security reasons, we take the minimum of this with the user's token balance.
+        uint128 leftoverSellAmount = uint128(
+            Math.min(uint(order.remainingAmount), getBalance(user, tokenIdToAddressMap(order.sellToken)))
+        );
+        // TODO - use SafeCast
+        uint128 limitTerm = uint128(
+            currentPrices[order.sellToken].mul(order.priceDenominator)
+            .sub(currentPrices[order.buyToken].mul(order.priceNumerator))
+        );
+        return uint128(leftoverSellAmount.mul(limitTerm)) / order.priceDenominator;
     }
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
