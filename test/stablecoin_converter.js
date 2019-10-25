@@ -161,7 +161,7 @@ contract("StablecoinConverter", async (accounts) => {
     })
   })
   describe("submitSolution()", () => {
-    it("rejects trivial solution (the only solution with zero utility", async () => {
+    it("rejects trivial solution (the only solution with zero utility)", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const erc20_2 = await MockContract.new()
