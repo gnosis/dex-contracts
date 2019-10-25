@@ -973,7 +973,7 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
       await truffleAssert.reverts(
-        stablecoinConverter.withdraw(erc20_2.address, { from: basicTrade.deposits[0].user }),
+        stablecoinConverter.withdraw(erc20_2.address, basicTrade.deposits[0].user, { from: basicTrade.deposits[0].user }),
         "withdraw was not registered previously"
       )
     })
@@ -1006,7 +1006,7 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
       await truffleAssert.reverts(
-        stablecoinConverter.withdraw(feeToken.address, { from: solutionSubmitter }),
+        stablecoinConverter.withdraw(feeToken.address, solutionSubmitter, { from: solutionSubmitter }),
         "withdraw was not registered previously"
       )
     })
