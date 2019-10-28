@@ -247,7 +247,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await closeAuction(stablecoinConverter)
 
-      const prices = [10, 10]
+      const prices = [1, 1]
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
       const volume = [10000, feeSubtracted(10000)]
