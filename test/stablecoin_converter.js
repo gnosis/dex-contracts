@@ -7,7 +7,8 @@ const ERC20 = artifacts.require("ERC20")
 const truffleAssert = require("truffle-assertions")
 const {
   waitForNSeconds,
-  sendTxAndGetReturnValue
+  sendTxAndGetReturnValue,
+  decodeAuctionElements
 } = require("./utilities.js")
 
 const feeDenominator = 1000 // fee is (1 / feeDenominator)
@@ -160,7 +161,7 @@ contract("StablecoinConverter", async (accounts) => {
     })
   })
   describe("submitSolution()", () => {
-    it("places two orders and matches them in a solution with Utility == 0", async () => {
+    it("rejects trivial solution (the only solution with zero utility)", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const erc20_2 = await MockContract.new()
@@ -182,18 +183,16 @@ contract("StablecoinConverter", async (accounts) => {
       const prices = basicTrade.solution.prices
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
-      const volume = basicTrade.solution.volume
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
-      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
-      assert.equal((await stablecoinConverter.getBalance.call(user_1, feeToken.address)).toNumber(), basicTrade.deposits[0].amount - getSellVolume(volume[0], prices[0], prices[1]), "Sold tokens were not adjusted correctly")
-      assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_2.address)).toNumber(), volume[0], "Bought tokens were not adjusted correctly")
-      assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), basicTrade.deposits[1].amount - getSellVolume(volume[1], prices[1], prices[0]), "Sold tokens were not adjusted correctly")
-      assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(), volume[1], "Bought tokens were not adjusted correctly")
-      // None of these assertions implies utility == 0?
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(batchIndex, owner, orderId, [0, 0], prices, tokenIdsForPrice, { from: solutionSubmitter }),
+        "Solution must be better than trivial"
+      )
+      const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
+      assert.equal(0, currentObjectiveValue)
     })
     it("places two orders and matches them in a solution with Utility > 0", async () => {
-
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const erc20_2 = await MockContract.new()
@@ -212,7 +211,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await closeAuction(stablecoinConverter)
 
-      const prices = [10, 10]
+      const prices = [1, 1]
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
       const volume = [10000, feeSubtracted(10000)]
@@ -224,7 +223,8 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_2.address)).toNumber(), volume[0], "Bought tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), basicTrade.deposits[1].amount - getSellVolume(volume[1], prices[1], prices[0]), "Sold tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(), volume[1], "Bought tokens were not adjusted correctly")
-      // None of these assertions implies utility > 0?
+      const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
+      assert(currentObjectiveValue > 0)
     })
 
     it("places two orders, matches them partially and then checks correct order adjustments", async () => {
@@ -290,7 +290,7 @@ contract("StablecoinConverter", async (accounts) => {
       const prices = basicTrade.solution.prices
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
-      const volume = [4000, feeSubtracted(4000) * 2]
+      const volume = [7000, feeSubtracted(7000) * 2]
 
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
@@ -331,11 +331,12 @@ contract("StablecoinConverter", async (accounts) => {
       const prices = basicTrade.solution.prices
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
-      const volume = [5000, feeSubtracted(5000) * 2]
+      const volume = [7000, feeSubtracted(7000) * 2]
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
+
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
-      const volume2 = [6000, feeSubtracted(6000) * 2]
+      const volume2 = [8000, feeSubtracted(8000) * 2]
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume2, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
       const volume3 = basicTrade.solution.volume
@@ -389,7 +390,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), 0, "Bought and sold tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_3, erc20_2.address)).toNumber(), feeAdded(10000) - getSellVolume(volume[3], prices[1], prices[0]), "Sold tokens were not adjusted correctly")
 
-      //Now reverting should not throw due to temporarily negative balances, only later due to objective value criteria
+      // Now reverting should not throw due to temporarily negative balances, only later due to objective value criteria
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter }),
         "Solution does not have a higher objective value than a previous solution"
@@ -417,7 +418,7 @@ contract("StablecoinConverter", async (accounts) => {
       const prices = basicTrade.solution.prices
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
-      const volume = [5000, feeSubtracted(5000) * 2]
+      const volume = [7000, feeSubtracted(7000) * 2]
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
@@ -429,12 +430,29 @@ contract("StablecoinConverter", async (accounts) => {
 
       await waitForNSeconds(BATCH_TIME)
 
-      await stablecoinConverter.submitSolution(batchIndex + 1, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
+      const volume2 = [2000, feeSubtracted(2000) * 2]
+      await stablecoinConverter.submitSolution(batchIndex + 1, owner, orderId, volume2, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
-      assert.equal((await stablecoinConverter.getBalance.call(user_1, feeToken.address)).toNumber(), basicTrade.deposits[0].amount - 2 * getSellVolume(volume[0], prices[0], prices[1]), "Sold tokens were not adjusted correctly")
-      assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_2.address)).toNumber(), 2 * volume[0], "Bought tokens were not adjusted correctly")
-      assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), basicTrade.deposits[1].amount - 2 * getSellVolume(volume[1], prices[1], prices[0]), "Sold tokens were not adjusted correctly")
-      assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(), 2 * volume[1], "Bought tokens were not adjusted correctly")
+      assert.equal(
+        basicTrade.deposits[0].amount - getSellVolume(volume[0] + volume2[0], prices[0], prices[1]),
+        (await stablecoinConverter.getBalance.call(user_1, feeToken.address)).toNumber(),
+        "Sold tokens were not adjusted correctly"
+      )
+      assert.equal(
+        volume[0] + volume2[0],
+        (await stablecoinConverter.getBalance.call(user_1, erc20_2.address)).toNumber(),
+        "Bought tokens were not adjusted correctly"
+      )
+      assert.equal(
+        basicTrade.deposits[1].amount - getSellVolume(volume[1] + volume2[1], prices[1], prices[0]),
+        (await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(),
+        "Sold tokens were not adjusted correctly"
+      )
+      assert.equal(
+        volume[1] + volume2[1],
+        (await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(),
+        "Bought tokens were not adjusted correctly"
+      )
     })
     it("settles a ring trade between 3 tokens", async () => {
       const feeToken = await MockContract.new()
@@ -685,39 +703,6 @@ contract("StablecoinConverter", async (accounts) => {
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
       )
     })
-    it("reverts, if findPriceIndex does not find the token, as it is not supplied", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      const erc20_2 = await MockContract.new()
-      const erc20_3 = await MockContract.new()
-
-      await feeToken.givenAnyReturnBool(true)
-      await erc20_2.givenAnyReturnBool(true)
-      await erc20_3.givenAnyReturnBool(true)
-      await stablecoinConverter.deposit(feeToken.address, 10000, { from: user_1 })
-      await stablecoinConverter.deposit(erc20_2.address, 10000, { from: user_2 })
-      await stablecoinConverter.deposit(erc20_3.address, 10000, { from: user_1 })
-
-      await stablecoinConverter.addToken(erc20_2.address)
-      await stablecoinConverter.addToken(erc20_3.address)
-
-      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 2, 1, true, batchIndex, 5000, 10000, { from: user_1 })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 2, true, batchIndex, 5000, 10000, { from: user_2 })
-
-      await closeAuction(stablecoinConverter)
-      const prices = [10000, 10000, 10000]
-      const owner = basicTrade.solution.owners
-      const orderId = [orderId1, orderId2]
-      const volume = [5000, feeSubtracted(5000)]
-      const tokenIdsForPrice = [0, 1]
-
-      await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-        "Price not provided for token"
-      )
-    })
     it("reverts, if tokenIds for prices are not sorted", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -846,40 +831,40 @@ contract("StablecoinConverter", async (accounts) => {
       await erc20_3.givenAnyReturnBool(true)
 
 
-      await stablecoinConverter.deposit(feeToken.address, 60000, { from: user_1 })
-      await stablecoinConverter.deposit(erc20_2.address, 60000, { from: user_2 })
-      await stablecoinConverter.deposit(erc20_3.address, 10000, { from: user_3 })
+      await stablecoinConverter.deposit(feeToken.address, feeAdded(110000), { from: user_1 })
+      await stablecoinConverter.deposit(erc20_2.address, feeAdded(100000), { from: user_2 })
+      await stablecoinConverter.deposit(erc20_3.address, feeAdded(10000), { from: user_3 })
 
       await stablecoinConverter.addToken(erc20_2.address)
       await stablecoinConverter.addToken(erc20_3.address)
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 10000, 60000, { from: user_1 })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 2, 1, true, batchIndex + 1, 10000, 60000, { from: user_2 })
-      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 2, true, batchIndex + 1, 10000, 60000, { from: user_3 })
-      const orderId4 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex + 1, 10000, 60000, { from: user_2 })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 10000, feeAdded(10000), { from: user_1 })
+      const orderId5 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 100000, feeAdded(100000), { from: user_1 })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 2, 1, true, batchIndex + 1, 10000, feeAdded(10000), { from: user_2 })
+      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 2, true, batchIndex + 1, 10000, feeAdded(10000), { from: user_3 })
+      const orderId4 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex + 1, 100000, feeAdded(100000), { from: user_2 })
 
 
       await closeAuction(stablecoinConverter)
 
-      const prices = [10000000, 10000000, 10000000]
+      const prices = [1, 1, 1]
       const owner = [user_1, user_2, user_3]
       const orderId = [orderId1, orderId2, orderId3]
-      const volume = [10000, 9990, 9981]
+      const volume = [10000, 10000, 10000]
       const tokenIdsForPrice = [0, 1, 2]
-
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
-      assert.equal((await stablecoinConverter.currentPrices.call(2)).toNumber(), 10000000, "CurrentPrice were not adjusted correctly")
 
-      const prices2 = [10, 10]
+      assert.equal(1, (await stablecoinConverter.currentPrices.call(2)).toNumber(), "CurrentPrice were not adjusted correctly")
+      const prices2 = [1, 1]
       const owner2 = [user_1, user_2]
-      const orderIds2 = [orderId1, orderId4]
-      const volume2 = [50000, feeSubtracted(50000)]
+      const orderIds2 = [orderId5, orderId4]
+      const volume2 = [100000, 100000]
       const tokenIdsForPrice2 = [0, 1]
 
       await stablecoinConverter.submitSolution(batchIndex, owner2, orderIds2, volume2, prices2, tokenIdsForPrice2)
-      assert.equal((await stablecoinConverter.currentPrices.call(2)).toNumber(), 0, "CurrentPrice were not adjusted correctly")
+      assert.equal(0, (await stablecoinConverter.currentPrices.call(2)).toNumber(), "CurrentPrice were not adjusted correctly")
     })
     it("reverts, if price of buyToken == 0", async () => {
       const feeToken = await MockContract.new()
@@ -961,13 +946,13 @@ contract("StablecoinConverter", async (accounts) => {
       const prices = basicTrade.solution.prices
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
-      const volume = [5000, feeSubtracted(5000) * 2]
+      const volume = [7000, feeSubtracted(7000) * 2]
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
       assert.equal((await stablecoinConverter.getBalance.call(solutionSubmitter, feeToken.address)).toNumber(), (getSellVolume(volume[0], prices[0], prices[1]) - volume[1]) / 2, "fee was not granted correctly")
 
-      const volume2 = [6000, feeSubtracted(6000) * 2]
+      const volume2 = [8000, feeSubtracted(8000) * 2]
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume2, prices, tokenIdsForPrice)
       assert.equal((await stablecoinConverter.getBalance.call(solutionSubmitter, feeToken.address)).toNumber(), 0, "fee was not reverted")
@@ -1033,7 +1018,6 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
-
       await truffleAssert.reverts(
         stablecoinConverter.withdraw(feeToken.address, { from: solutionSubmitter }),
         "withdraw was not registered previously"
@@ -1060,38 +1044,50 @@ contract("StablecoinConverter", async (accounts) => {
       const prices = basicTrade.solution.prices
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
-      const volume = [4000, feeSubtracted(4000) * 2]
+      const buyVolume = [7000, feeSubtracted(7000) * 2]
+      const sellVolume = [
+        getExecutedSellAmount(buyVolume[0], prices[1], prices[0]),
+        getExecutedSellAmount(buyVolume[1], prices[0], prices[1]),
+      ]
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
-
-      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
       const tradeUtilities = [
-        evaluateTradeUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, 4000, 8000, prices[1]),
-        evaluateTradeUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, 7992, 4000, prices[0])
+        evaluateTradeUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, buyVolume[0], sellVolume[0], prices[1], prices[0]),
+        evaluateTradeUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, buyVolume[1], sellVolume[1], prices[0], prices[1])
       ]
       const totalUtility = tradeUtilities.reduce((a, b) => a + b, 0)
       const disregardedUtilites = [
-        disregardedUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, 4000, 8000, prices[1]),
-        disregardedUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, 7992, 4000, prices[0])
+        disregardedUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, buyVolume[0], sellVolume[0], prices[1], prices[0]),
+        disregardedUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, buyVolume[1], sellVolume[1], prices[0], prices[1])
       ]
       const totalDisregardedUtility = disregardedUtilites.reduce((a, b) => a + b, 0)
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, buyVolume, prices, tokenIdsForPrice, { from: solutionSubmitter })
       const actualObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
+
       assert.equal(actualObjectiveValue, totalUtility - totalDisregardedUtility, "Objective value is not stored correct")
 
-      const volume2 = basicTrade.solution.volume
-      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume2, prices, tokenIdsForPrice, { from: solutionSubmitter })
-      const actualObjectiveValue2 = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
-
+      const buyVolume2 = basicTrade.solution.volume
+      const sellVolume2 = [
+        getExecutedSellAmount(buyVolume2[0], prices[1], prices[0]),
+        getExecutedSellAmount(buyVolume2[1], prices[0], prices[1]),
+      ]
       const tradeUtilities2 = [
-        evaluateTradeUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, 10000, 20000, prices[1]),
-        evaluateTradeUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, 19980, 10000, prices[0])
+        evaluateTradeUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, buyVolume2[0], sellVolume2[0], prices[1], prices[0]),
+        evaluateTradeUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, buyVolume2[1], sellVolume2[1], prices[0], prices[1])
       ]
       const totalUtility2 = tradeUtilities2.reduce((a, b) => a + b, 0)
       const disregardedUtilites2 = [
-        disregardedUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, 10000, 20000, prices[1]),
-        disregardedUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, 19980, 10000, prices[0])
+        disregardedUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, buyVolume2[0], sellVolume2[0], prices[1], prices[0]),
+        disregardedUtility(basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, buyVolume2[1], sellVolume2[1], prices[0], prices[1])
       ]
       const totalDisregardedUtility2 = disregardedUtilites2.reduce((a, b) => a + b, 0)
-      assert.equal(actualObjectiveValue2, totalUtility2 - totalDisregardedUtility2, "Objective value is not stored correct after a second solution submission")
+
+      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, buyVolume2, prices, tokenIdsForPrice, { from: solutionSubmitter })
+      const actualObjectiveValue2 = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
+      assert.equal(
+        actualObjectiveValue2,
+        totalUtility2 - totalDisregardedUtility2,
+        "Objective value incorrect after second solution submission"
+      )
     })
     it("checks that the objective value is returned correctly after getting into a new batch", async () => {
       const feeToken = await MockContract.new()
@@ -1115,15 +1111,14 @@ contract("StablecoinConverter", async (accounts) => {
       const prices = basicTrade.solution.prices
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
-      const volume = [4000, feeSubtracted(4000) * 2]
+      const volume = [7000, feeSubtracted(7000) * 2]
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
       await closeAuction(stablecoinConverter)
-      const expectedObjectiveValue = "-57896044618658097711785492504343953926634992332820282019728792003956564819968"
-      const actualObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toString()
-      assert.equal(expectedObjectiveValue, actualObjectiveValue, "Objective value is not returned correct")
+      const actualObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
+      assert.equal(actualObjectiveValue, 0, "Objective value is not returned correct")
     })
     it("reverts, if downcast from u256 to u128 would change the value", async () => {
       const feeToken = await MockContract.new()
@@ -1186,7 +1181,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-        "Max number of touched orders is 25"
+        "Solution exceeds MAX_TOUCHED_ORDERS"
       )
     })
   })
@@ -1298,41 +1293,23 @@ contract("StablecoinConverter", async (accounts) => {
   })
 })
 
-
-const ADDRESS_WIDTH = 20 * 2
-const UINT256_WIDTH = 32 * 2
-const UINT16_WIDTH = 2 * 2
-const UINT32_WIDTH = 4 * 2
-const UINT128_WIDTH = 16 * 2
-
-function decodeAuctionElements(bytes) {
-  const result = []
-  bytes = bytes.slice(2) // cutting of 0x
-  while (bytes.length > 0) {
-    const element = bytes.slice(0, 113 * 2).split("")
-    bytes = bytes.slice(113 * 2)
-    result.push({
-      user: "0x" + element.splice(0, ADDRESS_WIDTH).join(""), // address is only 20 bytes
-      sellTokenBalance: parseInt(element.splice(0, UINT256_WIDTH).join(""), 16),
-      buyToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
-      sellToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
-      validFrom: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
-      validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
-      isSellOrder: parseInt(element.splice(0, 2).join(""), 16) > 0,
-      priceNumerator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
-      priceDenominator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
-      remainingAmount: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
-    })
-  }
-  return result
+function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice) {
+  return Math.floor(Math.floor((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator / sellTokenPrice)
 }
 
-function evaluateTradeUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken) {
-  return (executedBuyAmount - Math.floor((executedSellAmount * buyAmount) / sellAmount)) * priceBuyToken
+function evaluateTradeUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
+  // Utility = ((execBuyAmt * order.sellAmt - preFeeSell * order.buyAmt) * price.buyToken) / order.sellAmt
+  const preFeeSell = (executedBuyAmount * priceBuyToken) / priceSellToken
+  return (executedBuyAmount - Math.floor((preFeeSell * buyAmount) / sellAmount)) * priceBuyToken
 }
 
-function disregardedUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken) {
-  return Math.floor((((sellAmount - executedSellAmount) * priceBuyToken) * buyAmount) / sellAmount)
+function disregardedUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
+  const limitTerm = priceSellToken * sellAmount - priceBuyToken * buyAmount
+  // Note, this computation assumes bidder has sufficient balance remaining
+  // Usually leftoverSellAmount = MIN(sellAmount - executedSellAmount, user.balance.sellToken)
+
+  const leftoverSellAmount = sellAmount - executedSellAmount
+  return Math.floor((leftoverSellAmount * limitTerm) / sellAmount)
 }
 
 const closeAuction = async (instance) => {
