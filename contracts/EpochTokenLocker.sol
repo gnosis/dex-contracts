@@ -141,7 +141,6 @@ contract EpochTokenLocker {
     /**
      * internal functions
      */
-
      /**
      * The following function should be used to update any balances within an epoch, which
      * will not be immediately final. E.g. our stablecoin converter credits new balances to
