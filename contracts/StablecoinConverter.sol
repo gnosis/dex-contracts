@@ -189,8 +189,6 @@ contract StablecoinConverter is EpochTokenLocker {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(checkOrderValidity(order, batchIndex), "Order is invalid");
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
-            // accumulate utility before updateRemainingOrder
-            utility = utility.add(evaluateUtility(executedBuyAmount, order));
             tokenConservation.updateTokenConservation(
                 order.buyToken,
                 order.sellToken,
@@ -205,6 +203,8 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedSellAmount.mul(order.priceNumerator) <= executedBuyAmount.mul(order.priceDenominator),
                 "limit price not satisfied"
             );
+            // accumulate utility before updateRemainingOrder, but after limitPrice verified!
+            utility = utility.add(evaluateUtility(executedBuyAmount, order));
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
             addBalanceAndPostponeWithdraw(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
         }
