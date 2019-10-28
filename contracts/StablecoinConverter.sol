@@ -247,7 +247,7 @@ contract StablecoinConverter is EpochTokenLocker {
         return (execBuy - ((preFeeSell * order.priceNumerator) / order.priceDenominator)) * currentPrices[order.buyToken];
     }
 
-    function evaluateDisregardedUtility(Order memory order, address user) internal returns(uint128) {
+    function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint128) {
         // |disregardedUtility| = maxUtility - actualUtility
         // where maxUtility is the utility achieved when execSellAmount == order.sellAmount.
         // (((sellAmount - execSell) * currentPrices[order.buyToken]) * buyAmount) / sellAmount;
