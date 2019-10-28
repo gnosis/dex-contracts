@@ -197,7 +197,7 @@ contract("StablecoinConverter", async (accounts) => {
     })
   })
   describe("submitSolution()", () => {
-    it("rejects trivial solution (the only solution with zero utility", async () => {
+    it("rejects trivial solution (the only solution with zero utility)", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const erc20_2 = await MockContract.new()
@@ -223,7 +223,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, [0, 0], prices, tokenIdsForPrice, { from: solutionSubmitter }),
-        "Solution does not have a higher objective value than a previous solution"
+        "Solution must be better than trivial"
       )
       const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
       assert.equal(0, currentObjectiveValue)
