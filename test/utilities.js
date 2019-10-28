@@ -184,8 +184,8 @@ function decodeAuctionElements(bytes) {
   const result = []
   bytes = bytes.slice(2) // cutting of 0x
   while (bytes.length > 0) {
-    const element = bytes.slice(0, 113 * 2).split("")
-    bytes = bytes.slice(113 * 2)
+    const element = bytes.slice(0, 112 * 2).split("")
+    bytes = bytes.slice(112 * 2)
     result.push({
       user: "0x" + element.splice(0, ADDRESS_WIDTH).join(""), // address is only 20 bytes
       sellTokenBalance: parseInt(element.splice(0, UINT256_WIDTH).join(""), 16),
@@ -193,7 +193,6 @@ function decodeAuctionElements(bytes) {
       sellToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
       validFrom: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
       validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
-      isSellOrder: parseInt(element.splice(0, 2).join(""), 16) > 0,
       priceNumerator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
       priceDenominator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
       remainingAmount: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
