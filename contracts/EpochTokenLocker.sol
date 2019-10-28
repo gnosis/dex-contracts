@@ -80,7 +80,7 @@ contract EpochTokenLocker {
 
         require(
             !hasCreditedBalance[msg.sender][token][getCurrentBatchId()],
-            "withdraw is not possible, due to new credit in this batchId"
+            "Withdraw not possible for token that is traded in the current auction"
         );
 
         uint amount = Math.min(
@@ -140,6 +140,14 @@ contract EpochTokenLocker {
 
     /**
      * internal functions
+     */
+
+     /**
+     * The following function should be used to update any balances within an epoch, which
+     * will not be immediately final. E.g. our stablecoin converter credits new balances to
+     * the buyers in an auction, but as there are might be better solutions, the updates are
+     * not final. In order to prevent withdraws from non-final updates, we disallow withdraws
+     * by setting hasCreditedBalance to 'true'
      */
     function addBalanceAndBlockWithdrawForThisBatch(address user, address token, uint amount) internal {
         if (hasValidWithdrawRequest(user, token)) {
