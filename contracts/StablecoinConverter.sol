@@ -257,14 +257,13 @@ contract StablecoinConverter is EpochTokenLocker {
         // (((sellAmount - execSell) * currentPrices[order.buyToken]) * buyAmount) / sellAmount;
         // Balances and orders have all been updated so: sellAmount - execSell == order.remainingAmount.
         // For security reasons, we take the minimum of this with the user's token balance.
-        uint128 leftoverSellAmount = uint128(
-            Math.min(uint(order.remainingAmount), getBalance(user, tokenIdToAddressMap(order.sellToken)))
+        uint256 leftoverSellAmount = Math.min(
+            uint256(order.remainingAmount),
+            getBalance(user, tokenIdToAddressMap(order.sellToken))
         );
         // TODO - use SafeCast
-        uint128 limitTerm = uint128(
-            currentPrices[order.sellToken].mul(order.priceDenominator)
-            .sub(currentPrices[order.buyToken].mul(order.priceNumerator))
-        );
+        uint256 limitTerm = currentPrices[order.sellToken].mul(order.priceDenominator)
+            .sub(currentPrices[order.buyToken].mul(order.priceNumerator));
         return uint128(leftoverSellAmount.mul(limitTerm)) / order.priceDenominator;
     }
 
