@@ -206,7 +206,7 @@ contract StablecoinConverter is EpochTokenLocker {
             // accumulate utility before updateRemainingOrder, but after limitPrice verified!
             utility = utility.add(evaluateUtility(executedBuyAmount, order));
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
-            addBalanceAndPostponeWithdraw(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
+            addBalanceAndBlockWithdrawForThisBatch(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
         }
         // doing all subtractions after all additions (in order to avoid negative values)
         for (uint i = 0; i < owners.length; i++) {
@@ -246,7 +246,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
         previousSolution.feeReward = feeReward;
-        addBalanceAndPostponeWithdraw(msg.sender, tokenIdToAddressMap(0), feeReward);
+        addBalanceAndBlockWithdrawForThisBatch(msg.sender, tokenIdToAddressMap(0), feeReward);
     }
 
     function updateCurrentPrices(
