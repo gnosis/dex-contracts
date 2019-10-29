@@ -975,7 +975,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await truffleAssert.reverts(
         stablecoinConverter.withdraw(erc20_2.address, basicTrade.deposits[0].user, { from: basicTrade.deposits[0].user }),
-        "withdraw was not registered previously"
+        "Withdraw not possible for token that is traded in the current auction"
       )
     })
     it("checks that credited feeToken reward can not be withdrawn in same batch as the solution submission", async () => {
@@ -1009,7 +1009,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await truffleAssert.reverts(
         stablecoinConverter.withdraw(feeToken.address, solutionSubmitter, { from: solutionSubmitter }),
-        "withdraw was not registered previously"
+        "Withdraw not possible for token that is traded in the current auction"
       )
     })
     it("checks that the objective value is stored correctly and updated after a new solution submission", async () => {

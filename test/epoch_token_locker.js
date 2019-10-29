@@ -147,7 +147,7 @@ contract("EpochTokenLocker", async (accounts) => {
       const batchId = await epochTokenLocker.getCurrentBatchId.call()
       assert.equal(await epochTokenLocker.hasCreditedBalance.call(user_1, ERC20.address, batchId), true)
       await truffleAssert.reverts(
-        epochTokenLocker.withdraw(ERC20.address),
+        epochTokenLocker.withdraw(ERC20.address, user_1),
         "Withdraw not possible for token that is traded in the current auction"
       )
     })
