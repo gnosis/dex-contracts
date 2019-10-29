@@ -7,7 +7,8 @@ const ERC20 = artifacts.require("ERC20")
 const truffleAssert = require("truffle-assertions")
 const {
   waitForNSeconds,
-  sendTxAndGetReturnValue
+  sendTxAndGetReturnValue,
+  decodeAuctionElements
 } = require("./utilities.js")
 
 const feeDenominator = 1000 // fee is (1 / feeDenominator)
@@ -53,7 +54,7 @@ contract("StablecoinConverter", async (accounts) => {
     solution: { prices: [1, 2], owners: [user_1, user_2], volume: [10000, feeSubtracted(10000) * 2], tokenIdsForPrice: [0, 1] }
   }
 
-  describe("placeOrder", () => {
+  describe("placeOrder()", () => {
     it("places Orders and checks parameters", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -71,7 +72,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
     })
   })
-  describe("cancelOrder", () => {
+  describe("cancelOrder()", () => {
     it("places orders, then cancels it and orders status", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -88,7 +89,7 @@ contract("StablecoinConverter", async (accounts) => {
 
     })
   })
-  describe("freeStorageOfOrder", () => {
+  describe("freeStorageOfOrder()", () => {
     it("places a order, then cancels and deletes it", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -117,7 +118,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder(id), "Order is still valid")
     })
   })
-  describe("addToken", () => {
+  describe("addToken()", () => {
     it("feeToken is set by default", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -159,7 +160,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(stablecoinConverter.addToken((await ERC20.new()).address), "Max tokens reached")
     })
   })
-  describe("submitSolution", () => {
+  describe("submitSolution()", () => {
     it("places two orders and matches them in a solution with traders' Utility == 0", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -191,7 +192,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), basicTrade.deposits[1].amount - getSellVolume(volume[1], prices[1], prices[0]), "Sold tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(), volume[1], "Bought tokens were not adjusted correctly")
     })
-    it("places two orders and matches them in a solution with traders' Utility >0", async () => {
+    it("places two orders and matches them in a solution with Utility > 0", async () => {
 
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -289,6 +290,7 @@ contract("StablecoinConverter", async (accounts) => {
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
       const volume = [4000, feeSubtracted(4000) * 2]
+
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
@@ -687,39 +689,6 @@ contract("StablecoinConverter", async (accounts) => {
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice)
       )
     })
-    it("reverts, if findPriceIndex does not find the token, as it is not supplied", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      const erc20_2 = await MockContract.new()
-      const erc20_3 = await MockContract.new()
-
-      await feeToken.givenAnyReturnBool(true)
-      await erc20_2.givenAnyReturnBool(true)
-      await erc20_3.givenAnyReturnBool(true)
-      await stablecoinConverter.deposit(feeToken.address, 10000, { from: user_1 })
-      await stablecoinConverter.deposit(erc20_2.address, 10000, { from: user_2 })
-      await stablecoinConverter.deposit(erc20_3.address, 10000, { from: user_1 })
-
-      await stablecoinConverter.addToken(erc20_2.address)
-      await stablecoinConverter.addToken(erc20_3.address)
-
-      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 2, 1, true, batchIndex, 5000, 10000, { from: user_1 })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 2, true, batchIndex, 5000, 10000, { from: user_2 })
-
-      await closeAuction(stablecoinConverter)
-      const prices = [10000, 10000, 10000]
-      const owner = basicTrade.solution.owners
-      const orderId = [orderId1, orderId2]
-      const volume = [5000, feeSubtracted(5000)]
-      const tokenIdsForPrice = [0, 1]
-
-      await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-        "Price not provided for token"
-      )
-    })
     it("reverts, if tokenIds for prices are not sorted", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -1003,6 +972,11 @@ contract("StablecoinConverter", async (accounts) => {
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
       assert.equal(await stablecoinConverter.hasCreditedBalance.call(basicTrade.orders[0].user, erc20_2.address, batchIndex + 1), true)
+
+      await truffleAssert.reverts(
+        stablecoinConverter.withdraw(erc20_2.address, basicTrade.deposits[0].user, { from: basicTrade.deposits[0].user }),
+        "withdraw was not registered previously"
+      )
     })
     it("checks that credited feeToken reward can not be withdrawn in same batch as the solution submission", async () => {
       const feeToken = await MockContract.new()
@@ -1032,6 +1006,11 @@ contract("StablecoinConverter", async (accounts) => {
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
       assert.equal(await stablecoinConverter.hasCreditedBalance.call(solutionSubmitter, feeToken.address, batchIndex + 1), true)
+
+      await truffleAssert.reverts(
+        stablecoinConverter.withdraw(feeToken.address, solutionSubmitter, { from: solutionSubmitter }),
+        "withdraw was not registered previously"
+      )
     })
     it("checks that the objective value is stored correctly and updated after a new solution submission", async () => {
       const feeToken = await MockContract.new()
@@ -1130,7 +1109,7 @@ contract("StablecoinConverter", async (accounts) => {
     })
 
   })
-  describe("getEncodedAuctionElements", async () => {
+  describe("getEncodedAuctionElements()", async () => {
     it("returns all orders that are have ever been submitted", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -1239,33 +1218,6 @@ contract("StablecoinConverter", async (accounts) => {
 })
 
 
-const ADDRESS_WIDTH = 20 * 2
-const UINT256_WIDTH = 32 * 2
-const UINT16_WIDTH = 2 * 2
-const UINT32_WIDTH = 4 * 2
-const UINT128_WIDTH = 16 * 2
-
-function decodeAuctionElements(bytes) {
-  const result = []
-  bytes = bytes.slice(2) // cutting of 0x
-  while (bytes.length > 0) {
-    const element = bytes.slice(0, 113 * 2).split("")
-    bytes = bytes.slice(113 * 2)
-    result.push({
-      user: "0x" + element.splice(0, ADDRESS_WIDTH).join(""), // address is only 20 bytes
-      sellTokenBalance: parseInt(element.splice(0, UINT256_WIDTH).join(""), 16),
-      buyToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
-      sellToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
-      validFrom: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
-      validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
-      isSellOrder: parseInt(element.splice(0, 2).join(""), 16) > 0,
-      priceNumerator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
-      priceDenominator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
-      remainingAmount: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
-    })
-  }
-  return result
-}
 
 const closeAuction = async (instance) => {
   const time_remaining = (await instance.getSecondsRemainingInBatch()).toNumber()
