@@ -36,7 +36,7 @@ contract EpochTokenLocker {
     mapping(address => mapping(address => BalanceState)) private balanceStates;
 
     // user => token => batchId => wasCredited
-    mapping(address => mapping (address => mapping(uint => bool))) public hasCreditedBalance;
+    mapping(address => mapping (address => uint)) public hasCreditedBalance;
 
     struct BalanceState {
         uint256 balance;
@@ -79,7 +79,7 @@ contract EpochTokenLocker {
         );
 
         require(
-            !hasCreditedBalance[msg.sender][token][getCurrentBatchId()],
+            hasCreditedBalance[msg.sender][token] < getCurrentBatchId(),
             "Withdraw not possible for token that is traded in the current auction"
         );
 
@@ -150,7 +150,7 @@ contract EpochTokenLocker {
      */
     function addBalanceAndBlockWithdrawForThisBatch(address user, address token, uint amount) internal {
         if (hasValidWithdrawRequest(user, token)) {
-            hasCreditedBalance[user][token][getCurrentBatchId()] = true;
+            hasCreditedBalance[user][token] = getCurrentBatchId();
         }
         addBalance(user, token, amount);
     }
