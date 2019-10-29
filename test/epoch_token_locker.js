@@ -145,7 +145,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(user_1, ERC20.address, 100)
 
       const batchId = await epochTokenLocker.getCurrentBatchId.call()
-      assert.equal((await epochTokenLocker.hasCreditedBalance.call(user_1, ERC20.address)).toString(), batchId.toString())
+      assert.equal((await epochTokenLocker.lastCreditBatchId.call(user_1, ERC20.address)).toString(), batchId.toString())
       await truffleAssert.reverts(
         epochTokenLocker.withdraw(ERC20.address, user_1),
         "Withdraw not possible for token that is traded in the current auction"
@@ -241,7 +241,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(user_1, ERC20.address, 100)
 
       const batchId = await epochTokenLocker.getCurrentBatchId.call()
-      assert.equal((await epochTokenLocker.hasCreditedBalance.call(user_1, ERC20.address)).toString(), batchId.toString())
+      assert.equal((await epochTokenLocker.lastCreditBatchId.call(user_1, ERC20.address)).toString(), batchId.toString())
       assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex.toString(), "PendingWithdrawBatchNumber not set correctly")
     })
   })
