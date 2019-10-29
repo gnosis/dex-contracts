@@ -242,6 +242,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       const batchId = await epochTokenLocker.getCurrentBatchId.call()
       assert.equal((await epochTokenLocker.lastCreditBatchId.call(user_1, ERC20.address)).toString(), batchId.toString())
+
       assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex.toString(), "PendingWithdrawBatchNumber not set correctly")
     })
   })
