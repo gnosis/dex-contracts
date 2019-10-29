@@ -971,7 +971,7 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
-      assert.equal(await stablecoinConverter.hasCreditedBalance.call(basicTrade.orders[0].user, erc20_2.address, batchIndex + 1), true)
+      assert.equal((await stablecoinConverter.lastCreditBatchId.call(basicTrade.orders[0].user, erc20_2.address)).toString(), (batchIndex + 1).toString())
 
       await truffleAssert.reverts(
         stablecoinConverter.withdraw(erc20_2.address, basicTrade.deposits[0].user, { from: basicTrade.deposits[0].user }),
@@ -1005,7 +1005,7 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
-      assert.equal(await stablecoinConverter.hasCreditedBalance.call(solutionSubmitter, feeToken.address, batchIndex + 1), true)
+      assert.equal((await stablecoinConverter.lastCreditBatchId.call(solutionSubmitter, feeToken.address)).toString(), (batchIndex + 1).toString())
 
       await truffleAssert.reverts(
         stablecoinConverter.withdraw(feeToken.address, solutionSubmitter, { from: solutionSubmitter }),
