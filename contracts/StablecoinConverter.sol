@@ -6,7 +6,11 @@ import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOn
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
 
-
+/** @title Stable Coin Converter - A decentralized exchange for stable tokens as a batch auciton.
+ * @author Alex Herrmann - <alex@gnosis.pm>
+ * @author Benjamin Smith - <ben@gnosis.pm>
+ * @author Felix Leupold - <felix@gnosis.pm>
+ */
 contract StablecoinConverter is EpochTokenLocker {
     using SafeMath for uint128;
     using BytesLib for bytes32;
@@ -52,15 +56,23 @@ contract StablecoinConverter is EpochTokenLocker {
     IdToAddressBiMap.Data private registeredTokens;
 
     uint public MAX_TOKENS;  // solhint-disable var-name-mixedcase
-    uint16 public numTokens = 0;
-    uint128 public feeDenominator; // fee is (1 / feeDenominator)
+    uint16 public numTokens;
+    uint128 public feeDenominator;
 
+    /** @dev Constructor determines exchange parameters
+      * @param maxTokens The maximum number of tokens that can be listed.
+      * @param _feeDenominator fee as a proportion is (1 / feeDenominator)
+      * @param feeToken Address of ERC20 fee token.
+      */
     constructor(uint maxTokens, uint128 _feeDenominator, address feeToken) public {
         MAX_TOKENS = maxTokens;
         feeDenominator = _feeDenominator;
         addToken(feeToken); // fee Token will always have the token index 0
     }
 
+    /** @dev Used to list a new token on the exchange.
+      * @param _tokenAddress ERC20 token to be listed.
+      */
     function addToken(address _tokenAddress) public {
         require(numTokens < MAX_TOKENS, "Max tokens reached");
         require(
@@ -70,6 +82,15 @@ contract StablecoinConverter is EpochTokenLocker {
         numTokens++;
     }
 
+    /** @dev a user facing function used to place limit sell orders in auction with expiry defined by batchId
+      * @param buyToken id of token to be bought
+      * @param sellToken id of token to be sold
+      * @param isSellOrder - TODO - remove with
+      * @param validUntil - batchId represnting order's expiry
+      * @param buyAmount - relative minimum amount of requested buy amount
+      * @param sellAmount - maximum amount of sell token to be exchanged
+      * @return orderId as index of user's current orders
+      */
     function placeOrder(
         uint16 buyToken,
         uint16 sellToken,
@@ -102,28 +123,45 @@ contract StablecoinConverter is EpochTokenLocker {
         return orders[msg.sender].length - 1;
     }
 
-    function cancelOrder(
-        uint id
-    ) public {
+    /** @dev a user facing function used to cancel orders (sets order expiry to previous batchId)
+      * @param id referencing the index of user's order to be canceled
+      */
+    function cancelOrder(uint id) public {
         orders[msg.sender][id].validUntil = getCurrentBatchId() - 1;
         emit OrderCancelation(msg.sender, id);
     }
 
-    function freeStorageOfOrder(
-        uint id
-    ) public {
+    /** @dev a user facing function used to delete expired orders
+      * @param id referencing the index of user's order to be canceled
+      */
+    function freeStorageOfOrder(uint id) public {
         require(orders[msg.sender][id].validUntil + 1 < getCurrentBatchId(), "Order is still valid");
         delete orders[msg.sender][id];
     }
 
+    /**
+     * Public View Methods
+     */
+
+    /** @dev View returning ID of listed tokens
+      * @param addr address of listed token.
+      * @return tokenId as stored, via BiMap, within the contract.
+      */
     function tokenAddressToIdMap(address addr) public view returns (uint16) {
         return IdToAddressBiMap.getId(registeredTokens, addr);
     }
 
+    /** @dev View returning address of listed token by ID
+      * @param id tokenId as stored, via BiMap, within the contract.
+      * @return address of (listed) token
+      */
     function tokenIdToAddressMap(uint16 id) public view returns (address) {
         return IdToAddressBiMap.getAddressAt(registeredTokens, id);
     }
 
+    /** @dev View returning all currently stored, byte-encoded sell orders
+      * @return encoded bytes representing all orders ordered by (user, index)
+      */
     function getEncodedAuctionElements() public view returns (bytes memory elements) {
         if (allUsers.size() > 0) {
             address user = allUsers.first();
