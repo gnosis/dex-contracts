@@ -1233,8 +1233,9 @@ contract("StablecoinConverter", async (accounts) => {
   })
 })
 
-function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice) {
-  return Math.floor(Math.floor((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator / sellTokenPrice)
+function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice, scale) {
+  const scaledFee = scale * feeDenominator
+  return Math.floor(Math.floor((executedBuyAmount * buyTokenPrice) / (scaledFee - 1)) * scaledFee / sellTokenPrice)
 }
 
 function evaluateTradeUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {

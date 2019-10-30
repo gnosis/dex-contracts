@@ -236,10 +236,16 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
         // Utility = ((execBuyAmt * order.sellAmt - preFeeSell * order.buyAmt) * price.buyToken) / order.sellAmt
-        uint256 preFeeSell = execBuy.mul(currentPrices[order.buyToken]).div(currentPrices[order.sellToken]);
+        uint256 scaledSellAmount = getExecutedSellAmount(
+            execBuy,
+            currentPrices[order.buyToken],
+            currentPrices[order.sellToken],
+            2
+        );
+        //execBuy.mul(currentPrices[order.buyToken]).div(currentPrices[order.sellToken]);
         return uint128(
             execBuy.sub(
-                preFeeSell.mul(order.priceNumerator).div(order.priceDenominator)
+                scaledSellAmount.mul(order.priceNumerator).div(order.priceDenominator)
             ).mul(currentPrices[order.buyToken])
         );
     }
@@ -264,7 +270,8 @@ contract StablecoinConverter is EpochTokenLocker {
     function getExecutedSellAmount(
         uint128 executedBuyAmount,
         uint128 buyTokenPrice,
-        uint128 sellTokenPrice
+        uint128 sellTokenPrice,
+        uint128 scale  // Used in utility evaluation with scale = 2
     ) internal view returns (uint128) {
         // executedSellAmount = sellAmount * (1 - (1/feeDenominator))
         //                    = sellAmount - sellAmount/feeDenominator
@@ -274,8 +281,9 @@ contract StablecoinConverter is EpochTokenLocker {
         //                    = (executedBuyAmount * buyTokenPrice / sellTokenPrice) * (feeDenominator - 1) / feeDenominator
         //                    in order to minimize rounding errors, the order is switched
         //                    = (executedBuyAmount * buyTokenPrice / feeDenominator) * (feeDenominator - 1) / sellTokenPrice
-        uint256 sellAmount = (uint256(executedBuyAmount).mul(buyTokenPrice) / (feeDenominator - 1))
-            .mul(feeDenominator) / sellTokenPrice;
+        uint128 scaledFeeDenominator = scale * feeDenominator;
+        uint256 sellAmount = (uint256(executedBuyAmount).mul(buyTokenPrice) / (scaledFeeDenominator - 1))
+            .mul(scaledFeeDenominator) / sellTokenPrice;
         require(sellAmount < MAX_UINT128, "sellAmount too large");
         return uint128(sellAmount);
     }
@@ -356,7 +364,8 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 executedSellAmount = getExecutedSellAmount(
             executedBuyAmount,
             currentPrices[order.buyToken],
-            currentPrices[order.sellToken]
+            currentPrices[order.sellToken],
+            1
         );
         return (executedBuyAmount, executedSellAmount);
     }
