@@ -35,6 +35,9 @@ contract EpochTokenLocker {
     // User => Token => BalanceState
     mapping(address => mapping(address => BalanceState)) private balanceStates;
 
+    // user => token => batchId => wasCredited
+    mapping(address => mapping (address => mapping(uint => bool))) public hasCreditedBalance;
+
     struct BalanceState {
         uint256 balance;
         PendingFlux pendingDeposits; // deposits will be credited in any next epoch, i.e. currentStateIndex > stateIndex
@@ -59,28 +62,37 @@ contract EpochTokenLocker {
     }
 
     function requestWithdraw(address token, uint amount) public {
+        // first process old pendingWithdraw, as otherwise balances might increase for currentBatchId - 1
+        if (hasValidWithdrawRequest(msg.sender, token)) {
+            withdraw(token, msg.sender);
+        }
         balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: getCurrentBatchId() });
         emit WithdrawRequest(msg.sender, token, amount, getCurrentBatchId());
     }
 
-    function withdraw(address token) public {
-        updateDepositsBalance(msg.sender, token); // withdrawn amount might just be deposited before
+    function withdraw(address token, address owner) public {
+        updateDepositsBalance(owner, token); // withdrawn amount might just be deposited before
 
         require(
-            balanceStates[msg.sender][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
+            balanceStates[owner][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
             "withdraw was not registered previously"
         );
 
+        require(
+            !hasCreditedBalance[msg.sender][token][getCurrentBatchId()],
+            "Withdraw not possible for token that is traded in the current auction"
+        );
+
         uint amount = Math.min(
-            balanceStates[msg.sender][token].balance,
+            balanceStates[owner][token].balance,
             balanceStates[msg.sender][token].pendingWithdraws.amount
         );
 
-        balanceStates[msg.sender][token].balance = balanceStates[msg.sender][token].balance.sub(amount);
-        delete balanceStates[msg.sender][token].pendingWithdraws;
+        balanceStates[owner][token].balance = balanceStates[owner][token].balance.sub(amount);
+        delete balanceStates[owner][token].pendingWithdraws;
 
-        ERC20(token).transfer(msg.sender, amount);
-        emit Withdraw(msg.sender, token, amount);
+        ERC20(token).transfer(owner, amount);
+        emit Withdraw(owner, token, amount);
     }
 
     /**
@@ -116,17 +128,29 @@ contract EpochTokenLocker {
             balance = balance.add(balanceStates[user][token].pendingDeposits.amount);
         }
         if (balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId()) {
-            balance -= Math.min(balanceStates[user][token].pendingWithdraws.amount, balance);
+            balance = balance.sub(Math.min(balanceStates[user][token].pendingWithdraws.amount, balance));
         }
         return balance;
+    }
+
+    function hasValidWithdrawRequest(address user, address token) public view returns(bool) {
+        return balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId() &&
+            balanceStates[user][token].pendingWithdraws.stateIndex > 0;
     }
 
     /**
      * internal functions
      */
-    function addBalanceAndPostponeWithdraw(address user, address token, uint amount) internal {
-        if (balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId()) {
-            balanceStates[user][token].pendingWithdraws.stateIndex = getCurrentBatchId();
+     /**
+     * The following function should be used to update any balances within an epoch, which
+     * will not be immediately final. E.g. our stablecoin converter credits new balances to
+     * the buyers in an auction, but as there are might be better solutions, the updates are
+     * not final. In order to prevent withdraws from non-final updates, we disallow withdraws
+     * by setting hasCreditedBalance to 'true'
+     */
+    function addBalanceAndBlockWithdrawForThisBatch(address user, address token, uint amount) internal {
+        if (hasValidWithdrawRequest(user, token)) {
+            hasCreditedBalance[user][token][getCurrentBatchId()] = true;
         }
         addBalance(user, token, amount);
     }
