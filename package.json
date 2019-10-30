@@ -49,11 +49,13 @@
     "openzeppelin-solidity": "2.1.1",
     "solidity-bytes-utils": "0.0.8",
     "truffle-contract": "^4.0.31",
-    "yargs": "^14.0.0"
+    "yargs": "^14.0.0",
+    "dotenv": "^8.0.0",
+    "solidity-multicall": "^1.0.0",
+    "truffle-hdwallet-provider": "^1.0.0-web3one.1"
   },
   "devDependencies": {
     "coveralls": "^3.0.4",
-    "dotenv": "^8.0.0",
     "es6-promise": "^4.2.5",
     "eslint": "^5.16.0",
     "eslint-plugin-no-only-tests": "^2.3.0",
@@ -63,10 +65,8 @@
     "minimist": "^1.2.0",
     "solhint": "^1.5.0",
     "solidity-coverage": "^0.5.11",
-    "solidity-multicall": "^1.0.0",
     "solium": "^1.2.4",
     "truffle": "^5.0.26",
-    "truffle-assertions": "^0.8.0",
-    "truffle-hdwallet-provider": "^1.0.0-web3one.1"
+    "truffle-assertions": "^0.8.0"
   }
 }
