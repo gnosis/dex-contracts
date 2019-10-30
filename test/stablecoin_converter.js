@@ -1046,8 +1046,8 @@ contract("StablecoinConverter", async (accounts) => {
       const orderId = [orderId1, orderId2]
       const buyVolume = [7000, feeSubtracted(7000) * 2]
       const sellVolume = [
-        getExecutedSellAmount(buyVolume[0], prices[1], prices[0]),
-        getExecutedSellAmount(buyVolume[1], prices[0], prices[1]),
+        getExecutedSellAmount(buyVolume[0], prices[1], prices[0], 1),
+        getExecutedSellAmount(buyVolume[1], prices[0], prices[1], 1),
       ]
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
       const tradeUtilities = [
@@ -1062,8 +1062,8 @@ contract("StablecoinConverter", async (accounts) => {
 
       const buyVolume2 = basicTrade.solution.volume
       const sellVolume2 = [
-        getExecutedSellAmount(buyVolume2[0], prices[1], prices[0]),
-        getExecutedSellAmount(buyVolume2[1], prices[0], prices[1]),
+        getExecutedSellAmount(buyVolume2[0], prices[1], prices[0], 1),
+        getExecutedSellAmount(buyVolume2[1], prices[0], prices[1], 1),
       ]
       const tradeUtilities2 = [
         evaluateTradeUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, buyVolume2[0], sellVolume2[0], prices[1], prices[0]),
@@ -1253,9 +1253,8 @@ function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice,
 }
 
 function evaluateTradeUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
-  // Utility = ((execBuyAmt * order.sellAmt - preFeeSell * order.buyAmt) * price.buyToken) / order.sellAmt
-  const preFeeSell = (executedBuyAmount * priceBuyToken) / priceSellToken
-  return (executedBuyAmount - Math.floor((preFeeSell * buyAmount) / sellAmount)) * priceBuyToken
+  const scaledSellAmount = getExecutedSellAmount(executedBuyAmount, priceBuyToken, priceSellToken, 2)
+  return (executedBuyAmount - Math.floor((scaledSellAmount * buyAmount) / sellAmount)) * priceBuyToken
 }
 
 const closeAuction = async (instance) => {
