@@ -54,6 +54,7 @@ contract StablecoinConverter is EpochTokenLocker {
     uint public MAX_TOKENS;  // solhint-disable var-name-mixedcase
     uint16 public numTokens = 0;
     uint128 public feeDenominator; // fee is (1 / feeDenominator)
+    uint128 private utilityAdjustmentFactor = 2;
 
     constructor(uint maxTokens, uint128 _feeDenominator, address feeToken) public {
         MAX_TOKENS = maxTokens;
@@ -235,17 +236,16 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
-        // Utility = ((execBuyAmt * order.sellAmt - scaledSellAmount * order.buyAmt) * price.buyToken) / order.sellAmt
-        uint256 scaledSellAmount = getExecutedSellAmount(
+        // Utility = ((execBuyAmt * order.sellAmt - adjustedSellAmount * order.buyAmt) * price.buyToken) / order.sellAmt
+        uint256 adjustedSellAmount = getExecutedSellAmount(
             execBuy,
             currentPrices[order.buyToken],
             currentPrices[order.sellToken],
-            2
+            uint128(feeDenominator.mul(utilityAdjustmentFactor))
         );
         return uint128(
-            execBuy.sub(
-                scaledSellAmount.mul(order.priceNumerator).div(order.priceDenominator)
-            ).mul(currentPrices[order.buyToken])
+            execBuy.sub(adjustedSellAmount.mul(order.priceNumerator)
+                .div(order.priceDenominator)).mul(currentPrices[order.buyToken])
         );
     }
 
@@ -270,19 +270,19 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 executedBuyAmount,
         uint128 buyTokenPrice,
         uint128 sellTokenPrice,
-        uint128 scale  // Used in utility evaluation with scale = 2
+        uint128 feeDenominator
     ) internal view returns (uint128) {
-        // executedSellAmount = sellAmount * (1 - (1/feeDenominator))
-        //                    = sellAmount - sellAmount/feeDenominator
-        //                    = (sellAmount * feeDenominator) / feeDenominator - sellAmount/feeDenominator
-        //                    = (sellAmount * feeDenominator - sellAmount) / feeDenominator
-        //                    = (sellAmount * (feeDenominator - 1)) /feeDenominator
-        //                    = (executedBuyAmount * buyTokenPrice / sellTokenPrice) * (feeDenominator - 1) / feeDenominator
+        // Based on Equation (2) from https://github.com/gnosis/dex-contracts/issues/173#issuecomment-526163117
+        // execSellAmount * p[sellToken] * (1 - phi) == execBuyAmount * p[buyToken]
+        // where phi = 1/feeDenominator
+        // Note that: 1 - phi = (feeDenominator - 1) / feeDenominator
+        // And so, 1/(1-phi) = feeDenominator / (feeDenominator - 1)
+        // executedSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
+        //                    = (execBuyAmount * buyTokenPrice / sellTokenPrice) * feeDenominator / (feeDenominator - 1)
         //                    in order to minimize rounding errors, the order is switched
-        //                    = (executedBuyAmount * buyTokenPrice / feeDenominator) * (feeDenominator - 1) / sellTokenPrice
-        uint128 scaledFeeDenominator = scale * feeDenominator;
-        uint256 sellAmount = (uint256(executedBuyAmount).mul(buyTokenPrice) / (scaledFeeDenominator - 1))
-            .mul(scaledFeeDenominator) / sellTokenPrice;
+        //                    = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
+        uint256 sellAmount = uint256(executedBuyAmount).mul(buyTokenPrice).div(feeDenominator - 1)
+            .mul(feeDenominator).div(sellTokenPrice);
         require(sellAmount < MAX_UINT128, "sellAmount too large");
         return uint128(sellAmount);
     }
@@ -364,7 +364,7 @@ contract StablecoinConverter is EpochTokenLocker {
             executedBuyAmount,
             currentPrices[order.buyToken],
             currentPrices[order.sellToken],
-            1
+            feeDenominator
         );
         return (executedBuyAmount, executedSellAmount);
     }
