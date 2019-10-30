@@ -277,10 +277,10 @@ contract StablecoinConverter is EpochTokenLocker {
         // where phi = 1/feeDenominator
         // Note that: 1 - phi = (feeDenominator - 1) / feeDenominator
         // And so, 1/(1-phi) = feeDenominator / (feeDenominator - 1)
-        // executedSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
-        //                    = (execBuyAmount * buyTokenPrice / sellTokenPrice) * feeDenominator / (feeDenominator - 1)
-        //                    in order to minimize rounding errors, the order is switched
-        //                    = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
+        // execSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
+        //                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * feeDenominator / (feeDenominator - 1)
+        //    in order to minimize rounding errors, the order of operations is switched
+        //                = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
         uint256 sellAmount = uint256(executedBuyAmount).mul(buyTokenPrice).div(feeDenominator - 1)
             .mul(feeDenominator).div(sellTokenPrice);
         // TODO - use SafeCast here.
