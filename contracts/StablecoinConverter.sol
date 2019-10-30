@@ -268,7 +268,7 @@ contract StablecoinConverter is EpochTokenLocker {
         // TODO - use SafeCast
         uint256 limitTerm = currentPrices[order.sellToken].mul(order.priceDenominator)
             .sub(currentPrices[order.buyToken].mul(order.priceNumerator));
-        return uint128(leftoverSellAmount.mul(limitTerm)) / order.priceDenominator;
+        return uint128(leftoverSellAmount.mul(limitTerm).div(order.priceDenominator));
     }
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
