@@ -235,14 +235,13 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
-        // Utility = ((execBuyAmt * order.sellAmt - preFeeSell * order.buyAmt) * price.buyToken) / order.sellAmt
+        // Utility = ((execBuyAmt * order.sellAmt - scaledSellAmount * order.buyAmt) * price.buyToken) / order.sellAmt
         uint256 scaledSellAmount = getExecutedSellAmount(
             execBuy,
             currentPrices[order.buyToken],
             currentPrices[order.sellToken],
             2
         );
-        //execBuy.mul(currentPrices[order.buyToken]).div(currentPrices[order.sellToken]);
         return uint128(
             execBuy.sub(
                 scaledSellAmount.mul(order.priceNumerator).div(order.priceDenominator)
