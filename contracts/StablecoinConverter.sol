@@ -242,14 +242,13 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
-        // Utility = ((execBuyAmt * order.sellAmt - preFeeSell * order.buyAmt) * price.buyToken) / order.sellAmt
+        // Utility = ((execBuyAmt * order.sellAmt - scaledSellAmount * order.buyAmt) * price.buyToken) / order.sellAmt
         uint256 scaledSellAmount = getExecutedSellAmount(
             execBuy,
             currentPrices[order.buyToken],
             currentPrices[order.sellToken],
             2
         );
-        //execBuy.mul(currentPrices[order.buyToken]).div(currentPrices[order.sellToken]);
         return uint128(
             execBuy.sub(
                 scaledSellAmount.mul(order.priceNumerator).div(order.priceDenominator)
@@ -258,10 +257,10 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint128) {
-        // |disregardedUtility| = maxUtility - actualUtility
-        // where maxUtility is the utility achieved when execSellAmount == order.sellAmount.
-        // (((sellAmount - execSell) * currentPrices[order.buyToken]) * buyAmount) / sellAmount;
-        // Balances and orders have all been updated so: sellAmount - execSell == order.remainingAmount.
+        // |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
+        // where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken
+        // and leftoverSellAmount = order.sellAmt - execSellAmt
+        // Balances and orders have all been updated so: sellAmount - execSellAmt == order.remainingAmount.
         // For security reasons, we take the minimum of this with the user's token balance.
         uint256 leftoverSellAmount = Math.min(
             uint256(order.remainingAmount),
