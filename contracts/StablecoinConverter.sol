@@ -161,7 +161,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     /** @dev a solver facing function called for auction settlement
-      * @param batchIndex index of auction solution refers to
+      * @param batchIndex index of auction solution is referring to
       * @param owners array of addresses corresponding to touched orders
       * @param orderIds array of order ids used in parallel with owners to identify touched order
       * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
@@ -335,7 +335,7 @@ contract StablecoinConverter is EpochTokenLocker {
         return uint128(sellAmount);
     }
 
-    /** @dev updates an order's remaing requested sell amount upon (partial) execution of a standing order
+    /** @dev Updates an order's remaing requested sell amount upon (partial) execution of a standing order
       * @param owner order's corresponding user address
       * @param orderId index of order in list of owner's orders
       * @param executedAmount proportion of order's requested sellAmount that was filled.
@@ -348,6 +348,11 @@ contract StablecoinConverter is EpochTokenLocker {
         orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.sub(executedAmount));
     }
 
+    /** @dev The inverse of updateRemainingOrder, called when reverting a solution in favour of a better one.
+      * @param owner order's corresponding user address
+      * @param orderId index of order in list of owner's orders
+      * @param executedAmount proportion of order's requested sellAmount that was filled.
+      */
     function revertRemainingOrder(
         address owner,
         uint orderId,
@@ -356,6 +361,13 @@ contract StablecoinConverter is EpochTokenLocker {
         orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(executedAmount));
     }
 
+    /** @dev
+      * @param batchIndex index of referenced auction
+      * @param owners array of addresses corresponding to touched orders
+      * @param orderIds array of order ids used in parallel with owners to identify touched order
+      * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
+      * @param tokenIdsForPrice ordered list of touched token ids
+      */
     function documentTrades(
         uint32 batchIndex,
         address[] memory owners,  // tradeData is submitted as arrays
@@ -375,6 +387,9 @@ contract StablecoinConverter is EpochTokenLocker {
         previousSolution.solutionSubmitter = msg.sender;
     }
 
+    /** @dev reverts all relevant contract storage relating to an overwritten auction solution.
+      * @param batchIndex index of referenced auction
+      */
     function undoPreviousSolution(uint32 batchIndex) internal {
         if (previousSolution.batchId == batchIndex) {
             for (uint i = 0; i < previousSolution.trades.length; i++) {
@@ -401,6 +416,13 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
+    /**
+     * Private Functions
+     */
+
+    /** @dev determines if value is better than currently and updates if it is.
+      * @param newObjectiveValue proposed value to be updated if greater than current.
+      */
     function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
         require(
             newObjectiveValue > getCurrentObjectiveValue(),
@@ -409,6 +431,13 @@ contract StablecoinConverter is EpochTokenLocker {
         previousSolution.objectiveValue = newObjectiveValue;
     }
 
+    // Private view
+
+    /** @dev Compute trade execution based on executedBuyAmount and relevant token prices
+      * @param volume executed buy amount
+      * @param order contains relevant buy-sell token information
+      * @return (executedBuyAmount, executedSellAmount)
+      */
     function getTradedAmounts(uint128 volume, Order memory order) private view returns (uint128, uint128) {
         // TODO: implement logic also for buyOrders
         uint128 executedBuyAmount = volume;
@@ -421,10 +450,21 @@ contract StablecoinConverter is EpochTokenLocker {
         return (executedBuyAmount, executedSellAmount);
     }
 
+    // Private pure
+
+    /** @dev used to determine if an order is valid for specific auction/batch
+      * @param order object whose validity is in question
+      * @param batchIndex auction index of validity
+      * @return true if order is valid in auction batchIndex else false
+      */
     function checkOrderValidity(Order memory order, uint batchIndex) private pure returns (bool) {
         return order.validFrom <= batchIndex && order.validUntil >= batchIndex;
     }
 
+    /** @dev Token ordering is verified by submitSolution. Required because binary search is used to fetch token info.
+      * @param tokenIdsForPrice list of tokenIds
+      * @return true if tokenIdsForPrice is sorted else false
+      */
     function checkPriceOrdering(uint16[] memory tokenIdsForPrice) private pure returns (bool) {
         for (uint i = 1; i < tokenIdsForPrice.length; i++) {
             if (tokenIdsForPrice[i] <= tokenIdsForPrice[i - 1]) {
@@ -434,6 +474,12 @@ contract StablecoinConverter is EpochTokenLocker {
         return true;
     }
 
+    /** @dev called only by getEncodedAuctionElements and used to pack auction info into bytes
+      * @param user list of tokenIds
+      * @param sellTokenBalance user's account balance of sell token
+      * @param order a sell order
+      * @return byte encoded, packed, concatenation of relevant order information
+      */
     function encodeAuctionElement(
         address user,
         uint256 sellTokenBalance,
