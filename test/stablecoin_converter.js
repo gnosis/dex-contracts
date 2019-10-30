@@ -984,10 +984,11 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
+      assert.equal(await stablecoinConverter.hasCreditedBalance.call(basicTrade.orders[0].user, erc20_2.address, batchIndex + 1), true)
 
       await truffleAssert.reverts(
-        stablecoinConverter.withdraw(erc20_2.address, { from: basicTrade.deposits[0].user }),
-        "withdraw was not registered previously"
+        stablecoinConverter.withdraw(erc20_2.address, basicTrade.deposits[0].user, { from: basicTrade.deposits[0].user }),
+        "Withdraw not possible for token that is traded in the current auction"
       )
     })
     it("checks that credited feeToken reward can not be withdrawn in same batch as the solution submission", async () => {
@@ -1017,10 +1018,7 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
-      await truffleAssert.reverts(
-        stablecoinConverter.withdraw(feeToken.address, { from: solutionSubmitter }),
-        "withdraw was not registered previously"
-      )
+      assert.equal(await stablecoinConverter.hasCreditedBalance.call(solutionSubmitter, feeToken.address, batchIndex + 1), true)
     })
     it("checks that the objective value is stored correctly and updated after a new solution submission", async () => {
       const feeToken = await MockContract.new()
@@ -1045,8 +1043,8 @@ contract("StablecoinConverter", async (accounts) => {
       const orderId = [orderId1, orderId2]
       const buyVolume = [7000, feeSubtracted(7000) * 2]
       const sellVolume = [
-        getExecutedSellAmount(buyVolume[0], prices[1], prices[0]),
-        getExecutedSellAmount(buyVolume[1], prices[0], prices[1]),
+        getExecutedSellAmount(buyVolume[0], prices[1], prices[0], 1),
+        getExecutedSellAmount(buyVolume[1], prices[0], prices[1], 1),
       ]
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
       const tradeUtilities = [
@@ -1066,8 +1064,8 @@ contract("StablecoinConverter", async (accounts) => {
 
       const buyVolume2 = basicTrade.solution.volume
       const sellVolume2 = [
-        getExecutedSellAmount(buyVolume2[0], prices[1], prices[0]),
-        getExecutedSellAmount(buyVolume2[1], prices[0], prices[1]),
+        getExecutedSellAmount(buyVolume2[0], prices[1], prices[0], 1),
+        getExecutedSellAmount(buyVolume2[1], prices[0], prices[1], 1),
       ]
       const tradeUtilities2 = [
         evaluateTradeUtility(basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, buyVolume2[0], sellVolume2[0], prices[1], prices[0]),
@@ -1259,14 +1257,14 @@ contract("StablecoinConverter", async (accounts) => {
   })
 })
 
-function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice) {
-  return Math.floor(Math.floor((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator / sellTokenPrice)
+function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice, scale) {
+  const scaledFee = scale * feeDenominator
+  return Math.floor(Math.floor((executedBuyAmount * buyTokenPrice) / (scaledFee - 1)) * scaledFee / sellTokenPrice)
 }
 
 function evaluateTradeUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
-  // Utility = ((execBuyAmt * order.sellAmt - preFeeSell * order.buyAmt) * price.buyToken) / order.sellAmt
-  const preFeeSell = (executedBuyAmount * priceBuyToken) / priceSellToken
-  return (executedBuyAmount - Math.floor((preFeeSell * buyAmount) / sellAmount)) * priceBuyToken
+  const scaledSellAmount = getExecutedSellAmount(executedBuyAmount, priceBuyToken, priceSellToken, 2)
+  return (executedBuyAmount - Math.floor((scaledSellAmount * buyAmount) / sellAmount)) * priceBuyToken
 }
 
 function disregardedUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
