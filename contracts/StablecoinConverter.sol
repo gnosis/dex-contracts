@@ -46,8 +46,27 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 remainingAmount; // remainingAmount can either be a sellAmount or buyAmount, depending on the flag isSellOrder
     }
 
+    struct PreviousSolutionData {
+        uint32 batchId;
+        TradeData[] trades;
+        uint16[] tokenIdsForPrice;
+        address solutionSubmitter;
+        uint256 feeReward;
+        uint256 objectiveValue;
+    }
+
+    struct TradeData {
+        address owner;
+        uint128 volume;
+        uint16 orderId;
+    }
+
     // User-> Order
     mapping(address => Order[]) public orders;
+
+    // tokenId -> CurrentPrice
+    mapping (uint16 => uint128) public currentPrices;
+    PreviousSolutionData public previousSolution;
 
     // Iterable set of all users, required to collect auction information
     IterableAppendOnlySet.Data private allUsers;
@@ -141,70 +160,14 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
-    /**
-     * Public View Methods
-     */
-
-    /** @dev View returning ID of listed tokens
-      * @param addr address of listed token.
-      * @return tokenId as stored, via BiMap, within the contract.
+    /** @dev a solver facing function called for auction settlement
+      * @param batchIndex index of auction solution refers to
+      * @param owners array of addresses corresponding to touched orders
+      * @param orderIds array of order ids used in parallel with owners to identify touched order
+      * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
+      * @param prices prices for touched tokens indexed by next parameter
+      * @param tokenIdsForPrice ordered list of touched token ids
       */
-    function tokenAddressToIdMap(address addr) public view returns (uint16) {
-        return IdToAddressBiMap.getId(registeredTokens, addr);
-    }
-
-    /** @dev View returning address of listed token by ID
-      * @param id tokenId as stored, via BiMap, within the contract.
-      * @return address of (listed) token
-      */
-    function tokenIdToAddressMap(uint16 id) public view returns (address) {
-        return IdToAddressBiMap.getAddressAt(registeredTokens, id);
-    }
-
-    /** @dev View returning all currently stored, byte-encoded sell orders
-      * @return encoded bytes representing all orders ordered by (user, index)
-      */
-    function getEncodedAuctionElements() public view returns (bytes memory elements) {
-        if (allUsers.size() > 0) {
-            address user = allUsers.first();
-            bool stop = false;
-            while (!stop) {
-                for (uint i = 0; i < orders[user].length; i++) {
-                    Order memory order = orders[user][i];
-                    elements = elements.concat(encodeAuctionElement(
-                        user,
-                        getBalance(user, tokenIdToAddressMap(order.sellToken)),
-                        order
-                    ));
-                }
-                if (user == allUsers.last) {
-                    stop = true;
-                } else {
-                    user = allUsers.next(user);
-                }
-            }
-        }
-        return elements;
-    }
-
-    mapping (uint16 => uint128) public currentPrices;
-    PreviousSolutionData public previousSolution;
-
-    struct PreviousSolutionData {
-        uint32 batchId;
-        TradeData[] trades;
-        uint16[] tokenIdsForPrice;
-        address solutionSubmitter;
-        uint256 feeReward;
-        uint256 objectiveValue;
-    }
-
-    struct TradeData {
-        address owner;
-        uint128 volume;
-        uint16 orderId;
-    }
-
     function submitSolution(
         uint32 batchIndex,
         address[] memory owners,          // tradeData is submitted as arrays
@@ -263,6 +226,55 @@ contract StablecoinConverter is EpochTokenLocker {
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
 
+    /**
+     * Public View Methods
+     */
+
+    /** @dev View returning ID of listed tokens
+      * @param addr address of listed token.
+      * @return tokenId as stored, via BiMap, within the contract.
+      */
+    function tokenAddressToIdMap(address addr) public view returns (uint16) {
+        return IdToAddressBiMap.getId(registeredTokens, addr);
+    }
+
+    /** @dev View returning address of listed token by ID
+      * @param id tokenId as stored, via BiMap, within the contract.
+      * @return address of (listed) token
+      */
+    function tokenIdToAddressMap(uint16 id) public view returns (address) {
+        return IdToAddressBiMap.getAddressAt(registeredTokens, id);
+    }
+
+    /** @dev View returning all currently stored, byte-encoded sell orders
+      * @return encoded bytes representing all orders ordered by (user, index)
+      */
+    function getEncodedAuctionElements() public view returns (bytes memory elements) {
+        if (allUsers.size() > 0) {
+            address user = allUsers.first();
+            bool stop = false;
+            while (!stop) {
+                for (uint i = 0; i < orders[user].length; i++) {
+                    Order memory order = orders[user][i];
+                    elements = elements.concat(encodeAuctionElement(
+                        user,
+                        getBalance(user, tokenIdToAddressMap(order.sellToken)),
+                        order
+                    ));
+                }
+                if (user == allUsers.last) {
+                    stop = true;
+                } else {
+                    user = allUsers.next(user);
+                }
+            }
+        }
+        return elements;
+    }
+
+    /** @dev called by solvers to determine their solution better than the current winner.
+      * @return objective function evaluation of the currently winning solution, or zero if no solution proposed.
+      */
     function getCurrentObjectiveValue() public view returns(uint) {
         if (previousSolution.batchId == getCurrentBatchId() - 1) {
             return previousSolution.objectiveValue;
@@ -271,14 +283,25 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
+    /**
+     * Internal Functions
+     */
+
+    /** @dev called at the end of submitSolution with a value of tokenConservation / 2
+      * @param feeReward amount to be rewarded to the solver
+      */
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
         previousSolution.feeReward = feeReward;
         addBalanceAndBlockWithdrawForThisBatch(msg.sender, tokenIdToAddressMap(0), feeReward);
     }
 
+    /** @dev called early from within submitSolution to update the token prices.
+      * @param prices list of prices for touched tokens only, first price is always fee token price
+      * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+      */
     function updateCurrentPrices(
-        uint128[] memory prices,          // list of prices for touched tokens only, frist price is fee token price
-        uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+        uint128[] memory prices,
+        uint16[] memory tokenIdsForPrice
     ) internal {
         for (uint i = 0; i < previousSolution.tokenIdsForPrice.length; i++) {
             currentPrices[previousSolution.tokenIdsForPrice[i]] = 0;
@@ -288,6 +311,11 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
+    /** @dev used to evaluate executedSellAmount from prices and executedBuyAmount
+      * @param executedBuyAmount amount of buyToken to be obtained in an exchange
+      * @param buyTokenPrice price of buyToken
+      * @param sellTokenPrice price of sellToken
+      */
     function getExecutedSellAmount(
         uint128 executedBuyAmount,
         uint128 buyTokenPrice,
@@ -307,10 +335,15 @@ contract StablecoinConverter is EpochTokenLocker {
         return uint128(sellAmount);
     }
 
+    /** @dev updates an order's remaing requested sell amount upon (partial) execution of a standing order
+      * @param owner order's corresponding user address
+      * @param orderId index of order in list of owner's orders
+      * @param executedAmount proportion of order's requested sellAmount that was filled.
+      */
     function updateRemainingOrder(
         address owner,
         uint orderId,
-        uint128 executedAmount
+        uint128 executedAmount  // TODO - should this be called executedSellAmount for clarity?
     ) internal returns (uint) {
         orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.sub(executedAmount));
     }
