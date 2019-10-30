@@ -132,11 +132,13 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     /** @dev a user facing function used to delete expired orders
-      * @param id referencing the index of user's order to be canceled
+      * @param ids referencing the indices of user's orders to be deleted
       */
-    function freeStorageOfOrder(uint id) public {
-        require(orders[msg.sender][id].validUntil + 1 < getCurrentBatchId(), "Order is still valid");
-        delete orders[msg.sender][id];
+    function freeStorageOfOrder(uint[] memory ids) public {
+        for (uint i = 0; i < ids.length; i++) {
+            require(orders[msg.sender][ids[i]].validUntil + 1 < getCurrentBatchId(), "Order is still valid");
+            delete orders[msg.sender][ids[i]];
+        }
     }
 
     /**

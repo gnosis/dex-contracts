@@ -97,7 +97,7 @@ contract("StablecoinConverter", async (accounts) => {
       const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, 3, 10, 20)
       await stablecoinConverter.cancelOrder(id)
       await waitForNSeconds(BATCH_TIME)
-      await stablecoinConverter.freeStorageOfOrder(id)
+      await stablecoinConverter.freeStorageOfOrder([id])
 
       assert.equal((await stablecoinConverter.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
     })
@@ -108,14 +108,26 @@ contract("StablecoinConverter", async (accounts) => {
       const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
 
       const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, currentStateIndex + 3, 10, 20)
-      await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder(id), "Order is still valid")
+      await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder([id]), "Order is still valid")
     })
     it("fails to delete canceled order in same stateIndex", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, 3, 10, 20)
       await stablecoinConverter.cancelOrder(id)
-      await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder(id), "Order is still valid")
+      await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder([id]), "Order is still valid")
+    })
+    it("deletes several orders successfully", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, 3, 10, 20)
+      await stablecoinConverter.cancelOrder(id)
+      const id2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, 3, 10, 20)
+      await stablecoinConverter.cancelOrder(id2)
+      await waitForNSeconds(BATCH_TIME)
+      await stablecoinConverter.freeStorageOfOrder([id, id2])
+      assert.equal((await stablecoinConverter.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
+      assert.equal((await stablecoinConverter.orders(user_1, id2)).priceDenominator, 0, "priceDenominator was stored incorrectly")
     })
   })
   describe("addToken()", () => {
@@ -971,7 +983,7 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
-      assert.equal(await stablecoinConverter.hasCreditedBalance.call(basicTrade.orders[0].user, erc20_2.address, batchIndex + 1), true)
+      assert.equal((await stablecoinConverter.lastCreditBatchId.call(basicTrade.orders[0].user, erc20_2.address)).toString(), (batchIndex + 1).toString())
 
       await truffleAssert.reverts(
         stablecoinConverter.withdraw(erc20_2.address, basicTrade.deposits[0].user, { from: basicTrade.deposits[0].user }),
@@ -1005,7 +1017,7 @@ contract("StablecoinConverter", async (accounts) => {
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter })
-      assert.equal(await stablecoinConverter.hasCreditedBalance.call(solutionSubmitter, feeToken.address, batchIndex + 1), true)
+      assert.equal((await stablecoinConverter.lastCreditBatchId.call(solutionSubmitter, feeToken.address)).toString(), (batchIndex + 1).toString())
 
       await truffleAssert.reverts(
         stablecoinConverter.withdraw(feeToken.address, solutionSubmitter, { from: solutionSubmitter }),
@@ -1201,7 +1213,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, batchIndex)
 
-      await stablecoinConverter.freeStorageOfOrder(0)
+      await stablecoinConverter.freeStorageOfOrder([0])
 
       auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
       assert.equal(auctionElements.length, 1)
