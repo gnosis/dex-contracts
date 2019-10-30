@@ -54,7 +54,7 @@ contract StablecoinConverter is EpochTokenLocker {
     uint public MAX_TOKENS;  // solhint-disable var-name-mixedcase
     uint16 public numTokens = 0;
     uint128 public feeDenominator; // fee is (1 / feeDenominator)
-    uint128 private utilityAdjustmentFactor = 2;
+    // uint128 private utilityAdjustmentFactor = 2;
 
     constructor(uint maxTokens, uint128 _feeDenominator, address feeToken) public {
         MAX_TOKENS = maxTokens;
@@ -221,7 +221,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedSellAmount
             );
         }
-        checkAndOverrideObjectiveValue(utility);
+        checkAndOverrideObjectiveValue(utility + uint(tokenConservation[0]) / 2);
         grantRewardToSolutionSubmitter(uint(tokenConservation[0]) / 2);
         tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
@@ -236,15 +236,14 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
-        // Utility = ((execBuyAmt * order.sellAmt - adjustedSellAmount * order.buyAmt) * price.buyToken) / order.sellAmt
-        uint256 adjustedSellAmount = getExecutedSellAmount(
+        // Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
+        uint256 execSell = getExecutedSellAmount(
             execBuy,
             currentPrices[order.buyToken],
-            currentPrices[order.sellToken],
-            uint128(feeDenominator.mul(utilityAdjustmentFactor))
+            currentPrices[order.sellToken]
         );
         return uint128(
-            execBuy.sub(adjustedSellAmount.mul(order.priceNumerator)
+            execBuy.sub(execSell.mul(order.priceNumerator)
                 .div(order.priceDenominator)).mul(currentPrices[order.buyToken])
         );
     }
@@ -269,8 +268,8 @@ contract StablecoinConverter is EpochTokenLocker {
     function getExecutedSellAmount(
         uint128 executedBuyAmount,
         uint128 buyTokenPrice,
-        uint128 sellTokenPrice,
-        uint128 feeDenominator
+        uint128 sellTokenPrice
+        // uint128 feeDenominator
     ) internal view returns (uint128) {
         // Based on Equation (2) from https://github.com/gnosis/dex-contracts/issues/173#issuecomment-526163117
         // execSellAmount * p[sellToken] * (1 - phi) == execBuyAmount * p[buyToken]
@@ -364,8 +363,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 executedSellAmount = getExecutedSellAmount(
             executedBuyAmount,
             currentPrices[order.buyToken],
-            currentPrices[order.sellToken],
-            feeDenominator
+            currentPrices[order.sellToken]
         );
         return (executedBuyAmount, executedSellAmount);
     }
