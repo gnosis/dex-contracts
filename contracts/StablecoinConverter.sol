@@ -283,6 +283,7 @@ contract StablecoinConverter is EpochTokenLocker {
         //                    = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
         uint256 sellAmount = uint256(executedBuyAmount).mul(buyTokenPrice).div(feeDenominator - 1)
             .mul(feeDenominator).div(sellTokenPrice);
+        // TODO - use SafeCast here.
         require(sellAmount < MAX_UINT128, "sellAmount too large");
         return uint128(sellAmount);
     }
