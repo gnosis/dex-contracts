@@ -268,7 +268,7 @@ contract StablecoinConverter is EpochTokenLocker {
         address owner,
         uint orderId,
         uint128 executedAmount
-    ) internal returns (uint) {
+    ) internal {
         orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.sub(executedAmount));
     }
 
@@ -276,7 +276,7 @@ contract StablecoinConverter is EpochTokenLocker {
         address owner,
         uint orderId,
         uint128 executedAmount
-    ) internal returns (uint) {
+    ) internal {
         orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(executedAmount));
     }
 
