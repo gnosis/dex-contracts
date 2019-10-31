@@ -101,7 +101,6 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev a user facing function used to place limit sell orders in auction with expiry defined by batchId
       * @param buyToken id of token to be bought
       * @param sellToken id of token to be sold
-      * @param isSellOrder - TODO - remove with
       * @param validUntil - batchId represnting order's expiry
       * @param buyAmount - relative minimum amount of requested buy amount
       * @param sellAmount - maximum amount of sell token to be exchanged
