@@ -1155,7 +1155,40 @@ contract("StablecoinConverter", async (accounts) => {
         "sellAmount too large"
       )
     })
+    it("reverts if max touched orders is exceeded", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_2 = await MockContract.new()
 
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+
+      await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
+      await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
+
+      await stablecoinConverter.addToken(erc20_2.address)
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+
+      await closeAuction(stablecoinConverter)
+
+      const prices = basicTrade.solution.prices
+      const seedOwners = basicTrade.solution.owners
+      const seedVolumes = basicTrade.solution.volume
+      const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
+
+      const halfNumTouched = 20
+      const owner = Array(halfNumTouched).fill(seedOwners[0]).concat(Array(halfNumTouched).fill(seedOwners[1]))
+      const orderId = Array(halfNumTouched).fill(orderId1).concat(Array(halfNumTouched).fill(orderId2))
+      const volume = Array(halfNumTouched).fill(seedVolumes[0] / halfNumTouched).concat(Array(halfNumTouched).fill(seedVolumes[1] / halfNumTouched))
+
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
+        "Solution exceeds MAX_TOUCHED_ORDERS"
+      )
+    })
   })
   describe("getEncodedAuctionElements()", async () => {
     it("returns all orders that are have ever been submitted", async () => {
