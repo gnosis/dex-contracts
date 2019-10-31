@@ -60,14 +60,13 @@ contract("StablecoinConverter", async (accounts) => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
 
       const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
-      const id = await stablecoinConverter.placeOrder.call(0, 1, true, 3, 10, 20, { from: user_1 })
-      await stablecoinConverter.placeOrder(0, 1, true, 3, 10, 20, { from: user_1 })
+      const id = await stablecoinConverter.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
+      await stablecoinConverter.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
       const orderResult = (await stablecoinConverter.orders.call(user_1, id))
       assert.equal((orderResult.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
       assert.equal((orderResult.priceNumerator).toNumber(), 10, "priceNumerator was stored incorrectly")
       assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
       assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
-      assert.equal(orderResult.isSellOrder, true, "sellTokenFlag was stored incorrectly")
       assert.equal((orderResult.validFrom).toNumber(), currentStateIndex.toNumber(), "validFrom was stored incorrectly")
       assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
     })
@@ -77,8 +76,8 @@ contract("StablecoinConverter", async (accounts) => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
 
-      const id = await stablecoinConverter.placeOrder.call(0, 1, true, 3, 10, 20, { from: user_1 })
-      await stablecoinConverter.placeOrder(0, 1, true, 3, 10, 20, { from: user_1 })
+      const id = await stablecoinConverter.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
+      await stablecoinConverter.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
       const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
       await stablecoinConverter.cancelOrder(id, { from: user_1 })
       assert.equal(
@@ -94,7 +93,7 @@ contract("StablecoinConverter", async (accounts) => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
 
-      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, 3, 10, 20)
+      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
       await stablecoinConverter.cancelOrder(id)
       await waitForNSeconds(BATCH_TIME)
       await stablecoinConverter.freeStorageOfOrder([id])
@@ -107,22 +106,25 @@ contract("StablecoinConverter", async (accounts) => {
 
       const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
 
-      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, currentStateIndex + 3, 10, 20)
-      await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder([id]), "Order is still valid")
+      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, currentStateIndex + 3, 10, 20)
+      await truffleAssert.reverts(
+        stablecoinConverter.freeStorageOfOrder([id]),
+        "Order is still valid"
+      )
     })
     it("fails to delete canceled order in same stateIndex", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, 3, 10, 20)
+      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
       await stablecoinConverter.cancelOrder(id)
       await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder([id]), "Order is still valid")
     })
     it("deletes several orders successfully", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, 3, 10, 20)
+      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
       await stablecoinConverter.cancelOrder(id)
-      const id2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, 3, 10, 20)
+      const id2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
       await stablecoinConverter.cancelOrder(id2)
       await waitForNSeconds(BATCH_TIME)
       await stablecoinConverter.freeStorageOfOrder([id, id2])
@@ -187,8 +189,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -219,8 +221,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, feeSubtracted(10000), feeAdded(10000), { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, feeSubtracted(10000), feeAdded(10000), { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -252,8 +254,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -293,8 +295,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -335,8 +337,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -382,10 +384,10 @@ contract("StablecoinConverter", async (accounts) => {
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 5000, feeAdded(10000), { from: user_1 })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex + 1, 5000, feeAdded(10000), { from: user_2 })
-      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 5000, feeAdded(10000), { from: user_2 })
-      const orderId4 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex + 1, 5000, feeAdded(10000), { from: user_3 })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, batchIndex + 1, 5000, feeAdded(10000), { from: user_1 })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, batchIndex + 1, 5000, feeAdded(10000), { from: user_2 })
+      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, batchIndex + 1, 5000, feeAdded(10000), { from: user_2 })
+      const orderId4 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, batchIndex + 1, 5000, feeAdded(10000), { from: user_3 })
 
       await closeAuction(stablecoinConverter)
 
@@ -425,8 +427,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -472,9 +474,9 @@ contract("StablecoinConverter", async (accounts) => {
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 1000, feeAdded(10000), { from: user_1 })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 2, 1, true, batchIndex + 1, 1000, feeAdded(10000), { from: user_2 })
-      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 2, true, batchIndex + 1, 1000, feeAdded(10000), { from: user_3 })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, batchIndex + 1, 1000, feeAdded(10000), { from: user_1 })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 2, 1, batchIndex + 1, 1000, feeAdded(10000), { from: user_2 })
+      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 2, batchIndex + 1, 1000, feeAdded(10000), { from: user_3 })
 
 
       await closeAuction(stablecoinConverter)
@@ -508,8 +510,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -538,8 +540,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       const prices = basicTrade.solution.prices
       const owner = basicTrade.solution.owners
@@ -566,8 +568,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
       // close another auction
@@ -597,8 +599,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex, basicTrade.orders[0].buyAmount + 100, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex, basicTrade.orders[0].buyAmount + 100, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
       const prices = basicTrade.solution.prices
@@ -625,8 +627,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
       const prices = basicTrade.solution.prices
@@ -654,8 +656,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount - 1, basicTrade.orders[1].sellAmount, { from: user_2 })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount - 1, basicTrade.orders[1].sellAmount, { from: user_2 })
 
       await closeAuction(stablecoinConverter)
 
@@ -685,8 +687,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -715,8 +717,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -745,8 +747,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -775,8 +777,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -805,8 +807,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -838,10 +840,10 @@ contract("StablecoinConverter", async (accounts) => {
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, true, batchIndex + 1, 10000, 60000, { from: user_1 })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 2, 1, true, batchIndex + 1, 10000, 60000, { from: user_2 })
-      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 2, true, batchIndex + 1, 10000, 60000, { from: user_3 })
-      const orderId4 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, batchIndex + 1, 10000, 60000, { from: user_2 })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, batchIndex + 1, 10000, 60000, { from: user_1 })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 2, 1, batchIndex + 1, 10000, 60000, { from: user_2 })
+      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 2, batchIndex + 1, 10000, 60000, { from: user_3 })
+      const orderId4 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, batchIndex + 1, 10000, 60000, { from: user_2 })
 
 
       await closeAuction(stablecoinConverter)
@@ -878,8 +880,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -908,8 +910,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -936,8 +938,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -971,8 +973,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -1005,8 +1007,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -1038,8 +1040,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -1072,8 +1074,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -1103,8 +1105,8 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, true, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, true, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       await closeAuction(stablecoinConverter)
 
@@ -1133,8 +1135,8 @@ contract("StablecoinConverter", async (accounts) => {
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      await stablecoinConverter.placeOrder(1, 0, true, batchIndex, 20, 10, { from: user_1 })
-      await stablecoinConverter.placeOrder(0, 1, true, batchIndex + 10, 500, 400, { from: user_2 })
+      await stablecoinConverter.placeOrder(1, 0, batchIndex, 20, 10, { from: user_1 })
+      await stablecoinConverter.placeOrder(0, 1, batchIndex + 10, 500, 400, { from: user_2 })
 
       const auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
       assert.equal(auctionElements.length, 2)
@@ -1145,7 +1147,6 @@ contract("StablecoinConverter", async (accounts) => {
         sellToken: 0,
         validFrom: batchIndex,
         validUntil: batchIndex,
-        isSellOrder: true,
         priceNumerator: 20,
         priceDenominator: 10,
         remainingAmount: 10,
@@ -1157,7 +1158,6 @@ contract("StablecoinConverter", async (accounts) => {
         sellToken: 1,
         validFrom: batchIndex,
         validUntil: batchIndex + 10,
-        isSellOrder: true,
         priceNumerator: 500,
         priceDenominator: 400,
         remainingAmount: 400,
@@ -1179,7 +1179,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await stablecoinConverter.deposit(erc20_1.address, 8, { from: user_1 })
       await stablecoinConverter.deposit(erc20_2.address, 20, { from: user_1 })
-      await stablecoinConverter.placeOrder(1, 2, true, batchIndex, 20, 10, { from: user_1 })
+      await stablecoinConverter.placeOrder(1, 2, batchIndex, 20, 10, { from: user_1 })
 
       let auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
       assert.equal(auctionElements[0].sellTokenBalance, 0)
@@ -1199,7 +1199,7 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      await stablecoinConverter.placeOrder(1, 0, true, batchIndex + 10, 20, 10)
+      await stablecoinConverter.placeOrder(1, 0, batchIndex + 10, 20, 10)
       stablecoinConverter.cancelOrder(0)
 
       let auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
