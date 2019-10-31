@@ -35,8 +35,8 @@ contract EpochTokenLocker {
     // User => Token => BalanceState
     mapping(address => mapping(address => BalanceState)) private balanceStates;
 
-    // user => token => batchId => wasCredited
-    mapping(address => mapping (address => mapping(uint => bool))) public hasCreditedBalance;
+    // user => token => lastCreditBatchId
+    mapping(address => mapping (address => uint)) public lastCreditBatchId;
 
     struct BalanceState {
         uint256 balance;
@@ -79,7 +79,7 @@ contract EpochTokenLocker {
         );
 
         require(
-            !hasCreditedBalance[msg.sender][token][getCurrentBatchId()],
+            lastCreditBatchId[msg.sender][token] < getCurrentBatchId(),
             "Withdraw not possible for token that is traded in the current auction"
         );
 
@@ -146,11 +146,12 @@ contract EpochTokenLocker {
      * will not be immediately final. E.g. our stablecoin converter credits new balances to
      * the buyers in an auction, but as there are might be better solutions, the updates are
      * not final. In order to prevent withdraws from non-final updates, we disallow withdraws
-     * by setting hasCreditedBalance to 'true'
+     * by setting lastCreditBatchId to the current batchId and allow only withdraws in batches
+     * with a higher batchId
      */
     function addBalanceAndBlockWithdrawForThisBatch(address user, address token, uint amount) internal {
         if (hasValidWithdrawRequest(user, token)) {
-            hasCreditedBalance[user][token][getCurrentBatchId()] = true;
+            lastCreditBatchId[user][token] = getCurrentBatchId();
         }
         addBalance(user, token, amount);
     }
