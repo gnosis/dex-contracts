@@ -14,7 +14,7 @@ contract StablecoinConverter is EpochTokenLocker {
     using TokenConservation for int[];
 
     uint constant private MAX_UINT128 = 2**128 - 1;
-    uint constant MAX_TOUCHED_ORDERS = 25;
+    uint constant public MAX_TOUCHED_ORDERS = 25;
 
     event OrderPlacement(
         address owner,
