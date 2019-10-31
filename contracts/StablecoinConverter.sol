@@ -105,10 +105,12 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function freeStorageOfOrder(
-        uint id
+        uint[] memory id
     ) public {
-        require(orders[msg.sender][id].validUntil + 1 < getCurrentBatchId(), "Order is still valid");
-        delete orders[msg.sender][id];
+        for (uint i = 0; i < id.length; i++) {
+            require(orders[msg.sender][id[i]].validUntil + 1 < getCurrentBatchId(), "Order is still valid");
+            delete orders[msg.sender][id[i]];
+        }
     }
 
     function tokenAddressToIdMap(address addr) public view returns (uint16) {
@@ -198,7 +200,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 "limit price not satisfied"
             );
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
-            addBalanceAndPostponeWithdraw(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
+            addBalanceAndBlockWithdrawForThisBatch(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
         }
         // doing all subtractions after all additions (in order to avoid negative values)
         for (uint i = 0; i < owners.length; i++) {
@@ -228,7 +230,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
         previousSolution.feeReward = feeReward;
-        addBalanceAndPostponeWithdraw(msg.sender, tokenIdToAddressMap(0), feeReward);
+        addBalanceAndBlockWithdrawForThisBatch(msg.sender, tokenIdToAddressMap(0), feeReward);
     }
 
     function updateCurrentPrices(
