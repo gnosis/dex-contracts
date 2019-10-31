@@ -107,7 +107,10 @@ contract("StablecoinConverter", async (accounts) => {
       const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
 
       const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, currentStateIndex + 3, 10, 20)
-      await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder(id), "Order is still valid")
+      await truffleAssert.reverts(
+        stablecoinConverter.freeStorageOfOrder([id]),
+        "Order is still valid"
+      )
     })
     it("fails to delete canceled order in same stateIndex", async () => {
       const feeToken = await MockContract.new()
@@ -119,9 +122,9 @@ contract("StablecoinConverter", async (accounts) => {
     it("deletes several orders successfully", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, 3, 10, 20)
+      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
       await stablecoinConverter.cancelOrder(id)
-      const id2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, true, 3, 10, 20)
+      const id2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
       await stablecoinConverter.cancelOrder(id2)
       await waitForNSeconds(BATCH_TIME)
       await stablecoinConverter.freeStorageOfOrder([id, id2])
