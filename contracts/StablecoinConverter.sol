@@ -232,7 +232,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     /** @dev View returning ID of listed tokens
       * @param addr address of listed token.
-      * @return tokenId as stored, via BiMap, within the contract.
+      * @return tokenId as stored within the contract.
       */
     function tokenAddressToIdMap(address addr) public view returns (uint16) {
         return IdToAddressBiMap.getId(registeredTokens, addr);
