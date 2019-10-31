@@ -8,9 +8,7 @@ import "./libraries/TokenConservation.sol";
 
 
 /** @title Stable Coin Converter - A decentralized exchange for stable tokens as a batch auciton.
- * @author Alex Herrmann - <alex@gnosis.pm>
- * @author Benjamin Smith - <ben@gnosis.pm>
- * @author Felix Leupold - <felix@gnosis.pm>
+ *  @author @gnosis/dfusion-team <https://github.com/orgs/gnosis/teams/dfusion-team/members>
  */
 contract StablecoinConverter is EpochTokenLocker {
     using SafeMath for uint128;
