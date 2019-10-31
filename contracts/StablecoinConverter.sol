@@ -41,7 +41,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 remainingAmount; // remainingAmount can either be a sellAmount or buyAmount, depending on the flag isSellOrder
     }
 
-    // User-> Order
+    // User -> Order
     mapping(address => Order[]) public orders;
 
     // Iterable set of all users, required to collect auction information
@@ -180,6 +180,7 @@ contract StablecoinConverter is EpochTokenLocker {
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
         int[] memory tokenConservation = new int[](prices.length);
+        uint utility = 0;
         for (uint i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(checkOrderValidity(order, batchIndex), "Order is invalid");
@@ -198,6 +199,8 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedSellAmount.mul(order.priceNumerator) <= executedBuyAmount.mul(order.priceDenominator),
                 "limit price not satisfied"
             );
+            // accumulate utility before updateRemainingOrder, but after limitPrice verified!
+            utility = utility.add(evaluateUtility(executedBuyAmount, order));
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
             addBalanceAndBlockWithdrawForThisBatch(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
         }
@@ -213,7 +216,9 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedSellAmount
             );
         }
-        checkAndOverrideObjectiveValue(uint(tokenConservation[0]));
+        // Objective function is the sum of utility + the burnt fees collected
+        // This ensures direct trades (when available) yield better solutions than longer rings!
+        checkAndOverrideObjectiveValue(utility + uint(tokenConservation[0]) / 2);
         grantRewardToSolutionSubmitter(uint(tokenConservation[0]) / 2);
         tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
@@ -225,6 +230,19 @@ contract StablecoinConverter is EpochTokenLocker {
         } else {
             return 0;
         }
+    }
+
+    function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
+        // Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
+        uint256 execSell = getExecutedSellAmount(
+            execBuy,
+            currentPrices[order.buyToken],
+            currentPrices[order.sellToken]
+        );
+        return uint128(
+            execBuy.sub(execSell.mul(order.priceNumerator)
+                .div(order.priceDenominator)).mul(currentPrices[order.buyToken])
+        );
     }
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
@@ -248,17 +266,20 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 executedBuyAmount,
         uint128 buyTokenPrice,
         uint128 sellTokenPrice
+        // uint128 feeDenominator
     ) internal view returns (uint128) {
-        // executedSellAmount = sellAmount * (1 - (1/feeDenominator))
-        //                    = sellAmount - sellAmount/feeDenominator
-        //                    = (sellAmount * feeDenominator) / feeDenominator - sellAmount/feeDenominator
-        //                    = (sellAmount * feeDenominator - sellAmount) / feeDenominator
-        //                    = (sellAmount * (feeDenominator - 1)) /feeDenominator
-        //                    = (executedBuyAmount * buyTokenPrice / sellTokenPrice) * (feeDenominator - 1) / feeDenominator
-        //                    in order to minimize rounding errors, the order is switched
-        //                    = (executedBuyAmount * buyTokenPrice / feeDenominator) * (feeDenominator - 1) / sellTokenPrice
-        uint256 sellAmount = (uint256(executedBuyAmount).mul(buyTokenPrice) / (feeDenominator - 1))
-            .mul(feeDenominator) / sellTokenPrice;
+        // Based on Equation (2) from https://github.com/gnosis/dex-contracts/issues/173#issuecomment-526163117
+        // execSellAmount * p[sellToken] * (1 - phi) == execBuyAmount * p[buyToken]
+        // where phi = 1/feeDenominator
+        // Note that: 1 - phi = (feeDenominator - 1) / feeDenominator
+        // And so, 1/(1-phi) = feeDenominator / (feeDenominator - 1)
+        // execSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
+        //                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * feeDenominator / (feeDenominator - 1)
+        //    in order to minimize rounding errors, the order of operations is switched
+        //                = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
+        uint256 sellAmount = uint256(executedBuyAmount).mul(buyTokenPrice).div(feeDenominator - 1)
+            .mul(feeDenominator).div(sellTokenPrice);
+        // TODO - use SafeCast here.
         require(sellAmount < MAX_UINT128, "sellAmount too large");
         return uint128(sellAmount);
     }
