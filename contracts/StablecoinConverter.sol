@@ -53,7 +53,6 @@ contract StablecoinConverter is EpochTokenLocker {
     uint public MAX_TOKENS;  // solhint-disable var-name-mixedcase
     uint16 public numTokens = 0;
     uint128 public feeDenominator; // fee is (1 / feeDenominator)
-    // uint128 private utilityAdjustmentFactor = 2;
 
     constructor(uint maxTokens, uint128 _feeDenominator, address feeToken) public {
         MAX_TOKENS = maxTokens;
@@ -223,8 +222,10 @@ contract StablecoinConverter is EpochTokenLocker {
                 evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
             );
         }
-        require(utility >= disregardedUtility, "Solution must be better than trivial");
+        // Objective function is the sum of utility + the burnt fees collected
+        // This ensures direct trades (when available) yield better solutions than longer rings!
         uint burntFees = uint(tokenConservation[0]) / 2;
+        require(utility + burntFees > disregardedUtility, "Solution must be better than trivial");
         checkAndOverrideObjectiveValue(utility - disregardedUtility + burntFees);
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
