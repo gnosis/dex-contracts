@@ -154,7 +154,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] tokenIdsForPrice;
         address solutionSubmitter;
         uint256 feeReward;
-        uint256 objectiveValue;
+        uint objectiveValue;
     }
 
     struct TradeData {
@@ -216,10 +216,17 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedSellAmount
             );
         }
-        // Objective function is the sum of utility + the burnt fees collected
-        // This ensures direct trades (when available) yield better solutions than longer rings!
-        checkAndOverrideObjectiveValue(utility + uint(tokenConservation[0]) / 2);
-        grantRewardToSolutionSubmitter(uint(tokenConservation[0]) / 2);
+        uint disregardedUtility = 0;
+        for (uint i = 0; i < owners.length; i++) {
+            disregardedUtility = disregardedUtility.add(
+                evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
+            );
+        }
+        uint burntFees = uint(tokenConservation[0]) / 2;
+        require(utility + burntFees > disregardedUtility, "Solution must be better than trivial");
+        // burntFees ensures direct trades (when available) yield better solutions than longer rings
+        checkAndOverrideObjectiveValue(utility - disregardedUtility + burntFees);
+        grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
@@ -243,6 +250,22 @@ contract StablecoinConverter is EpochTokenLocker {
             execBuy.sub(execSell.mul(order.priceNumerator)
                 .div(order.priceDenominator)).mul(currentPrices[order.buyToken])
         );
+    }
+
+    function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint128) {
+        // |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
+        // where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken
+        // and leftoverSellAmount = order.sellAmt - execSellAmt
+        // Balances and orders have all been updated so: sellAmount - execSellAmt == order.remainingAmount.
+        // For correctness, we take the minimum of this with the user's token balance.
+        uint256 leftoverSellAmount = Math.min(
+            uint256(order.remainingAmount),
+            getBalance(user, tokenIdToAddressMap(order.sellToken))
+        );
+        // TODO - use SafeCast
+        uint256 limitTerm = currentPrices[order.sellToken].mul(order.priceDenominator)
+            .sub(currentPrices[order.buyToken].mul(order.priceNumerator));
+        return uint128(leftoverSellAmount.mul(limitTerm).div(order.priceDenominator));
     }
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
