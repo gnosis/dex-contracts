@@ -222,10 +222,9 @@ contract StablecoinConverter is EpochTokenLocker {
                 evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
             );
         }
-        // Objective function is the sum of utility + the burnt fees collected
-        // This ensures direct trades (when available) yield better solutions than longer rings!
         uint burntFees = uint(tokenConservation[0]) / 2;
         require(utility + burntFees > disregardedUtility, "Solution must be better than trivial");
+        // burntFees ensures direct trades (when available) yield better solutions than longer rings
         checkAndOverrideObjectiveValue(utility - disregardedUtility + burntFees);
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
