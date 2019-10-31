@@ -14,6 +14,7 @@ contract StablecoinConverter is EpochTokenLocker {
     using TokenConservation for int[];
 
     uint constant private MAX_UINT128 = 2**128 - 1;
+    uint constant MAX_TOUCHED_ORDERS = 25;
 
     event OrderPlacement(
         address owner,
@@ -176,12 +177,10 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
                                           // fee token id not required since always 0
     ) public {
-        require(
-            batchIndex == getCurrentBatchId() - 1,
-            "Solutions are no longer accepted for this batch"
-        );
+        require(batchIndex == getCurrentBatchId() - 1, "Solutions are no longer accepted for this batch");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         require(checkPriceOrdering(tokenIdsForPrice), "prices are not ordered by tokenId");
+        require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
         undoPreviousSolution(batchIndex);
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete previousSolution.trades;
