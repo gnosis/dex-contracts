@@ -36,7 +36,7 @@ module.exports = async (callback) => {
     const batch_index = (await instance.getCurrentBatchId.call()).toNumber()
     const valid_until = batch_index + parseInt(argv.validFor)
 
-    const id = await sendTxAndGetReturnValue(instance.placeOrder, argv.buyToken, argv.sellToken, true, valid_until, minBuy, maxSell, { from: account })
+    const id = await sendTxAndGetReturnValue(instance.placeOrder, argv.buyToken, argv.sellToken, valid_until, minBuy, maxSell, { from: account })
 
     console.log(`Placed Limit Sell Order successfully with ID ${id}. Valid from batch ${batch_index} until batch: ${valid_until}`)
     callback()
