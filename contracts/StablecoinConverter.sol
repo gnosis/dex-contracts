@@ -20,7 +20,6 @@ contract StablecoinConverter is EpochTokenLocker {
         address owner,
         uint16 buyToken,
         uint16 sellToken,
-        bool isSellOrder,
         uint32 validFrom,
         uint32 validUntil,
         uint128 priceNumerator,
@@ -37,7 +36,6 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16 sellToken;
         uint32 validFrom;   // order is valid from auction collection period: validFrom inclusive
         uint32 validUntil;  // order is valid till auction collection period: validUntil inclusive
-        bool isSellOrder;
         uint128 priceNumerator;
         uint128 priceDenominator;
         uint128 remainingAmount; // remainingAmount can either be a sellAmount or buyAmount, depending on the flag isSellOrder
@@ -74,7 +72,6 @@ contract StablecoinConverter is EpochTokenLocker {
     function placeOrder(
         uint16 buyToken,
         uint16 sellToken,
-        bool isSellOrder,
         uint32 validUntil,
         uint128 buyAmount,
         uint128 sellAmount
@@ -84,7 +81,6 @@ contract StablecoinConverter is EpochTokenLocker {
             sellToken: sellToken,
             validFrom: getCurrentBatchId(),
             validUntil: validUntil,
-            isSellOrder: isSellOrder,
             priceNumerator: buyAmount,
             priceDenominator: sellAmount,
             remainingAmount: sellAmount
@@ -93,7 +89,6 @@ contract StablecoinConverter is EpochTokenLocker {
             msg.sender,
             buyToken,
             sellToken,
-            isSellOrder,
             getCurrentBatchId(),
             validUntil,
             buyAmount,
@@ -338,7 +333,6 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function getTradedAmounts(uint128 volume, Order memory order) private view returns (uint128, uint128) {
-        // TODO: implement logic also for buyOrders
         uint128 executedBuyAmount = volume;
         require(currentPrices[order.sellToken] != 0, "prices are not allowed to be zero");
         uint128 executedSellAmount = getExecutedSellAmount(
@@ -373,7 +367,6 @@ contract StablecoinConverter is EpochTokenLocker {
         element = element.concat(abi.encodePacked(order.sellToken));
         element = element.concat(abi.encodePacked(order.validFrom));
         element = element.concat(abi.encodePacked(order.validUntil));
-        element = element.concat(abi.encodePacked(order.isSellOrder));
         element = element.concat(abi.encodePacked(order.priceNumerator));
         element = element.concat(abi.encodePacked(order.priceDenominator));
         element = element.concat(abi.encodePacked(order.remainingAmount));
