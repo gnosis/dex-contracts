@@ -6,6 +6,7 @@ import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOn
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
 
+
 /** @title Stable Coin Converter - A decentralized exchange for stable tokens as a batch auciton.
  * @author Alex Herrmann - <alex@gnosis.pm>
  * @author Benjamin Smith - <ben@gnosis.pm>
@@ -225,7 +226,6 @@ contract StablecoinConverter is EpochTokenLocker {
         tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
     }
-
     /**
      * Public View Methods
      */
@@ -282,7 +282,6 @@ contract StablecoinConverter is EpochTokenLocker {
             return 0;
         }
     }
-
     /**
      * Internal Functions
      */
@@ -415,7 +414,6 @@ contract StablecoinConverter is EpochTokenLocker {
             );
         }
     }
-
     /**
      * Private Functions
      */
@@ -430,7 +428,6 @@ contract StablecoinConverter is EpochTokenLocker {
         );
         previousSolution.objectiveValue = newObjectiveValue;
     }
-
     // Private view
 
     /** @dev Compute trade execution based on executedBuyAmount and relevant token prices
@@ -449,7 +446,6 @@ contract StablecoinConverter is EpochTokenLocker {
         );
         return (executedBuyAmount, executedSellAmount);
     }
-
     // Private pure
 
     /** @dev used to determine if an order is valid for specific auction/batch
