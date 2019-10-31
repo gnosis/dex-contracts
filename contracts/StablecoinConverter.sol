@@ -306,6 +306,7 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param executedBuyAmount amount of buyToken to be obtained in an exchange
       * @param buyTokenPrice price of buyToken
       * @param sellTokenPrice price of sellToken
+      * @return executedSellAmount as computed from prices and executedBuyAmount (fees incorporated)
       */
     function getExecutedSellAmount(
         uint128 executedBuyAmount,
