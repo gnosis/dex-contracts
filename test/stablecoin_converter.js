@@ -201,7 +201,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, [0, 0], prices, tokenIdsForPrice, { from: solutionSubmitter }),
-        "Solution must be better than trivial"
+        "Solution does not have a higher objective value than a previous solution"
       )
       const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
       assert.equal(0, currentObjectiveValue)
@@ -237,6 +237,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_2.address)).toNumber(), volume[0], "Bought tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), basicTrade.deposits[1].amount - getSellVolume(volume[1], prices[1], prices[0]), "Sold tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(), volume[1], "Bought tokens were not adjusted correctly")
+
       const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
       assert(currentObjectiveValue > 0)
     })
