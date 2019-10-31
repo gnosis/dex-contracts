@@ -272,7 +272,7 @@ contract StablecoinConverter is EpochTokenLocker {
         return elements;
     }
 
-    /** @dev called by solvers to determine their solution better than the current winner.
+    /** @dev gets the objective value of currently winning solution.
       * @return objective function evaluation of the currently winning solution, or zero if no solution proposed.
       */
     function getCurrentObjectiveValue() public view returns(uint) {
