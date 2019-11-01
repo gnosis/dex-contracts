@@ -23,15 +23,23 @@ contract StablecoinConverter is EpochTokenLocker {
     IterableAppendOnlySet.Data private allUsers;
     IdToAddressBiMap.Data private registeredTokens;
 
+    /** @dev Maximum number of touched orders in auction (used in submitSolution) */
     uint constant public MAX_TOUCHED_ORDERS = 25;
-    uint public MAX_TOKENS;  // solhint-disable var-name-mixedcase
+
+    /** @dev maximum number of tokens that can be listed for exchange */
+    // solhint-disable-next-line var-name-mixedcase
+    uint public MAX_TOKENS;
+
+    /** @dev Current number of tokens listed/available for exchange */
     uint16 public numTokens;
+
+    /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/feeDenominator */
     uint128 public feeDenominator;
 
-    // User -> Order
+    /** @dev mapping of type userAddress -> List[Order] where all the user's orders are stored */
     mapping(address => Order[]) public orders;
 
-    // tokenId -> CurrentPrice
+    /** @dev mapping of type tokenId -> curentPrice of tokenId */
     mapping (uint16 => uint128) public currentPrices;
     PreviousSolutionData public previousSolution;
 
@@ -296,7 +304,7 @@ contract StablecoinConverter is EpochTokenLocker {
         addBalanceAndBlockWithdrawForThisBatch(msg.sender, tokenIdToAddressMap(0), feeReward);
     }
 
-    /** @dev called early from within submitSolution to update the token prices.
+    /** @dev Called from within submitSolution to update the token prices.
       * @param prices list of prices for touched tokens only, first price is always fee token price
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
       */
