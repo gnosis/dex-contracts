@@ -29,6 +29,8 @@ const gas = process.env.GAS_LIMIT || DEFAULT_GAS_LIMIT
 //  i.e. NETWORK='{ "name": "docker", "networkId": "99999", "url": "http://rpc:8545", "gas": "6700000", "gasPrice": "25000000000"  }'
 let additionalNetwork = process.env.NETWORK ? JSON.parse(process.env.NETWORK) : null
 
+const urlDevelopment = process.env.GANACHE_HOST || 'localhost'
+
 // network key
 const infuraKey = process.env.INFURA_KEY || '9408f47dedf04716a03ef994182cf150'
 
@@ -44,6 +46,7 @@ module.exports = {
     urlRinkeby: 'https://rinkeby.infura.io/v3/'.concat(infuraKey),
     urlKovan: 'https://kovan.infura.io/v3/'.concat(infuraKey),
     urlMainnet: 'https://mainnet.infura.io/v3/'.concat(infuraKey),
+    urlDevelopment,
     gasPriceGWei,
     gas,
     additionalNetwork,
