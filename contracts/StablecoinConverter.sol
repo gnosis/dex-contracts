@@ -158,17 +158,16 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param owners array of addresses corresponding to touched orders
       * @param orderIds array of order ids used in parallel with owners to identify touched order
       * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
-      * @param prices prices for touched tokens indexed by next parameter
-      * @param tokenIdsForPrice ordered list of touched token ids
+      * @param prices list of prices for touched tokens indexed by next parameter
+      * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
       */
     function submitSolution(
         uint32 batchIndex,
-        address[] memory owners,          // tradeData is submitted as arrays
+        address[] memory owners,
         uint16[] memory orderIds,
         uint128[] memory volumes,
-        uint128[] memory prices,          // list of prices for touched tokens only
-        uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
-                                          // fee token id not required since always 0
+        uint128[] memory prices,
+        uint16[] memory tokenIdsForPrice
     ) public {
         require(
             batchIndex == getCurrentBatchId() - 1,
@@ -358,11 +357,11 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param owners array of addresses corresponding to touched orders
       * @param orderIds array of order ids used in parallel with owners to identify touched order
       * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
-      * @param tokenIdsForPrice ordered list of touched token ids
+      * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
       */
     function documentTrades(
         uint32 batchIndex,
-        address[] memory owners,  // tradeData is submitted as arrays
+        address[] memory owners,
         uint16[] memory orderIds,
         uint128[] memory volumes,
         uint16[] memory tokenIdsForPrice
