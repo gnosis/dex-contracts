@@ -87,7 +87,7 @@ contract StablecoinConverter is EpochTokenLocker {
         addToken(feeToken); // fee Token will always have the token index 0
     }
 
-    /** @dev Used to list a new token on the exchange.
+    /** @dev Used to list a new token on the contract: Hence, making it available for exchange in an auction.
       * @param _tokenAddress ERC20 token to be listed.
       */
     function addToken(address _tokenAddress) public {
@@ -99,7 +99,7 @@ contract StablecoinConverter is EpochTokenLocker {
         numTokens++;
     }
 
-    /** @dev a user facing function used to place limit sell orders in auction with expiry defined by batchId
+    /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
       * @param buyToken id of token to be bought
       * @param sellToken id of token to be sold
       * @param validUntil - batchId represnting order's expiry
@@ -144,7 +144,8 @@ contract StablecoinConverter is EpochTokenLocker {
         emit OrderCancelation(msg.sender, id);
     }
 
-    /** @dev a user facing function used to delete expired orders
+    /** @dev A user facing function used to delete expired orders.
+      * This release of storage gives a gas refund to msg.sender and requires that all orders are expired.
       * @param ids referencing the indices of user's orders to be deleted
       */
     function freeStorageOfOrder(uint[] memory ids) public {
