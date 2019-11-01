@@ -187,9 +187,13 @@ contract StablecoinConverter is EpochTokenLocker {
       * 3. `tokenIdsForPrice` is sorted.
       * 4. Number of touched orders does not exceed `MAX_TOUCHED_ORDERS`.
       * 5. Each touched order is valid at current `batchIndex`.
-      * 6. `executedSellAmount` does not exceed order's remaining amount.
+      * 6. Each touched order's `executedSellAmount` does not exceed its remaining amount.
       * 7. Limit Price of each touched order is respected.
-      * 8.
+      * 8. Solution's objective evaluation must be positive.
+      *
+      * Sub Requirements: Those nested within other functions
+      * - checkAndOverrideObjectiveValue; Objetive Evaluation is greater than current winning solution
+      * - checkTokenConservation; for all, non-fee, tokens total amount sold == total amount bought
       */
     function submitSolution(
         uint32 batchIndex,
