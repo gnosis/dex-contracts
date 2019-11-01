@@ -3,6 +3,10 @@ pragma solidity ^0.5.0;
 import "openzeppelin-solidity/contracts/drafts/SignedSafeMath.sol";
 
 
+/** @title Token Conservation
+ *  A library for updating and verifying the tokenConservation contraint for StablecoinConverter's batch auction
+ *  @author @gnosis/dfusion-team <https://github.com/orgs/gnosis/teams/dfusion-team/members>
+ */
 library TokenConservation {
     using SignedSafeMath for int256;
 
@@ -14,26 +18,24 @@ library TokenConservation {
         uint128 buyAmount,
         uint128 sellAmount
     ) internal pure {
-        uint buyTokenIndex = findPriceIndex(buyToken, tokenIdsForPrice);
-        uint sellTokenIndex = findPriceIndex(sellToken, tokenIdsForPrice);
+        uint256 buyTokenIndex = findPriceIndex(buyToken, tokenIdsForPrice);
+        uint256 sellTokenIndex = findPriceIndex(sellToken, tokenIdsForPrice);
         self[buyTokenIndex] = self[buyTokenIndex].sub(int(buyAmount));
         self[sellTokenIndex] = self[sellTokenIndex].add(int(sellAmount));
     }
 
-    function checkTokenConservation(
-        int[] memory self
-    ) internal pure {
-        for (uint i = 1; i < self.length; i++) {
+    function checkTokenConservation(int[] memory self) internal pure {
+        for (uint256 i = 1; i < self.length; i++) {
             require(self[i] == 0, "Token conservation does not hold");
         }
     }
 
-    function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
+    function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint256) {
         // binary search for the other tokens
-        uint leftValue = 0;
-        uint rightValue = tokenIdForPrice.length - 1;
+        uint256 leftValue = 0;
+        uint256 rightValue = tokenIdForPrice.length - 1;
         while (rightValue >= leftValue) {
-            uint middleValue = leftValue + (rightValue-leftValue) / 2;
+            uint256 middleValue = leftValue + (rightValue-leftValue) / 2;
             if (tokenIdForPrice[middleValue] == index) {
                 return middleValue;
             } else if (tokenIdForPrice[middleValue] < index) {

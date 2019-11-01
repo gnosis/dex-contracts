@@ -96,11 +96,15 @@ contract StablecoinConverter is EpochTokenLocker {
 
     /** @dev Used to list a new token on the contract: Hence, making it available for exchange in an auction.
       * @param _tokenAddress ERC20 token to be listed.
+      *
+      * Requirements:
+      * - `maxTokens` has not already been reached
+      * - `token` has not already been added
       */
-    function addToken(address _tokenAddress) public {
+    function addToken(address token) public {
         require(numTokens < MAX_TOKENS, "Max tokens reached");
         require(
-            IdToAddressBiMap.insert(registeredTokens, numTokens, _tokenAddress),
+            IdToAddressBiMap.insert(registeredTokens, numTokens, token),
             "Token already registered"
         );
         numTokens++;
@@ -113,6 +117,8 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param buyAmount - relative minimum amount of requested buy amount
       * @param sellAmount - maximum amount of sell token to be exchanged
       * @return orderId as index of user's current orders
+      *
+      * Emits an {OrderPlacement} event with all relevant order details.
       */
     function placeOrder(
         uint16 buyToken,
@@ -145,6 +151,8 @@ contract StablecoinConverter is EpochTokenLocker {
 
     /** @dev a user facing function used to cancel orders (sets order expiry to previous batchId)
       * @param id referencing the index of user's order to be canceled
+      *
+      * Emits an {OrderCancelation} with sender's address and orderId
       */
     function cancelOrder(uint id) public {
         orders[msg.sender][id].validUntil = getCurrentBatchId() - 1;
@@ -154,6 +162,9 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev A user facing function used to delete expired orders.
       * This release of storage gives a gas refund to msg.sender and requires that all orders are expired.
       * @param ids referencing the indices of user's orders to be deleted
+      *
+      * Requirements:
+      * - Each requested order is expired
       */
     function freeStorageOfOrder(uint[] memory ids) public {
         for (uint i = 0; i < ids.length; i++) {
@@ -169,6 +180,16 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
       * @param prices list of prices for touched tokens indexed by next parameter
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+      *
+      * Requirements:
+      * 1. Solutions for this `batchIndex` are currently being accepted.
+      * 2. feeToken price is specified.
+      * 3. `tokenIdsForPrice` is sorted.
+      * 4. Number of touched orders does not exceed `MAX_TOUCHED_ORDERS`.
+      * 5. Each touched order is valid at current `batchIndex`.
+      * 6. `executedSellAmount` does not exceed order's remaining amount.
+      * 7. Limit Price of each touched order is respected.
+      * 8.
       */
     function submitSolution(
         uint32 batchIndex,
