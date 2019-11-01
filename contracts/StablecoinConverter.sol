@@ -95,7 +95,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     /** @dev Used to list a new token on the contract: Hence, making it available for exchange in an auction.
-      * @param _tokenAddress ERC20 token to be listed.
+      * @param token ERC20 token to be listed.
       *
       * Requirements:
       * - `maxTokens` has not already been reached
