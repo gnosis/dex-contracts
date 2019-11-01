@@ -84,13 +84,13 @@ contract EpochTokenLocker {
 
     /** @dev Claims pending withdraw - can be called on behalf of others
       * @param token address of token to be withdrawn
-      * @param owner address of owner who withdraw is being claimed.
+      * @param user address of user who withdraw is being claimed.
       */
-    function withdraw(address token, address owner) public {
-        updateDepositsBalance(owner, token); // withdrawn amount might just be deposited before
+    function withdraw(address token, address user) public {
+        updateDepositsBalance(user, token); // withdrawn amount might just be deposited before
 
         require(
-            balanceStates[owner][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
+            balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
             "withdraw was not registered previously"
         );
 
@@ -100,70 +100,74 @@ contract EpochTokenLocker {
         );
 
         uint amount = Math.min(
-            balanceStates[owner][token].balance,
+            balanceStates[user][token].balance,
             balanceStates[msg.sender][token].pendingWithdraws.amount
         );
 
-        balanceStates[owner][token].balance = balanceStates[owner][token].balance.sub(amount);
-        delete balanceStates[owner][token].pendingWithdraws;
+        balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
+        delete balanceStates[user][token].pendingWithdraws;
 
-        ERC20(token).transfer(owner, amount);
-        emit Withdraw(owner, token, amount);
+        ERC20(token).transfer(user, amount);
+        emit Withdraw(user, token, amount);
     }
     /**
      * Public view functions
      */
 
-    /** @dev
-      * @param user
-      * @param token
+    /** @dev getter function used to display pending deposit amount
+      * @param user address of user
+      * @param token address of ERC20 token
+      * return amount of pending deposit if any (else 0)
       */
     function getPendingDepositAmount(address user, address token) public view returns(uint) {
         return balanceStates[user][token].pendingDeposits.amount;
     }
 
-    /** @dev
-      * @param user
-      * @param token
+    /** @dev getter function used to display pending deposit batchIndex
+      * @param user address of user
+      * @param token address of ERC20 token
+      * return stateIndex of deposit's transfer
       */
     function getPendingDepositBatchNumber(address user, address token) public view returns(uint) {
         return balanceStates[user][token].pendingDeposits.stateIndex;
     }
 
-    /** @dev
-      * @param user
-      * @param token
+    /** @dev getter function used to display pending withdraw amount
+      * @param user address of user
+      * @param token address of ERC20 token
+      * return stateIndex when withdraw was requested
       */
     function getPendingWithdrawAmount(address user, address token) public view returns(uint) {
         return balanceStates[user][token].pendingWithdraws.amount;
     }
-    /** @dev
-      * @param user
-      * @param token
+
+    /** @dev getter function used to display pending withdraw's batchIndex
+      * @param user address of user
+      * @param token address of ERC20 token
+      * return stateIndex at time of withdraw's request
       */
     function getPendingWithdrawBatchNumber(address user, address token) public view returns(uint) {
         return balanceStates[user][token].pendingWithdraws.stateIndex;
     }
 
-    /** @dev
-      * @param user
-      * @param token
+    /** @dev getter function to determine current auction id.
+      * return current stateIndex
       */
     function getCurrentBatchId() public view returns(uint32) {
         return uint32(now / BATCH_TIME);
     }
 
-    /** @dev
-      * @param user
-      * @param token
+    /** @dev used to determine how much time is left in a batch
+      * return seconds remaining in current batch
       */
     function getSecondsRemainingInBatch() public view returns(uint) {
         return BATCH_TIME - (now % BATCH_TIME);
     }
 
-    /** @dev
-      * @param user
-      * @param token
+    /** @dev fetches and returns user's balance
+      * @param user address of user
+      * @param token address of ERC20 token
+      * return Current `token` balance of `user`'s account
       */
     function getBalance(address user, address token) public view returns(uint256) {
         uint balance = balanceStates[user][token].balance;
@@ -176,9 +180,10 @@ contract EpochTokenLocker {
         return balance;
     }
 
-    /** @dev
-      * @param user
-      * @param token
+    /** @dev Used to determine if user has a valid pending withdraw request of specific token
+      * @param user address of user
+      * @param token address of ERC20 token
+      * return true if `user` has valid withdraw request for `token`, otherwise false
       */
     function hasValidWithdrawRequest(address user, address token) public view returns(bool) {
         return balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId() &&
@@ -218,7 +223,6 @@ contract EpochTokenLocker {
             balanceStates[user][token].balance = balanceStates[user][token].balance.add(
                 balanceStates[user][token].pendingDeposits.amount
             );
-
             delete balanceStates[user][token].pendingDeposits;
         }
     }
