@@ -55,7 +55,11 @@ contract EpochTokenLocker {
     /** @dev credits user with deposit amount on next epoch (given by getCurrentBatchId)
       * @param token address of token to be deposited
       * @param amount number of token(s) to be credited to user's account
-      * Requires that token transfer to contract is successfull
+      *
+      * Emits an {Deposit} event with relevent deposit information.
+      *
+      * Requirements:
+      * - token transfer to contract is successfull
       */
     function deposit(address token, uint amount) public {
         updateDepositsBalance(msg.sender, token);
@@ -72,6 +76,8 @@ contract EpochTokenLocker {
     /** @dev Signals and initiates user's intent to withdraw.
       * @param token address of token to be withdrawn
       * @param amount number of token(s) to be withdrawn
+      *
+      * Emits an {WithdrawRequest} event with relevent request information.
       */
     function requestWithdraw(address token, uint amount) public {
         // First process pendingWithdraw (if any), as otherwise balances might increase for currentBatchId - 1
@@ -85,20 +91,23 @@ contract EpochTokenLocker {
     /** @dev Claims pending withdraw - can be called on behalf of others
       * @param token address of token to be withdrawn
       * @param user address of user who withdraw is being claimed.
+      *
+      * Emits an {Withdraw} event stating that `user` withdrew `amount` of `token`
+      *
+      * Requirements:
+      * - withdraw was requested in previous epoch
+      * - token was received from exchange in current auction batch
       */
     function withdraw(address token, address user) public {
-        updateDepositsBalance(user, token); // withdrawn amount might just be deposited before
-
+        updateDepositsBalance(user, token); // withdrawn amount may have been deposited in previous epoch
         require(
             balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
             "withdraw was not registered previously"
         );
-
         require(
             lastCreditBatchId[msg.sender][token] < getCurrentBatchId(),
             "Withdraw not possible for token that is traded in the current auction"
         );
-
         uint amount = Math.min(
             balanceStates[user][token].balance,
             balanceStates[msg.sender][token].pendingWithdraws.amount
