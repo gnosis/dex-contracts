@@ -408,7 +408,7 @@ contract("StablecoinConverter", async (accounts) => {
       // Now reverting should not throw due to temporarily negative balances, only later due to objective value criteria
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter }),
-        "Solution does not have a higher objective value than a previous solution"
+        "Solution must have a higher objective value than current solution"
       )
     })
     it("checks that trades documented from a previous trade are deleted and not considered for a new batchIndex", async () => {
