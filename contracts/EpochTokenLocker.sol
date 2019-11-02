@@ -64,7 +64,7 @@ contract EpochTokenLocker {
     function requestWithdraw(address token, uint amount) public {
         // first process old pendingWithdraw, as otherwise balances might increase for currentBatchId - 1
         if (hasValidWithdrawRequest(msg.sender, token)) {
-            withdraw(token, msg.sender);
+            withdraw(msg.sender, token);
         }
         balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: getCurrentBatchId() });
         emit WithdrawRequest(msg.sender, token, amount, getCurrentBatchId());
