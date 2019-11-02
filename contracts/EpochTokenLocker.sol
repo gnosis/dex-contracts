@@ -70,11 +70,11 @@ contract EpochTokenLocker {
         emit WithdrawRequest(msg.sender, token, amount, getCurrentBatchId());
     }
 
-    function withdraw(address token, address owner) public {
-        updateDepositsBalance(owner, token); // withdrawn amount might just be deposited before
+    function withdraw(address user, address token) public {
+        updateDepositsBalance(user, token); // withdrawn amount might just be deposited before
 
         require(
-            balanceStates[owner][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
+            balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
             "withdraw was not registered previously"
         );
 
@@ -84,15 +84,15 @@ contract EpochTokenLocker {
         );
 
         uint amount = Math.min(
-            balanceStates[owner][token].balance,
+            balanceStates[user][token].balance,
             balanceStates[msg.sender][token].pendingWithdraws.amount
         );
 
-        balanceStates[owner][token].balance = balanceStates[owner][token].balance.sub(amount);
-        delete balanceStates[owner][token].pendingWithdraws;
+        balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
+        delete balanceStates[user][token].pendingWithdraws;
 
-        ERC20(token).transfer(owner, amount);
-        emit Withdraw(owner, token, amount);
+        ERC20(token).transfer(user, amount);
+        emit Withdraw(user, token, amount);
     }
 
     /**
