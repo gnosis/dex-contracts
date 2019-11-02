@@ -46,7 +46,7 @@
     "ethereumjs-util": "^6.0.0",
     "fast-memoize": "^2.5.1",
     "merkletreejs": "0.0.22",
-    "openzeppelin-solidity": "2.1.1",
+    "openzeppelin-solidity": "OpenZeppelin/openzeppelin-contracts#master",
     "solidity-bytes-utils": "0.0.8",
     "truffle-contract": "^4.0.31",
     "yargs": "^14.0.0"
