@@ -1315,7 +1315,9 @@ function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice,
 
 function evaluateTradeUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
   const scaledSellAmount = getExecutedSellAmount(executedBuyAmount, priceBuyToken, priceSellToken, 2)
-  return (executedBuyAmount - Math.floor((scaledSellAmount * buyAmount) / sellAmount)) * priceBuyToken
+  const essentialUtility = (executedBuyAmount - Math.floor((scaledSellAmount * buyAmount) / sellAmount)) * priceBuyToken
+  const utilityError = [(scaledSellAmount * buyAmount) % sellAmount] * priceBuyToken / sellAmount
+  return essentialUtility - utilityError
 }
 
 function disregardedUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
