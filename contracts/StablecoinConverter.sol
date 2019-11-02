@@ -41,6 +41,8 @@ contract StablecoinConverter is EpochTokenLocker {
 
     /** @dev mapping of type tokenId -> curentPrice of tokenId */
     mapping (uint16 => uint128) public currentPrices;
+
+    /** @dev Sufficient information for current winning auction solution */
     PreviousSolutionData public previousSolution;
 
     event OrderPlacement(
@@ -182,14 +184,14 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
       *
       * Requirements:
-      * 1. Solutions for this `batchIndex` are currently being accepted.
-      * 2. feeToken price is specified.
-      * 3. `tokenIdsForPrice` is sorted.
-      * 4. Number of touched orders does not exceed `MAX_TOUCHED_ORDERS`.
-      * 5. Each touched order is valid at current `batchIndex`.
-      * 6. Each touched order's `executedSellAmount` does not exceed its remaining amount.
-      * 7. Limit Price of each touched order is respected.
-      * 8. Solution's objective evaluation must be positive.
+      * - Solutions for this `batchIndex` are currently being accepted.
+      * - feeToken price is specified.
+      * - `tokenIdsForPrice` is sorted.
+      * - Number of touched orders does not exceed `MAX_TOUCHED_ORDERS`.
+      * - Each touched order is valid at current `batchIndex`.
+      * - Each touched order's `executedSellAmount` does not exceed its remaining amount.
+      * - Limit Price of each touched order is respected.
+      * - Solution's objective evaluation must be positive.
       *
       * Sub Requirements: Those nested within other functions
       * - checkAndOverrideObjectiveValue; Objetive Evaluation is greater than current winning solution
