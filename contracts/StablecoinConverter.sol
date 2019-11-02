@@ -371,7 +371,7 @@ contract StablecoinConverter is EpochTokenLocker {
         orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(executedAmount));
     }
 
-    /** @dev
+    /** @dev This function writes solution information into contract storage
       * @param batchIndex index of referenced auction
       * @param owners array of addresses corresponding to touched orders
       * @param orderIds array of order ids used in parallel with owners to identify touched order
