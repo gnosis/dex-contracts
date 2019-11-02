@@ -250,7 +250,8 @@ contract StablecoinConverter is EpochTokenLocker {
             currentPrices[order.sellToken]
         ).mul(order.priceNumerator);
         uint256 essentialUtility = execBuy.sub(execSellTimesBuy.div(order.priceDenominator)).mul(currentPrices[order.buyToken]);
-        uint256 utilityError = execSellTimesBuy.mod(order.sellAmt).mul(currentPrices[order.buyToken]).div(order.sellAmt);
+        uint256 utilityError = execSellTimesBuy.mod(order.priceDenominator)
+            .mul(currentPrices[order.buyToken]).div(order.priceDenominator);
         return uint128(essentialUtility.sub(utilityError));
     }
 
