@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "./EpochTokenLocker.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOnlySet.sol";
+import "@gnosis.pm/owl-token/contracts/TokenOWL.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
 
@@ -62,6 +63,9 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function addToken(address _tokenAddress) public {
         require(numTokens < MAX_TOKENS, "Max tokens reached");
+        if (numTokens > 0) {
+            TokenOWL(tokenIdToAddressMap(0)).burnOWL(msg.sender, 10);
+        }
         require(
             IdToAddressBiMap.insert(registeredTokens, numTokens, _tokenAddress),
             "Token already registered"
