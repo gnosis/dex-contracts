@@ -16,6 +16,7 @@ contract StablecoinConverter is EpochTokenLocker {
     uint constant private MAX_UINT128 = 2**128 - 1;
     uint constant MAX_TOUCHED_ORDERS = 25;
 
+
     event OrderPlacement(
         address owner,
         uint16 buyToken,
@@ -223,8 +224,9 @@ contract StablecoinConverter is EpochTokenLocker {
                 evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
             );
         }
-        require(utility >= disregardedUtility, "Solution must be better than trivial");
         uint burntFees = uint(tokenConservation[0]) / 2;
+        require(utility + burntFees > disregardedUtility, "Solution must be better than trivial");
+        // burntFees ensures direct trades (when available) yield better solutions than longer rings
         checkAndOverrideObjectiveValue(utility - disregardedUtility + burntFees);
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
@@ -241,15 +243,18 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
         // Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
-        uint256 execSell = getExecutedSellAmount(
+        //         = [execBuyAmt - (execSellAmount * order.buyAmt) / order.sellAmt] * price.buyToken
+        //            - [(execSellAmount * order.buyAmt) % order.sellAmt] * price.buyToken / order.sellAmt
+        //         = essentialUtility - utilityError
+        uint256 execSellTimesBuy = getExecutedSellAmount(
             execBuy,
             currentPrices[order.buyToken],
             currentPrices[order.sellToken]
-        );
-        return uint128(
-            execBuy.sub(execSell.mul(order.priceNumerator)
-                .div(order.priceDenominator)).mul(currentPrices[order.buyToken])
-        );
+        ).mul(order.priceNumerator);
+        uint256 essentialUtility = execBuy.sub(execSellTimesBuy.div(order.priceDenominator)).mul(currentPrices[order.buyToken]);
+        uint256 utilityError = execSellTimesBuy.mod(order.priceDenominator)
+            .mul(currentPrices[order.buyToken]).div(order.priceDenominator);
+        return uint128(essentialUtility.sub(utilityError));
     }
 
     function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint128) {
@@ -311,7 +316,7 @@ contract StablecoinConverter is EpochTokenLocker {
         address owner,
         uint orderId,
         uint128 executedAmount
-    ) internal returns (uint) {
+    ) internal {
         orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.sub(executedAmount));
     }
 
@@ -319,7 +324,7 @@ contract StablecoinConverter is EpochTokenLocker {
         address owner,
         uint orderId,
         uint128 executedAmount
-    ) internal returns (uint) {
+    ) internal {
         orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(executedAmount));
     }
 
