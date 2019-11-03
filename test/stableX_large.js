@@ -48,7 +48,6 @@ contract("StablecoinConverter", async (accounts) => {
           stablecoinConverter.placeOrder,
           order.buyToken,
           order.sellToken,
-          true,
           batchIndex + 1,
           order.buyAmount,
           order.sellAmount,
@@ -96,7 +95,7 @@ contract("StablecoinConverter", async (accounts) => {
       const solution = await makeOrdersAndCloseAuction(20, seedVolumes)
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
-    it("fails when trying to fill 80 orders", async () => {
+    it("fails with out of gas when trying to fill 80 orders", async () => {
       const solution = await makeOrdersAndCloseAuction(40, seedVolumes)
       await truffleAssert.fails(
         stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter }),
@@ -105,7 +104,7 @@ contract("StablecoinConverter", async (accounts) => {
     })
   })
   describe("submit competing solutions", () => {
-    it("submits 1 competing solution with 10 touched", async () => {
+    it("submits 1 competing with 10 touched", async () => {
       const solution = await makeOrdersAndCloseAuction(5, seedVolumes)
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
@@ -113,7 +112,7 @@ contract("StablecoinConverter", async (accounts) => {
       const volumes2 = Array(5).fill(seedVolumes2[0]).concat(Array(5).fill(seedVolumes2[1]))
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, volumes2, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
-    it("submits 2 competing solutions with 10 touched", async () => {
+    it("submits 2 competing with 10 touched", async () => {
       const halfNumTouched = 5
       const solution = await makeOrdersAndCloseAuction(halfNumTouched, seedVolumes)
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter })
@@ -126,7 +125,7 @@ contract("StablecoinConverter", async (accounts) => {
       const volumes3 = Array(halfNumTouched).fill(seedVolumes3[0]).concat(Array(halfNumTouched).fill(seedVolumes3[1]))
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, volumes3, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
-    it("submits 1 competing solution with 20 touched", async () => {
+    it("submits 1 competing with 20 touched", async () => {
       const halfNumTouched = 10
       const solution = await makeOrdersAndCloseAuction(halfNumTouched, seedVolumes)
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter })
@@ -135,7 +134,7 @@ contract("StablecoinConverter", async (accounts) => {
       const volumes2 = Array(halfNumTouched).fill(seedVolumes2[0]).concat(Array(halfNumTouched).fill(seedVolumes2[1]))
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, volumes2, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
-    it("submits 2 competing solutions with 20 touched", async () => {
+    it("submits 2 competing with 20 touched", async () => {
       const halfNumTouched = 5
       const solution = await makeOrdersAndCloseAuction(halfNumTouched, seedVolumes)
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter })
@@ -148,7 +147,7 @@ contract("StablecoinConverter", async (accounts) => {
       const volumes3 = Array(halfNumTouched).fill(seedVolumes3[0]).concat(Array(halfNumTouched).fill(seedVolumes3[1]))
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, volumes3, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
-    it("submits 2 competing solutions with 24 touched", async () => {
+    it("submits 2 competing with 24 touched", async () => {
       const halfNumTouched = 12
       const solution = await makeOrdersAndCloseAuction(halfNumTouched, seedVolumes)
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter })
@@ -161,7 +160,7 @@ contract("StablecoinConverter", async (accounts) => {
       const volumes3 = Array(halfNumTouched).fill(seedVolumes3[0]).concat(Array(halfNumTouched).fill(seedVolumes3[1]))
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, volumes3, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
-    it("submits 2 competing solutions with 30 touched", async () => {
+    it("submits 2 competing with 30 touched", async () => {
       const halfNumTouched = 15
       const solution = await makeOrdersAndCloseAuction(halfNumTouched, seedVolumes)
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter })
@@ -174,7 +173,7 @@ contract("StablecoinConverter", async (accounts) => {
       const volumes3 = Array(halfNumTouched).fill(seedVolumes3[0]).concat(Array(halfNumTouched).fill(seedVolumes3[1]))
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, volumes3, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
-    it("fails on competing solution with 40 touched", async () => {
+    it("fails with out of gas on competing solution with 40 touched", async () => {
       const halfNumTouched = 20
       const solution = await makeOrdersAndCloseAuction(halfNumTouched, seedVolumes)
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter })
