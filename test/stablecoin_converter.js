@@ -1,5 +1,7 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const MockContract = artifacts.require("MockContract")
+const TokenOWL = artifacts.require("TokenOWL")
+const TokenOWLProxy = artifacts.require("TokenOWLProxy")
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
 const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
 const ERC20 = artifacts.require("ERC20")
@@ -157,7 +159,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(await stablecoinConverter.tokenIdToAddressMap.call(2), token_2.address)
     })
 
-    it("Reject: add same token twice", async () => {
+    it("Rejects same token added twice", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const token = await ERC20.new()
@@ -173,6 +175,18 @@ contract("StablecoinConverter", async (accounts) => {
 
       await truffleAssert.reverts(stablecoinConverter.addToken((await ERC20.new()).address), "Max tokens reached")
     })
+
+    it("Burn 10 OWL on Add Token", async () => {
+      const owlToken = await TokenOWL.new()
+      const owlProxy = await TokenOWLProxy.new(owlToken.address)
+      await owlProxy.setMinter(user_1)
+      await owlProxy.mintOWL(user_2, 10)
+
+      const stablecoinConverter = await StablecoinConverter.new(2, feeDenominator, owlToken.address)
+      const token = await ERC20.new()
+      await stablecoinConverter.addToken(token.address, { from: user_2 })
+    })
+
   })
   describe("submitSolution()", () => {
     it("rejects trivial solution (the only solution with zero utility)", async () => {
