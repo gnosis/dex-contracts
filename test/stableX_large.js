@@ -135,7 +135,7 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, volumes2, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
     it("submits 2 competing with 20 touched", async () => {
-      const halfNumTouched = 5
+      const halfNumTouched = 10
       const solution = await makeOrdersAndCloseAuction(halfNumTouched, seedVolumes)
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter })
 
@@ -146,6 +146,15 @@ contract("StablecoinConverter", async (accounts) => {
       const seedVolumes3 = [10000, feeSubtracted(10000) * 2]
       const volumes3 = Array(halfNumTouched).fill(seedVolumes3[0]).concat(Array(halfNumTouched).fill(seedVolumes3[1]))
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, volumes3, prices, tokenIdsForPrice, { from: solutionSubmitter })
+    })
+    it("submits 1 competing with 24 touched", async () => {
+      const halfNumTouched = 12
+      const solution = await makeOrdersAndCloseAuction(halfNumTouched, seedVolumes)
+      await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter })
+
+      const seedVolumes2 = [8000, feeSubtracted(8000) * 2]
+      const volumes2 = Array(halfNumTouched).fill(seedVolumes2[0]).concat(Array(halfNumTouched).fill(seedVolumes2[1]))
+      await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, volumes2, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
     it("submits 2 competing with 24 touched", async () => {
       const halfNumTouched = 12
@@ -159,6 +168,15 @@ contract("StablecoinConverter", async (accounts) => {
       const seedVolumes3 = [10000, feeSubtracted(10000) * 2]
       const volumes3 = Array(halfNumTouched).fill(seedVolumes3[0]).concat(Array(halfNumTouched).fill(seedVolumes3[1]))
       await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, volumes3, prices, tokenIdsForPrice, { from: solutionSubmitter })
+    })
+    it("submits 1 competing with 30 touched", async () => {
+      const halfNumTouched = 15
+      const solution = await makeOrdersAndCloseAuction(halfNumTouched, seedVolumes)
+      await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, solution.volumes, prices, tokenIdsForPrice, { from: solutionSubmitter })
+
+      const seedVolumes2 = [8000, feeSubtracted(8000) * 2]
+      const volumes2 = Array(halfNumTouched).fill(seedVolumes2[0]).concat(Array(halfNumTouched).fill(seedVolumes2[1]))
+      await stablecoinConverter.submitSolution(batchIndex, solution.owners, solution.orderIds, volumes2, prices, tokenIdsForPrice, { from: solutionSubmitter })
     })
     it("submits 2 competing with 30 touched", async () => {
       const halfNumTouched = 15
