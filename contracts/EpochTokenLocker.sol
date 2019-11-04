@@ -82,7 +82,7 @@ contract EpochTokenLocker {
     function requestWithdraw(address token, uint amount) public {
         // First process pendingWithdraw (if any), as otherwise balances might increase for currentBatchId - 1
         if (hasValidWithdrawRequest(msg.sender, token)) {
-            withdraw(token, msg.sender);
+            withdraw(msg.sender, token);
         }
         balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: getCurrentBatchId() });
         emit WithdrawRequest(msg.sender, token, amount, getCurrentBatchId());
@@ -98,7 +98,7 @@ contract EpochTokenLocker {
       * - withdraw was requested in previous epoch
       * - token was received from exchange in current auction batch
       */
-    function withdraw(address token, address user) public {
+    function withdraw(address user, address token) public {
         updateDepositsBalance(user, token); // withdrawn amount may have been deposited in previous epoch
         require(
             balanceStates[user][token].pendingWithdraws.stateIndex < getCurrentBatchId(),
