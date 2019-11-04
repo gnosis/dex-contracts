@@ -66,9 +66,9 @@ library TokenConservation {
         uint256 rightValue = tokenIdForPrice.length - 1;
         while (rightValue >= leftValue) {
             uint256 middleValue = leftValue + (rightValue-leftValue) / 2;
-            if (tokenIdForPrice[middleValue] == index) {
+            if (tokenIdForPrice[middleValue] == tokenId) {
                 return middleValue;
-            } else if (tokenIdForPrice[middleValue] < index) {
+            } else if (tokenIdForPrice[middleValue] < tokenId) {
                 leftValue = middleValue + 1;
             } else {
                 rightValue = middleValue - 1;
