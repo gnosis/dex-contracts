@@ -4,6 +4,7 @@ node_js:
 before_install:
   - rm -rf build
   - rm -rf node_modules
+  - npm install
   - npm install -g ganache-cli
 before_script:
   - ganache-cli --defaultBalanceEther 500000000 > /dev/null &
