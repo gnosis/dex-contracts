@@ -10,6 +10,14 @@ import "openzeppelin-solidity/contracts/drafts/SignedSafeMath.sol";
 library TokenConservation {
     using SignedSafeMath for int256;
 
+    /** @dev updated token conservation array.
+      * @param self list of token imbalances
+      * @param buyToken id of token whose imbalance should be subtracted from
+      * @param sellToken id of token whose imbalance should be added to
+      * @param tokenIdsForPrice sorted list of tokenIds
+      * @param buyAmount amount to be subtracted at `self[buyTokenIndex]`
+      * @param sellAmount amount to be added at `self[sellTokenIndex]`
+      */
     function updateTokenConservation(
         int[] memory self,
         uint16 buyToken,
@@ -24,6 +32,10 @@ library TokenConservation {
         self[sellTokenIndex] = self[sellTokenIndex].add(int(sellAmount));
     }
 
+    /** @dev Ensures all array's elements are zero except the first.
+      * @param self list of token imbalances
+      * @return true if all, but first element of self are zero else false
+      */
     function checkTokenConservation(int[] memory self) internal pure {
         for (uint256 i = 1; i < self.length; i++) {
             require(self[i] == 0, "Token conservation does not hold");
@@ -34,16 +46,21 @@ library TokenConservation {
       * @param tokenIdsForPrice list of tokenIds
       * @return true if tokenIdsForPrice is sorted else false
       */
-    function checkPriceOrdering(uint16[] memory self) internal pure returns (bool) {
-        for (uint i = 1; i < self.length; i++) {
-            if (self[i] <= self[i - 1]) {
+    function checkPriceOrdering(uint16[] memory tokenIdsForPrice) internal pure returns (bool) {
+        for (uint i = 1; i < tokenIdsForPrice.length; i++) {
+            if (tokenIdsForPrice[i] <= tokenIdsForPrice[i - 1]) {
                 return false;
             }
         }
         return true;
     }
 
-    function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint256) {
+    /** @dev implementation of binary search on sorted list returns token id
+      * @param tokenId element whose index is to be found
+      * @param tokenIdsForPrice list of (sorted) tokenIds for which binary search is applied.
+      * @return `index` in `tokenIdsForPrice` where `tokenId` appears (reverts if not found).
+      */
+    function findPriceIndex(uint16 tokenId, uint16[] memory tokenIdForPrice) private pure returns (uint256) {
         // binary search for the other tokens
         uint256 leftValue = 0;
         uint256 rightValue = tokenIdForPrice.length - 1;

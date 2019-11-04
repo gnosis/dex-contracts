@@ -32,7 +32,7 @@ contract TokenConservationWrapper {
     }
 
     function checkPriceOrdering(
-        uint16[] memory self
+        uint16[] memory tokenIdsForPrice
     ) public pure returns(bool) {
         return self.checkPriceOrdering();
     }
