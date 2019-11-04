@@ -146,9 +146,9 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     mapping (uint16 => uint128) public currentPrices;
-    CurrentSolutionData public currentSolution;
+    SolutionData public currentSolution;
 
-    struct CurrentSolutionData {
+    struct SolutionData {
         uint32 batchId;
         TradeData[] trades;
         uint16[] tokenIdsForPrice;
