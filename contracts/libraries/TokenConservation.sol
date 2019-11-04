@@ -30,6 +30,19 @@ library TokenConservation {
         }
     }
 
+    /** @dev Token ordering is verified by submitSolution. Required because binary search is used to fetch token info.
+      * @param tokenIdsForPrice list of tokenIds
+      * @return true if tokenIdsForPrice is sorted else false
+      */
+    function checkPriceOrdering(uint16[] memory self) internal pure returns (bool) {
+        for (uint i = 1; i < self.length; i++) {
+            if (self[i] <= self[i - 1]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint256) {
         // binary search for the other tokens
         uint256 leftValue = 0;
