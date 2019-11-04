@@ -20,6 +20,25 @@ contract("TokenConservation", async () => {
     })
   })
 
+  describe("checkPriceOrdering()", () => {
+    it("returns false when unordered", async () => {
+      const tokenConservation = await TokenConservationWrapper.new()
+      assert.equal(await tokenConservation.checkPriceOrdering([1, 0]), false, "Failed on [1, 0]")
+      assert.equal(await tokenConservation.checkPriceOrdering([1, 3, 2]), false, "Failed on [1, 3, 2]")
+    })
+    it("returns false when not unique", async () => {
+      const tokenConservation = await TokenConservationWrapper.new()
+      assert.equal(await tokenConservation.checkPriceOrdering([1, 1]), false, "Failed on [1, 1]")
+    })
+    it("returns true when ordered", async () => {
+      const tokenConservation = await TokenConservationWrapper.new()
+      assert.equal(await tokenConservation.checkPriceOrdering([0, 1]), true, "Failed on [0, 1]")
+      assert.equal(await tokenConservation.checkPriceOrdering([1, 2, 3]), true, "Failed on [1, 2, 3]")
+    })
+
+
+  })
+
   describe("updateTokenConservation()", () => {
     it("calculates the updated tokenConservation array", async () => {
       const tokenConservation = await TokenConservationWrapper.new()
