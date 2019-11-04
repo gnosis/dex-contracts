@@ -28,6 +28,15 @@ library TokenConservation {
         }
     }
 
+    function checkPriceOrdering(uint16[] memory self) internal pure returns (bool) {
+        for (uint i = 1; i < self.length; i++) {
+            if (self[i] <= self[i - 1]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     function findPriceIndex(uint16 index, uint16[] memory tokenIdForPrice) private pure returns (uint) {
         // binary search for the other tokens
         uint leftValue = 0;

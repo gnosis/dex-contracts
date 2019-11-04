@@ -12,6 +12,7 @@ contract StablecoinConverter is EpochTokenLocker {
     using BytesLib for bytes32;
     using BytesLib for bytes;
     using TokenConservation for int[];
+    using TokenConservation for uint16[];
 
     uint constant private MAX_UINT128 = 2**128 - 1;
     uint constant public MAX_TOUCHED_ORDERS = 25;
@@ -174,7 +175,7 @@ contract StablecoinConverter is EpochTokenLocker {
     ) public {
         require(batchIndex == getCurrentBatchId() - 1, "Solutions are no longer accepted for this batch");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
-        require(checkPriceOrdering(tokenIdsForPrice), "prices are not ordered by tokenId");
+        require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
         require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
         undoPreviousSolution(batchIndex);
         updateCurrentPrices(prices, tokenIdsForPrice);
@@ -389,15 +390,6 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function checkOrderValidity(Order memory order, uint batchIndex) private pure returns (bool) {
         return order.validFrom <= batchIndex && order.validUntil >= batchIndex;
-    }
-
-    function checkPriceOrdering(uint16[] memory tokenIdsForPrice) private pure returns (bool) {
-        for (uint i = 1; i < tokenIdsForPrice.length; i++) {
-            if (tokenIdsForPrice[i] <= tokenIdsForPrice[i - 1]) {
-                return false;
-            }
-        }
-        return true;
     }
 
     function encodeAuctionElement(
