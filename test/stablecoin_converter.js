@@ -1002,7 +1002,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.lastCreditBatchId.call(basicTrade.orders[0].user, erc20_2.address)).toString(), (batchIndex + 1).toString())
 
       await truffleAssert.reverts(
-        stablecoinConverter.withdraw(erc20_2.address, basicTrade.deposits[0].user, { from: basicTrade.deposits[0].user }),
+        stablecoinConverter.withdraw(basicTrade.deposits[0].user, erc20_2.address, { from: basicTrade.deposits[0].user }),
         "Withdraw not possible for token that is traded in the current auction"
       )
     })
@@ -1036,7 +1036,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.lastCreditBatchId.call(solutionSubmitter, feeToken.address)).toString(), (batchIndex + 1).toString())
 
       await truffleAssert.reverts(
-        stablecoinConverter.withdraw(feeToken.address, solutionSubmitter, { from: solutionSubmitter }),
+        stablecoinConverter.withdraw(solutionSubmitter, feeToken.address, { from: solutionSubmitter }),
         "Withdraw not possible for token that is traded in the current auction"
       )
     })
