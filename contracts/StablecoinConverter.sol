@@ -3,11 +3,13 @@ pragma solidity ^0.5.0;
 import "./EpochTokenLocker.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOnlySet.sol";
+import "openzeppelin-solidity/contracts/utils/SafeCast.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
 
 
 contract StablecoinConverter is EpochTokenLocker {
+    using SafeCast for uint;
     using SafeMath for uint128;
     using BytesLib for bytes32;
     using BytesLib for bytes;
@@ -247,10 +249,8 @@ contract StablecoinConverter is EpochTokenLocker {
             currentPrices[order.buyToken],
             currentPrices[order.sellToken]
         );
-        return uint128(
-            execBuy.sub(execSell.mul(order.priceNumerator)
-                .div(order.priceDenominator)).mul(currentPrices[order.buyToken])
-        );
+        return execBuy.sub(execSell.mul(order.priceNumerator)
+            .div(order.priceDenominator)).mul(currentPrices[order.buyToken]).toUint128();
     }
 
     function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint128) {
@@ -263,10 +263,9 @@ contract StablecoinConverter is EpochTokenLocker {
             uint256(order.remainingAmount),
             getBalance(user, tokenIdToAddressMap(order.sellToken))
         );
-        // TODO - use SafeCast
         uint256 limitTerm = currentPrices[order.sellToken].mul(order.priceDenominator)
             .sub(currentPrices[order.buyToken].mul(order.priceNumerator));
-        return uint128(leftoverSellAmount.mul(limitTerm).div(order.priceDenominator));
+        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator).toUint128();
     }
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
@@ -303,9 +302,7 @@ contract StablecoinConverter is EpochTokenLocker {
         //                = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
         uint256 sellAmount = uint256(executedBuyAmount).mul(buyTokenPrice).div(feeDenominator - 1)
             .mul(feeDenominator).div(sellTokenPrice);
-        // TODO - use SafeCast here.
-        require(sellAmount < MAX_UINT128, "sellAmount too large");
-        return uint128(sellAmount);
+        return sellAmount.toUint128();
     }
 
     function updateRemainingOrder(
@@ -313,7 +310,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint orderId,
         uint128 executedAmount
     ) internal {
-        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.sub(executedAmount));
+        orders[owner][orderId].remainingAmount = orders[owner][orderId].remainingAmount.sub(executedAmount).toUint128();
     }
 
     function revertRemainingOrder(
@@ -321,7 +318,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint orderId,
         uint128 executedAmount
     ) internal {
-        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(executedAmount));
+        orders[owner][orderId].remainingAmount = orders[owner][orderId].remainingAmount.add(executedAmount).toUint128();
     }
 
     function documentTrades(

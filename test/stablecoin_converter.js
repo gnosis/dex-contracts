@@ -1164,7 +1164,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice),
-        "sellAmount too large"
+        "SafeCast: value doesn't fit in 128 bits"
       )
     })
     it("reverts if max touched orders is exceeded", async () => {
