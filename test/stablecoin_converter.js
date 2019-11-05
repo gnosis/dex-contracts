@@ -71,6 +71,23 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
     })
   })
+  describe("placeValidFromOrder()", () => {
+    it("places order with sepcified validFrom", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+
+      const id = await stablecoinConverter.placeValidFromOrder.call(0, 1, 20, 3, 10, 20, { from: user_1 })
+      await stablecoinConverter.placeValidFromOrder(0, 1, 20, 3, 10, 20, { from: user_1 })
+      const orderResult = (await stablecoinConverter.orders.call(user_1, id))
+      assert.equal((orderResult.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
+      assert.equal((orderResult.priceNumerator).toNumber(), 10, "priceNumerator was stored incorrectly")
+      assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
+      assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
+      // Note that this order will be stored, but never valid. However, this can not affect the exchange in any maliciouis way!
+      assert.equal((orderResult.validFrom).toNumber(), 20, "validFrom was stored incorrectly")
+      assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
+    })
+  })
   describe("cancelOrder()", () => {
     it("places orders, then cancels it and orders status", async () => {
       const feeToken = await MockContract.new()
