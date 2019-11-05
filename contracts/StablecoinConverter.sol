@@ -168,6 +168,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     function submitSolution(
         uint32 batchIndex,
+        uint256 claimedObjectiveValue,
         address[] memory owners,          // tradeData is submitted as arrays
         uint16[] memory orderIds,
         uint128[] memory volumes,
@@ -175,6 +176,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
                                           // fee token id not required since always 0
     ) public {
+        require(claimedObjectiveValue > getCurrentObjectiveValue(), "claimed objective value is not more than current solution");
         require(batchIndex == getCurrentBatchId() - 1, "Solutions are no longer accepted for this batch");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
@@ -209,10 +211,7 @@ contract StablecoinConverter is EpochTokenLocker {
         }
         // doing all subtractions after all additions (in order to avoid negative values)
         for (uint i = 0; i < owners.length; i++) {
-            (, uint128 executedSellAmount) = getTradedAmounts(
-                volumes[i],
-                orders[owners[i]][orderIds[i]]
-            );
+            (, uint128 executedSellAmount) = getTradedAmounts(volumes[i], orders[owners[i]][orderIds[i]]);
             subtractBalance(
                 owners[i],
                 tokenIdToAddressMap(orders[owners[i]][orderIds[i]].sellToken),
@@ -221,9 +220,7 @@ contract StablecoinConverter is EpochTokenLocker {
         }
         uint disregardedUtility = 0;
         for (uint i = 0; i < owners.length; i++) {
-            disregardedUtility = disregardedUtility.add(
-                evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
-            );
+            disregardedUtility = disregardedUtility.add(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]));
         }
         uint burntFees = uint(tokenConservation[0]) / 2;
         require(utility + burntFees > disregardedUtility, "Solution must be better than trivial");
