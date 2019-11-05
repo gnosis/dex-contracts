@@ -60,15 +60,15 @@ library TokenConservation {
       * @param tokenIdsForPrice list of (sorted) tokenIds for which binary search is applied.
       * @return `index` in `tokenIdsForPrice` where `tokenId` appears (reverts if not found).
       */
-    function findPriceIndex(uint16 tokenId, uint16[] memory tokenIdForPrice) private pure returns (uint256) {
+    function findPriceIndex(uint16 tokenId, uint16[] memory tokenIdsForPrice) private pure returns (uint256) {
         // binary search for the other tokens
         uint256 leftValue = 0;
-        uint256 rightValue = tokenIdForPrice.length - 1;
+        uint256 rightValue = tokenIdsForPrice.length - 1;
         while (rightValue >= leftValue) {
             uint256 middleValue = leftValue + (rightValue-leftValue) / 2;
-            if (tokenIdForPrice[middleValue] == tokenId) {
+            if (tokenIdsForPrice[middleValue] == tokenId) {
                 return middleValue;
-            } else if (tokenIdForPrice[middleValue] < tokenId) {
+            } else if (tokenIdsForPrice[middleValue] < tokenId) {
                 leftValue = middleValue + 1;
             } else {
                 rightValue = middleValue - 1;
