@@ -241,7 +241,6 @@ contract("StablecoinConverter", async (accounts) => {
       const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
       assert(currentObjectiveValue > 0)
     })
-
     it("places two orders, matches them partially and then checks correct order adjustments", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -539,6 +538,39 @@ contract("StablecoinConverter", async (accounts) => {
       //correct batchIndex would be batchIndex
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex - 1, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter }),
+        "Solutions are no longer accepted for this batch"
+      )
+    })
+    it("rejects solution submission after 4 minute deadline is over", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+
+      const erc20_2 = await MockContract.new()
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+
+      await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
+      await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
+
+      await stablecoinConverter.addToken(erc20_2.address)
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+
+
+      const time_remaining = (await stablecoinConverter.getSecondsRemainingInBatch()).toNumber()
+      await waitForNSeconds(time_remaining + 241)
+
+      const prices = basicTrade.solution.prices
+      const owner = basicTrade.solution.owners
+      const orderId = [orderId1, orderId2]
+      const volume = basicTrade.solution.volume
+      const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
+
+      // Should be exactly one second past when solutions are being accepted.
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter }),
         "Solutions are no longer accepted for this batch"
       )
     })
