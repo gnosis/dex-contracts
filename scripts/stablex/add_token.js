@@ -26,7 +26,7 @@ module.exports = async function (callback) {
       await owlProxy.approve(instance.address, feeForAddingToken)
     }
 
-    const balanceOWL = await owlProxy.allowance.call(accounts[0], instance.address)
+    const balanceOWL = await owlProxy.balanceOf.call(accounts[0])
 
     if (balanceOWL < feeForAddingToken) {
       callback("Error: Sender does not have enough FeeToken to register the token")
