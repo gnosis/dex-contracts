@@ -188,7 +188,7 @@ contract StablecoinConverter is EpochTokenLocker {
       *
       * Requirements:
       * - Solutions for this `batchIndex` are currently being accepted.
-      * - feeToken price is specified.
+      * - Fee Token price is non-zero
       * - `tokenIdsForPrice` is sorted.
       * - Number of touched orders does not exceed `MAX_TOUCHED_ORDERS`.
       * - Each touched order is valid at current `batchIndex`.
