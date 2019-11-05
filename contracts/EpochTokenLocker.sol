@@ -62,12 +62,17 @@ contract EpochTokenLocker {
     }
 
     function requestWithdraw(address token, uint amount) public {
+        requestFutureWithdraw(token, amount, getCurrentBatchId());
+    }
+
+    function requestFutureWithdraw(address token, uint amount, uint batchId) public {
         // first process old pendingWithdraw, as otherwise balances might increase for currentBatchId - 1
         if (hasValidWithdrawRequest(msg.sender, token)) {
             withdraw(msg.sender, token);
         }
-        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: getCurrentBatchId() });
-        emit WithdrawRequest(msg.sender, token, amount, getCurrentBatchId());
+        require(batchId >= getCurrentBatchId(), "Request cannot be made in the past");
+        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: batchId });
+        emit WithdrawRequest(msg.sender, token, amount, batchId);
     }
 
     function withdraw(address user, address token) public {
