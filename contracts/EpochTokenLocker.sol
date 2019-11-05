@@ -80,12 +80,24 @@ contract EpochTokenLocker {
       * Emits an {WithdrawRequest} event with relevent request information.
       */
     function requestWithdraw(address token, uint amount) public {
+        requestFutureWithdraw(token, amount, getCurrentBatchId());
+    }
+
+    /** @dev Signals and initiates user's intent to withdraw.
+      * @param token address of token to be withdrawn
+      * @param amount number of token(s) to be withdrawn
+      * @param batchId state index at which request is to be made.
+      *
+      * Emits an {WithdrawRequest} event with relevent request information.
+      */
+    function requestFutureWithdraw(address token, uint amount, uint32 batchId) public {
         // First process pendingWithdraw (if any), as otherwise balances might increase for currentBatchId - 1
         if (hasValidWithdrawRequest(msg.sender, token)) {
             withdraw(msg.sender, token);
         }
-        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: getCurrentBatchId() });
-        emit WithdrawRequest(msg.sender, token, amount, getCurrentBatchId());
+        require(batchId >= getCurrentBatchId(), "Request cannot be made in the past");
+        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({ amount: amount, stateIndex: batchId });
+        emit WithdrawRequest(msg.sender, token, amount, batchId);
     }
 
     /** @dev Claims pending withdraw - can be called on behalf of others
