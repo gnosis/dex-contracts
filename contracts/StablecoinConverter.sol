@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "./EpochTokenLocker.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOnlySet.sol";
+import "openzeppelin-solidity/contracts/utils/SafeCast.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
 
@@ -11,6 +12,7 @@ import "./libraries/TokenConservation.sol";
  *  @author @gnosis/dfusion-team <https://github.com/orgs/gnosis/teams/dfusion-team/members>
  */
 contract StablecoinConverter is EpochTokenLocker {
+    using SafeCast for uint;
     using SafeMath for uint128;
     using BytesLib for bytes32;
     using BytesLib for bytes;
@@ -324,6 +326,32 @@ contract StablecoinConverter is EpochTokenLocker {
      * Internal Functions
      */
 
+    function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
+        // Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
+        uint256 execSell = getExecutedSellAmount(
+            execBuy,
+            currentPrices[order.buyToken],
+            currentPrices[order.sellToken]
+        );
+        return execBuy.sub(execSell.mul(order.priceNumerator)
+            .div(order.priceDenominator)).mul(currentPrices[order.buyToken]).toUint128();
+    }
+
+    function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint128) {
+        // |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
+        // where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken
+        // and leftoverSellAmount = order.sellAmt - execSellAmt
+        // Balances and orders have all been updated so: sellAmount - execSellAmt == order.remainingAmount.
+        // For correctness, we take the minimum of this with the user's token balance.
+        uint256 leftoverSellAmount = Math.min(
+            uint256(order.remainingAmount),
+            getBalance(user, tokenIdToAddressMap(order.sellToken))
+        );
+        uint256 limitTerm = currentPrices[order.sellToken].mul(order.priceDenominator)
+            .sub(currentPrices[order.buyToken].mul(order.priceNumerator));
+        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator).toUint128();
+    }
+
     /** @dev called at the end of submitSolution with a value of tokenConservation / 2
       * @param feeReward amount to be rewarded to the solver
       */
@@ -348,6 +376,26 @@ contract StablecoinConverter is EpochTokenLocker {
         }
     }
 
+    function getExecutedSellAmount(
+        uint128 executedBuyAmount,
+        uint128 buyTokenPrice,
+        uint128 sellTokenPrice
+        // uint128 feeDenominator
+    ) internal view returns (uint128) {
+        // Based on Equation (2) from https://github.com/gnosis/dex-contracts/issues/173#issuecomment-526163117
+        // execSellAmount * p[sellToken] * (1 - phi) == execBuyAmount * p[buyToken]
+        // where phi = 1/feeDenominator
+        // Note that: 1 - phi = (feeDenominator - 1) / feeDenominator
+        // And so, 1/(1-phi) = feeDenominator / (feeDenominator - 1)
+        // execSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
+        //                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * feeDenominator / (feeDenominator - 1)
+        //    in order to minimize rounding errors, the order of operations is switched
+        //                = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
+        uint256 sellAmount = uint256(executedBuyAmount).mul(buyTokenPrice).div(feeDenominator - 1)
+            .mul(feeDenominator).div(sellTokenPrice);
+        return sellAmount.toUint128();
+    }
+
     /** @dev Updates an order's remaing requested sell amount upon (partial) execution of a standing order
       * @param owner order's corresponding user address
       * @param orderId index of order in list of owner's orders
@@ -358,7 +406,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint orderId,
         uint128 executedAmount
     ) internal {
-        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.sub(executedAmount));
+        orders[owner][orderId].remainingAmount = orders[owner][orderId].remainingAmount.sub(executedAmount).toUint128();
     }
 
     /** @dev The inverse of updateRemainingOrder, called when reverting a solution in favour of a better one.
@@ -371,7 +419,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint orderId,
         uint128 executedAmount
     ) internal {
-        orders[owner][orderId].remainingAmount = uint128(orders[owner][orderId].remainingAmount.add(executedAmount));
+        orders[owner][orderId].remainingAmount = orders[owner][orderId].remainingAmount.add(executedAmount).toUint128();
     }
 
     /** @dev This function writes solution information into contract storage
