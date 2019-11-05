@@ -72,9 +72,10 @@ contract StablecoinConverter is EpochTokenLocker {
         numTokens++;
     }
 
-    function placeOrder(
+    function placeValidFromOrder(
         uint16 buyToken,
         uint16 sellToken,
+        uint32 validFrom,
         uint32 validUntil,
         uint128 buyAmount,
         uint128 sellAmount
@@ -82,7 +83,7 @@ contract StablecoinConverter is EpochTokenLocker {
         orders[msg.sender].push(Order({
             buyToken: buyToken,
             sellToken: sellToken,
-            validFrom: getCurrentBatchId(),
+            validFrom: validFrom,
             validUntil: validUntil,
             priceNumerator: buyAmount,
             priceDenominator: sellAmount,
@@ -92,13 +93,23 @@ contract StablecoinConverter is EpochTokenLocker {
             msg.sender,
             buyToken,
             sellToken,
-            getCurrentBatchId(),
+            validFrom,
             validUntil,
             buyAmount,
             sellAmount
         );
         allUsers.insert(msg.sender);
         return orders[msg.sender].length - 1;
+    }
+
+    function placeOrder(
+        uint16 buyToken,
+        uint16 sellToken,
+        uint32 validUntil,
+        uint128 buyAmount,
+        uint128 sellAmount
+    ) public returns (uint) {
+        return placeValidFromOrder(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
     }
 
     function cancelOrder(
