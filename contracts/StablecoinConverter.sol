@@ -30,8 +30,8 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev Maximum number of touched orders in auction (used in submitSolution) */
     uint constant public MAX_TOUCHED_ORDERS = 25;
 
+    /** @dev Fee charged for adding a token) */
     uint constant public TOKEN_ADDITION_FEE_IN_OWL = 10*10**18;
-
 
     /** @dev maximum number of tokens that can be listed for exchange */
     // solhint-disable-next-line var-name-mixedcase
