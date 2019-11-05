@@ -85,6 +85,29 @@ contract("EpochTokenLocker", async (accounts) => {
       assert.equal(await ERC20.invocationCountForCalldata.call(withdrawTransfer), 1)
     })
   })
+  describe("requestFutureWithdraw()", () => {
+    it("rejects futureWithdraw request from the past", async () => {
+      const epochTokenLocker = await EpochTokenLocker.new()
+      const ERC20 = await MockContract.new()
+      await ERC20.givenAnyReturnBool(true)
+      const currentStateIndex = (await epochTokenLocker.getCurrentBatchId.call()).toNumber()
+
+      await truffleAssert.reverts(
+        epochTokenLocker.requestFutureWithdraw(ERC20.address, 100, currentStateIndex - 1),
+        "Request cannot be made in the past"
+      )
+    })
+    it("processes a future withdraw request", async () => {
+      const epochTokenLocker = await EpochTokenLocker.new()
+      const ERC20 = await MockContract.new()
+      await ERC20.givenAnyReturnBool(true)
+      const currentStateIndex = (await epochTokenLocker.getCurrentBatchId.call()).toNumber()
+
+      await epochTokenLocker.requestFutureWithdraw(ERC20.address, 100, currentStateIndex + 1)
+      assert.equal(await epochTokenLocker.getPendingWithdrawAmount(user_1, ERC20.address), 100)
+      assert.equal((await epochTokenLocker.getPendingWithdrawBatchNumber(user_1, ERC20.address)).toNumber(), currentStateIndex + 1)
+    })
+  })
   describe("withdraw", () => {
     it("processes a deposit, then processes a withdraw request and withdraws in next stateIndex", async () => {
       const epochTokenLocker = await EpochTokenLocker.new()

@@ -65,7 +65,7 @@ contract EpochTokenLocker {
         requestFutureWithdraw(token, amount, getCurrentBatchId());
     }
 
-    function requestFutureWithdraw(address token, uint amount, uint batchId) public {
+    function requestFutureWithdraw(address token, uint amount, uint32 batchId) public {
         // first process old pendingWithdraw, as otherwise balances might increase for currentBatchId - 1
         if (hasValidWithdrawRequest(msg.sender, token)) {
             withdraw(msg.sender, token);
