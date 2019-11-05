@@ -326,32 +326,6 @@ contract StablecoinConverter is EpochTokenLocker {
      * Internal Functions
      */
 
-    function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
-        // Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
-        uint256 execSell = getExecutedSellAmount(
-            execBuy,
-            currentPrices[order.buyToken],
-            currentPrices[order.sellToken]
-        );
-        return execBuy.sub(execSell.mul(order.priceNumerator)
-            .div(order.priceDenominator)).mul(currentPrices[order.buyToken]).toUint128();
-    }
-
-    function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint128) {
-        // |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
-        // where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken
-        // and leftoverSellAmount = order.sellAmt - execSellAmt
-        // Balances and orders have all been updated so: sellAmount - execSellAmt == order.remainingAmount.
-        // For correctness, we take the minimum of this with the user's token balance.
-        uint256 leftoverSellAmount = Math.min(
-            uint256(order.remainingAmount),
-            getBalance(user, tokenIdToAddressMap(order.sellToken))
-        );
-        uint256 limitTerm = currentPrices[order.sellToken].mul(order.priceDenominator)
-            .sub(currentPrices[order.buyToken].mul(order.priceNumerator));
-        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator).toUint128();
-    }
-
     /** @dev called at the end of submitSolution with a value of tokenConservation / 2
       * @param feeReward amount to be rewarded to the solver
       */
@@ -374,26 +348,6 @@ contract StablecoinConverter is EpochTokenLocker {
         for (uint i = 0; i < tokenIdsForPrice.length; i++) {
             currentPrices[tokenIdsForPrice[i]] = prices[i];
         }
-    }
-
-    function getExecutedSellAmount(
-        uint128 executedBuyAmount,
-        uint128 buyTokenPrice,
-        uint128 sellTokenPrice
-        // uint128 feeDenominator
-    ) internal view returns (uint128) {
-        // Based on Equation (2) from https://github.com/gnosis/dex-contracts/issues/173#issuecomment-526163117
-        // execSellAmount * p[sellToken] * (1 - phi) == execBuyAmount * p[buyToken]
-        // where phi = 1/feeDenominator
-        // Note that: 1 - phi = (feeDenominator - 1) / feeDenominator
-        // And so, 1/(1-phi) = feeDenominator / (feeDenominator - 1)
-        // execSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
-        //                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * feeDenominator / (feeDenominator - 1)
-        //    in order to minimize rounding errors, the order of operations is switched
-        //                = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
-        uint256 sellAmount = uint256(executedBuyAmount).mul(buyTokenPrice).div(feeDenominator - 1)
-            .mul(feeDenominator).div(sellTokenPrice);
-        return sellAmount.toUint128();
     }
 
     /** @dev Updates an order's remaing requested sell amount upon (partial) execution of a standing order
@@ -484,63 +438,59 @@ contract StablecoinConverter is EpochTokenLocker {
       * @return Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
       */
     function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint128) {
+        // Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
         uint256 execSell = getExecutedSellAmount(
             execBuy,
             currentPrices[order.buyToken],
             currentPrices[order.sellToken]
         );
-        return uint128(
-            execBuy.sub(execSell.mul(order.priceNumerator)
-                .div(order.priceDenominator)).mul(currentPrices[order.buyToken])
-        );
+        return execBuy.sub(execSell.mul(order.priceNumerator)
+            .div(order.priceDenominator)).mul(currentPrices[order.buyToken]).toUint128();
     }
 
-    /** @dev Evaluates disregarded utility of a touched order based on trade execution
+    /** @dev computes a measure of how much of an order was disregarded (only valid when limit price is respected)
       * @param order the sell order whose disregarded utility is being evaluated
       * @param user address of order's owner
-      * @return |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
+      * @return disregardedUtility of the order (after it has been applied)
+      * Note that:
+      * |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
       * where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken
       * and leftoverSellAmount = order.sellAmt - execSellAmt
-      * At time of evaluation, balances and orders have all been updated so:
-      * sellAmount - execSellAmt == order.remainingAmount
+      * Balances and orders have all been updated so: sellAmount - execSellAmt == order.remainingAmount.
+      * For correctness, we take the minimum of this with the user's token balance.
       */
     function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint128) {
-        // For correctness, we take the minimum of this with the user's token balance.
         uint256 leftoverSellAmount = Math.min(
             uint256(order.remainingAmount),
             getBalance(user, tokenIdToAddressMap(order.sellToken))
         );
-        // TODO - use SafeCast
         uint256 limitTerm = currentPrices[order.sellToken].mul(order.priceDenominator)
             .sub(currentPrices[order.buyToken].mul(order.priceNumerator));
-        return uint128(leftoverSellAmount.mul(limitTerm).div(order.priceDenominator));
+        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator).toUint128();
     }
 
-    /** @dev used to evaluate executedSellAmount from prices and executedBuyAmount
-      * @param executedBuyAmount amount of buyToken to be obtained in an exchange
-      * @param buyTokenPrice price of buyToken
-      * @param sellTokenPrice price of sellToken
-      * @return executedSellAmount as computed from prices and executedBuyAmount (fees incorporated)
+    /** @dev Evaluates executedBuy amount based on prices and executedBuyAmout (fees included)
+      * @param executedBuyAmount amount of buyToken executed for purchase in batch auction
+      * @param buyTokenPrice uniform clearing price of buyToken
+      * @param sellTokenPrice uniform clearing price of sellToken
+      * @return executedSellAmount as expressed in Equation (2)
+      * https://github.com/gnosis/dex-contracts/issues/173#issuecomment-526163117
+      * execSellAmount * p[sellToken] * (1 - phi) == execBuyAmount * p[buyToken]
+      * where phi = 1/feeDenominator
+      * Note that: 1 - phi = (feeDenominator - 1) / feeDenominator
+      * And so, 1/(1-phi) = feeDenominator / (feeDenominator - 1)
+      * execSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
+      *                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * feeDenominator / (feeDenominator - 1)
+      * in order to minimize rounding errors, the order of operations is switched
+      *                = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
       */
     function getExecutedSellAmount(
         uint128 executedBuyAmount,
         uint128 buyTokenPrice,
         uint128 sellTokenPrice
     ) internal view returns (uint128) {
-        // Based on Equation (2) from https://github.com/gnosis/dex-contracts/issues/173#issuecomment-526163117
-        // execSellAmount * p[sellToken] * (1 - phi) == execBuyAmount * p[buyToken]
-        // where phi = 1/feeDenominator
-        // Note that: 1 - phi = (feeDenominator - 1) / feeDenominator
-        // And so, 1/(1-phi) = feeDenominator / (feeDenominator - 1)
-        // execSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
-        //                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * feeDenominator / (feeDenominator - 1)
-        //    in order to minimize rounding errors, the order of operations is switched
-        //                = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
-        uint256 sellAmount = uint256(executedBuyAmount).mul(buyTokenPrice).div(feeDenominator - 1)
-            .mul(feeDenominator).div(sellTokenPrice);
-        // TODO - use SafeCast here.
-        require(sellAmount < MAX_UINT128, "sellAmount too large");
-        return uint128(sellAmount);
+        return uint256(executedBuyAmount).mul(buyTokenPrice).div(feeDenominator - 1)
+            .mul(feeDenominator).div(sellTokenPrice).toUint128();
     }
     /**
      * Private Functions
