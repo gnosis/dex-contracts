@@ -1,7 +1,6 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const MockContract = artifacts.require("MockContract")
 const TokenOWL = artifacts.require("TokenOWL")
-const TokenOWLProxy = artifacts.require("TokenOWLProxy")
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
 const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
 const ERC20 = artifacts.require("ERC20")
@@ -177,14 +176,41 @@ contract("StablecoinConverter", async (accounts) => {
     })
 
     it("Burn 10 OWL on Add Token", async () => {
+      const TokenOWLProxy = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
       const owlToken = await TokenOWL.new()
-      const owlProxy = await TokenOWLProxy.new(owlToken.address)
+      const owlProxyContract = await TokenOWLProxy.new(owlToken.address)
+      const owlProxy = await TokenOWL.at(owlProxyContract.address)
       await owlProxy.setMinter(user_1)
-      await owlProxy.mintOWL(user_2, 10)
+      const owlAmount = (10 * 10 ** 18).toString()
 
-      const stablecoinConverter = await StablecoinConverter.new(2, feeDenominator, owlToken.address)
+      await owlProxy.mintOWL(user_1, owlAmount)
+
+      const stablecoinConverter = await StablecoinConverter.new(2, feeDenominator, owlProxy.address)
       const token = await ERC20.new()
-      await stablecoinConverter.addToken(token.address, { from: user_2 })
+      await owlProxy.approve(stablecoinConverter.address, owlAmount)
+      assert.equal(await owlProxy.balanceOf.call(user_1), owlAmount)
+      assert.equal(await owlProxy.allowance.call(user_1, stablecoinConverter.address), owlAmount)
+
+      await stablecoinConverter.addToken(token.address, { from: user_1 })
+      assert.equal(await owlProxy.balanceOf.call(user_1), 0)
+    })
+
+    it("throws, if fees are not burned", async () => {
+      const TokenOWLProxy = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
+      const owlToken = await TokenOWL.new()
+      const owlProxyContract = await TokenOWLProxy.new(owlToken.address)
+      const owlProxy = await TokenOWL.at(owlProxyContract.address)
+      await owlProxy.setMinter(user_1)
+      const owlAmount = (10 * 10 ** 18).toString()
+
+
+      const stablecoinConverter = await StablecoinConverter.new(2, feeDenominator, owlProxy.address)
+      const token = await ERC20.new()
+      await owlProxy.approve(stablecoinConverter.address, owlAmount)
+      assert.equal(await owlProxy.allowance.call(user_1, stablecoinConverter.address), owlAmount)
+
+      // reverts as owl balance is not sufficient
+      await truffleAssert.reverts(stablecoinConverter.addToken(token.address, { from: user_1 }))
     })
 
   })

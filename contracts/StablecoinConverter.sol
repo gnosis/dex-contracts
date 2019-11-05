@@ -30,6 +30,9 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev Maximum number of touched orders in auction (used in submitSolution) */
     uint constant public MAX_TOUCHED_ORDERS = 25;
 
+    uint constant public TOKEN_ADDITION_FEE_IN_OWL = 10*10**18;
+
+
     /** @dev maximum number of tokens that can be listed for exchange */
     // solhint-disable-next-line var-name-mixedcase
     uint public MAX_TOKENS;
@@ -110,7 +113,8 @@ contract StablecoinConverter is EpochTokenLocker {
     function addToken(address token) public {
         require(numTokens < MAX_TOKENS, "Max tokens reached");
         if (numTokens > 0) {
-            TokenOWL(tokenIdToAddressMap(0)).burnOWL(msg.sender, 10);
+            // Only charge fees for tokens other than the fee token itself
+            TokenOWL(tokenIdToAddressMap(0)).burnOWL(msg.sender, TOKEN_ADDITION_FEE_IN_OWL);
         }
         require(
             IdToAddressBiMap.insert(registeredTokens, numTokens, token),

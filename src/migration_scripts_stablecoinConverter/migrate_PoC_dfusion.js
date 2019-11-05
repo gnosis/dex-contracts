@@ -1,17 +1,28 @@
 const { isDevelopmentNetwork, getDependency } = require("../migration_utilities.js")
+const deployOwl = require("@gnosis.pm/owl-token/src/migrations-truffle-5/3_deploy_OWL")
 
 async function migrate({
   artifacts,
   deployer,
   network,
+  accounts,
+  web3,
   feeDenominator = 1000,
   maxTokens = 2 ** 16 - 1
 }) {
   let fee_token
   if (isDevelopmentNetwork(network)) {
-    const ERC20Mintable = artifacts.require("ERC20Mintable")
-    await deployer.deploy(ERC20Mintable)
-    fee_token = await ERC20Mintable.deployed()
+    await deployOwl(
+      {
+        artifacts,
+        deployer,
+        network,
+        accounts,
+        web3
+      }
+    )
+    const TokenOWLProxy = artifacts.require("TokenOWLProxy")
+    fee_token = await TokenOWLProxy.deployed()
   } else {
     const TokenOWLProxy = getDependency(artifacts, network, deployer, "@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
     fee_token = await TokenOWLProxy.deployed()
