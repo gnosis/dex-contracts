@@ -118,9 +118,50 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
       * @param buyToken id of token to be bought
       * @param sellToken id of token to be sold
-      * @param validUntil - batchId represnting order's expiry
-      * @param buyAmount - relative minimum amount of requested buy amount
-      * @param sellAmount - maximum amount of sell token to be exchanged
+      * @param validFrom batchId represnting order's validity start time
+      * @param validUntil batchId represnting order's expiry
+      * @param buyAmount relative minimum amount of requested buy amount
+      * @param sellAmount maximum amount of sell token to be exchanged
+      * @return orderId as index of user's current orders
+      *
+      * Emits an {OrderPlacement} event with all relevant order details.
+      */
+    function placeValidFromOrder(
+        uint16 buyToken,
+        uint16 sellToken,
+        uint32 validFrom,
+        uint32 validUntil,
+        uint128 buyAmount,
+        uint128 sellAmount
+    ) public returns (uint) {
+        orders[msg.sender].push(Order({
+            buyToken: buyToken,
+            sellToken: sellToken,
+            validFrom: validFrom,
+            validUntil: validUntil,
+            priceNumerator: buyAmount,
+            priceDenominator: sellAmount,
+            remainingAmount: sellAmount
+        }));
+        emit OrderPlacement(
+            msg.sender,
+            buyToken,
+            sellToken,
+            validFrom,
+            validUntil,
+            buyAmount,
+            sellAmount
+        );
+        allUsers.insert(msg.sender);
+        return orders[msg.sender].length - 1;
+    }
+
+    /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
+      * @param buyToken id of token to be bought
+      * @param sellToken id of token to be sold
+      * @param validUntil batchId represnting order's expiry
+      * @param buyAmount relative minimum amount of requested buy amount
+      * @param sellAmount maximum amount of sell token to be exchanged
       * @return orderId as index of user's current orders
       *
       * Emits an {OrderPlacement} event with all relevant order details.
@@ -132,26 +173,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 buyAmount,
         uint128 sellAmount
     ) public returns (uint) {
-        orders[msg.sender].push(Order({
-            buyToken: buyToken,
-            sellToken: sellToken,
-            validFrom: getCurrentBatchId(),
-            validUntil: validUntil,
-            priceNumerator: buyAmount,
-            priceDenominator: sellAmount,
-            remainingAmount: sellAmount
-        }));
-        emit OrderPlacement(
-            msg.sender,
-            buyToken,
-            sellToken,
-            getCurrentBatchId(),
-            validUntil,
-            buyAmount,
-            sellAmount
-        );
-        allUsers.insert(msg.sender);
-        return orders[msg.sender].length - 1;
+        return placeValidFromOrder(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
     }
 
     /** @dev a user facing function used to cancel orders (sets order expiry to previous batchId)
