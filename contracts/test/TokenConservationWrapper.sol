@@ -5,6 +5,7 @@ import "../libraries/TokenConservation.sol";
 
 contract TokenConservationWrapper {
     using TokenConservation for int[];
+    using TokenConservation for uint16[];
 
     function updateTokenConservationTest(
         int[] memory testInstance,
@@ -28,5 +29,11 @@ contract TokenConservationWrapper {
         int[] memory testInstance
     ) public pure {
         testInstance.checkTokenConservation();
+    }
+
+    function checkPriceOrdering(
+        uint16[] memory tokenIdsForPrice
+    ) public pure returns(bool) {
+        return tokenIdsForPrice.checkPriceOrdering();
     }
 }
