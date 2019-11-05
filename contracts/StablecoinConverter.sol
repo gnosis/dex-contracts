@@ -209,8 +209,8 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory prices,
         uint16[] memory tokenIdsForPrice
     ) public {
-        require(claimedObjectiveValue > getCurrentObjectiveValue(), "claimed objective value is not more than current solution");
         require(batchIndex == getCurrentBatchId() - 1, "Solutions are no longer accepted for this batch");
+        require(claimedObjectiveValue > getCurrentObjectiveValue(), "Claimed objective is not more than current solution");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
         require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");

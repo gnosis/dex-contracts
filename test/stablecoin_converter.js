@@ -241,7 +241,6 @@ contract("StablecoinConverter", async (accounts) => {
       const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
       assert(currentObjectiveValue > 0)
     })
-
     it("places two orders, matches them partially and then checks correct order adjustments", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -510,6 +509,30 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(await stablecoinConverter.getBalance.call(user_1, erc20_2.address), volume[0], "Bought tokens were not adjusted correctly")
       assert.equal(await stablecoinConverter.getBalance.call(user_2, erc20_3.address), volume[1], "Bought tokens were not adjusted correctly")
       assert.equal(await stablecoinConverter.getBalance.call(user_3, feeToken.address), volume[2], "Bought tokens were not adjusted correctly")
+    })
+    it.only("rejects if claimed objective is not better than current", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_2 = await MockContract.new()
+
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+
+      await stablecoinConverter.addToken(erc20_2.address)
+
+      await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
+      await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
+
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, feeSubtracted(10000), feeAdded(10000), { from: basicTrade.orders[1].user })
+
+      await closeAuction(stablecoinConverter)
+
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(batchIndex, 0, [], [], [], [], []),
+        "Claimed objective is not more than current solution"
+      )
     })
     it("throws, if the batchIndex is incorrect", async () => {
       const feeToken = await MockContract.new()
