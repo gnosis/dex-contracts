@@ -146,7 +146,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     mapping (uint16 => uint128) public currentPrices;
-    SolutionData public currentSolution;
+    SolutionData public latestSolution;
 
     struct SolutionData {
         uint32 batchId;
@@ -178,7 +178,7 @@ contract StablecoinConverter is EpochTokenLocker {
         require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
         undoCurrentSolution(batchIndex);
         updateCurrentPrices(prices, tokenIdsForPrice);
-        delete currentSolution.trades;
+        delete latestSolution.trades;
         int[] memory tokenConservation = new int[](prices.length);
         uint utility = 0;
         for (uint i = 0; i < owners.length; i++) {
@@ -232,8 +232,8 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function getCurrentObjectiveValue() public view returns(uint) {
-        if (currentSolution.batchId == getCurrentBatchId() - 1) {
-            return currentSolution.objectiveValue;
+        if (latestSolution.batchId == getCurrentBatchId() - 1) {
+            return latestSolution.objectiveValue;
         } else {
             return 0;
         }
@@ -269,7 +269,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function grantRewardToSolutionSubmitter(uint feeReward) internal {
-        currentSolution.feeReward = feeReward;
+        latestSolution.feeReward = feeReward;
         addBalanceAndBlockWithdrawForThisBatch(msg.sender, tokenIdToAddressMap(0), feeReward);
     }
 
@@ -277,8 +277,8 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory prices,          // list of prices for touched tokens only, frist price is fee token price
         uint16[] memory tokenIdsForPrice  // price[i] is the price for the token with tokenID tokenIdsForPrice[i]
     ) internal {
-        for (uint i = 0; i < currentSolution.tokenIdsForPrice.length; i++) {
-            currentPrices[currentSolution.tokenIdsForPrice[i]] = 0;
+        for (uint i = 0; i < latestSolution.tokenIdsForPrice.length; i++) {
+            currentPrices[latestSolution.tokenIdsForPrice[i]] = 0;
         }
         for (uint i = 0; i < tokenIdsForPrice.length; i++) {
             currentPrices[tokenIdsForPrice[i]] = prices[i];
@@ -330,40 +330,40 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory volumes,
         uint16[] memory tokenIdsForPrice
     ) internal {
-        currentSolution.batchId = batchIndex;
+        latestSolution.batchId = batchIndex;
         for (uint i = 0; i < owners.length; i++) {
-            currentSolution.trades.push(TradeData({
+            latestSolution.trades.push(TradeData({
                 owner: owners[i],
                 orderId: orderIds[i],
                 volume: volumes[i]
             }));
         }
-        currentSolution.tokenIdsForPrice = tokenIdsForPrice;
-        currentSolution.solutionSubmitter = msg.sender;
+        latestSolution.tokenIdsForPrice = tokenIdsForPrice;
+        latestSolution.solutionSubmitter = msg.sender;
     }
 
     function undoCurrentSolution(uint32 batchIndex) internal {
-        if (currentSolution.batchId == batchIndex) {
-            for (uint i = 0; i < currentSolution.trades.length; i++) {
-                address owner = currentSolution.trades[i].owner;
-                uint orderId = currentSolution.trades[i].orderId;
+        if (latestSolution.batchId == batchIndex) {
+            for (uint i = 0; i < latestSolution.trades.length; i++) {
+                address owner = latestSolution.trades[i].owner;
+                uint orderId = latestSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                (, uint128 sellAmount) = getTradedAmounts(currentSolution.trades[i].volume, order);
+                (, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
                 addBalance(owner, tokenIdToAddressMap(order.sellToken), sellAmount);
             }
-            for (uint i = 0; i < currentSolution.trades.length; i++) {
-                address owner = currentSolution.trades[i].owner;
-                uint orderId = currentSolution.trades[i].orderId;
+            for (uint i = 0; i < latestSolution.trades.length; i++) {
+                address owner = latestSolution.trades[i].owner;
+                uint orderId = latestSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                (uint128 buyAmount, uint128 sellAmount) = getTradedAmounts(currentSolution.trades[i].volume, order);
+                (uint128 buyAmount, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
                 revertRemainingOrder(owner, orderId, sellAmount);
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
             }
             // subtract granted fees:
             subtractBalance(
-                currentSolution.solutionSubmitter,
+                latestSolution.solutionSubmitter,
                 tokenIdToAddressMap(0),
-                currentSolution.feeReward
+                latestSolution.feeReward
             );
         }
     }
@@ -373,7 +373,7 @@ contract StablecoinConverter is EpochTokenLocker {
             newObjectiveValue > getCurrentObjectiveValue(),
             "Solution must have a higher objective value than current solution"
         );
-        currentSolution.objectiveValue = newObjectiveValue;
+        latestSolution.objectiveValue = newObjectiveValue;
     }
 
     function getTradedAmounts(uint128 volume, Order memory order) private view returns (uint128, uint128) {
