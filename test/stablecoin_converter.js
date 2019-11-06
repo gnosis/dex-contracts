@@ -175,7 +175,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(stablecoinConverter.addToken((await ERC20.new()).address), "Max tokens reached")
     })
 
-    it("Burn 10 OWL on Add Token", async () => {
+    it("Burns 10 OWL when adding token", async () => {
       const TokenOWLProxy = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
       const owlToken = await TokenOWL.new()
       const owlProxyContract = await TokenOWLProxy.new(owlToken.address)
