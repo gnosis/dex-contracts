@@ -181,8 +181,15 @@ contract EpochTokenLocker {
     /** @dev used to determine how much time is left in a batch
       * return seconds remaining in current batch
       */
-    function getSecondsRemainingInBatch() public view returns(uint) {
-        return BATCH_TIME - (now % BATCH_TIME);
+    function getSecondsRemainingInBatch() public view returns(uint256) {
+        return BATCH_TIME - getBatchTime();
+    }
+
+    /** @dev used to determine number of seconds passed in current batch
+      * return seconds passed in current batch
+      */
+    function getBatchTime() public view returns(uint256) {
+        return now % BATCH_TIME;
     }
 
     /** @dev fetches and returns user's balance

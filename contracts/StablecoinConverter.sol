@@ -347,8 +347,7 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function acceptingSolutions(uint32 batchIndex) public view returns (bool) {
-        // Note that (now % 300 < 240) corresponds to 4 minutes after the batch has closed.
-        return batchIndex == getCurrentBatchId() - 1 && now % 300 < 240;
+        return batchIndex == getCurrentBatchId() - 1 && getBatchTime() < 4 minutes;
     }
 
     /** @dev gets the objective value of currently winning solution.
