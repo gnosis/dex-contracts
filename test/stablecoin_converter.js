@@ -181,7 +181,7 @@ contract("StablecoinConverter", async (accounts) => {
       const owlProxyContract = await TokenOWLProxy.new(owlToken.address)
       const owlProxy = await TokenOWL.at(owlProxyContract.address)
       await owlProxy.setMinter(user_1)
-      const owlAmount = (10 * 10 ** 18).toString()
+      const owlAmount = (10 * 10 ** (await owlProxy.decimals.call())).toString()
 
       await owlProxy.mintOWL(user_1, owlAmount)
 
@@ -201,7 +201,7 @@ contract("StablecoinConverter", async (accounts) => {
       const owlProxyContract = await TokenOWLProxy.new(owlToken.address)
       const owlProxy = await TokenOWL.at(owlProxyContract.address)
       await owlProxy.setMinter(user_1)
-      const owlAmount = (10 * 10 ** 18).toString()
+      const owlAmount = (10 * 10 ** (await owlProxy.decimals.call())).toString()
 
 
       const stablecoinConverter = await StablecoinConverter.new(2, feeDenominator, owlProxy.address)
