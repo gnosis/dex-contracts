@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "./EpochTokenLocker.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOnlySet.sol";
+import "@gnosis.pm/owl-token/contracts/TokenOWL.sol";
 import "openzeppelin-solidity/contracts/utils/SafeCast.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
@@ -29,6 +30,9 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev Maximum number of touched orders in auction (used in submitSolution) */
     uint constant public MAX_TOUCHED_ORDERS = 25;
 
+    /** @dev Fee charged for adding a token) */
+    uint constant public TOKEN_ADDITION_FEE_IN_OWL = 10 ether;
+
     /** @dev maximum number of tokens that can be listed for exchange */
     // solhint-disable-next-line var-name-mixedcase
     uint public MAX_TOKENS;
@@ -38,6 +42,9 @@ contract StablecoinConverter is EpochTokenLocker {
 
     /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/feeDenominator */
     uint128 public feeDenominator;
+
+    /** @dev The feeToken of the exchange will be the OWL Token */
+    TokenOWL public feeToken;
 
     /** @dev mapping of type userAddress -> List[Order] where all the user's orders are stored */
     mapping(address => Order[]) public orders;
@@ -91,12 +98,13 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
       * @param _feeDenominator fee as a proportion is (1 / feeDenominator)
-      * @param feeToken Address of ERC20 fee token.
+      * @param _feeToken Address of ERC20 fee token.
       */
-    constructor(uint maxTokens, uint128 _feeDenominator, address feeToken) public {
+    constructor(uint maxTokens, uint128 _feeDenominator, address _feeToken) public {
         MAX_TOKENS = maxTokens;
+        feeToken = TokenOWL(_feeToken);
         feeDenominator = _feeDenominator;
-        addToken(feeToken); // fee Token will always have the token index 0
+        addToken(_feeToken); // feeToken will always have the token index 0
     }
 
     /** @dev Used to list a new token on the contract: Hence, making it available for exchange in an auction.
@@ -108,6 +116,10 @@ contract StablecoinConverter is EpochTokenLocker {
       */
     function addToken(address token) public {
         require(numTokens < MAX_TOKENS, "Max tokens reached");
+        if (numTokens > 0) {
+            // Only charge fees for tokens other than the fee token itself
+            feeToken.burnOWL(msg.sender, TOKEN_ADDITION_FEE_IN_OWL);
+        }
         require(
             IdToAddressBiMap.insert(registeredTokens, numTokens, token),
             "Token already registered"

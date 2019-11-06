@@ -1,5 +1,6 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const MockContract = artifacts.require("MockContract")
+const TokenOWL = artifacts.require("TokenOWL")
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
 const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
 const ERC20 = artifacts.require("ERC20")
@@ -174,7 +175,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(await stablecoinConverter.tokenIdToAddressMap.call(2), token_2.address)
     })
 
-    it("Reject: add same token twice", async () => {
+    it("Rejects same token added twice", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const token = await ERC20.new()
@@ -190,6 +191,45 @@ contract("StablecoinConverter", async (accounts) => {
 
       await truffleAssert.reverts(stablecoinConverter.addToken((await ERC20.new()).address), "Max tokens reached")
     })
+
+    it("Burns 10 OWL when adding token", async () => {
+      const TokenOWLProxy = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
+      const owlToken = await TokenOWL.new()
+      const owlProxyContract = await TokenOWLProxy.new(owlToken.address)
+      const owlProxy = await TokenOWL.at(owlProxyContract.address)
+      await owlProxy.setMinter(user_1)
+      const owlAmount = (10 * 10 ** (await owlProxy.decimals.call())).toString()
+
+      await owlProxy.mintOWL(user_1, owlAmount)
+
+      const stablecoinConverter = await StablecoinConverter.new(2, feeDenominator, owlProxy.address)
+      const token = await ERC20.new()
+      await owlProxy.approve(stablecoinConverter.address, owlAmount)
+      assert.equal(await owlProxy.balanceOf.call(user_1), owlAmount)
+      assert.equal(await owlProxy.allowance.call(user_1, stablecoinConverter.address), owlAmount)
+
+      await stablecoinConverter.addToken(token.address, { from: user_1 })
+      assert.equal(await owlProxy.balanceOf.call(user_1), 0)
+    })
+
+    it("throws, if fees are not burned", async () => {
+      const TokenOWLProxy = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
+      const owlToken = await TokenOWL.new()
+      const owlProxyContract = await TokenOWLProxy.new(owlToken.address)
+      const owlProxy = await TokenOWL.at(owlProxyContract.address)
+      await owlProxy.setMinter(user_1)
+      const owlAmount = (10 * 10 ** (await owlProxy.decimals.call())).toString()
+
+
+      const stablecoinConverter = await StablecoinConverter.new(2, feeDenominator, owlProxy.address)
+      const token = await ERC20.new()
+      await owlProxy.approve(stablecoinConverter.address, owlAmount)
+      assert.equal(await owlProxy.allowance.call(user_1, stablecoinConverter.address), owlAmount)
+
+      // reverts as owl balance is not sufficient
+      await truffleAssert.reverts(stablecoinConverter.addToken(token.address, { from: user_1 }))
+    })
+
   })
   describe("submitSolution()", () => {
     it("rejects trivial solution (the only solution with zero utility)", async () => {

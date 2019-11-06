@@ -16,13 +16,23 @@ const argv = require("yargs")
 module.exports = async function (callback) {
   try {
     const instance = await StablecoinConverter.deployed()
-    const accounts = await web3.eth.getAccounts()
-    console.log(`Beginning environment setup with ${argv.numAccounts} accounts and ${argv.numTokens} tokens`)
+    const TokenOWL = artifacts.require("TokenOWL")
+    const TokenOWLProxy = artifacts.require("TokenOWLProxy")
+    const owlProxyContract = await TokenOWLProxy.deployed()
+    const owlProxy = await TokenOWL.at(owlProxyContract.address)
 
+    const accounts = await web3.eth.getAccounts()
+    await owlProxy.setMinter(accounts[0])
     const amount = web3.utils.toWei("3000")
 
+    await owlProxy.mintOWL(accounts[0], amount)
+    await owlProxy.approve(instance.address, amount)
+
+    console.log(`Beginning environment setup with ${argv.numAccounts} accounts and ${argv.numTokens} tokens`)
+
+
     // Create and register tokens (feeToken is already registered)
-    const tokens = [await ERC20Mintable.deployed()]
+    const tokens = [owlProxy]
     for (let i = 1; i < argv.numTokens; i++) {
       const token = await ERC20Mintable.new()
       await instance.addToken(token.address)
@@ -32,7 +42,11 @@ module.exports = async function (callback) {
     // Create balance and approval for tokens
     for (let account = 0; account < argv.numAccounts; account++) {
       for (let token = 0; token < argv.numTokens; token++) {
-        await tokens[token].mint(accounts[account], amount)
+        if (token == 0) {
+          await owlProxy.mintOWL(accounts[account], amount)
+        } else {
+          await tokens[token].mint(accounts[account], amount)
+        }
         await tokens[token].approve(instance.address, amount, { from: accounts[account] })
       }
     }
