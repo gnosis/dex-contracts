@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "./EpochTokenLocker.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOnlySet.sol";
+import "@gnosis.pm/owl-token/contracts/TokenOWL.sol";
 import "openzeppelin-solidity/contracts/utils/SafeCast.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
@@ -29,6 +30,9 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev Maximum number of touched orders in auction (used in submitSolution) */
     uint constant public MAX_TOUCHED_ORDERS = 25;
 
+    /** @dev Fee charged for adding a token) */
+    uint constant public TOKEN_ADDITION_FEE_IN_OWL = 10 ether;
+
     /** @dev maximum number of tokens that can be listed for exchange */
     // solhint-disable-next-line var-name-mixedcase
     uint public MAX_TOKENS;
@@ -38,6 +42,9 @@ contract StablecoinConverter is EpochTokenLocker {
 
     /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/feeDenominator */
     uint128 public feeDenominator;
+
+    /** @dev The feeToken of the exchange will be the OWL Token */
+    TokenOWL public feeToken;
 
     /** @dev mapping of type userAddress -> List[Order] where all the user's orders are stored */
     mapping(address => Order[]) public orders;
@@ -91,12 +98,13 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
       * @param _feeDenominator fee as a proportion is (1 / feeDenominator)
-      * @param feeToken Address of ERC20 fee token.
+      * @param _feeToken Address of ERC20 fee token.
       */
-    constructor(uint maxTokens, uint128 _feeDenominator, address feeToken) public {
+    constructor(uint maxTokens, uint128 _feeDenominator, address _feeToken) public {
         MAX_TOKENS = maxTokens;
+        feeToken = TokenOWL(_feeToken);
         feeDenominator = _feeDenominator;
-        addToken(feeToken); // fee Token will always have the token index 0
+        addToken(_feeToken); // feeToken will always have the token index 0
     }
 
     /** @dev Used to list a new token on the contract: Hence, making it available for exchange in an auction.
@@ -108,6 +116,10 @@ contract StablecoinConverter is EpochTokenLocker {
       */
     function addToken(address token) public {
         require(numTokens < MAX_TOKENS, "Max tokens reached");
+        if (numTokens > 0) {
+            // Only charge fees for tokens other than the fee token itself
+            feeToken.burnOWL(msg.sender, TOKEN_ADDITION_FEE_IN_OWL);
+        }
         require(
             IdToAddressBiMap.insert(registeredTokens, numTokens, token),
             "Token already registered"
@@ -118,9 +130,50 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
       * @param buyToken id of token to be bought
       * @param sellToken id of token to be sold
-      * @param validUntil - batchId represnting order's expiry
-      * @param buyAmount - relative minimum amount of requested buy amount
-      * @param sellAmount - maximum amount of sell token to be exchanged
+      * @param validFrom batchId represnting order's validity start time
+      * @param validUntil batchId represnting order's expiry
+      * @param buyAmount relative minimum amount of requested buy amount
+      * @param sellAmount maximum amount of sell token to be exchanged
+      * @return orderId as index of user's current orders
+      *
+      * Emits an {OrderPlacement} event with all relevant order details.
+      */
+    function placeValidFromOrder(
+        uint16 buyToken,
+        uint16 sellToken,
+        uint32 validFrom,
+        uint32 validUntil,
+        uint128 buyAmount,
+        uint128 sellAmount
+    ) public returns (uint) {
+        orders[msg.sender].push(Order({
+            buyToken: buyToken,
+            sellToken: sellToken,
+            validFrom: validFrom,
+            validUntil: validUntil,
+            priceNumerator: buyAmount,
+            priceDenominator: sellAmount,
+            remainingAmount: sellAmount
+        }));
+        emit OrderPlacement(
+            msg.sender,
+            buyToken,
+            sellToken,
+            validFrom,
+            validUntil,
+            buyAmount,
+            sellAmount
+        );
+        allUsers.insert(msg.sender);
+        return orders[msg.sender].length - 1;
+    }
+
+    /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
+      * @param buyToken id of token to be bought
+      * @param sellToken id of token to be sold
+      * @param validUntil batchId represnting order's expiry
+      * @param buyAmount relative minimum amount of requested buy amount
+      * @param sellAmount maximum amount of sell token to be exchanged
       * @return orderId as index of user's current orders
       *
       * Emits an {OrderPlacement} event with all relevant order details.
@@ -132,26 +185,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 buyAmount,
         uint128 sellAmount
     ) public returns (uint) {
-        orders[msg.sender].push(Order({
-            buyToken: buyToken,
-            sellToken: sellToken,
-            validFrom: getCurrentBatchId(),
-            validUntil: validUntil,
-            priceNumerator: buyAmount,
-            priceDenominator: sellAmount,
-            remainingAmount: sellAmount
-        }));
-        emit OrderPlacement(
-            msg.sender,
-            buyToken,
-            sellToken,
-            getCurrentBatchId(),
-            validUntil,
-            buyAmount,
-            sellAmount
-        );
-        allUsers.insert(msg.sender);
-        return orders[msg.sender].length - 1;
+        return placeValidFromOrder(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
     }
 
     /** @dev a user facing function used to cancel orders (sets order expiry to previous batchId)
