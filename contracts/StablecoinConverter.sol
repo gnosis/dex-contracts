@@ -566,6 +566,10 @@ contract StablecoinConverter is EpochTokenLocker {
         return order.validFrom <= batchIndex && order.validUntil >= batchIndex;
     }
 
+    /** @dev computes the remaining sell amount for a given order
+      * @param order the order for which remaining amount should be calculated
+      * @return the remaining sell amount
+      */
     function getRemainingAmount(Order memory order) private pure returns (uint128) {
         return order.priceDenominator - order.usedAmount;
     }
