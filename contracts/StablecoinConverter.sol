@@ -21,8 +21,6 @@ contract StablecoinConverter is EpochTokenLocker {
     using TokenConservation for uint16[];
     using IterableAppendOnlySet for IterableAppendOnlySet.Data;
 
-    uint128 constant private MAX_UINT128 = 2**128 - 1;
-
     // Iterable set of all users, required to collect auction information
     IterableAppendOnlySet.Data private allUsers;
     IdToAddressBiMap.Data private registeredTokens;
