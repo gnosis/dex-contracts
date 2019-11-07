@@ -245,6 +245,7 @@ contract StablecoinConverter is EpochTokenLocker {
         require(batchIndex == getCurrentBatchId() - 1, "Solutions are no longer accepted for this batch");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
+        require(prices[0] == 1 ether, "Prices not normalized");
         require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
         undoCurrentSolution(batchIndex);
         updateCurrentPrices(prices, tokenIdsForPrice);
