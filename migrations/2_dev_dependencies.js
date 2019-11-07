@@ -1,5 +1,3 @@
-/*eslint no-undef: "off"*/
-
 const migrateDependencies = require("../src/migrate_dependencies.js")
 
 module.exports = function (deployer, network) {
