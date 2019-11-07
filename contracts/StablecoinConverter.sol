@@ -84,7 +84,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint32 validUntil;  // order is valid till auction collection period: validUntil inclusive
         uint128 priceNumerator;
         uint128 priceDenominator;
-        uint128 usedAmount; // remainingAmount = priceDenominator - usedAmount
+        uint128 remainingAmount; // remainingAmount can either be a sellAmount or buyAmount, depending on the flag isSellOrder
     }
 
     struct TradeData {
@@ -151,7 +151,7 @@ contract StablecoinConverter is EpochTokenLocker {
             validUntil: validUntil,
             priceNumerator: buyAmount,
             priceDenominator: sellAmount,
-            usedAmount: 0
+            remainingAmount: sellAmount
         }));
         emit OrderPlacement(
             msg.sender,
@@ -260,7 +260,7 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedBuyAmount,
                 executedSellAmount
             );
-            require(getRemainingAmount(order) >= executedSellAmount, "executedSellAmount bigger than specified in order");
+            require(order.remainingAmount >= executedSellAmount, "executedSellAmount bigger than specified in order");
             // Ensure executed price is not lower than the order price:
             //       executedSellAmount / executedBuyAmount <= order.priceDenominator / order.priceNumerator
             require(
@@ -392,7 +392,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint256 orderId,
         uint128 executedAmount
     ) internal {
-        orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.add(executedAmount).toUint128();
+        orders[owner][orderId].remainingAmount = orders[owner][orderId].remainingAmount.sub(executedAmount).toUint128();
     }
 
     /** @dev The inverse of updateRemainingOrder, called when reverting a solution in favour of a better one.
@@ -405,7 +405,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint256 orderId,
         uint128 executedAmount
     ) internal {
-        orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.sub(executedAmount).toUint128();
+        orders[owner][orderId].remainingAmount = orders[owner][orderId].remainingAmount.add(executedAmount).toUint128();
     }
 
     /** @dev This function writes solution information into contract storage
@@ -488,12 +488,12 @@ contract StablecoinConverter is EpochTokenLocker {
       * |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
       * where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken
       * and leftoverSellAmount = order.sellAmt - execSellAmt
-      * Balances and orders have all been updated so: sellAmount - execSellAmt == remainingAmount(order).
+      * Balances and orders have all been updated so: sellAmount - execSellAmt == order.remainingAmount.
       * For correctness, we take the minimum of this with the user's token balance.
       */
     function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint256) {
         uint256 leftoverSellAmount = Math.min(
-            getRemainingAmount(order),
+            uint256(order.remainingAmount),
             getBalance(user, tokenIdToAddressMap(order.sellToken))
         );
         uint256 limitTerm = currentPrices[order.sellToken].mul(order.priceDenominator)
@@ -566,14 +566,6 @@ contract StablecoinConverter is EpochTokenLocker {
         return order.validFrom <= batchIndex && order.validUntil >= batchIndex;
     }
 
-    /** @dev computes the remaining sell amount for a given order
-      * @param order the order for which remaining amount should be calculated
-      * @return the remaining sell amount
-      */
-    function getRemainingAmount(Order memory order) private pure returns (uint128) {
-        return order.priceDenominator - order.usedAmount;
-    }
-
     /** @dev called only by getEncodedAuctionElements and used to pack auction info into bytes
       * @param user list of tokenIds
       * @param sellTokenBalance user's account balance of sell token
@@ -593,7 +585,7 @@ contract StablecoinConverter is EpochTokenLocker {
         element = element.concat(abi.encodePacked(order.validUntil));
         element = element.concat(abi.encodePacked(order.priceNumerator));
         element = element.concat(abi.encodePacked(order.priceDenominator));
-        element = element.concat(abi.encodePacked(getRemainingAmount(order)));
+        element = element.concat(abi.encodePacked(order.remainingAmount));
         return element;
     }
 }
