@@ -499,7 +499,7 @@ contract StablecoinConverter is EpochTokenLocker {
             getBalance(user, tokenIdToAddressMap(order.sellToken))
         );
         uint256 limitTerm = currentPrices[order.sellToken].mul(order.priceDenominator)
-            .sub(currentPrices[order.buyToken].mul(order.priceNumerator));
+            .mul(feeDenominator - 1).div(feeDenominator).sub(currentPrices[order.buyToken].mul(order.priceNumerator));
         return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator).toUint128();
     }
 
