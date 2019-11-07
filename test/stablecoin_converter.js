@@ -333,10 +333,10 @@ contract("StablecoinConverter", async (accounts) => {
       const orderResult1 = (await stablecoinConverter.orders.call(user_1, orderId1))
       const orderResult2 = (await stablecoinConverter.orders.call(user_2, orderId2))
 
-      assert.equal((orderResult1.remainingAmount).toNumber(), basicTrade.orders[0].sellAmount - getSellVolume(volume[0], prices[0], prices[1]), "remainingAmount was stored incorrectly")
+      assert.equal((orderResult1.usedAmount).toNumber(), getSellVolume(volume[0], prices[0], prices[1]), "usedAmount was stored incorrectly")
       assert.equal((orderResult1.priceDenominator).toNumber(), basicTrade.orders[0].sellAmount, "priceDenominator was stored incorrectly")
       assert.equal((orderResult1.priceNumerator).toNumber(), basicTrade.orders[0].buyAmount, "priceNominator was stored incorrectly")
-      assert.equal((orderResult2.remainingAmount).toNumber(), basicTrade.orders[1].sellAmount - getSellVolume(volume[1], prices[1], prices[0]), "remainingAmount was stored incorrectly")
+      assert.equal((orderResult2.usedAmount).toNumber(), getSellVolume(volume[1], prices[1], prices[0]), "usedAmount was stored incorrectly")
       assert.equal((orderResult2.priceDenominator).toNumber(), basicTrade.orders[1].sellAmount, "priceDenominator was stored incorrectly")
       assert.equal((orderResult2.priceNumerator).toNumber(), basicTrade.orders[1].buyAmount, "priceNominator was stored incorrectly")
     })
