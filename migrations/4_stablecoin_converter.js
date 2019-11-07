@@ -1,5 +1,5 @@
 const argv = require("../src/migration_utilities")
-const migrateStablecoinConverter = require("../src/migration_scripts_stablecoinConverter/migrate_PoC_dfusion")
+const migrateStablecoinConverter = require("../src/migrate_PoC_dfusion")
 
 module.exports = async function (deployer, network, accounts, web3) {
   if (!argv.onlyMigrateSnappAuction) {
