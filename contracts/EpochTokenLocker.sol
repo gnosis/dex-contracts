@@ -64,7 +64,7 @@ contract EpochTokenLocker {
       */
     function deposit(address token, uint256 amount) public {
         updateDepositsBalance(msg.sender, token);
-        SafeERC20.safeTransferFrom(IERC20(token),msg.sender, address(this), amount);
+        SafeERC20.safeTransferFrom(IERC20(token), msg.sender, address(this), amount);
         // solhint-disable-next-line max-line-length
         balanceStates[msg.sender][token].pendingDeposits.amount = balanceStates[msg.sender][token].pendingDeposits.amount.add(amount);
         balanceStates[msg.sender][token].pendingDeposits.stateIndex = getCurrentBatchId();
@@ -126,7 +126,7 @@ contract EpochTokenLocker {
         balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
         delete balanceStates[user][token].pendingWithdraws;
 
-        SafeERC20.safeTransfer(IERC20(token),user, amount);
+        SafeERC20.safeTransfer(IERC20(token), user, amount);
         emit Withdraw(user, token, amount);
     }
     /**
