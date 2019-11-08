@@ -298,7 +298,6 @@ contract("StablecoinConverter", async (accounts) => {
       const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
       assert(currentObjectiveValue > 0)
     })
-
     it("places two orders, matches them partially and then checks correct order adjustments", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -333,10 +332,10 @@ contract("StablecoinConverter", async (accounts) => {
       const orderResult1 = (await stablecoinConverter.orders.call(user_1, orderId1))
       const orderResult2 = (await stablecoinConverter.orders.call(user_2, orderId2))
 
-      assert.equal((orderResult1.remainingAmount).toNumber(), basicTrade.orders[0].sellAmount - getSellVolume(volume[0], prices[0], prices[1]), "remainingAmount was stored incorrectly")
+      assert.equal((orderResult1.usedAmount).toNumber(), getSellVolume(volume[0], prices[0], prices[1]), "usedAmount was stored incorrectly")
       assert.equal((orderResult1.priceDenominator).toNumber(), basicTrade.orders[0].sellAmount, "priceDenominator was stored incorrectly")
       assert.equal((orderResult1.priceNumerator).toNumber(), basicTrade.orders[0].buyAmount, "priceNominator was stored incorrectly")
-      assert.equal((orderResult2.remainingAmount).toNumber(), basicTrade.orders[1].sellAmount - getSellVolume(volume[1], prices[1], prices[0]), "remainingAmount was stored incorrectly")
+      assert.equal((orderResult2.usedAmount).toNumber(), getSellVolume(volume[1], prices[1], prices[0]), "usedAmount was stored incorrectly")
       assert.equal((orderResult2.priceDenominator).toNumber(), basicTrade.orders[1].sellAmount, "priceDenominator was stored incorrectly")
       assert.equal((orderResult2.priceNumerator).toNumber(), basicTrade.orders[1].buyAmount, "priceNominator was stored incorrectly")
     })
@@ -599,6 +598,39 @@ contract("StablecoinConverter", async (accounts) => {
         "Solutions are no longer accepted for this batch"
       )
     })
+    it("rejects solution submission after 4 minute deadline is over", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+
+      const erc20_2 = await MockContract.new()
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+
+      await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
+      await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
+
+      await stablecoinConverter.addToken(erc20_2.address)
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+
+
+      const time_remaining = (await stablecoinConverter.getSecondsRemainingInBatch()).toNumber()
+      await waitForNSeconds(time_remaining + 241)
+
+      const prices = basicTrade.solution.prices
+      const owner = basicTrade.solution.owners
+      const orderId = [orderId1, orderId2]
+      const volume = basicTrade.solution.volume
+      const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
+
+      // Should be exactly one second past when solutions are being accepted.
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter }),
+        "Solutions are no longer accepted for this batch"
+      )
+    })
     it("throws, if order is not yet valid", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -611,19 +643,19 @@ contract("StablecoinConverter", async (accounts) => {
 
       await stablecoinConverter.addToken(erc20_2.address)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeValidFromOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, batchIndex + 2, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
+      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeValidFromOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, batchIndex + 2, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
 
       const prices = basicTrade.solution.prices
       const owner = basicTrade.solution.owners
       const orderId = [orderId1, orderId2]
       const volume = basicTrade.solution.volume
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
+      closeAuction(stablecoinConverter)
 
-      //correct batchIndex would be batchIndex
+      // The orders placed aren't valid until next batch!
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex - 1, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter }),
+        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solutionSubmitter }),
         "Order is invalid"
       )
     })
