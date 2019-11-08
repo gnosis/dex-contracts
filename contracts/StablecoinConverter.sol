@@ -240,7 +240,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory prices,
         uint16[] memory tokenIdsForPrice
     ) public {
-        require(batchIndex == getCurrentBatchId() - 1, "Solutions are no longer accepted for this batch");
+        require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
         require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
@@ -342,6 +342,10 @@ contract StablecoinConverter is EpochTokenLocker {
             }
         }
         return elements;
+    }
+
+    function acceptingSolutions(uint32 batchIndex) public view returns (bool) {
+        return batchIndex == getCurrentBatchId() - 1 && getSecondsRemainingInBatch() >= 1 minutes;
     }
 
     /** @dev gets the objective value of currently winning solution.
