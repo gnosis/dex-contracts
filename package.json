@@ -46,6 +46,7 @@
     "ethereumjs-util": "^6.0.0",
     "fast-memoize": "^2.5.1",
     "merkletreejs": "0.0.22",
+    "node-fetch": "^2.6.0",
     "openzeppelin-solidity": "OpenZeppelin/openzeppelin-contracts#2c11ed59",
     "solidity-bytes-utils": "0.0.8",
     "truffle-contract": "^4.0.31",
@@ -67,6 +68,7 @@
     "solium": "^1.2.4",
     "truffle": "^5.0.26",
     "truffle-assertions": "^0.8.0",
-    "truffle-hdwallet-provider": "^1.0.0-web3one.1"
+    "truffle-hdwallet-provider": "^1.0.0-web3one.1",
+    "truffle-plugin-verify": "^0.3.5"
   }
 }

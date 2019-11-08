@@ -3,8 +3,8 @@
     "4": {
       "events": {},
       "links": {},
-      "address": "0x8baA7216FBb24aA867F18a0De1467f5f3Dc68CB4",
-      "transactionHash": "0xc340b4f9ddc8e42a438c9633010695c55fadfd0649a3abf43dbb458888bd2db4"
+      "address": "0xDe82A01A9728eC885f2970d99116E5690B6074c7",
+      "transactionHash": "0x0fad1dfaf756a996c8208ebaf35b0024e36eac09a34c50836aca8b4ebce6a2ea"
     }
   },
   "SnappAuction": {
@@ -270,10 +270,10 @@
       },
       "links": {
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53",
-        "SnappBaseCore": "0x48c81dD6936A8f4fa9F3BCc85d89325924372E06"
+        "SnappBaseCore": "0x39eC847627b6aE61987d4DBFD6A75E7A4E05cf55"
       },
-      "address": "0xb2a80acC3915b3485DA6982489023751B5E138CA",
-      "transactionHash": "0xd48b062f4614788d9e826f9383b18c00df94b22adc11172eb20a244812ab94e8"
+      "address": "0xCCD2C5a0db5A2fcB5aEd1378cD91f4da35D166c8",
+      "transactionHash": "0x46bb6ee0d9d6fa2c8283797c2f93a063f414f3020c2e59b59293f73917ea2206"
     }
   },
   "SnappBaseCore": {
@@ -400,19 +400,160 @@
       "links": {
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53"
       },
-      "address": "0x48c81dD6936A8f4fa9F3BCc85d89325924372E06",
-      "transactionHash": "0xf89519af8f6db1aad252cd44378dd20a40a1505b00c7875a5e7cfd7254460f67"
+      "address": "0x39eC847627b6aE61987d4DBFD6A75E7A4E05cf55",
+      "transactionHash": "0xe0a49339b18478fdda276a55e3b458f4c246bbba3b57a336f19c53efe67f47c5"
     }
   },
   "StablecoinConverter": {
     "4": {
-      "events": {},
+      "events": {
+        "0x951b66125eb3ef23450a52bb65cf4786c423cc944abb7de8a749a7d05642060e": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "buyToken",
+              "type": "uint16"
+            },
+            {
+              "indexed": false,
+              "name": "sellToken",
+              "type": "uint16"
+            },
+            {
+              "indexed": false,
+              "name": "validFrom",
+              "type": "uint32"
+            },
+            {
+              "indexed": false,
+              "name": "validUntil",
+              "type": "uint32"
+            },
+            {
+              "indexed": false,
+              "name": "priceNumerator",
+              "type": "uint128"
+            },
+            {
+              "indexed": false,
+              "name": "priceDenominator",
+              "type": "uint128"
+            }
+          ],
+          "name": "OrderPlacement",
+          "type": "event",
+          "signature": "0x951b66125eb3ef23450a52bb65cf4786c423cc944abb7de8a749a7d05642060e"
+        },
+        "0x36adb26c9fa7b5219b043ac78b698e6e539a937ff88758ab51b04d331e7111ed": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "id",
+              "type": "uint256"
+            }
+          ],
+          "name": "OrderCancelation",
+          "type": "event",
+          "signature": "0x36adb26c9fa7b5219b043ac78b698e6e539a937ff88758ab51b04d331e7111ed"
+        },
+        "0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a095284754544f4c709d7": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "stateIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "Deposit",
+          "type": "event",
+          "signature": "0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a095284754544f4c709d7"
+        },
+        "0x10067fd172dd3ef9b7819d1d8add346f7eb58f4d57b92610d15e964125443a89": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "stateIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "WithdrawRequest",
+          "type": "event",
+          "signature": "0x10067fd172dd3ef9b7819d1d8add346f7eb58f4d57b92610d15e964125443a89"
+        },
+        "0x9b1bfa7fa9ee420a16e124f794c35ac9f90472acc99140eb2f6447c714cad8eb": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "Withdraw",
+          "type": "event",
+          "signature": "0x9b1bfa7fa9ee420a16e124f794c35ac9f90472acc99140eb2f6447c714cad8eb"
+        }
+      },
       "links": {
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53",
         "IterableAppendOnlySet": "0x85ab87B703265D10Ac025687cB180f7187193F13"
       },
-      "address": "0x9046451F7cF124c1d7d1832F76F5e98a33D1610E",
-      "transactionHash": "0x791092cb8ff3a5f3cecdf73ea173860e904d42be7b0fc9f754d649c96d2d1fbe"
+      "address": "0xd63BF9836F9445f4D1B877D36A02954E35B1EdB9",
+      "transactionHash": "0x94512e83d957a13c6cc3a3b07463ea6b18a8ce5cfa2fc7ce518a45272578de3c"
     }
   }
 }
