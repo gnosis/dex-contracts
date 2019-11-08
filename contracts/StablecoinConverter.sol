@@ -475,13 +475,16 @@ contract StablecoinConverter is EpochTokenLocker {
       */
     function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint256) {
         // Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
-        uint256 execSell = getExecutedSellAmount(
+        uint256 execSellTimesBuy = getExecutedSellAmount(
             execBuy,
             currentPrices[order.buyToken],
             currentPrices[order.sellToken]
-        );
-        return execBuy.sub(execSell.mul(order.priceNumerator)
-            .div(order.priceDenominator)).mul(currentPrices[order.buyToken]);
+        ).mul(order.priceNumerator);
+
+        uint256 roundedUtility = execBuy.sub(execSellTimesBuy.div(order.priceDenominator)).mul(currentPrices[order.buyToken]);
+        uint256 utilityError = execSellTimesBuy.mod(order.priceDenominator)
+            .mul(currentPrices[order.buyToken]).div(order.priceDenominator);
+        return roundedUtility.sub(utilityError).toUint128();
     }
 
     /** @dev computes a measure of how much of an order was disregarded (only valid when limit price is respected)
