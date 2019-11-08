@@ -65,7 +65,7 @@
     "solidity-coverage": "^0.5.11",
     "solidity-multicall": "^1.0.0",
     "solium": "^1.2.4",
-    "truffle": "^5.0.26",
+    "truffle": "^5.0.44",
     "truffle-assertions": "^0.8.0",
     "truffle-hdwallet-provider": "^1.0.0-web3one.1"
   }
