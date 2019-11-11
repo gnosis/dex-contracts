@@ -219,6 +219,7 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
       * @param prices list of prices for touched tokens indexed by next parameter
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+      * @return the computed objective value of the solution
       *
       * Requirements:
       * - Solutions for this `batchIndex` are currently being accepted.
@@ -242,7 +243,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory volumes,
         uint128[] memory prices,
         uint16[] memory tokenIdsForPrice
-    ) public {
+    ) public returns (uint256) {
         require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
         require(claimedObjectiveValue > getCurrentObjectiveValue(), "Claimed objective is not more than current solution");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
@@ -296,6 +297,7 @@ contract StablecoinConverter is EpochTokenLocker {
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
+        return (latestSolution.objectiveValue);
     }
     /**
      * Public View Methods
