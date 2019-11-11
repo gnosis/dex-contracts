@@ -1410,7 +1410,7 @@ function evaluateTradeUtility(buyAmount, sellAmount, executedBuyAmount, executed
 }
 
 function disregardedUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
-  const limitTerm = priceSellToken * sellAmount - priceBuyToken * buyAmount
+  const limitTerm = priceSellToken * sellAmount - priceBuyToken * feeAdded(buyAmount)
   // Note, this computation assumes bidder has sufficient balance remaining
   // Usually leftoverSellAmount = MIN(sellAmount - executedSellAmount, user.balance.sellToken)
 
