@@ -142,14 +142,14 @@ const basicTradeSolutions = [
     prices: [1, 2].map(toETH),
     owners: [0, 1],
     tokenIdsForPrice: [0, 1],
-    buyVolumes: basicTrade.orders.map(order => order.buyAmount)
+    buyVolumes: [toETH(10), feeSubtracted(toETH(20))]
   },
   {
     name: "Partial solution",
     prices: [1, 2].map(toETH),
     owners: [0, 1],
     tokenIdsForPrice: [0, 1],
-    buyVolumes: basicTrade.orders.map(order => order.buyAmount.mul(new BN(9)).div(new BN(10)))
+    buyVolumes: [toETH(9), feeSubtracted(toETH(18))]
   }
 ]
 
@@ -277,7 +277,7 @@ const biggieSmallTradeSolutions = [
 // ]
 
 
-const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions, true)
+const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions)
 // console.log(JSON.stringify(basicTradeCase, null, "  "))
 
 const advancedTradeCase = generateTestCase(advancedTrade, advancedTradeSolutions)
@@ -296,6 +296,7 @@ module.exports = {
   advancedTradeCase,
   basicTradeCase,
   biggieSmallCase,
+  getExecutedSellAmount,
   // doubleDoubleTradeCase,
   // basicRingTradeCase
 }
