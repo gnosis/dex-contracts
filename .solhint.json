@@ -15,7 +15,7 @@
         ],
         "function-max-lines": [
             "error",
-            57
+            60
         ],
         "max-states-count": [
             "error",
