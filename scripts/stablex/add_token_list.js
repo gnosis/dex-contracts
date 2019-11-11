@@ -1,4 +1,4 @@
-const { addTokens } = require("../script_utilities.js")
+const { addTokens } = require("./utilities.js")
 const fetch = require("node-fetch")
 
 module.exports = async function (callback) {
