@@ -284,6 +284,57 @@ contract("StablecoinConverter", async (accounts) => {
       const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
       assert.equal(0, currentObjectiveValue)
     })
+    it("[Basic Trade] places two orders and returns calculated utility", async () => {
+
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_2 = await MockContract.new()
+
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+
+      await stablecoinConverter.addToken(erc20_2.address)
+
+      for (const deposit of basicTradeCase.deposits) {
+        const tokenAddress = await stablecoinConverter.tokenIdToAddressMap.call(deposit.token)
+        await stablecoinConverter.deposit(tokenAddress, deposit.amount, { from: accounts[deposit.user] })
+      }
+
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = []
+      for (const order of basicTradeCase.orders) {
+        orderIds.push(
+          await sendTxAndGetReturnValue(
+            stablecoinConverter.placeOrder,
+            order.buyToken,
+            order.sellToken,
+            batchIndex + 1,
+            order.buyAmount,
+            order.sellAmount,
+            { from: accounts[order.user] }
+          )
+        )
+      }
+      await closeAuction(stablecoinConverter)
+
+      const solution = basicTradeCase.solutions[0]
+      const volume = solution.buyVolumes
+      const prices = solution.prices
+      const tokenIdsForPrice = solution.tokenIdsForPrice
+
+      await stablecoinConverter.submitSolution.call(
+        batchIndex,
+        solution.objectiveValue,
+        solution.owners.map(x => accounts[x]),
+        orderIds,
+        volume,
+        prices,
+        tokenIdsForPrice,
+        { from: solver }
+      )
+
+      assert(objectiveValue > 0, "the computed objective value is greater than 0")
+   })
     it("[Basic Trade] places two orders and matches them in a solution with Utility > 0", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
