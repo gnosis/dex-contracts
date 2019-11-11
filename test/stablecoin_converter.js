@@ -20,7 +20,7 @@ const {
   getExecutedSellAmount,
 } = require("./resources/auction_examples.js")
 
-
+const MAX_ERROR = new BN("999000")
 const feeDenominator = 1000 // fee is (1 / feeDenominator)
 
 // function feeAdded(x) {
@@ -42,20 +42,6 @@ contract("StablecoinConverter", async (accounts) => {
 
     BATCH_TIME = (await stablecoinConverter.BATCH_TIME.call()).toNumber()
   })
-
-  // Basic Trade used in most of the tests:
-  // Trade for user_1: amount of token_1 sold: 20020, amount of token_2 bought: 10000,
-  // Trade for user_2: amount of token_2 sold: 10000, amount of token_1 bought: feeSubtracted(10000) * 2
-  // ==> Token conservation holds for token_2, and fee token == token_1 has negative balance of 40
-
-  // const basicTrade = {
-  //   deposits: [{ amount: feeAdded(20000), token: 0, user: user_1 }, { amount: feeAdded(10000) * 2, token: 1, user: user_2 }],
-  //   orders: [
-  //     { sellToken: 0, buyToken: 1, sellAmount: feeAdded(20000), buyAmount: 10000, user: user_1 },
-  //     { sellToken: 1, buyToken: 0, sellAmount: feeAdded(10000), buyAmount: feeSubtracted(10000) * 2, user: user_2 }
-  //   ],
-  //   solution: { prices: [1, 2], owners: [user_1, user_2], volume: [10000, 20000], tokenIdsForPrice: [0, 1] }
-  // }
 
   describe("placeOrder()", () => {
     it("places Orders and checks parameters", async () => {
@@ -905,7 +891,7 @@ contract("StablecoinConverter", async (accounts) => {
             order.buyToken,
             order.sellToken,
             batchIndex + 1,
-            order.buyAmount.add(new BN("999000")),   // <------- NOTE THAT THIS IS DIFFERENT
+            order.buyAmount.add(MAX_ERROR),   // <------- NOTE THAT THIS IS DIFFERENT
             order.sellAmount,
             { from: accounts[order.user] }
           )
@@ -1038,7 +1024,7 @@ contract("StablecoinConverter", async (accounts) => {
       // Make deposits
       for (const deposit of basicTradeCase.deposits) {
         const tokenAddress = await stablecoinConverter.tokenIdToAddressMap.call(deposit.token)
-        await stablecoinConverter.deposit(tokenAddress, deposit.amount.sub(new BN(10)), { from: accounts[deposit.user] })
+        await stablecoinConverter.deposit(tokenAddress, deposit.amount.sub(MAX_ERROR), { from: accounts[deposit.user] })
       }
 
       // Place orders
