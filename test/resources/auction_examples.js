@@ -77,7 +77,9 @@ function evaluateObjectiveValue(trade, solution, debug = false) {
     disregardedUtility(x, solution.buyVolumes[i], solution.prices))
 
   log("Trade Utilities:", orderUtilities.map(o => o.toString()))
+  log("Total Utility:", orderUtilities.reduce((acc, x) => acc.add(x), new BN(0)).toString())
   log("Disregarded Utilities:", orderDisregardedUtilities.map(o => o.toString()))
+  log("Total Disregarded Utility:", orderDisregardedUtilities.reduce((acc, x) => acc.add(x), new BN(0)).toString())
 
   log("2U - maxU:", trade.orders.map((x, i) =>
     evaluateTradeUtility(x, solution.buyVolumes[i], solution.prices).mul(new BN(2))
@@ -96,6 +98,7 @@ function evaluateObjectiveValue(trade, solution, debug = false) {
 
   const totalFees = feesPerOrder.reduce((acc, x) => acc.add(x), new BN(0))
   log("Total Fees:", totalFees.toString())
+  log("Total Fees / 2:", totalFees.div(new BN(2)).toString())
 
   const objectiveValue = new BN(0)
   for (let i = 0; i < trade.orders.length; i++) {
