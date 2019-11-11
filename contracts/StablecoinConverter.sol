@@ -291,7 +291,7 @@ contract StablecoinConverter is EpochTokenLocker {
             disregardedUtility = disregardedUtility.add(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]));
         }
         uint256 burntFees = uint256(tokenConservation[0]) / 2;
-        require(utility + burntFees > disregardedUtility, "Solution must be better than trivial");
+        require(utility.add(burntFees) > disregardedUtility, "Solution must be better than trivial");
         // burntFees ensures direct trades (when available) yield better solutions than longer rings
         uint256 objectiveValue = utility - disregardedUtility + burntFees;
         checkAndOverrideObjectiveValue(objectiveValue);
