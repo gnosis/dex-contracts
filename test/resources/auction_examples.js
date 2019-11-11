@@ -19,7 +19,6 @@ function toETH(value) {
 function feeSubtracted(x) {
   assert(BN.isBN(x))
   return x.mul(feeDenominatorMinusOne).div(feeDenominator)
-
 }
 
 function feeAdded(x) {
@@ -48,6 +47,7 @@ function disregardedUtility(order, executedBuyAmount, prices) {
   const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
   const limitTermRight = prices[order.buyToken].mul(order.buyAmount).mul(feeDenominator).div(feeDenominatorMinusOne)
   const limitTerm = limitTermLeft.sub(limitTermRight)
+  console.log(limitTermLeft.toString(), limitTermRight.toString())
   assert(!limitTerm.isNeg())
   return leftoverSellAmount.mul(limitTerm).div(order.sellAmount)
 }
@@ -96,7 +96,7 @@ function evaluateObjectiveValue(trade, solution, debug = false) {
   log("Fees Per Order:", feesPerOrder.map(x => x.toString()))
 
   const totalFees = feesPerOrder.reduce((acc, x) => acc.add(x), new BN(0))
-  log("Total Fees:     ", totalFees.toString())
+  log("Total Fees:", totalFees.toString())
 
   const objectiveValue = new BN(0)
   for (let i = 0; i < trade.orders.length; i++) {
@@ -124,10 +124,7 @@ function generateTestCase(trade, solutions, debug = false) {
   return testCase
 }
 
-// Basic Trade used in most of the tests:
-// Trade for user_1: amount of token_1 sold: 20020, amount of token_2 bought: 10000,
-// Trade for user_2: amount of token_2 sold: 10000, amount of token_1 bought: feeSubtracted(10000) * 2
-// ==> Token conservation holds for token_2, and fee token == token_1 has negative balance of 40
+/////--------------- Basic Trade used in many of the tests:
 
 const user_1 = "Alex"
 const user_2 = "Ben"
@@ -162,9 +159,6 @@ const basicTradeSolutions = [
   }
 ]
 
-const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions, true)
-console.log(JSON.stringify(basicTradeCase, null, "  "))
-
 /////--------------- Advanced Trade
 
 const advancedTrade = {
@@ -175,7 +169,6 @@ const advancedTrade = {
     { amount: feeAdded(toETH(20)), token: 1, user: user_4 },
     { amount: toETH(20), token: 0, user: user_5 },
     { amount: feeAdded(toETH(20)), token: 1, user: user_6 },
-
   ],
   orders: [
     { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: user_1 },
@@ -209,110 +202,121 @@ const advancedTradeSolutions = [
 ]
 
 
-const advancedTradeCase = generateTestCase(advancedTrade, advancedTradeSolutions, false)
-console.log(JSON.stringify(advancedTradeCase, null, "  "))
+/////--------------- One large (market maker) and one small (market order)
 
-// const ringTrade = {
-//   deposits: [
-//     { amount: feeAdded(10000), token: 0, user: user_1 },
-//     { amount: feeAdded(10000), token: 2, user: user_2 },
-//     { amount: feeAdded(10000), token: 0, user: user_3 },
-//   ],
-//   orders: [
-//     { sellToken: 1, buyToken: 0, sellAmount: 1000, buyAmount: feeAdded(10000), user: user_1 },
-//     { sellToken: 2, buyToken: 1, sellAmount: 1000, buyAmount: feeAdded(10000), user: user_2 },
-//     { sellToken: 0, buyToken: 2, sellAmount: 1000, buyAmount: feeAdded(10000), user: user_3 }
-//   ],
-//   fullSolution: {
-//     prices: [1000000, 1000000, 1000000],
-//     owners: [user_1, user_2, user_3],
-//     buyVolume: [10000, 9990, 9981],
-//     tokenIdsForPrice: [0, 1, 2],
-//     objectiveValue: 26946997017
-//   },
-// }
-
-// const badNameTrade = {
-//   deposits: [
-//     { amount: feeAdded(10000), token: 1, user: user_1 },
-//     { amount: 19, token: 2, user: user_2 },
-//     { amount: feeAdded(10000), token: 0, user: user_3 },
-//   ],
-//   orders: [
-//     { sellToken: 0, buyToken: 1, sellAmount: 5000, buyAmount: feeAdded(10000), user: user_1 },
-//     { sellToken: 1, buyToken: 0, sellAmount: 5000, buyAmount: feeAdded(10000), user: user_2 },
-//     { sellToken: 0, buyToken: 1, sellAmount: 5000, buyAmount: feeAdded(10000), user: user_2 },
-//     { sellToken: 1, buyToken: 0, sellAmount: 5000, buyAmount: feeAdded(10000), user: user_3 }
-//   ],
-//   solution: {
-//     prices: [1000000, 1000000],
-//     owners: [user_1, user_2, user_2, user_3],
-//     buyVolume: [10000, 9990, 9981, 9972],
-//     tokenIdsForPrice: [0, 1],
-//     objectiveValue: 19958485534
-//   },
-// }
-
-
-
-
-
-
-
-
-
-// function getSellVolume(x, priceNumerator, priceDenominator) {
-//   return Math.floor(Math.floor(x * priceDenominator / (feeDenominator - 1)) * feeDenominator / priceNumerator)
-// }
-
-// contract("StablecoinConverter", async (accounts) => {
-
-//   const [user_1, user_2, user_3, solutionSubmitter] = accounts
-//   let BATCH_TIME
-//   before(async () => {
-//     const feeToken = await MockContract.new()
-//     const lib1 = await IdToAddressBiMap.new()
-//     const lib2 = await IterableAppendOnlySet.new()
-//     await StablecoinConverter.link(IdToAddressBiMap, lib1.address)
-//     await StablecoinConverter.link(IterableAppendOnlySet, lib2.address)
-//     const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-
-//     BATCH_TIME = (await stablecoinConverter.BATCH_TIME.call()).toNumber()
-//   })
-
-// function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice, scale) {
-//   const scaledFee = scale * feeDenominator
-//   return Math.floor(Math.floor((executedBuyAmount * buyTokenPrice) / (scaledFee - 1)) * scaledFee / sellTokenPrice)
-// }
-
-// function evaluateTradeUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
-//   const scaledSellAmount = getExecutedSellAmount(executedBuyAmount, priceBuyToken, priceSellToken, 2)
-//   const essentialUtility = (executedBuyAmount - Math.floor((scaledSellAmount * buyAmount) / sellAmount)) * priceBuyToken
-//   const utilityError = Math.floor([(scaledSellAmount * buyAmount) % sellAmount] * priceBuyToken / sellAmount)
-//   return essentialUtility - utilityError
-// }
-
-// function disregardedUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
-//   const limitTerm = priceSellToken * sellAmount - priceBuyToken * buyAmount
-//   // Note, this computation assumes bidder has sufficient balance remaining
-//   // Usually leftoverSellAmount = MIN(sellAmount - executedSellAmount, user.balance.sellToken)
-//   const leftoverSellAmount = sellAmount - executedSellAmount
-//   return Math.floor((leftoverSellAmount * limitTerm) / sellAmount)
-// }
-
-// function evaluateObjectiveValue(solution, orders) {
-
-// }
-
-
-function disregardedUtilityWithLargeHelpfulError(order, executedBuyAmount, prices) {
-  const executedSellAmount = getExecutedSellAmount(executedBuyAmount, prices[order.buyToken], prices[order.sellToken])
-  // Not accounting for balances here.
-  // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
-  const leftoverSellAmount = order.sellAmount.sub(executedSellAmount)
-  const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
-  const limitTermRight = prices[order.buyToken].mul(feeDenominator).div(feeDenominatorMinusOne).mul(order.buyAmount)
-  const limitTerm = limitTermLeft.sub(limitTermRight)
-  assert(!limitTerm.isNeg())
-  return leftoverSellAmount.mul(limitTerm).div(order.sellAmount)
+const biggieSmallTrade = {
+  deposits: [
+    { amount: toETH(185), token: 0, user: user_1 },
+    { amount: toETH(1000), token: 1, user: user_2 },
+  ],
+  orders: [
+    { sellToken: 0, buyToken: 1, sellAmount: toETH(185), buyAmount: toETH(1), user: user_1 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(1000), buyAmount: toETH(184000), user: user_2 },
+  ]
 }
+
+const biggieSmallTradeSolutions = [
+  {
+    name: "Max Fulfillment",
+    prices: [toETH(1), new BN("184184184184184185000")],
+    owners: [user_1, user_2],
+    buyVolumes: [toETH(1), new BN("184000000000000000815")],
+    sellVolumes: [new BN("184368552736921106106"), toETH(1)],
+  }
+]
+
+/////--------------- Two orders A -> B and two orders B -> A 
+
+const fiveHunnit = toETH(500)
+const tenThouzy = toETH(10000)
+
+const doubleDoubleTrade = {
+  deposits: [
+    { amount: fiveHunnit, token: 0, user: user_1 },
+    { amount: fiveHunnit, token: 1, user: user_2 },
+  ],
+  orders: [
+    { sellToken: 0, buyToken: 1, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: user_1 },
+    { sellToken: 1, buyToken: 0, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: user_2 },
+    { sellToken: 0, buyToken: 1, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: user_2 },
+    { sellToken: 1, buyToken: 0, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: user_3 }
+  ]
+}
+
+const doubleDoubleTradeSolutions = [
+  {
+    name: "Not sure about this one...",
+    prices: [1, 1].map(toETH),
+    owners: [user_1, user_2, user_1, user_2],
+    buyVolume: [100, 99, 98, 97].map(toETH),
+    tokenIdsForPrice: [0, 1],
+  },
+]
+
+/////--------------- Basic Ring Trade example A -> B -> C
+
+const basicRingTrade = {
+  deposits: [
+    { amount: toETH(100), token: 0, user: user_1 },
+    { amount: toETH(100), token: 1, user: user_2 },
+    { amount: toETH(100), token: 2, user: user_3 },
+  ],
+  orders: [
+    { sellToken: 0, buyToken: 1, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: user_1 },
+    { sellToken: 1, buyToken: 2, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: user_2 },
+    { sellToken: 2, buyToken: 0, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: user_3 }
+  ],
+}
+
+const basicRingTradeSolutions = [
+  {
+    name: "Simple Ring",
+    prices: [1, 1, 1].map(toETH),
+    owners: [user_1, user_2, user_3],
+    buyVolume: [100, 99, 98].map(toETH),
+    tokenIdsForPrice: [0, 1, 2],
+  },
+]
+
+
+const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions)
+// console.log(JSON.stringify(basicTradeCase, null, "  "))
+
+const advancedTradeCase = generateTestCase(advancedTrade, advancedTradeSolutions)
+// console.log(JSON.stringify(advancedTradeCase, null, "  "))
+
+const biggieSmallCase = generateTestCase(biggieSmallTrade, biggieSmallTradeSolutions)
+// console.log(JSON.stringify(biggieSmallCase, null, "  "))
+
+const doubleDoubleTradeCase = generateTestCase(doubleDoubleTrade, doubleDoubleTradeSolutions)
+// console.log(JSON.stringify(doubleDoubleTradeCase, null, "  "))
+
+const basicRingTradeCase = generateTestCase(basicRingTrade, basicRingTradeSolutions)
+// console.log(JSON.stringify(doubleDoubleTradeCase, null, "  "))
+
+module.exports = {
+  advancedTradeCase,
+  basicTradeCase,
+  biggieSmallCase,
+  doubleDoubleTradeCase,
+  basicRingTradeCase
+}
+
+
+
+
+
+
+
+// function disregardedUtilityWithLargeHelpfulError(order, executedBuyAmount, prices) {
+//   const executedSellAmount = getExecutedSellAmount(executedBuyAmount, prices[order.buyToken], prices[order.sellToken])
+//   // Not accounting for balances here.
+//   // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
+//   const leftoverSellAmount = order.sellAmount.sub(executedSellAmount)
+//   const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
+//   const limitTermRight = prices[order.buyToken].mul(feeDenominator).div(feeDenominatorMinusOne).mul(order.buyAmount)
+//   const limitTerm = limitTermLeft.sub(limitTermRight)
+//   assert(!limitTerm.isNeg())
+//   return leftoverSellAmount.mul(limitTerm).div(order.sellAmount)
+// }
+
