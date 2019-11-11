@@ -125,21 +125,14 @@ function generateTestCase(trade, solutions, debug = false) {
 
 /////--------------- Basic Trade used in many of the tests:
 
-const user_1 = "Alex"
-const user_2 = "Ben"
-const user_3 = "Felix"
-const user_4 = "Nick"
-const user_5 = "Tom"
-const user_6 = "Chuck Norris"
-
 const basicTrade = {
   deposits: [
-    { amount: toETH(20), token: 0, user: user_1 },
-    { amount: feeAdded(toETH(20)), token: 1, user: user_2 }
+    { amount: feeAdded(toETH(20)).add(amountEpsilon), token: 0, user: 0 },
+    { amount: toETH(10), token: 1, user: 1 }
   ],
   orders: [
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: user_1 },
-    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: user_2 }
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: 1 }
   ],
 }
 
@@ -147,13 +140,15 @@ const basicTradeSolutions = [
   {
     name: "Full solution",
     prices: [1, 2].map(toETH),
-    owners: [user_1, user_2],
+    owners: [0, 1],
+    tokenIdsForPrice: [0, 1],
     buyVolumes: basicTrade.orders.map(order => order.buyAmount)
   },
   {
     name: "Partial solution",
     prices: [1, 2].map(toETH),
-    owners: [user_1, user_2],
+    owners: [0, 1],
+    tokenIdsForPrice: [0, 1],
     buyVolumes: basicTrade.orders.map(order => order.buyAmount.mul(new BN(9)).div(new BN(10)))
   }
 ]
@@ -162,20 +157,20 @@ const basicTradeSolutions = [
 
 const advancedTrade = {
   deposits: [
-    { amount: toETH(20), token: 0, user: user_1 },
-    { amount: feeAdded(toETH(20)), token: 1, user: user_2 },
-    { amount: toETH(20), token: 0, user: user_3 },
-    { amount: feeAdded(toETH(20)), token: 1, user: user_4 },
-    { amount: toETH(20), token: 0, user: user_5 },
-    { amount: feeAdded(toETH(20)), token: 1, user: user_6 },
+    { amount: toETH(20), token: 0, user: 0 },
+    { amount: feeAdded(toETH(20)), token: 1, user: 1 },
+    { amount: toETH(20), token: 0, user: 2 },
+    { amount: feeAdded(toETH(20)), token: 1, user: 3 },
+    { amount: toETH(20), token: 0, user: 4 },
+    { amount: feeAdded(toETH(20)), token: 1, user: 5 },
   ],
   orders: [
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: user_1 },
-    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: user_2 },
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: user_3 },
-    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: user_4 },
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: user_5 },
-    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: user_6 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: 1 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: 2 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: 3 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: 4 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: 5 },
   ],
 }
 
@@ -183,19 +178,22 @@ const advancedTradeSolutions = [
   {
     name: "Match 1 pair",
     prices: [1, 2].map(toETH),
-    owners: [user_1, user_2],
+    owners: [0, 1],
+    tokenIdsForPrice: [0, 1],
     buyVolumes: advancedTrade.orders.map((x, i) => i < 2 ? x.buyAmount : new BN(0))
   },
   {
     name: "Match 2 pairs",
     prices: [1, 2].map(toETH),
-    owners: [user_1, user_2, user_3, user_4],
+    owners: [0, 1, 2, 3],
+    tokenIdsForPrice: [0, 1],
     buyVolumes: advancedTrade.orders.map((x, i) => i < 4 ? x.buyAmount : new BN(0))
   },
   {
     name: "Match 3 pairs",
     prices: [1, 2].map(toETH),
-    owners: [user_1, user_2, user_3, user_4, user_5, user_6],
+    owners: [0, 1, 2, 3, 4, 5],
+    tokenIdsForPrice: [0, 1],
     buyVolumes: advancedTrade.orders.map(order => order.buyAmount)
   }
 ]
@@ -205,12 +203,12 @@ const advancedTradeSolutions = [
 
 const biggieSmallTrade = {
   deposits: [
-    { amount: toETH(185), token: 0, user: user_1 },
-    { amount: toETH(1000), token: 1, user: user_2 },
+    { amount: toETH(185), token: 0, user: 0 },
+    { amount: toETH(1000), token: 1, user: 1 },
   ],
   orders: [
-    { sellToken: 0, buyToken: 1, sellAmount: toETH(185), buyAmount: toETH(1), user: user_1 },
-    { sellToken: 1, buyToken: 0, sellAmount: toETH(1000), buyAmount: toETH(184000), user: user_2 },
+    { sellToken: 0, buyToken: 1, sellAmount: toETH(185), buyAmount: toETH(1), user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(1000), buyAmount: toETH(184000), user: 1 },
   ]
 }
 
@@ -218,7 +216,8 @@ const biggieSmallTradeSolutions = [
   {
     name: "Max Fulfillment",
     prices: [toETH(1), new BN("184184184184184185000")],
-    owners: [user_1, user_2],
+    owners: [0, 1],
+    tokenIdsForPrice: [0, 1],
     buyVolumes: [toETH(1), new BN("184000000000000000815")],
     sellVolumes: [new BN("184368552736921106106"), toETH(1)],
   }
@@ -231,14 +230,14 @@ const biggieSmallTradeSolutions = [
 
 // const doubleDoubleTrade = {
 //   deposits: [
-//     { amount: fiveHunnit, token: 0, user: user_1 },
-//     { amount: fiveHunnit, token: 1, user: user_2 },
+//     { amount: fiveHunnit, token: 0, user: 0 },
+//     { amount: fiveHunnit, token: 1, user: 1 },
 //   ],
 //   orders: [
-//     { sellToken: 0, buyToken: 1, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: user_1 },
-//     { sellToken: 1, buyToken: 0, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: user_2 },
-//     { sellToken: 0, buyToken: 1, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: user_2 },
-//     { sellToken: 1, buyToken: 0, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: user_3 }
+//     { sellToken: 0, buyToken: 1, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: 0 },
+//     { sellToken: 1, buyToken: 0, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: 1 },
+//     { sellToken: 0, buyToken: 1, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: 1 },
+//     { sellToken: 1, buyToken: 0, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: 2 }
 //   ]
 // }
 
@@ -246,7 +245,7 @@ const biggieSmallTradeSolutions = [
 //   {
 //     name: "Not sure about this one...",
 //     prices: [1, 1].map(toETH),
-//     owners: [user_1, user_2, user_1, user_2],
+//     owners: [0, 1, 0, 1],
 //     buyVolumes: [100, 99, 98, 97].map(toETH),
 //     tokenIdsForPrice: [0, 1],
 //   },
@@ -256,14 +255,14 @@ const biggieSmallTradeSolutions = [
 
 // const basicRingTrade = {
 //   deposits: [
-//     { amount: toETH(100), token: 0, user: user_1 },
-//     { amount: toETH(100), token: 1, user: user_2 },
-//     { amount: toETH(100), token: 2, user: user_3 },
+//     { amount: toETH(100), token: 0, user: 0 },
+//     { amount: toETH(100), token: 1, user: 1 },
+//     { amount: toETH(100), token: 2, user: 2 },
 //   ],
 //   orders: [
-//     { sellToken: 0, buyToken: 1, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: user_1 },
-//     { sellToken: 1, buyToken: 2, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: user_2 },
-//     { sellToken: 2, buyToken: 0, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: user_3 }
+//     { sellToken: 0, buyToken: 1, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: 0 },
+//     { sellToken: 1, buyToken: 2, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: 1 },
+//     { sellToken: 2, buyToken: 0, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: 2 }
 //   ],
 // }
 
@@ -271,14 +270,14 @@ const biggieSmallTradeSolutions = [
 //   {
 //     name: "Simple Ring",
 //     prices: [1, 1, 1].map(toETH),
-//     owners: [user_1, user_2, user_3],
+//     owners: [0, 1, 2],
 //     buyVolumes: [100, 99, 98].map(toETH),
 //     tokenIdsForPrice: [0, 1, 2],
 //   },
 // ]
 
 
-const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions)
+const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions, true)
 // console.log(JSON.stringify(basicTradeCase, null, "  "))
 
 const advancedTradeCase = generateTestCase(advancedTrade, advancedTradeSolutions)
