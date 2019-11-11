@@ -7,6 +7,10 @@ const assert = require("assert")
 const feeDenominator = new BN(1000)
 const feeDenominatorMinusOne = feeDenominator.sub(new BN(1))
 
+// amount epsilon is used to account for rounding errors in the amount
+// calculations so that we don't underflow on limit term calculation
+const amountEpsilon = new BN(999000)
+
 function toETH(value) {
   const oneFinney = new BN(10).pow(new BN(15))
   return new BN(value * 1000).mul(oneFinney)
@@ -42,7 +46,7 @@ function disregardedUtility(order, executedBuyAmount, prices) {
   // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
   const leftoverSellAmount = order.sellAmount.sub(executedSellAmount)
   const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
-  const limitTermRight = prices[order.buyToken].mul(feeDenominator).div(feeDenominatorMinusOne).mul(order.buyAmount)
+  const limitTermRight = prices[order.buyToken].mul(order.buyAmount).mul(feeDenominator).div(feeDenominatorMinusOne)
   const limitTerm = limitTermLeft.sub(limitTermRight)
   assert(!limitTerm.isNeg())
   return leftoverSellAmount.mul(limitTerm).div(order.sellAmount)
@@ -138,8 +142,8 @@ const basicTrade = {
     { amount: feeAdded(toETH(20)), token: 1, user: user_2 }
   ],
   orders: [
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)), buyAmount: toETH(10), user: user_1 },
-    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)), user: user_2 }
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: user_1 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: user_2 }
   ],
 }
 
@@ -158,7 +162,7 @@ const basicTradeSolutions = [
   }
 ]
 
-const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions)
+const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions, true)
 console.log(JSON.stringify(basicTradeCase, null, "  "))
 
 /////--------------- Advanced Trade
@@ -174,12 +178,12 @@ const advancedTrade = {
 
   ],
   orders: [
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)), buyAmount: toETH(10), user: user_1 },
-    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)), user: user_2 },
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)), buyAmount: toETH(10), user: user_3 },
-    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)), user: user_4 },
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)), buyAmount: toETH(10), user: user_5 },
-    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)), user: user_6 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: user_1 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: user_2 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: user_3 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: user_4 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: user_5 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: user_6 },
   ],
 }
 
@@ -205,7 +209,7 @@ const advancedTradeSolutions = [
 ]
 
 
-const advancedTradeCase = generateTestCase(advancedTrade, advancedTradeSolutions, true)
+const advancedTradeCase = generateTestCase(advancedTrade, advancedTradeSolutions, false)
 console.log(JSON.stringify(advancedTradeCase, null, "  "))
 
 // const ringTrade = {
@@ -299,3 +303,16 @@ console.log(JSON.stringify(advancedTradeCase, null, "  "))
 // function evaluateObjectiveValue(solution, orders) {
 
 // }
+
+
+function disregardedUtilityWithLargeHelpfulError(order, executedBuyAmount, prices) {
+  const executedSellAmount = getExecutedSellAmount(executedBuyAmount, prices[order.buyToken], prices[order.sellToken])
+  // Not accounting for balances here.
+  // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
+  const leftoverSellAmount = order.sellAmount.sub(executedSellAmount)
+  const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
+  const limitTermRight = prices[order.buyToken].mul(feeDenominator).div(feeDenominatorMinusOne).mul(order.buyAmount)
+  const limitTerm = limitTermLeft.sub(limitTermRight)
+  assert(!limitTerm.isNeg())
+  return leftoverSellAmount.mul(limitTerm).div(order.sellAmount)
+}
