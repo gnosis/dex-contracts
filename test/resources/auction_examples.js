@@ -160,12 +160,12 @@ const basicTradeSolutions = [
 
 const advancedTrade = {
   deposits: [
-    { amount: toETH(20), token: 0, user: 0 },
-    { amount: feeAdded(toETH(20)), token: 1, user: 1 },
-    { amount: toETH(20), token: 0, user: 2 },
-    { amount: feeAdded(toETH(20)), token: 1, user: 3 },
-    { amount: toETH(20), token: 0, user: 4 },
-    { amount: feeAdded(toETH(20)), token: 1, user: 5 },
+    { amount: feeAdded(toETH(20)).add(amountEpsilon), token: 0, user: 0 },
+    { amount: toETH(10), token: 1, user: 1 },
+    { amount: feeAdded(toETH(20)).add(amountEpsilon), token: 0, user: 2 },
+    { amount: toETH(10), token: 1, user: 3 },
+    { amount: feeAdded(toETH(20)).add(amountEpsilon), token: 0, user: 4 },
+    { amount: toETH(10), token: 1, user: 5 },
   ],
   orders: [
     { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: 0 },
@@ -177,27 +177,28 @@ const advancedTrade = {
   ],
 }
 
+const zero = new BN(0)
 const advancedTradeSolutions = [
   {
     name: "Match 1 pair",
     prices: [1, 2].map(toETH),
     owners: [0, 1],
     tokenIdsForPrice: [0, 1],
-    buyVolumes: advancedTrade.orders.map((x, i) => i < 2 ? x.buyAmount : new BN(0))
+    buyVolumes: [toETH(10), feeSubtracted(toETH(20)), zero, zero, zero, zero]
   },
   {
     name: "Match 2 pairs",
     prices: [1, 2].map(toETH),
     owners: [0, 1, 2, 3],
     tokenIdsForPrice: [0, 1],
-    buyVolumes: advancedTrade.orders.map((x, i) => i < 4 ? x.buyAmount : new BN(0))
+    buyVolumes: [toETH(10), feeSubtracted(toETH(20)), toETH(10), feeSubtracted(toETH(20)), zero, zero]
   },
   {
     name: "Match 3 pairs",
     prices: [1, 2].map(toETH),
     owners: [0, 1, 2, 3, 4, 5],
     tokenIdsForPrice: [0, 1],
-    buyVolumes: advancedTrade.orders.map(order => order.buyAmount)
+    buyVolumes: [toETH(10), feeSubtracted(toETH(20)), toETH(10), feeSubtracted(toETH(20)), toETH(10), feeSubtracted(toETH(20))]
   }
 ]
 
