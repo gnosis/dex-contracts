@@ -1457,40 +1457,60 @@ contract("StablecoinConverter", async (accounts) => {
         "Withdraw not possible for token that is traded in the current auction"
       )
     })
-    // it("checks that credited feeToken reward can not be withdrawn in same batch as the solution submission", async () => {
-    //   const feeToken = await MockContract.new()
-    //   const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-    //   const erc20_2 = await MockContract.new()
+    it("ensures credited feeToken reward can't be withdrawn in same batch as solution submission", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_2 = await MockContract.new()
 
-    //   await feeToken.givenAnyReturnBool(true)
-    //   await erc20_2.givenAnyReturnBool(true)
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
 
-    //   await stablecoinConverter.deposit(feeToken.address, basicTrade.deposits[0].amount, { from: basicTrade.deposits[0].user })
-    //   await stablecoinConverter.deposit(erc20_2.address, basicTrade.deposits[1].amount, { from: basicTrade.deposits[1].user })
-    //   await stablecoinConverter.requestWithdraw(feeToken.address, 1, { from: solver })
+      await stablecoinConverter.addToken(erc20_2.address)
 
-    //   await stablecoinConverter.addToken(erc20_2.address)
-    //   const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      // Make deposits
+      for (const deposit of basicTradeCase.deposits) {
+        const tokenAddress = await stablecoinConverter.tokenIdToAddressMap.call(deposit.token)
+        await stablecoinConverter.deposit(tokenAddress, deposit.amount, { from: accounts[deposit.user] })
+      }
 
-    //   const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[0].buyToken, basicTrade.orders[0].sellToken, batchIndex + 1, basicTrade.orders[0].buyAmount, basicTrade.orders[0].sellAmount, { from: basicTrade.orders[0].user })
-    //   const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, basicTrade.orders[1].buyToken, basicTrade.orders[1].sellToken, batchIndex + 1, basicTrade.orders[1].buyAmount, basicTrade.orders[1].sellAmount, { from: basicTrade.orders[1].user })
+      // Place orders
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = []
+      for (const order of basicTradeCase.orders) {
+        orderIds.push(
+          await sendTxAndGetReturnValue(
+            stablecoinConverter.placeOrder,
+            order.buyToken,
+            order.sellToken,
+            batchIndex + 1,
+            order.buyAmount,
+            order.sellAmount,
+            { from: accounts[order.user] }
+          )
+        )
+      }
+      await closeAuction(stablecoinConverter)
+      const solution = basicTradeCase.solutions[0]
+      await stablecoinConverter.submitSolution(
+        batchIndex,
+        solution.owners.map(x => accounts[x]),
+        orderIds,
+        solution.buyVolumes,
+        solution.prices,
+        solution.tokenIdsForPrice,
+        { from: solver }
+      )
 
-    //   await closeAuction(stablecoinConverter)
-
-    //   const prices = basicTrade.solution.prices
-    //   const owner = basicTrade.solution.owners
-    //   const orderId = [orderId1, orderId2]
-    //   const volume = basicTrade.solution.volume
-    //   const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
-
-    //   await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solver })
-    //   assert.equal((await stablecoinConverter.lastCreditBatchId.call(solver, feeToken.address)).toString(), (batchIndex + 1).toString())
-
-    //   await truffleAssert.reverts(
-    //     stablecoinConverter.withdraw(solver, feeToken.address, { from: solver }),
-    //     "Withdraw not possible for token that is traded in the current auction"
-    //   )
-    // })
+      // TODO - WHAT THE HELL IS WRONG WITH THIS!
+      assert.equal(
+        (batchIndex + 1).toString(),
+        (await stablecoinConverter.lastCreditBatchId.call(solver, feeToken.address)).toString()
+      )
+      await truffleAssert.reverts(
+        stablecoinConverter.withdraw(solver, feeToken.address, { from: solver }),
+        "Withdraw not possible for token that is traded in the current auction"
+      )
+    })
     // it("checks that the objective value is stored correctly and updated after a new solution submission", async () => {
     //   const feeToken = await MockContract.new()
     //   const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
