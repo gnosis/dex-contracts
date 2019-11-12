@@ -48,7 +48,7 @@ function disregardedUtility(order, executedBuyAmount, prices) {
   const limitTermRight = prices[order.buyToken].mul(order.buyAmount).mul(feeDenominator).div(feeDenominatorMinusOne)
   // min((sA  * pS // fd  * (fd - 1) // pB), bA) * pB // (fd - 1) * fd 
   let limitTerm = new BN(0)
-  if (limitTermLeft > limitTermRight) {
+  if (limitTermLeft.gt(limitTermRight)) {
     limitTerm = limitTermLeft.sub(limitTermRight)
   }
   return leftoverSellAmount.mul(limitTerm).div(order.sellAmount)
@@ -263,23 +263,6 @@ const biggieSmallTradeSolutions = [
 
 // /////--------------- Basic Ring Trade example A -> B -> C
 
-// buy amounts: [ '990000000000000000', '990000000000000000', '990000000000000000' ]
-// sell amounts: [ '1000000000000000000', '1000000000000000000', '1000000000000000000' ]
-// prices: [ '1000000000000000000', '1000000000000000000', '1000000000000000000' ]
-// buy volumes: [ '999000000000000000', '998001000000000000', '997002999000000000' ]
-// sell volumes: [ '1000000000000000000', '999000000000000000', '998001000000000000' ]
-// token conservation: [ '2997001000000000', '0', '0' ]
-// order utilities: [
-//   '9000000000000000000000000000000000',
-//   '8991000000000000000000000000000000',
-//   '8982009000000000000000000000000000'
-// ]
-// order disregarded utilities: [
-//   '0',
-//   '9009009009009009009009009009009',
-//   '18009009009009009009009009009009'
-// ]
-
 const sell = new BN("1000000000000000000")
 const buy = new BN("990000000000000000")
 
@@ -307,6 +290,53 @@ const basicRingTradeSolutions = [
   },
 ]
 
+// Short ring is better
+
+const fiftyETH = toETH(50)
+
+const shortRingBetterTradeCase = {
+  deposits: [
+    // Very large deposits
+    { amount: fiftyETH, token: 0, user: 0 },
+    { amount: fiftyETH, token: 1, user: 1 },
+    { amount: fiftyETH, token: 2, user: 2 },
+    { amount: toETH(185), token: 0, user: 3 },
+    { amount: toETH(1000), token: 1, user: 4 },
+  ],
+  orders: [
+    // Ring trade orders
+    { sellToken: 0, buyToken: 1, sellAmount: sell, buyAmount: buy, user: 0 },
+    { sellToken: 1, buyToken: 2, sellAmount: sell, buyAmount: buy, user: 1 },
+    { sellToken: 2, buyToken: 0, sellAmount: sell, buyAmount: buy, user: 2 },
+    // basic Trade Orders
+    { sellToken: 0, buyToken: 1, sellAmount: toETH(185), buyAmount: toETH(1), user: 3 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(1000), buyAmount: toETH(184000), user: 4 },
+  ],
+  solutions: [
+    {
+      name: "Ring Trade Solution",
+      prices: [1, 1, 1].map(toETH),
+      owners: [0, 1, 2],
+      buyVolumes: [new BN("999000000000000000"), new BN("998001000000000000"), new BN("997002999000000000"), zero, zero],
+      sellVolumes: [new BN("1000000000000000000"), new BN("999000000000000000"), new BN("998001000000000000")],
+      tokenIdsForPrice: [0, 1, 2],
+      burntFees: 1498500500000000,
+      objectiveValue: 26945990981981981983480482481981982,
+    },
+    {
+      name: "Biggie Small Trade",
+      // prices: [toETH(1), new BN("184184184184184185000")],
+      prices: [toETH(1), new BN("184184184184184184184")],
+      owners: [3, 4],
+      tokenIdsForPrice: [0, 1],
+      // buyVolumes: [toETH(1), new BN("184000000000000000815")],
+      buyVolumes: [toETH(1), new BN("184000000000000000000")],
+      sellVolumes: [new BN("184368552736921106106"), toETH(1)],
+      burntFees: 184276368460552644,
+      objectiveValue: 626507423564715254807956719501111767,
+    },
+  ]
+}
 
 const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions)
 // console.log(JSON.stringify(basicTradeCase, null, "  "))
@@ -317,11 +347,11 @@ const advancedTradeCase = generateTestCase(advancedTrade, advancedTradeSolutions
 const biggieSmallCase = generateTestCase(biggieSmallTrade, biggieSmallTradeSolutions)
 // console.log(JSON.stringify(biggieSmallCase, null, "  "))
 
-// const doubleDoubleTradeCase = generateTestCase(doubleDoubleTrade, doubleDoubleTradeSolutions)
-// // console.log(JSON.stringify(doubleDoubleTradeCase, null, "  "))
-
-const basicRingTradeCase = generateTestCase(basicRingTrade, basicRingTradeSolutions, true)
+const basicRingTradeCase = generateTestCase(basicRingTrade, basicRingTradeSolutions)
 // console.log(JSON.stringify(doubleDoubleTradeCase, null, "  "))
+
+// const shortRingBetterTradeCase = generateTestCase(shortRingBetterTrade, shortRingBetterTradeSolutions, true)
+// // console.log(JSON.stringify(shortRingBetterTradeCase, null, "  "))
 
 module.exports = {
   toETH,
@@ -330,6 +360,6 @@ module.exports = {
   biggieSmallCase,
   getExecutedSellAmount,
   basicRingTradeCase,
-  // doubleDoubleTradeCase,
+  shortRingBetterTradeCase,
 }
 
