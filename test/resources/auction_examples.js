@@ -45,9 +45,15 @@ function disregardedUtility(order, executedBuyAmount, prices) {
   // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
   const leftoverSellAmount = order.sellAmount.sub(executedSellAmount)
   const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
-  const limitTermRight = prices[order.buyToken].mul(order.buyAmount).mul(feeDenominator).div(feeDenominatorMinusOne)
+  // const limitTermRight = prices[order.buyToken].mul(order.buyAmount).mul(feeDenominator).div(feeDenominatorMinusOne)
+  // min((sA  * pS // fd  * (fd - 1) // pB), bA) * pB // (fd - 1) * fd 
+  const limitTermRight = BN.min(
+    order.sellAmount.mul(prices[order.sellToken]).div(feeDenominator).mul(feeDenominatorMinusOne).div(prices[order.buyToken]),
+    order.buyAmount
+  ).mul(prices[order.buyToken]).div(feeDenominatorMinusOne).mul(feeDenominator)
   const limitTerm = limitTermLeft.sub(limitTermRight)
   assert(!limitTerm.isNeg())
+
   return leftoverSellAmount.mul(limitTerm).div(order.sellAmount)
 }
 
@@ -81,7 +87,7 @@ function evaluateObjectiveValue(trade, solution, debug = false) {
   log("Disregarded Utilities:", orderDisregardedUtilities.map(o => o.toString()))
   log("Total Disregarded Utility:", orderDisregardedUtilities.reduce((acc, x) => acc.add(x), new BN(0)).toString())
 
-  log("2U - maxU:", trade.orders.map((x, i) =>
+  log("2U - maxU:   ", trade.orders.map((x, i) =>
     evaluateTradeUtility(x, solution.buyVolumes[i], solution.prices).mul(new BN(2))
       .sub(maxUtility(x, solution.prices)).toString()))
 
@@ -97,8 +103,9 @@ function evaluateObjectiveValue(trade, solution, debug = false) {
   log("Fees Per Order:", feesPerOrder.map(x => x.toString()))
 
   const totalFees = feesPerOrder.reduce((acc, x) => acc.add(x), new BN(0))
-  log("Total Fees:", totalFees.toString())
-  log("Total Fees / 2:", totalFees.div(new BN(2)).toString())
+  const burntFees = totalFees.div(new BN(2))
+  log("Total Fees:    ", totalFees.toString())
+  log("Burnt Fees:", burntFees.toString())
 
   const objectiveValue = new BN(0)
   for (let i = 0; i < trade.orders.length; i++) {
@@ -111,7 +118,7 @@ function evaluateObjectiveValue(trade, solution, debug = false) {
   objectiveValue.iadd(totalFees.div(new BN(2)))
 
   log("Objective Value:", objectiveValue.toString())
-  return objectiveValue
+  return { objectiveValue, burntFees }
 }
 
 function generateTestCase(trade, solutions, debug = false) {
@@ -120,8 +127,8 @@ function generateTestCase(trade, solutions, debug = false) {
     if (debug) {
       console.log(`Computing objective value for ${solution.name}`)
     }
-    const objectiveValue = evaluateObjectiveValue(trade, solution, debug)
-    testCase.solutions.push(Object.assign({ objectiveValue }, solution))
+    const { objectiveValue, burntFees } = evaluateObjectiveValue(trade, solution, debug)
+    testCase.solutions.push(Object.assign({ burntFees, objectiveValue }, solution))
   }
   return testCase
 }
@@ -219,10 +226,12 @@ const biggieSmallTrade = {
 const biggieSmallTradeSolutions = [
   {
     name: "Max Fulfillment",
-    prices: [toETH(1), new BN("184184184184184185000")],
+    // prices: [toETH(1), new BN("184184184184184185000")],
+    prices: [toETH(1), new BN("184184184184184184184")],
     owners: [0, 1],
     tokenIdsForPrice: [0, 1],
-    buyVolumes: [toETH(1), new BN("184000000000000000815")],
+    // buyVolumes: [toETH(1), new BN("184000000000000000815")],
+    buyVolumes: [toETH(1), new BN("184000000000000000000")],
     sellVolumes: [new BN("184368552736921106106"), toETH(1)],
   }
 ]
@@ -297,6 +306,7 @@ const biggieSmallCase = generateTestCase(biggieSmallTrade, biggieSmallTradeSolut
 // // console.log(JSON.stringify(doubleDoubleTradeCase, null, "  "))
 
 module.exports = {
+  toETH,
   advancedTradeCase,
   basicTradeCase,
   biggieSmallCase,
