@@ -94,7 +94,7 @@ function evaluateObjectiveValue(trade, solution, debug = false) {
     } else if (x.sellToken === 0) {
       return getExecutedSellAmount(solution.buyVolumes[i], solution.prices[x.buyToken], solution.prices[x.sellToken])
     } else {
-      new BN(0)
+      return new BN(0)
     }
   })
   log("Fees Per Order:", feesPerOrder.map(x => x.toString()))
@@ -263,28 +263,49 @@ const biggieSmallTradeSolutions = [
 
 // /////--------------- Basic Ring Trade example A -> B -> C
 
-// const basicRingTrade = {
-//   deposits: [
-//     { amount: toETH(100), token: 0, user: 0 },
-//     { amount: toETH(100), token: 1, user: 1 },
-//     { amount: toETH(100), token: 2, user: 2 },
-//   ],
-//   orders: [
-//     { sellToken: 0, buyToken: 1, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: 0 },
-//     { sellToken: 1, buyToken: 2, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: 1 },
-//     { sellToken: 2, buyToken: 0, sellAmount: toETH(100), buyAmount: feeAdded(toETH(100)), user: 2 }
-//   ],
-// }
-
-// const basicRingTradeSolutions = [
-//   {
-//     name: "Simple Ring",
-//     prices: [1, 1, 1].map(toETH),
-//     owners: [0, 1, 2],
-//     buyVolumes: [100, 99, 98].map(toETH),
-//     tokenIdsForPrice: [0, 1, 2],
-//   },
+// buy amounts: [ '990000000000000000', '990000000000000000', '990000000000000000' ]
+// sell amounts: [ '1000000000000000000', '1000000000000000000', '1000000000000000000' ]
+// prices: [ '1000000000000000000', '1000000000000000000', '1000000000000000000' ]
+// buy volumes: [ '999000000000000000', '998001000000000000', '997002999000000000' ]
+// sell volumes: [ '1000000000000000000', '999000000000000000', '998001000000000000' ]
+// token conservation: [ '2997001000000000', '0', '0' ]
+// order utilities: [
+//   '9000000000000000000000000000000000',
+//   '8991000000000000000000000000000000',
+//   '8982009000000000000000000000000000'
 // ]
+// order disregarded utilities: [
+//   '0',
+//   '9009009009009009009009009009009',
+//   '18009009009009009009009009009009'
+// ]
+
+const sell = new BN("1000000000000000000")
+const buy = new BN("990000000000000000")
+
+const basicRingTrade = {
+  deposits: [
+    { amount: sell, token: 0, user: 0 },
+    { amount: sell, token: 1, user: 1 },
+    { amount: sell, token: 2, user: 2 },
+  ],
+  orders: [
+    { sellToken: 0, buyToken: 1, sellAmount: sell, buyAmount: buy, user: 0 },
+    { sellToken: 1, buyToken: 2, sellAmount: sell, buyAmount: buy, user: 1 },
+    { sellToken: 2, buyToken: 0, sellAmount: sell, buyAmount: buy, user: 2 }
+  ]
+}
+
+const basicRingTradeSolutions = [
+  {
+    name: "Simple Ring",
+    prices: [1, 1, 1].map(toETH),
+    owners: [0, 1, 2],
+    buyVolumes: [new BN("999000000000000000"), new BN("998001000000000000"), new BN("997002999000000000")],
+    sellVolumes: [new BN("1000000000000000000"), new BN("999000000000000000"), new BN("998001000000000000")],
+    tokenIdsForPrice: [0, 1, 2],
+  },
+]
 
 
 const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions)
@@ -299,8 +320,8 @@ const biggieSmallCase = generateTestCase(biggieSmallTrade, biggieSmallTradeSolut
 // const doubleDoubleTradeCase = generateTestCase(doubleDoubleTrade, doubleDoubleTradeSolutions)
 // // console.log(JSON.stringify(doubleDoubleTradeCase, null, "  "))
 
-// const basicRingTradeCase = generateTestCase(basicRingTrade, basicRingTradeSolutions)
-// // console.log(JSON.stringify(doubleDoubleTradeCase, null, "  "))
+const basicRingTradeCase = generateTestCase(basicRingTrade, basicRingTradeSolutions, true)
+// console.log(JSON.stringify(doubleDoubleTradeCase, null, "  "))
 
 module.exports = {
   toETH,
@@ -308,25 +329,7 @@ module.exports = {
   basicTradeCase,
   biggieSmallCase,
   getExecutedSellAmount,
+  basicRingTradeCase,
   // doubleDoubleTradeCase,
-  // basicRingTradeCase
 }
-
-
-
-
-
-
-
-// function disregardedUtilityWithLargeHelpfulError(order, executedBuyAmount, prices) {
-//   const executedSellAmount = getExecutedSellAmount(executedBuyAmount, prices[order.buyToken], prices[order.sellToken])
-//   // Not accounting for balances here.
-//   // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
-//   const leftoverSellAmount = order.sellAmount.sub(executedSellAmount)
-//   const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
-//   const limitTermRight = prices[order.buyToken].mul(feeDenominator).div(feeDenominatorMinusOne).mul(order.buyAmount)
-//   const limitTerm = limitTermLeft.sub(limitTermRight)
-//   assert(!limitTerm.isNeg())
-//   return leftoverSellAmount.mul(limitTerm).div(order.sellAmount)
-// }
 
