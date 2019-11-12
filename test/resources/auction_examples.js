@@ -16,9 +16,13 @@ function toETH(value) {
   return new BN(value * 1000).mul(oneFinney)
 }
 
-function feeSubtracted(x) {
+function feeSubtracted(x, n) {
   assert(BN.isBN(x))
-  return x.mul(feeDenominatorMinusOne).div(feeDenominator)
+  const res = x.mul(feeDenominatorMinusOne).div(feeDenominator)
+  if (!n || n == 1) {
+    return res
+  }
+  return feeSubtracted(res, n - 1)
 }
 
 function feeAdded(x) {
@@ -263,19 +267,19 @@ const biggieSmallTradeSolutions = [
 
 // /////--------------- Basic Ring Trade example A -> B -> C
 
-const sell = new BN("1000000000000000000")
-const buy = new BN("990000000000000000")
+const oneETH = toETH(1)
+const buyAmt = toETH(0.99)
 
 const basicRingTrade = {
   deposits: [
-    { amount: sell, token: 0, user: 0 },
-    { amount: sell, token: 1, user: 1 },
-    { amount: sell, token: 2, user: 2 },
+    { amount: oneETH, token: 0, user: 0 },
+    { amount: oneETH, token: 1, user: 1 },
+    { amount: oneETH, token: 2, user: 2 },
   ],
   orders: [
-    { sellToken: 0, buyToken: 1, sellAmount: sell, buyAmount: buy, user: 0 },
-    { sellToken: 1, buyToken: 2, sellAmount: sell, buyAmount: buy, user: 1 },
-    { sellToken: 2, buyToken: 0, sellAmount: sell, buyAmount: buy, user: 2 }
+    { sellToken: 0, buyToken: 1, sellAmount: oneETH, buyAmount: buyAmt, user: 0 },
+    { sellToken: 1, buyToken: 2, sellAmount: oneETH, buyAmount: buyAmt, user: 1 },
+    { sellToken: 2, buyToken: 0, sellAmount: oneETH, buyAmount: buyAmt, user: 2 }
   ]
 }
 
@@ -284,8 +288,7 @@ const basicRingTradeSolutions = [
     name: "Simple Ring",
     prices: [1, 1, 1].map(toETH),
     owners: [0, 1, 2],
-    buyVolumes: [new BN("999000000000000000"), new BN("998001000000000000"), new BN("997002999000000000")],
-    sellVolumes: [new BN("1000000000000000000"), new BN("999000000000000000"), new BN("998001000000000000")],
+    buyVolumes: [feeSubtracted(oneETH), feeSubtracted(oneETH), feeSubtracted(oneETH, 3)],
     tokenIdsForPrice: [0, 1, 2],
   },
 ]
@@ -305,9 +308,9 @@ const shortRingBetterTradeCase = {
   ],
   orders: [
     // Ring trade orders
-    { sellToken: 0, buyToken: 1, sellAmount: sell, buyAmount: buy, user: 0 },
-    { sellToken: 1, buyToken: 2, sellAmount: sell, buyAmount: buy, user: 1 },
-    { sellToken: 2, buyToken: 0, sellAmount: sell, buyAmount: buy, user: 2 },
+    { sellToken: 0, buyToken: 1, sellAmount: oneETH, buyAmount: buyAmt, user: 0 },
+    { sellToken: 1, buyToken: 2, sellAmount: oneETH, buyAmount: buyAmt, user: 1 },
+    { sellToken: 2, buyToken: 0, sellAmount: oneETH, buyAmount: buyAmt, user: 2 },
     // basic Trade Orders
     { sellToken: 0, buyToken: 1, sellAmount: toETH(185), buyAmount: toETH(1), user: 3 },
     { sellToken: 1, buyToken: 0, sellAmount: toETH(1000), buyAmount: toETH(184000), user: 4 },
@@ -317,8 +320,7 @@ const shortRingBetterTradeCase = {
       name: "Ring Trade Solution",
       prices: [1, 1, 1].map(toETH),
       owners: [0, 1, 2],
-      buyVolumes: [new BN("999000000000000000"), new BN("998001000000000000"), new BN("997002999000000000"), zero, zero],
-      sellVolumes: [new BN("1000000000000000000"), new BN("999000000000000000"), new BN("998001000000000000")],
+      buyVolumes: [feeSubtracted(oneETH), feeSubtracted(oneETH, 2), feeSubtracted(oneETH, 3), zero, zero],
       tokenIdsForPrice: [0, 1, 2],
       burntFees: 1498500500000000,
       objectiveValue: 26945990981981981983480482481981982,
@@ -330,8 +332,7 @@ const shortRingBetterTradeCase = {
       owners: [3, 4],
       tokenIdsForPrice: [0, 1],
       // buyVolumes: [toETH(1), new BN("184000000000000000815")],
-      buyVolumes: [toETH(1), new BN("184000000000000000000")],
-      sellVolumes: [new BN("184368552736921106106"), toETH(1)],
+      buyVolumes: [toETH(1), toETH(184)],
       burntFees: 184276368460552644,
       objectiveValue: 626507423564715254807956719501111767,
     },
