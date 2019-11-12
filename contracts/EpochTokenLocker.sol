@@ -1,6 +1,7 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/Math.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -63,10 +64,7 @@ contract EpochTokenLocker {
       */
     function deposit(address token, uint256 amount) public {
         updateDepositsBalance(msg.sender, token);
-        require(
-            ERC20(token).transferFrom(msg.sender, address(this), amount),
-            "Tokentransfer for deposit was not successful"
-        );
+        SafeERC20.safeTransferFrom(IERC20(token), msg.sender, address(this), amount);
         // solhint-disable-next-line max-line-length
         balanceStates[msg.sender][token].pendingDeposits.amount = balanceStates[msg.sender][token].pendingDeposits.amount.add(amount);
         balanceStates[msg.sender][token].pendingDeposits.stateIndex = getCurrentBatchId();
@@ -128,7 +126,7 @@ contract EpochTokenLocker {
         balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
         delete balanceStates[user][token].pendingWithdraws;
 
-        ERC20(token).transfer(user, amount);
+        SafeERC20.safeTransfer(IERC20(token), user, amount);
         emit Withdraw(user, token, amount);
     }
     /**

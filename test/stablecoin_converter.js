@@ -651,7 +651,7 @@ contract("StablecoinConverter", async (accounts) => {
       const orderId = [orderId1, orderId2]
       const volume = basicTrade.solution.volume
       const tokenIdsForPrice = basicTrade.solution.tokenIdsForPrice
-      closeAuction(stablecoinConverter)
+      await closeAuction(stablecoinConverter)
 
       // The orders placed aren't valid until next batch!
       await truffleAssert.reverts(
