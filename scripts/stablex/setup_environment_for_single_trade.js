@@ -15,18 +15,20 @@ module.exports = async function (callback) {
     const TokenOWL = artifacts.require("TokenOWL")
     console.log(await instance.feeToken.call())
     const owlToken = await TokenOWL.at(await instance.feeToken.call())
-
     const amount = (10 ** 18).toString()
+    await owlToken.mintOWL(account, amount)
 
     const token = await ERC20Mintable.new()
 
     await token.mint(account, amount)
     await addTokens([token.address], web3, artifacts)
+
     await depositTokens(owlToken.address, account, amount, artifacts, callback)
     await depositTokens(token.address, account, amount, artifacts, callback)
-    const valid_until = 2 ** 31
-    await placeOrder(owlToken.address, token.address, account, valid_until, Math.floor(amount / 1000 * 999), Math.floor(amount * 1000 / 999), artifacts)
-    await placeOrder(token.address, owlToken.address, account, valid_until, Math.floor(amount / 1000 * 999), Math.floor(amount * 1000 / 999), artifacts)
+
+    const valid_for = 2 ** 10
+    await placeOrder(0, 1, account, valid_for, Math.floor(amount / 1000 * 99).toString(), Math.floor(amount * 1000 / 999).toString(), artifacts)
+    await placeOrder(1, 0, account, valid_for, Math.floor(amount / 1000 * 99).toString(), Math.floor(amount * 1000 / 999).toString(), artifacts)
 
     console.log("Primitive trading against oneself is setup")
     callback()
