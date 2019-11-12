@@ -1395,6 +1395,17 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(auctionElements, null)
     })
   })
+  describe("hasToken()", async () => {
+    it("returns whether token was already added", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_1 = await MockContract.new()
+      assert.equal(await stablecoinConverter.hasToken.call(erc20_1.address), false)
+      await stablecoinConverter.addToken(erc20_1.address)
+
+      assert.equal(await stablecoinConverter.hasToken.call(erc20_1.address), true)
+    })
+  })
 })
 
 function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice, scale) {
