@@ -45,15 +45,12 @@ function disregardedUtility(order, executedBuyAmount, prices) {
   // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
   const leftoverSellAmount = order.sellAmount.sub(executedSellAmount)
   const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
-  // const limitTermRight = prices[order.buyToken].mul(order.buyAmount).mul(feeDenominator).div(feeDenominatorMinusOne)
+  const limitTermRight = prices[order.buyToken].mul(order.buyAmount).mul(feeDenominator).div(feeDenominatorMinusOne)
   // min((sA  * pS // fd  * (fd - 1) // pB), bA) * pB // (fd - 1) * fd 
-  const limitTermRight = BN.min(
-    order.sellAmount.mul(prices[order.sellToken]).div(feeDenominator).mul(feeDenominatorMinusOne).div(prices[order.buyToken]),
-    order.buyAmount
-  ).mul(prices[order.buyToken]).div(feeDenominatorMinusOne).mul(feeDenominator)
-  const limitTerm = limitTermLeft.sub(limitTermRight)
-  assert(!limitTerm.isNeg())
-
+  let limitTerm = new BN(0)
+  if (limitTermLeft > limitTermRight) {
+    limitTerm = limitTermLeft.sub(limitTermRight)
+  }
   return leftoverSellAmount.mul(limitTerm).div(order.sellAmount)
 }
 
