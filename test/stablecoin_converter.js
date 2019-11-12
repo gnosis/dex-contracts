@@ -1242,6 +1242,12 @@ contract("StablecoinConverter", async (accounts) => {
           )
         )
       }
+      const relevantUser = accounts[basicTradeCase.orders[0].user]
+      const buyToken = await stablecoinConverter.tokenIdToAddressMap.call(basicTradeCase.orders[0].buyToken)
+
+      // relevant Userplaces withdraw request:
+      await stablecoinConverter.requestWithdraw(buyToken, 100, { from: relevantUser })
+
       await closeAuction(stablecoinConverter)
       const solution = basicTradeCase.solutions[0]
       await stablecoinConverter.submitSolution(
@@ -1253,9 +1259,6 @@ contract("StablecoinConverter", async (accounts) => {
         solution.tokenIdsForPrice,
         { from: solver }
       )
-      // TODO(bh2smith) - WTF is wrong with this thing!
-      const relevantUser = accounts[basicTradeCase.orders[0].user]
-      const buyToken = await stablecoinConverter.tokenIdToAddressMap.call(basicTradeCase.orders[0].buyToken)
       assert.equal(
         batchIndex + 1,
         await stablecoinConverter.lastCreditBatchId.call(relevantUser, buyToken),
@@ -1298,6 +1301,9 @@ contract("StablecoinConverter", async (accounts) => {
           )
         )
       }
+      // solver places withdraw request:
+      await stablecoinConverter.requestWithdraw(feeToken.address, 100, { from: solver })
+
       await closeAuction(stablecoinConverter)
       const solution = basicTradeCase.solutions[0]
       await stablecoinConverter.submitSolution(
@@ -1310,7 +1316,6 @@ contract("StablecoinConverter", async (accounts) => {
         { from: solver }
       )
 
-      // TODO - WHAT THE HELL IS WRONG WITH THIS!
       assert.equal(
         (batchIndex + 1).toString(),
         (await stablecoinConverter.lastCreditBatchId.call(solver, feeToken.address)).toString()
