@@ -20,6 +20,42 @@ const addTokens = async function (token_addresses, web3, artifacts) {
   }
 }
 
+const depositTokens = async function (token_address, depositor, amount, artifacts, callback) {
+  try {
+
+    const StablecoinConverter = artifacts.require("StablecoinConverter")
+    const instance = await StablecoinConverter.deployed()
+    const ERC20 = artifacts.require("ERC20.sol")
+
+    const token = await ERC20.at(token_address)
+    const depositor_balance = (await token.balanceOf.call(depositor))
+    if (depositor_balance.lt(amount)) {
+      callback(`Error: Depositor has insufficient balance ${depositor_balance} < ${amount}.`)
+    }
+
+    const allowance = (await token.allowance.call(depositor, instance.address)).toString()
+    if (allowance < amount) {
+      await token.approve(instance.address, amount, { from: depositor })
+    }
+
+    await instance.deposit(token_address, amount, { from: depositor })
+    callback()
+  } catch (error) {
+    callback(error)
+  }
+}
+
+const placeOrder = async function (buyToken, sellToken, account, valid_until, minBuy, maxSell, artifacts) {
+  const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
+
+  const StablecoinConverter = artifacts.require("StablecoinConverter")
+
+  const instance = await StablecoinConverter.deployed()
+  await sendTxAndGetReturnValue(instance.placeOrder, buyToken, sellToken, valid_until, minBuy, maxSell, { from: account })
+}
+
 module.exports = {
+  placeOrder,
+  depositTokens,
   addTokens
 }
