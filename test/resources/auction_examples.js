@@ -288,7 +288,7 @@ const basicRingTradeSolutions = [
     name: "Simple Ring",
     prices: [1, 1, 1].map(toETH),
     owners: [0, 1, 2],
-    buyVolumes: [feeSubtracted(oneETH), feeSubtracted(oneETH), feeSubtracted(oneETH, 3)],
+    buyVolumes: [feeSubtracted(oneETH), feeSubtracted(oneETH, 2), feeSubtracted(oneETH, 3)],
     tokenIdsForPrice: [0, 1, 2],
   },
 ]
