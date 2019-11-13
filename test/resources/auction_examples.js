@@ -301,6 +301,7 @@ const shortRingBetterTradeCase = {
 
 const fiveThouzy = new BN("5000")
 const tenThouzy = new BN("10000")
+
 const smallExample = {
   deposits: [
     { amount: feeAdded(tenThouzy), token: 0, user: 0 },
@@ -308,10 +309,10 @@ const smallExample = {
     { amount: feeAdded(tenThouzy), token: 1, user: 2 },
   ],
   orders: [
-    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 0 },
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 1 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 0 },
     { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 1 },
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 2 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 1 },
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 2 },
   ],
 }
 
@@ -330,7 +331,7 @@ const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions)
 const advancedTradeCase = generateTestCase(advancedTrade, advancedTradeSolutions)
 const biggieSmallCase = generateTestCase(biggieSmallTrade, biggieSmallTradeSolutions)
 const basicRingTradeCase = generateTestCase(basicRingTrade, basicRingTradeSolutions)
-const smallExampleCase = generateTestCase(smallExample, smallExampleSolutions, true)
+const smallExampleCase = generateTestCase(smallExample, smallExampleSolutions)
 
 module.exports = {
   toETH,

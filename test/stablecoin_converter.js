@@ -19,12 +19,9 @@ const {
   advancedTradeCase,
   getExecutedSellAmount,
   basicRingTradeCase,
-  shortRingBetterTradeCase
+  shortRingBetterTradeCase,
+  smallExampleCase,
 } = require("./resources/auction_examples.js")
-
-const {
-  feeAdded
-} = require("./resources/math.js")
 
 const MAX_ERROR = new BN("999000")
 const feeDenominator = 1000 // fee is (1 / feeDenominator)
@@ -605,6 +602,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       // Should be exactly one second past when solutions are being accepted.
       await truffleAssert.reverts(
+
         stablecoinConverter.submitSolution(
           updatedBatchIndex,
           solution.owners.map(x => accounts[x]),
@@ -1577,7 +1575,6 @@ contract("StablecoinConverter", async (accounts) => {
       )
       assert.equal(0, (await stablecoinConverter.currentPrices.call(2)).toString(), "CurrentPrice were not adjusted correctly")
     })
-    // TODO - this test needs to be cleaned up and working.
     it("checks that solution trades are deleted even if balances get temporarily negative while reverting ", async () => {
       // The following test, a user_2 will receive some tokens and sell these received tokens in one batch.
       // If this batch-trade gets executed and later reverted by another trade, users_2's balance would be temporarily negative, unless
@@ -1590,41 +1587,91 @@ contract("StablecoinConverter", async (accounts) => {
       await feeToken.givenAnyReturnBool(true)
       await erc20_2.givenAnyReturnBool(true)
 
-      const user_3 = accounts[3]
-
-      await stablecoinConverter.deposit(feeToken.address, feeAdded(new BN("10000")), { from: user_1 })
-      await stablecoinConverter.deposit(erc20_2.address, feeAdded(new BN("10000")), { from: user_3 })
-      await stablecoinConverter.deposit(erc20_2.address, 19, { from: user_2 }) // needed to pay fees
-
       await stablecoinConverter.addToken(erc20_2.address)
+      const tradeCase = smallExampleCase
 
+      // Make deposits
+      for (const deposit of tradeCase.deposits) {
+        const tokenAddress = await stablecoinConverter.tokenIdToAddressMap.call(deposit.token)
+        await stablecoinConverter.deposit(tokenAddress, deposit.amount, { from: accounts[deposit.user] })
+      }
+
+      // Place orders
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-
-      const orderId1 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, batchIndex + 1, 5000, feeAdded(new BN("10000")), { from: user_1 })
-      const orderId2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, batchIndex + 1, 5000, feeAdded(new BN("10000")), { from: user_2 })
-      const orderId3 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 1, 0, batchIndex + 1, 5000, feeAdded(new BN("10000")), { from: user_2 })
-      const orderId4 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, batchIndex + 1, 5000, feeAdded(new BN("10000")), { from: user_3 })
-
+      const orderIds = []
+      for (const order of tradeCase.orders) {
+        orderIds.push(
+          await sendTxAndGetReturnValue(
+            stablecoinConverter.placeOrder,
+            order.buyToken,
+            order.sellToken,
+            batchIndex + 1,
+            order.buyAmount,
+            order.sellAmount,
+            { from: accounts[order.user] }
+          )
+        )
+      }
       await closeAuction(stablecoinConverter)
+      const solution = tradeCase.solutions[0]
+      await stablecoinConverter.submitSolution(
+        batchIndex,
+        solution.owners.map(x => accounts[x]),
+        orderIds,
+        solution.buyVolumes,
+        solution.prices,
+        solution.tokenIdsForPrice,
+        { from: solver }
+      )
+      const users = tradeCase.deposits.map(d => accounts[d.user])
 
-      const prices = [toETH(1), toETH(1)]
-      const owner = [user_1, user_2, user_2, user_3]
-      const orderId = [orderId1, orderId2, orderId3, orderId4]
-      const volume = [10000, 9990, 9981, 9972] // volumes are the previous volume minus fees
-      const tokenIdsForPrice = [0, 1]
-
-      await stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solver })
-
-      assert.equal((await stablecoinConverter.getBalance.call(user_1, feeToken.address)).toNumber(), feeAdded(new BN("10000")) - getExecutedSellAmount(new BN(volume[0]), new BN(prices[0]), new BN(prices[1])), "Sold tokens were not adjusted correctly")
-      assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken.address)).toNumber(), 0, "Sold tokens were not adjusted correctly")
-      assert.equal((await stablecoinConverter.getBalance.call(user_3, feeToken.address)).toNumber(), volume[3], "Bought tokens were not adjusted correctly")
-      assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_2.address)).toNumber(), volume[0], "Bought tokens were not adjusted correctly")
-      assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toNumber(), 0, "Bought and sold tokens were not adjusted correctly")
-      assert.equal((await stablecoinConverter.getBalance.call(user_3, erc20_2.address)).toNumber(), feeAdded(new BN("10000")) - getExecutedSellAmount(new BN(volume[3]), new BN(prices[1]), new BN(prices[0])), "Sold tokens were not adjusted correctly")
+      assert.equal(
+        (await stablecoinConverter.getBalance.call(users[0], feeToken.address)).toString(),
+        tradeCase.deposits[0].amount.sub(getExecutedSellAmount(solution.buyVolumes[0], solution.prices[0], solution.prices[1])).toString(),
+        "Sold tokens were not adjusted correctly"
+      )
+      assert.equal(
+        (await stablecoinConverter.getBalance.call(users[0], feeToken.address)).toString(),
+        tradeCase.deposits[0].amount.sub(getExecutedSellAmount(solution.buyVolumes[0], solution.prices[0], solution.prices[1])).toString(),
+        "Sold tokens were not adjusted correctly"
+      )
+      assert.equal(
+        (await stablecoinConverter.getBalance.call(users[1], feeToken.address)),
+        0,
+        "Sold tokens were not adjusted correctly"
+      )
+      assert.equal(
+        (await stablecoinConverter.getBalance.call(users[2], feeToken.address)).toString(),
+        solution.buyVolumes[3].toString(),
+        "Bought tokens were not adjusted correctly"
+      )
+      assert.equal(
+        (await stablecoinConverter.getBalance.call(users[0], erc20_2.address)).toString(),
+        solution.buyVolumes[0].toString(),
+        "Bought tokens were not adjusted correctly"
+      )
+      assert.equal(
+        (await stablecoinConverter.getBalance.call(users[1], erc20_2.address)),
+        0,
+        "Bought and sold tokens were not adjusted correctly"
+      )
+      assert.equal(
+        (await stablecoinConverter.getBalance.call(users[2], erc20_2.address)).toString(),
+        tradeCase.deposits[2].amount.sub(getExecutedSellAmount(solution.buyVolumes[3], solution.prices[1], solution.prices[0])).toString(),
+        "Sold tokens were not adjusted correctly"
+      )
 
       // Now reverting should not throw due to temporarily negative balances, only later due to objective value criteria
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex, owner, orderId, volume, prices, tokenIdsForPrice, { from: solver }),
+        stablecoinConverter.submitSolution(
+          batchIndex,
+          solution.owners.map(x => accounts[x]),
+          orderIds,
+          solution.buyVolumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
+          { from: solver }
+        ),
         "Solution must have a higher objective value than current solution"
       )
     })
