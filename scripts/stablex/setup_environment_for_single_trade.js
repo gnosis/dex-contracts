@@ -18,8 +18,6 @@ module.exports = async function (callback) {
 
     const amount = (10 ** 18).toString()
 
-    // only needed for running locally
-    //await owlToken.mintOWL(account, amount)
 
     const token = await ERC20Mintable.new()
     await token.mint(account, amount)
