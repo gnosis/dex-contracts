@@ -57,13 +57,6 @@ function disregardedUtility(order, executedBuyAmount, prices) {
   return leftoverSellAmount.mul(limitTerm).div(order.sellAmount)
 }
 
-function maxUtility(order, prices) {
-  const limitTermLeft = prices[order.sellToken].mul(order.sellAmount).mul(feeDenominatorMinusOne).div(feeDenominator)
-  const limitTermRight = prices[order.buyToken].mul(order.buyAmount)
-  const limitTerm = limitTermLeft.sub(limitTermRight)
-  return limitTerm
-}
-
 function evaluateObjectiveValue(trade, solution, debug = false) {
   const log = debug && console.log || (() => { })
 
@@ -87,10 +80,6 @@ function evaluateObjectiveValue(trade, solution, debug = false) {
   log("Disregarded Utilities:", orderDisregardedUtilities.map(o => o.toString()))
   log("Total Disregarded Utility:", orderDisregardedUtilities.reduce((acc, x) => acc.add(x), new BN(0)).toString())
 
-  log("2U - maxU:   ", trade.orders.map((x, i) =>
-    evaluateTradeUtility(x, solution.buyVolumes[i], solution.prices).mul(new BN(2))
-      .sub(maxUtility(x, solution.prices)).toString()))
-
   const feesPerOrder = trade.orders.map((x, i) => {
     if (x.buyToken === 0) {
       return solution.buyVolumes[i].neg()
@@ -104,7 +93,7 @@ function evaluateObjectiveValue(trade, solution, debug = false) {
 
   const totalFees = feesPerOrder.reduce((acc, x) => acc.add(x), new BN(0))
   const burntFees = totalFees.div(new BN(2))
-  log("Total Fees:    ", totalFees.toString())
+  log("Total Fees:", totalFees.toString())
   log("Burnt Fees:", burntFees.toString())
 
   const objectiveValue = new BN(0)
@@ -209,7 +198,6 @@ const advancedTradeSolutions = [
   }
 ]
 
-
 /////--------------- One large (market maker) and one small (market order)
 
 const biggieSmallTrade = {
@@ -226,43 +214,13 @@ const biggieSmallTrade = {
 const biggieSmallTradeSolutions = [
   {
     name: "Max Fulfillment",
-    // prices: [toETH(1), new BN("184184184184184185000")],
     prices: [toETH(1), new BN("184184184184184184184")],
     owners: [0, 1],
     tokenIdsForPrice: [0, 1],
-    // buyVolumes: [toETH(1), new BN("184000000000000000815")],
     buyVolumes: [toETH(1), new BN("184000000000000000000")],
     sellVolumes: [new BN("184368552736921106106"), toETH(1)],
   }
 ]
-
-// /////--------------- Two orders A -> B and two orders B -> A 
-
-// const fiveHunnit = toETH(500)
-// const tenThouzy = toETH(10000)
-
-// const doubleDoubleTrade = {
-//   deposits: [
-//     { amount: fiveHunnit, token: 0, user: 0 },
-//     { amount: fiveHunnit, token: 1, user: 1 },
-//   ],
-//   orders: [
-//     { sellToken: 0, buyToken: 1, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: 0 },
-//     { sellToken: 1, buyToken: 0, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: 1 },
-//     { sellToken: 0, buyToken: 1, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: 1 },
-//     { sellToken: 1, buyToken: 0, sellAmount: fiveHunnit, buyAmount: tenThouzy, user: 2 }
-//   ]
-// }
-
-// const doubleDoubleTradeSolutions = [
-//   {
-//     name: "Not sure about this one...",
-//     prices: [1, 1].map(toETH),
-//     owners: [0, 1, 0, 1],
-//     buyVolumes: [100, 99, 98, 97].map(toETH),
-//     tokenIdsForPrice: [0, 1],
-//   },
-// ]
 
 // /////--------------- Basic Ring Trade example A -> B -> C
 
@@ -343,33 +301,36 @@ const shortRingBetterTradeCase = {
 
 const fiveThouzy = new BN("5000")
 const tenThouzy = new BN("10000")
-const smallExampleCase = {
+const smallExample = {
   deposits: [
     { amount: feeAdded(tenThouzy), token: 0, user: 0 },
     { amount: new BN(19), token: 1, user: 1 },
     { amount: feeAdded(tenThouzy), token: 1, user: 2 },
   ],
   orders: [
-    { sellToken: 1, buyToken: 0, sellAmount: fiveThouzy, buyAmount: feeAdded(tenThouzy), user: 0 },
-    { sellToken: 0, buyToken: 1, sellAmount: fiveThouzy, buyAmount: feeAdded(tenThouzy), user: 1 },
-    { sellToken: 1, buyToken: 0, sellAmount: fiveThouzy, buyAmount: feeAdded(tenThouzy), user: 1 },
-    { sellToken: 0, buyToken: 1, sellAmount: fiveThouzy, buyAmount: feeAdded(tenThouzy), user: 2 },
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 0 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 1 },
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 1 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 2 },
   ],
-  solutions: [
-    {
-      name: "Small Solution",
-      prices: [1, 1].map(toETH),
-      owners: [0, 1, 1, 2],
-      tokenIdsForPrice: [0, 1],
-      buyVolumes: [new BN(10000), new BN(9990), new BN(9981), new BN(9972)],
-    }
-  ]
 }
+
+const smallExampleSolutions = [
+  {
+    name: "Small Solution",
+    prices: [1, 1].map(toETH),
+    owners: [0, 1, 1, 2],
+    tokenIdsForPrice: [0, 1],
+    buyVolumes: [new BN(10000), new BN(9990), new BN(9981), new BN(9972)],
+  }
+]
+
 
 const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions)
 const advancedTradeCase = generateTestCase(advancedTrade, advancedTradeSolutions)
 const biggieSmallCase = generateTestCase(biggieSmallTrade, biggieSmallTradeSolutions)
 const basicRingTradeCase = generateTestCase(basicRingTrade, basicRingTradeSolutions)
+const smallExampleCase = generateTestCase(smallExample, smallExampleSolutions, true)
 
 module.exports = {
   toETH,
@@ -381,4 +342,3 @@ module.exports = {
   shortRingBetterTradeCase,
   smallExampleCase
 }
-
