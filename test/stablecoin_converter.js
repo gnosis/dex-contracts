@@ -13,7 +13,10 @@ const {
   decodeAuctionElements
 } = require("./utilities.js")
 
-const { toETH } = require("./resources/math")
+const {
+  toETH,
+  getExecutedSellAmount,
+} = require("./resources/math")
 const {
   solutionSubmissionParams,
   basicTrade,
@@ -25,7 +28,6 @@ const {
 
 const {
   basicTradeCase,
-  getExecutedSellAmount,
   basicRingTradeCase,
   shortRingBetterTradeCase,
   smallExampleCase,
@@ -528,7 +530,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toString(), basicTrade.deposits[1].amount.sub(getExecutedSellAmount(fullBuyVolumes[1], prices[0], prices[1])).toString(), "Sold tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken.address)), fullBuyVolumes[1].toString(), "Bought tokens were not adjusted correctly")
     })
-    it.only("[Advanced Trade] verifies the 2nd solution is correctly documented and can be reverted by a 3rd", async () => {
+    it("[Advanced Trade] verifies the 2nd solution is correctly documented and can be reverted by a 3rd", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const erc20_2 = await MockContract.new()
@@ -1550,7 +1552,7 @@ contract("StablecoinConverter", async (accounts) => {
         "Solution exceeds MAX_TOUCHED_ORDERS"
       )
     })
-    it("[Ring Trade] settles a ring trade between 3 tokens", async () => {
+    it.only("[Ring Trade] settles a ring trade between 3 tokens", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const erc20_2 = await MockContract.new()
@@ -1586,11 +1588,11 @@ contract("StablecoinConverter", async (accounts) => {
         )
       }
       await closeAuction(stablecoinConverter)
-      const solution = basicRingTradeCase.solutions[0]
-      const volume = solution.buyVolumes
-      const prices = solution.prices
+      const solution = solutionSubmissionParams(basicRingTrade.solutions[0], accounts, orderIds)
+      const { prices, volumes } = solution
+
       await stablecoinConverter.submitSolution(
-        batchIndex, solution.objectiveValue, solution.owners.map(x => accounts[x]), orderIds, volume, prices, solution.tokenIdsForPrice, { from: solver }
+        batchIndex, solution.objectiveValue, solution.owners, orderIds, volumes, prices, solution.tokenIdsForPrice, { from: solver }
       )
 
       const actualObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call())
@@ -1611,12 +1613,12 @@ contract("StablecoinConverter", async (accounts) => {
 
         assert.equal(
           sellTokenBalance.toString(),
-          deposit.amount.sub(getExecutedSellAmount(solution.buyVolumes[i], prices[order.buyToken], prices[order.sellToken])).toString(),
+          deposit.amount.sub(getExecutedSellAmount(volumes[i], prices[order.buyToken], prices[order.sellToken])).toString(),
           `Sold tokens were not adjusted correctly at order index ${i}`
         )
         assert.equal(
           buyTokenBalance.toString(),
-          solution.buyVolumes[i].toString(),
+          volumes[i].toString(),
           `Bought tokens were not adjusted correctly at order index ${i}`
         )
       }

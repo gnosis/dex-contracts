@@ -203,6 +203,7 @@ function debugTestCase(testCase, orderIds, accounts) {
 /**
  * @typedef SolutionParam
  * @type {object}
+ * @property {BN} objectiveValue The computed objective value for the solution
  * @property {string[]} owners The account addresses for thr order orners
  * @property {string[]} touchedOrderIds The ids of touched orders
  * @property {BN[]} volumes The buy volumes
@@ -231,6 +232,7 @@ function solutionSubmissionParams(solution, accounts, orderIds) {
   assert(userCount <= accounts.length, "missing users in accounts")
 
   return {
+    objectiveValue: solution.objectiveValue,
     owners: solution.orders.map(o => accounts[o.user]),
     touchedOrderIds: solution.orders.map(o => orderIds[o.idx]),
     volumes: solution.orders.map(o => o.buy),
