@@ -292,10 +292,11 @@ const basicRingTradeSolutions = [
   },
 ]
 
+// NON-GENERATED EXAMPLES
+
 // Short ring is better
 
 const fiftyETH = toETH(50)
-
 const shortRingBetterTradeCase = {
   deposits: [
     // Very large deposits
@@ -338,20 +339,37 @@ const shortRingBetterTradeCase = {
   ]
 }
 
+// Trade through a fee provider (user 1)
+
+const fiveThouzy = new BN("5000")
+const tenThouzy = new BN("10000")
+const smallExampleCase = {
+  deposits: [
+    { amount: feeAdded(tenThouzy), token: 0, user: 0 },
+    { amount: new BN(19), token: 1, user: 1 },
+    { amount: feeAdded(tenThouzy), token: 1, user: 2 },
+  ],
+  orders: [
+    { sellToken: 1, buyToken: 0, sellAmount: fiveThouzy, buyAmount: feeAdded(tenThouzy), user: 0 },
+    { sellToken: 0, buyToken: 1, sellAmount: fiveThouzy, buyAmount: feeAdded(tenThouzy), user: 1 },
+    { sellToken: 1, buyToken: 0, sellAmount: fiveThouzy, buyAmount: feeAdded(tenThouzy), user: 1 },
+    { sellToken: 0, buyToken: 1, sellAmount: fiveThouzy, buyAmount: feeAdded(tenThouzy), user: 2 },
+  ],
+  solutions: [
+    {
+      name: "Small Solution",
+      prices: [1, 1].map(toETH),
+      owners: [0, 1, 1, 2],
+      tokenIdsForPrice: [0, 1],
+      buyVolumes: [new BN(10000), new BN(9990), new BN(9981), new BN(9972)],
+    }
+  ]
+}
+
 const basicTradeCase = generateTestCase(basicTrade, basicTradeSolutions)
-// console.log(JSON.stringify(basicTradeCase, null, "  "))
-
 const advancedTradeCase = generateTestCase(advancedTrade, advancedTradeSolutions)
-// console.log(JSON.stringify(advancedTradeCase, null, "  "))
-
 const biggieSmallCase = generateTestCase(biggieSmallTrade, biggieSmallTradeSolutions)
-// console.log(JSON.stringify(biggieSmallCase, null, "  "))
-
 const basicRingTradeCase = generateTestCase(basicRingTrade, basicRingTradeSolutions)
-// console.log(JSON.stringify(doubleDoubleTradeCase, null, "  "))
-
-// const shortRingBetterTradeCase = generateTestCase(shortRingBetterTrade, shortRingBetterTradeSolutions, true)
-// // console.log(JSON.stringify(shortRingBetterTradeCase, null, "  "))
 
 module.exports = {
   toETH,
@@ -361,5 +379,6 @@ module.exports = {
   getExecutedSellAmount,
   basicRingTradeCase,
   shortRingBetterTradeCase,
+  smallExampleCase
 }
 
