@@ -1801,22 +1801,6 @@ contract("StablecoinConverter", async (accounts) => {
   })
 })
 
-// function evaluateTradeUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
-//   const scaledSellAmount = getExecutedSellAmount(executedBuyAmount, priceBuyToken, priceSellToken, 2)
-//   const essentialUtility = (executedBuyAmount - Math.floor((scaledSellAmount * buyAmount) / sellAmount)) * priceBuyToken
-//   const utilityError = Math.floor([(scaledSellAmount * buyAmount) % sellAmount] * priceBuyToken / sellAmount)
-//   return essentialUtility - utilityError
-// }
-
-// function disregardedUtility(buyAmount, sellAmount, executedBuyAmount, executedSellAmount, priceBuyToken, priceSellToken) {
-//   const limitTerm = priceSellToken * sellAmount - priceBuyToken * feeAdded(buyAmount)
-//   // Note, this computation assumes bidder has sufficient balance remaining
-//   // Usually leftoverSellAmount = MIN(sellAmount - executedSellAmount, user.balance.sellToken)
-
-//   const leftoverSellAmount = sellAmount - executedSellAmount
-//   return Math.floor((leftoverSellAmount * limitTerm) / sellAmount)
-// }
-
 const closeAuction = async (instance) => {
   const time_remaining = (await instance.getSecondsRemainingInBatch()).toNumber()
   await waitForNSeconds(time_remaining + 1)
