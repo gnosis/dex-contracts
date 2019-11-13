@@ -236,6 +236,7 @@ contract StablecoinConverter is EpochTokenLocker {
       */
     function submitSolution(
         uint32 batchIndex,
+        uint256 claimedObjectiveValue,
         address[] memory owners,
         uint16[] memory orderIds,
         uint128[] memory volumes,
@@ -243,6 +244,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] memory tokenIdsForPrice
     ) public {
         require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
+        require(claimedObjectiveValue > getCurrentObjectiveValue(), "Claimed objective is not more than current solution");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         require(prices[0] == 1 ether, "fee token price must be 10^18");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
@@ -286,9 +288,7 @@ contract StablecoinConverter is EpochTokenLocker {
         }
         uint256 disregardedUtility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
-            disregardedUtility = disregardedUtility.add(
-                evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
-            );
+            disregardedUtility = disregardedUtility.add(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]));
         }
         uint256 burntFees = uint256(tokenConservation[0]) / 2;
         require(utility + burntFees > disregardedUtility, "Solution must be better than trivial");

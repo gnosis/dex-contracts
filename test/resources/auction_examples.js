@@ -280,19 +280,17 @@ const shortRingBetterTradeCase = {
       owners: [0, 1, 2],
       buyVolumes: [feeSubtracted(oneETH), feeSubtracted(oneETH, 2), feeSubtracted(oneETH, 3), zero, zero],
       tokenIdsForPrice: [0, 1, 2],
-      burntFees: 1498500500000000,
-      objectiveValue: 26945990981981981983480482481981982,
+      burntFees: new BN("1498500500000000"),
+      objectiveValue: new BN("26945990981981981983480482481981982"),
     },
     {
       name: "Biggie Small Trade",
-      // prices: [toETH(1), new BN("184184184184184185000")],
       prices: [toETH(1), new BN("184184184184184184184")],
       owners: [3, 4],
       tokenIdsForPrice: [0, 1],
-      // buyVolumes: [toETH(1), new BN("184000000000000000815")],
       buyVolumes: [toETH(1), toETH(184)],
-      burntFees: 184276368460552644,
-      objectiveValue: 626507423564715254807956719501111767,
+      burntFees: new BN("184276368460552644"),
+      objectiveValue: new BN("626507423564715254807956719501111767"),
     },
   ]
 }
