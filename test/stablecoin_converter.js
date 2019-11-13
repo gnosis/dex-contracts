@@ -1627,7 +1627,7 @@ contract("StablecoinConverter", async (accounts) => {
         "Solution must have a higher objective value than current solution"
       )
     })
-    it("partially fills orders in one auciton and then fills them some more in the next.", async () => {
+    it("partially fills orders in one auction and then fills them some more in the next.", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const erc20_2 = await MockContract.new()
