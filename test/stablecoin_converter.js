@@ -318,22 +318,19 @@ contract("StablecoinConverter", async (accounts) => {
       await closeAuction(stablecoinConverter)
 
       const solution = basicTradeCase.solutions[0]
-      const volume = solution.buyVolumes
-      const prices = solution.prices
-      const tokenIdsForPrice = solution.tokenIdsForPrice
-
-      await stablecoinConverter.submitSolution.call(
+      const objectiveValue = await stablecoinConverter.submitSolution.call(
         batchIndex,
         solution.objectiveValue,
         solution.owners.map(x => accounts[x]),
         orderIds,
-        volume,
-        prices,
-        tokenIdsForPrice,
+        solution.buyVolumes,
+        solution.prices,
+        solution.tokenIdsForPrice,
         { from: solver }
       )
 
       assert(objectiveValue > 0, "the computed objective value is greater than 0")
+      assert.equal(objectiveValue, solution.objectiveValue.toString())
    })
     it("[Basic Trade] places two orders and matches them in a solution with Utility > 0", async () => {
       const feeToken = await MockContract.new()
