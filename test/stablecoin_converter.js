@@ -1552,7 +1552,7 @@ contract("StablecoinConverter", async (accounts) => {
         "Solution exceeds MAX_TOUCHED_ORDERS"
       )
     })
-    it.only("[Ring Trade] settles a ring trade between 3 tokens", async () => {
+    it("[Ring Trade] settles a ring trade between 3 tokens", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const erc20_2 = await MockContract.new()
