@@ -31,7 +31,6 @@ function feeAdded(x) {
 }
 
 function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice) {
-  // assert([executedBuyAmount, buyTokenPrice, sellTokenPrice].all(BN.isBN))
   return executedBuyAmount.mul(buyTokenPrice).div(feeDenominatorMinusOne).mul(feeDenominator).div(sellTokenPrice)
 }
 
