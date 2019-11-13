@@ -317,6 +317,7 @@ contract StablecoinConverter is EpochTokenLocker {
     function tokenIdToAddressMap(uint16 id) public view returns (address) {
         return IdToAddressBiMap.getAddressAt(registeredTokens, id);
     }
+
     /** @dev View returning a bool attesting whether token was already added
       * @param addr address of the token to be checked
       * @return bool attesting whether token was already added

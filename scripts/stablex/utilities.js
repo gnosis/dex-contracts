@@ -19,12 +19,12 @@ const addTokens = async function (token_addresses, web3, artifacts) {
     await owl.approve(instance.address, feeForAddingToken)
   }
 
-  for (const i in token_addresses) {
-    if (!(await instance.hasToken.call(token_addresses[i]))) {
-      await instance.addToken(token_addresses[i])
-      console.log(`Successfully added token ${token_addresses[i]}`)
+  for (const token_address of token_addresses) {
+    if (!(await instance.hasToken.call(token_address))) {
+      await instance.addToken(token_address)
+      console.log(`Successfully added token ${token_address}`)
     } else {
-      console.log(`The token ${token_addresses[i]} was already added`)
+      console.log(`The token ${token_address} was already added`)
     }
   }
 }
