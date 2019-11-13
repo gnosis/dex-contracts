@@ -49,7 +49,7 @@ function feeSubtracted(x, n = 1) {
   assert(BN.isBN(x))
   assert(Number.isInteger(n) && n > 0)
 
-  var result = new BN(x)
+  let result = new BN(x)
   for (; n > 0; n--) {
     result = result.imul(feeDenominatorMinusOne).div(feeDenominator)
   }
