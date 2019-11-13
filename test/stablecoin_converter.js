@@ -16,6 +16,7 @@ const {
 const {
   toETH,
   getExecutedSellAmount,
+  ERROR_EPSILON,
 } = require("./resources/math")
 const {
   solutionSubmissionParams,
@@ -26,7 +27,6 @@ const {
   smallExample,
 } = require("./resources/examples")
 
-const MAX_ERROR = new BN("999000")
 const feeDenominator = 1000 // fee is (1 / feeDenominator)
 
 contract("StablecoinConverter", async (accounts) => {
@@ -852,7 +852,7 @@ contract("StablecoinConverter", async (accounts) => {
             order.buyToken,
             order.sellToken,
             batchIndex + 1,
-            order.buyAmount.add(MAX_ERROR),   // <------- NOTE THAT THIS IS DIFFERENT
+            order.buyAmount.add(ERROR_EPSILON),   // <------- NOTE THAT THIS IS DIFFERENT
             order.sellAmount,
             { from: accounts[order.user] }
           )
@@ -988,7 +988,7 @@ contract("StablecoinConverter", async (accounts) => {
       // Make deposits
       for (const deposit of basicTrade.deposits) {
         const tokenAddress = await stablecoinConverter.tokenIdToAddressMap.call(deposit.token)
-        await stablecoinConverter.deposit(tokenAddress, deposit.amount.sub(MAX_ERROR), { from: accounts[deposit.user] })
+        await stablecoinConverter.deposit(tokenAddress, deposit.amount.sub(ERROR_EPSILON), { from: accounts[deposit.user] })
       }
 
       // Place orders
