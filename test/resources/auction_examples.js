@@ -321,7 +321,7 @@ const smallExampleSolutions = [
     prices: [1, 1].map(toETH),
     owners: [0, 1, 1, 2],
     tokenIdsForPrice: [0, 1],
-    buyVolumes: [new BN(10000), new BN(9990), new BN(9981), new BN(9972)],
+    buyVolumes: [10000, 9990, 9981, 9972].map(val => new BN(val)),
   }
 ]
 
