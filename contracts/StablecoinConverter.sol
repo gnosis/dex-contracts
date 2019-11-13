@@ -187,13 +187,15 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     /** @dev a user facing function used to cancel orders (sets order expiry to previous batchId)
-      * @param id referencing the index of user's order to be canceled
+      * @param ids referencing the index of user's order to be canceled
       *
       * Emits an {OrderCancelation} with sender's address and orderId
       */
-    function cancelOrder(uint256 id) public {
-        orders[msg.sender][id].validUntil = getCurrentBatchId() - 1;
-        emit OrderCancelation(msg.sender, id);
+    function cancelOrder(uint256[] memory ids) public {
+        for (uint256 i = 0; i < ids.length; i++) {
+            orders[msg.sender][ids[i]].validUntil = getCurrentBatchId() - 1;
+            emit OrderCancelation(msg.sender, ids[i]);
+        }
     }
 
     /** @dev A user facing function used to delete expired orders.
@@ -274,10 +276,7 @@ contract StablecoinConverter is EpochTokenLocker {
         }
         // doing all subtractions after all additions (in order to avoid negative values)
         for (uint256 i = 0; i < owners.length; i++) {
-            (, uint128 executedSellAmount) = getTradedAmounts(
-                volumes[i],
-                orders[owners[i]][orderIds[i]]
-            );
+            (, uint128 executedSellAmount) = getTradedAmounts(volumes[i], orders[owners[i]][orderIds[i]]);
             subtractBalance(
                 owners[i],
                 tokenIdToAddressMap(orders[owners[i]][orderIds[i]].sellToken),
@@ -316,6 +315,14 @@ contract StablecoinConverter is EpochTokenLocker {
       */
     function tokenIdToAddressMap(uint16 id) public view returns (address) {
         return IdToAddressBiMap.getAddressAt(registeredTokens, id);
+    }
+
+    /** @dev View returning a bool attesting whether token was already added
+      * @param addr address of the token to be checked
+      * @return bool attesting whether token was already added
+      */
+    function hasToken(address addr) public view returns (bool) {
+        return IdToAddressBiMap.hasAddress(registeredTokens, addr);
     }
 
     /** @dev View returning all currently stored, byte-encoded sell orders
@@ -493,7 +500,7 @@ contract StablecoinConverter is EpochTokenLocker {
       * @return disregardedUtility of the order (after it has been applied)
       * Note that:
       * |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
-      * where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken
+      * where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken * (1 - phi)
       * and leftoverSellAmount = order.sellAmt - execSellAmt
       * Balances and orders have all been updated so: sellAmount - execSellAmt == remainingAmount(order).
       * For correctness, we take the minimum of this with the user's token balance.
@@ -503,9 +510,14 @@ contract StablecoinConverter is EpochTokenLocker {
             getRemainingAmount(order),
             getBalance(user, tokenIdToAddressMap(order.sellToken))
         );
-        uint256 limitTerm = currentPrices[order.sellToken].mul(order.priceDenominator)
-            .sub(currentPrices[order.buyToken].mul(order.priceNumerator));
-        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator);
+        uint256 limitTermLeft = currentPrices[order.sellToken].mul(order.priceDenominator);
+        uint256 limitTermRight = order.priceNumerator.mul(currentPrices[order.buyToken])
+            .mul(feeDenominator).div(feeDenominator-1);
+        uint256 limitTerm = 0;
+        if (limitTermLeft > limitTermRight) {
+            limitTerm = limitTermLeft.sub(limitTermRight);
+        }
+        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator).toUint128();
     }
 
     /** @dev Evaluates executedBuy amount based on prices and executedBuyAmout (fees included)

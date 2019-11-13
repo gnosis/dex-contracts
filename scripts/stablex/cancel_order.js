@@ -14,7 +14,7 @@ module.exports = async (callback) => {
 
     const accounts = await web3.eth.getAccounts()
     const instance = await StablecoinConverter.deployed()
-    await instance.cancelOrder(argv.orderId, { from: accounts[argv.accountId] })
+    await instance.cancelOrder([argv.orderId], { from: accounts[argv.accountId] })
 
     console.log(`Successfully cancelled order with ID ${argv.orderId}`)
     callback()
