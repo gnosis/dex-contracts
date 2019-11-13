@@ -1,21 +1,6 @@
-const BN = require("bn.js")
 const assert = require("assert")
-
-/**
- * @typedef Order
- * @type {object}
- * @property {number} buyToken The buy token
- * @property {BN} buyAmount The buy amount
- * @property {number} sellToken The buy token
- * @property {BN} sellAmount The sell amount
- * @property {number} user The user ID for the order
- *
- * @typedef Solution
- * @type {object}
- * @property {string?} name an optional descriptive name
- * @property {BN[]} prices The prices for each token
- * @property {BN[]} buyVolumes The executed buy amounts for each order
- */
+const BN = require("bn.js")
+const { flat } = require("./array-shims.js")
 
 /**
  * Converts the amount value to `ether` unit.
@@ -31,29 +16,28 @@ function toETH(value) {
  * The fee denominator used for calculating fees.
  * @type {BN}
  */
-const feeDenominator = new BN(1000)
+const FEE_DENOMINATOR = new BN(1000)
 
 /**
  * The fee denominator minus one.
  * @type {BN}
  */
-const feeDenominatorMinusOne = feeDenominator.sub(new BN(1))
+const FEE_DENOMINATOR_MINUS_ONE = FEE_DENOMINATOR.sub(new BN(1))
 
 /**
  * Removes fees to the specified value `n` times.
  * @param {BN} x The value to apply the fee to
- * @param {number} [n=1] The number of times to apply the fee, defaults to 1
+ * @param {number} [n=1] The number of times to apply the fee, must be greater than 0
  * @return {BN} The value minus fees
  */
 function feeSubtracted(x, n = 1) {
-  assert(BN.isBN(x))
-  assert(Number.isInteger(n) && n > 0)
+  assert(BN.isBN(x), "x is not a bignum")
+  assert(Number.isInteger(n) && n > 0, "n is not a valid integer")
 
-  let result = new BN(x)
-  for (; n > 0; n--) {
-    result = result.imul(feeDenominatorMinusOne).div(feeDenominator)
-  }
-  return result
+  const result = x.mul(FEE_DENOMINATOR_MINUS_ONE).div(FEE_DENOMINATOR)
+  return n === 1 ?
+    result :
+    feeSubtracted(result, n - 1)
 }
 
 /**
@@ -62,9 +46,9 @@ function feeSubtracted(x, n = 1) {
  * @return {BN} The value plus fees
  */
 function feeAdded(x) {
-  assert(BN.isBN(x))
+  assert(BN.isBN(x), "x is not a bignum")
 
-  return x.mul(feeDenominator).div(feeDenominatorMinusOne)
+  return x.mul(FEE_DENOMINATOR).div(FEE_DENOMINATOR_MINUS_ONE)
 }
 
 /**
@@ -72,7 +56,7 @@ function feeAdded(x) {
  * errors.
  * @type {BN}
  */
-const amountEpsilon = new BN(999000)
+const ERROR_EPSILON = new BN(999000)
 
 /**
  * Calculates the executed buy amout given a buy volume and the settled buy and
@@ -83,12 +67,22 @@ const amountEpsilon = new BN(999000)
  * @return {BN} The value plus fees
  */
 function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice) {
-  assert(BN.isBN(executedBuyAmount))
-  assert(BN.isBN(buyTokenPrice))
-  assert(BN.isBN(sellTokenPrice))
+  assert(BN.isBN(executedBuyAmount), "executedBuyAmount is not a bignum")
+  assert(BN.isBN(buyTokenPrice), "buyTokenPrice is not a bignum")
+  assert(BN.isBN(sellTokenPrice), "sellTokenPrice is not a bignum")
 
-  return executedBuyAmount.mul(buyTokenPrice).div(feeDenominatorMinusOne).mul(feeDenominator).div(sellTokenPrice)
+  return executedBuyAmount.mul(buyTokenPrice).div(FEE_DENOMINATOR_MINUS_ONE).mul(FEE_DENOMINATOR).div(sellTokenPrice)
 }
+
+/**
+ * @typedef Order
+ * @type {object}
+ * @property {number} buyToken The buy token
+ * @property {BN} buyAmount The buy amount
+ * @property {number} sellToken The buy token
+ * @property {BN} sellAmount The sell amount
+ * @property {number} user The user ID for the order
+ */
 
 /**
  * Calculates the utility of an order given an executed buy amount and settled
@@ -99,8 +93,10 @@ function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice)
  * @return {BN} The order's utility
  */
 function orderUtility(order, executedBuyAmount, prices) {
-  assert(BN.isBN(executedBuyAmount))
-  assert(Array.isArray(prices))
+  assert(BN.isBN(executedBuyAmount), "executedBuyAmount is not a bignum")
+  assert(Array.isArray(prices), "prices is not an array")
+  assert(prices.length > order.buyToken, "order buy token not included in prices")
+  assert(prices.length > order.sellToken, "order sell token not included in prices")
 
   const executedSellAmount = getExecutedSellAmount(executedBuyAmount, prices[order.buyToken], prices[order.sellToken])
   const execSellTimesBuy = executedSellAmount.mul(order.buyAmount)
@@ -118,21 +114,31 @@ function orderUtility(order, executedBuyAmount, prices) {
  * @return {BN} The order's disregarded utility
  */
 function orderDisregardedUtility(order, executedBuyAmount, prices) {
-  assert(BN.isBN(executedBuyAmount))
-  assert(Array.isArray(prices))
+  assert(BN.isBN(executedBuyAmount), "executedBuyAmount is not a bignum")
+  assert(Array.isArray(prices), "prices is not an array")
+  assert(prices.length > order.buyToken, "order buy token not included in prices")
+  assert(prices.length > order.sellToken, "order sell token not included in prices")
 
   const executedSellAmount = getExecutedSellAmount(executedBuyAmount, prices[order.buyToken], prices[order.sellToken])
   // Not accounting for balances here.
   // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
   const leftoverSellAmount = order.sellAmount.sub(executedSellAmount)
   const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
-  const limitTermRight = prices[order.buyToken].mul(order.buyAmount).mul(feeDenominator).div(feeDenominatorMinusOne)
-  let limitTerm = new BN(0)
+  const limitTermRight = prices[order.buyToken].mul(order.buyAmount).mul(FEE_DENOMINATOR).div(FEE_DENOMINATOR_MINUS_ONE)
+  let limitTerm = toETH(0)
   if (limitTermLeft.gt(limitTermRight)) {
     limitTerm = limitTermLeft.sub(limitTermRight)
   }
   return leftoverSellAmount.mul(limitTerm).div(order.sellAmount)
 }
+
+/**
+ * @typedef Solution
+ * @type {object}
+ * @property {string?} name an optional descriptive name
+ * @property {BN[]} prices The prices for each token
+ * @property {BN[]} buyVolumes The executed buy amounts for each order
+ */
 
 /**
  * Calculates the total objective value for the specified solution given the
@@ -142,50 +148,85 @@ function orderDisregardedUtility(order, executedBuyAmount, prices) {
  * @return {BN} The solution's objective value
  */
 function solutionObjectiveValue(orders, solution) {
-  const tokenCount = Math.max(...orders.map(o => [o.buyToken, o.sellToken]).flat()) + 1
+  return solutionObjectiveValueComputation(orders, solution).result
+}
 
-  assert(orders.length === solution.buyVolumes.length)
-  assert(tokenCount === solution.prices.length)
+/**
+ * @typedef ObjectiveValueComputation
+ * @type {object}
+ * @property {BN[]} tokenConservation The token conservation for each token
+ * @property {BN[]} utilities The utility of each order
+ * @property {BN[]} disregardedUtilities The disregarded utility of each order
+ * @property {BN} totalUtility The total utility of all the orders
+ * @property {BN} totalDisregardedUtility The total disregarded utility of all the orders
+ * @property {BN} burntFees The total burnt fees, half of the total fees
+ * @property {BN} result The objecitive value result
+ */
 
-  const totalFees = orders.reduce(
-    (acc, o, i) => {
-      if (o.buyToken === 0) {
-        return acc.isub(solution.buyVolumes[i])
-      } else if (o.sellToken === 0) {
-        const sellVolume = getExecutedSellAmount(
-          solution.buyVolumes[i],
-          solution.prices[o.buyToken],
-          solution.prices[o.sellToken]
-        )
-        return acc.iadd(sellVolume)
-      } else {
-        return acc
-      }
-    },
-    new BN(0)
-  )
+/**
+ * Calculates the solutions objective value returning a computation object with
+ * all the intermediate values - useful for debugging.
+ * @param {Order[]} orders The orders
+ * @param {Solution} solution The solution
+ * @return {ObjectiveValueComputation} The solution's objective value computation object
+ */
+function solutionObjectiveValueComputation(orders, solution) {
+  const tokenCount = Math.max(...flat(orders.map(o => [o.buyToken, o.sellToken]))) + 1
 
-  const objectiveValue = new BN(0)
-  for (let i = 0; i < orders.length; i++) {
-    if (solution.buyVolumes[i].isZero()) {
-      continue
-    }
-    const utility = orderUtility(orders[i], solution.buyVolumes[i], solution.prices)
-    objectiveValue.iadd(utility)
-    const disregardedUtility = orderDisregardedUtility(orders[i], solution.buyVolumes[i], solution.prices)
-    objectiveValue.isub(disregardedUtility)
+  assert(orders.length === solution.buyVolumes.length, "solution buy volumes do not match orders")
+  assert(tokenCount === solution.prices.length, "solution prices does not include all tokens")
+  assert(toETH(1).eq(solution.prices[0]), "fee token price is not 1 ether")
+
+  const feeTokenTouched = orders.findIndex((o, i) =>
+    !solution.buyVolumes[i].isZero() && (o.buyToken === 0 || o.sellToken === 0)) !== -1
+  assert(feeTokenTouched, "fee token is not touched")
+
+  const touchedOrders = orders
+    .map((o, i) => solution.buyVolumes[i].isZero() ? null : [o, i])
+    .filter(pair => !!pair)
+
+  const tokenConservation = solution.prices.map(() => new BN(0))
+  for (const [order, i] of touchedOrders) {
+    tokenConservation[order.buyToken].isub(solution.buyVolumes[i])
+    tokenConservation[order.sellToken].iadd(getExecutedSellAmount(
+      solution.buyVolumes[i],
+      solution.prices[order.buyToken],
+      solution.prices[order.sellToken]
+    ))
   }
-  objectiveValue.iadd(totalFees.div(new BN(2)))
+  assert(!tokenConservation[0].isNeg(), "fee token conservation is negative")
+  tokenConservation.slice(1).forEach((conservation, i) => assert(conservation.isZero(), `token conservation not respected for token ${i}`))
 
-  return objectiveValue
+  const utilities = touchedOrders.map(
+    ([o, i]) => orderUtility(o, solution.buyVolumes[i], solution.prices))
+  const disregardedUtilities = touchedOrders.map(
+    ([o, i]) => orderDisregardedUtility(o, solution.buyVolumes[i], solution.prices))
+
+  const totalUtility = utilities.reduce((acc, du) => acc.iadd(du), toETH(0))
+  const totalDisregardedUtility = disregardedUtilities.reduce((acc, du) => acc.iadd(du), toETH(0))
+  const burntFees = tokenConservation[0].div(new BN(2))
+
+  const result = totalUtility.sub(totalDisregardedUtility).add(burntFees)
+
+  return {
+    tokenConservation,
+    utilities,
+    disregardedUtilities,
+    totalUtility,
+    totalDisregardedUtility,
+    burntFees,
+    result,
+  }
 }
 
 module.exports = {
   toETH,
   feeSubtracted,
   feeAdded,
-  amountEpsilon,
+  ERROR_EPSILON,
+  getExecutedSellAmount,
   orderUtility,
   orderDisregardedUtility,
   solutionObjectiveValue,
+  solutionObjectiveValueComputation,
 }
