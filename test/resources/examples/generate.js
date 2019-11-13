@@ -2,8 +2,6 @@ const assert = require("assert")
 const BN = require("bn.js")
 const {
   getExecutedSellAmount,
-  orderUtility,
-  orderDisregardedUtility,
   solutionObjectiveValueComputation,
 } = require("../math.js")
 const { flat, dedupe } = require("../array-shims.js")
@@ -102,13 +100,12 @@ function generateTestCase(input) {
             touchedOrders
               .map(o => orders[o.idx])
               .map(o => [o.buyToken, o.sellToken])
-          ))
-          .sort()
-          .map(i => ({
-            id: i,
-            price: solution.prices[i],
-            conservation: objectiveValue.tokenConservation[i],
-          })),
+          )).sort()
+            .map(i => ({
+              id: i,
+              price: solution.prices[i],
+              conservation: objectiveValue.tokenConservation[i],
+            })),
         orders: touchedOrders,
         totalFees: objectiveValue.totalFees,
         totalUtility: objectiveValue.totalUtility,
@@ -136,8 +133,8 @@ function debugTestCase(testCase, orderIds, accounts) {
   orderIds = orderIds || testCase.orders.map((_, i) => i)
   accounts = accounts || (() => {
     const accounts = []
-    for (var i = 0; i < userCount; i++) {
-      accounts.push(`0x${i.toString(16).padStart(40, '0')}`)
+    for (let i = 0; i < userCount; i++) {
+      accounts.push(`0x${i.toString(16).padStart(40, "0")}`)
     }
     return accounts
   })()
@@ -154,16 +151,16 @@ function debugTestCase(testCase, orderIds, accounts) {
   const formatTable = table => {
     const [width, height] = [Math.max(...table.map(r => r.length)), table.length]
     const getCell = (i, j) => {
-      const cell = !!table[i] ? table[i][j] : undefined
+      const cell = i < height ? table[i][j] : undefined
       return cell === undefined ? "" : cell === null ? "<NULL>" : `${cell}`
     }
 
     const columnWidths = []
-    for (var j = 0; j < width; j++) {
+    for (let j = 0; j < width; j++) {
       columnWidths.push(Math.max(...table.map((_, i) => getCell(i, j).length)) + 1)
     }
 
-    for (var i = 0; i < height; i++) {
+    for (let i = 0; i < height; i++) {
       const line = columnWidths.map((cw, j) => j === 0 ?
         getCell(i, j).padEnd(cw) :
         getCell(i, j).padStart(cw)
