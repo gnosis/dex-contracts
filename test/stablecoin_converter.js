@@ -1577,6 +1577,7 @@ contract("StablecoinConverter", async (accounts) => {
       )
       assert.equal(0, (await stablecoinConverter.currentPrices.call(2)).toString(), "CurrentPrice were not adjusted correctly")
     })
+    // TODO - this test needs to be cleaned up and working.
     it("checks that solution trades are deleted even if balances get temporarily negative while reverting ", async () => {
       // The following test, a user_2 will receive some tokens and sell these received tokens in one batch.
       // If this batch-trade gets executed and later reverted by another trade, users_2's balance would be temporarily negative, unless
