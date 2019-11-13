@@ -600,13 +600,13 @@ contract("StablecoinConverter", async (accounts) => {
       }
       const time_remaining = (await stablecoinConverter.getSecondsRemainingInBatch()).toNumber()
       await waitForNSeconds(time_remaining + 241)
-
+      const updatedBatchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       const solution = basicTradeCase.solutions[0]
 
       // Should be exactly one second past when solutions are being accepted.
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
-          batchIndex,
+          updatedBatchIndex,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
