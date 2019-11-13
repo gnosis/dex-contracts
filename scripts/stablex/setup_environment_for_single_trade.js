@@ -15,11 +15,13 @@ module.exports = async function (callback) {
     const TokenOWL = artifacts.require("TokenOWL")
     console.log(await instance.feeToken.call())
     const owlToken = await TokenOWL.at(await instance.feeToken.call())
+
     const amount = (10 ** 18).toString()
-    await owlToken.mintOWL(account, amount)
+
+    // only needed for running locally
+    //await owlToken.mintOWL(account, amount)
 
     const token = await ERC20Mintable.new()
-
     await token.mint(account, amount)
     await addTokens([token.address], web3, artifacts)
 
