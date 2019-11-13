@@ -187,13 +187,15 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     /** @dev a user facing function used to cancel orders (sets order expiry to previous batchId)
-      * @param id referencing the index of user's order to be canceled
+      * @param ids referencing the index of user's order to be canceled
       *
       * Emits an {OrderCancelation} with sender's address and orderId
       */
-    function cancelOrder(uint256 id) public {
-        orders[msg.sender][id].validUntil = getCurrentBatchId() - 1;
-        emit OrderCancelation(msg.sender, id);
+    function cancelOrder(uint256[] memory ids) public {
+        for (uint256 i = 0; i < ids.length; i++) {
+            orders[msg.sender][ids[i]].validUntil = getCurrentBatchId() - 1;
+            emit OrderCancelation(msg.sender, ids[i]);
+        }
     }
 
     /** @dev A user facing function used to delete expired orders.
