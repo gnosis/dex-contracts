@@ -3,8 +3,8 @@
     "4": {
       "events": {},
       "links": {},
-      "address": "0xDe82A01A9728eC885f2970d99116E5690B6074c7",
-      "transactionHash": "0x0fad1dfaf756a996c8208ebaf35b0024e36eac09a34c50836aca8b4ebce6a2ea"
+      "address": "0xE091F109b721A4A42973595FfEE621c04A2147D1",
+      "transactionHash": "0x172014a549bf2639d98caf903671e2e8bccf5a4734241b797f18b70d690225e9"
     }
   },
   "SnappAuction": {
@@ -270,10 +270,10 @@
       },
       "links": {
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53",
-        "SnappBaseCore": "0x39eC847627b6aE61987d4DBFD6A75E7A4E05cf55"
+        "SnappBaseCore": "0x3709B8E6E2a684A1c97809E616877A6577e9e131"
       },
-      "address": "0xCCD2C5a0db5A2fcB5aEd1378cD91f4da35D166c8",
-      "transactionHash": "0x46bb6ee0d9d6fa2c8283797c2f93a063f414f3020c2e59b59293f73917ea2206"
+      "address": "0x01Ad09b1AD496407651aa943874bC0664834BFA1",
+      "transactionHash": "0x2b814ea1d93f34719358639f5d499c62cb7a0438d5da9da84eb283477eef89e0"
     }
   },
   "SnappBaseCore": {
@@ -400,8 +400,8 @@
       "links": {
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53"
       },
-      "address": "0x39eC847627b6aE61987d4DBFD6A75E7A4E05cf55",
-      "transactionHash": "0xe0a49339b18478fdda276a55e3b458f4c246bbba3b57a336f19c53efe67f47c5"
+      "address": "0x3709B8E6E2a684A1c97809E616877A6577e9e131",
+      "transactionHash": "0x221780f742917b8d22d0cfda2a04216b5082099460ade7c79d126b8271399d4e"
     }
   },
   "StablecoinConverter": {
@@ -552,8 +552,8 @@
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53",
         "IterableAppendOnlySet": "0x85ab87B703265D10Ac025687cB180f7187193F13"
       },
-      "address": "0xd63BF9836F9445f4D1B877D36A02954E35B1EdB9",
-      "transactionHash": "0x94512e83d957a13c6cc3a3b07463ea6b18a8ce5cfa2fc7ce518a45272578de3c"
+      "address": "0x9D1a98dF71420035F67209af8c4138ea1C39b9d2",
+      "transactionHash": "0x1de320c25955cd07dcb57509c68932f27b5588747f771cd63072fba15bf618c3"
     }
   }
 }
