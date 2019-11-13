@@ -219,6 +219,18 @@ contract("StablecoinConverter", async (accounts) => {
 
   })
   describe("submitSolution()", () => {
+    it("rejects if claimed objective is not better than current", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      await closeAuction(stablecoinConverter)
+
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(batchIndex, 0, [], [], [], [], []),
+        "Claimed objective is not more than current solution"
+      )
+    })
     it("rejects trivial solution (the only solution with zero utility)", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -253,17 +265,18 @@ contract("StablecoinConverter", async (accounts) => {
       }
       await closeAuction(stablecoinConverter)
 
-      const tradeSolution = basicTradeCase.solutions[0]
-      const zeroVolumes = Array(tradeSolution.buyVolumes.length).fill(0)
+      const solution = basicTradeCase.solutions[0]
+      const zeroVolumes = Array(solution.buyVolumes.length).fill(0)
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
-          tradeSolution.owners.map(x => accounts[x]),
+          solution.objectiveValue,
+          solution.owners.map(x => accounts[x]),
           orderIds,
           zeroVolumes,
-          tradeSolution.prices,
-          tradeSolution.tokenIdsForPrice,
+          solution.prices,
+          solution.tokenIdsForPrice,
           { from: solver }
         ),
         "Solution must be better than trivial"
@@ -303,14 +316,15 @@ contract("StablecoinConverter", async (accounts) => {
       }
       await closeAuction(stablecoinConverter)
 
-      const tradeSolution = basicTradeCase.solutions[0]
-      const volume = tradeSolution.buyVolumes
-      const prices = tradeSolution.prices
-      const tokenIdsForPrice = tradeSolution.tokenIdsForPrice
+      const solution = basicTradeCase.solutions[0]
+      const volume = solution.buyVolumes
+      const prices = solution.prices
+      const tokenIdsForPrice = solution.tokenIdsForPrice
 
       await stablecoinConverter.submitSolution(
         batchIndex,
-        tradeSolution.owners.map(x => accounts[x]),
+        solution.objectiveValue,
+        solution.owners.map(x => accounts[x]),
         orderIds,
         volume,
         prices,
@@ -325,7 +339,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       // This final assertion isn't really necessary here.
       const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call())
-      assert.equal(currentObjectiveValue.toString(), tradeSolution.objectiveValue.toString())
+      assert.equal(currentObjectiveValue.toString(), solution.objectiveValue.toString())
     })
     it("[Basic Trade] places two orders, matches them partially and then checks correct order adjustments", async () => {
       const feeToken = await MockContract.new()
@@ -366,6 +380,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await stablecoinConverter.submitSolution(
         batchIndex,
+        partialSolution.objectiveValue,
         partialSolution.owners.map(x => accounts[x]),
         orderIds,
         volume,
@@ -432,7 +447,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       // Submit partial Solution.
       const partialBuyVolumes = partialSolution.buyVolumes
-      await stablecoinConverter.submitSolution(batchIndex, owners, orderIds, partialBuyVolumes, prices, tokenIdsForPrice, { from: solver })
+      await stablecoinConverter.submitSolution(batchIndex, partialSolution.objectiveValue, owners, orderIds, partialBuyVolumes, prices, tokenIdsForPrice, { from: solver })
 
       const partialObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call())
       assert.equal(partialObjectiveValue.toString(), partialSolution.objectiveValue.toString())
@@ -446,7 +461,7 @@ contract("StablecoinConverter", async (accounts) => {
       // Submit Full (Better) solution
       const fullSolution = basicTradeCase.solutions[0]
       const fullBuyVolumes = fullSolution.buyVolumes
-      await stablecoinConverter.submitSolution(batchIndex, owners, orderIds, fullBuyVolumes, prices, tokenIdsForPrice, { from: solver })
+      await stablecoinConverter.submitSolution(batchIndex, fullSolution.objectiveValue, owners, orderIds, fullBuyVolumes, prices, tokenIdsForPrice, { from: solver })
 
       const fullObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call())
       assert.equal(fullObjectiveValue.toString(), fullSolution.objectiveValue.toString())
@@ -499,6 +514,7 @@ contract("StablecoinConverter", async (accounts) => {
         const tokenIdsForPrice = solution.tokenIdsForPrice
         await stablecoinConverter.submitSolution(
           batchIndex,
+          solution.objectiveValue,
           owners,
           orderIds,
           volume,
@@ -552,6 +568,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex - 1,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
@@ -604,6 +621,7 @@ contract("StablecoinConverter", async (accounts) => {
 
         stablecoinConverter.submitSolution(
           updatedBatchIndex,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
@@ -654,6 +672,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
@@ -706,6 +725,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex + 1,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
@@ -754,6 +774,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
@@ -804,6 +825,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           badVolumes,
@@ -852,6 +874,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           basicTradeCase.orders.map(x => x.buyAmount),  // <----- THIS IS THE DIFFERENCE!
@@ -900,6 +923,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
@@ -948,6 +972,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
@@ -997,6 +1022,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
@@ -1046,6 +1072,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
@@ -1093,6 +1120,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       await stablecoinConverter.submitSolution(
         batchIndex,
+        solution.objectiveValue,
         solution.owners.map(x => accounts[x]),
         orderIds,
         solution.buyVolumes,
@@ -1137,6 +1165,7 @@ contract("StablecoinConverter", async (accounts) => {
       const solution = basicTradeCase.solutions[0]
       await stablecoinConverter.submitSolution(
         batchIndex,
+        solution.objectiveValue,
         solution.owners.map(x => accounts[x]),
         orderIds,
         solution.buyVolumes,
@@ -1186,6 +1215,7 @@ contract("StablecoinConverter", async (accounts) => {
       const partialSolution = basicTradeCase.solutions[1]
       await stablecoinConverter.submitSolution(
         batchIndex,
+        partialSolution.objectiveValue,
         partialSolution.owners.map(x => accounts[x]),
         orderIds,
         partialSolution.buyVolumes,
@@ -1202,6 +1232,7 @@ contract("StablecoinConverter", async (accounts) => {
       const fullSolution = basicTradeCase.solutions[0]
       await stablecoinConverter.submitSolution(
         batchIndex,
+        fullSolution.objectiveValue,
         fullSolution.owners.map(x => accounts[x]),
         orderIds,
         fullSolution.buyVolumes,
@@ -1246,13 +1277,14 @@ contract("StablecoinConverter", async (accounts) => {
       const relevantUser = accounts[basicTradeCase.orders[0].user]
       const buyToken = await stablecoinConverter.tokenIdToAddressMap.call(basicTradeCase.orders[0].buyToken)
 
-      // relevant Userplaces withdraw request:
+      // relevant user places withdraw request:
       await stablecoinConverter.requestWithdraw(buyToken, 100, { from: relevantUser })
 
       await closeAuction(stablecoinConverter)
       const solution = basicTradeCase.solutions[0]
       await stablecoinConverter.submitSolution(
         batchIndex,
+        solution.objectiveValue,
         solution.owners.map(x => accounts[x]),
         orderIds,
         solution.buyVolumes,
@@ -1309,6 +1341,7 @@ contract("StablecoinConverter", async (accounts) => {
       const solution = basicTradeCase.solutions[0]
       await stablecoinConverter.submitSolution(
         batchIndex,
+        solution.objectiveValue,
         solution.owners.map(x => accounts[x]),
         orderIds,
         solution.buyVolumes,
@@ -1362,6 +1395,7 @@ contract("StablecoinConverter", async (accounts) => {
       const solution = basicTradeCase.solutions[0]
       await stablecoinConverter.submitSolution(
         batchIndex,
+        solution.objectiveValue,
         solution.owners.map(x => accounts[x]),
         orderIds,
         solution.buyVolumes,
@@ -1410,6 +1444,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
+          solution.objectiveValue,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
@@ -1435,7 +1470,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       const tooManyOwners = Array(maxTouchedOrders + 1).fill(user_1)
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(batchIndex - 1, tooManyOwners, [], [], [toETH(1)], [0]),
+        stablecoinConverter.submitSolution(batchIndex - 1, 1, tooManyOwners, [], [], [toETH(1)], [0]),
         "Solution exceeds MAX_TOUCHED_ORDERS"
       )
     })
@@ -1479,7 +1514,7 @@ contract("StablecoinConverter", async (accounts) => {
       const volume = solution.buyVolumes
       const prices = solution.prices
       await stablecoinConverter.submitSolution(
-        batchIndex, solution.owners.map(x => accounts[x]), orderIds, volume, prices, solution.tokenIdsForPrice, { from: solver }
+        batchIndex, solution.objectiveValue, solution.owners.map(x => accounts[x]), orderIds, volume, prices, solution.tokenIdsForPrice, { from: solver }
       )
 
       const actualObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call())
@@ -1501,12 +1536,12 @@ contract("StablecoinConverter", async (accounts) => {
         assert.equal(
           sellTokenBalance.toString(),
           deposit.amount.sub(getExecutedSellAmount(solution.buyVolumes[i], prices[order.buyToken], prices[order.sellToken])).toString(),
-          `Sold tokens were not adjusted correctly ${i}`
+          `Sold tokens were not adjusted correctly at order index ${i}`
         )
         assert.equal(
           buyTokenBalance.toString(),
           solution.buyVolumes[i].toString(),
-          `Bought tokens were not adjusted correctly ${i}`
+          `Bought tokens were not adjusted correctly at order index ${i}`
         )
       }
     })
@@ -1551,6 +1586,7 @@ contract("StablecoinConverter", async (accounts) => {
       const ringSolution = tradeCase.solutions[0]
       await stablecoinConverter.submitSolution(
         batchIndex,
+        ringSolution.objectiveValue,
         ringSolution.owners.map(x => accounts[x]),
         orderIds,
         ringSolution.buyVolumes,
@@ -1559,12 +1595,12 @@ contract("StablecoinConverter", async (accounts) => {
         { from: solver }
       )
 
-
       assert.equal(ringSolution.prices[2].toString(), (await stablecoinConverter.currentPrices.call(2)).toString(), "CurrentPrice were not adjusted correctly")
 
       const directSolution = tradeCase.solutions[1]
       await stablecoinConverter.submitSolution(
         batchIndex,
+        directSolution.objectiveValue,
         directSolution.owners.map(x => accounts[x]),
         orderIds,
         directSolution.buyVolumes,
@@ -1615,6 +1651,7 @@ contract("StablecoinConverter", async (accounts) => {
       const solution = tradeCase.solutions[0]
       await stablecoinConverter.submitSolution(
         batchIndex,
+        solution.objectiveValue,
         solution.owners.map(x => accounts[x]),
         orderIds,
         solution.buyVolumes,
@@ -1664,6 +1701,7 @@ contract("StablecoinConverter", async (accounts) => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
+          solution.objectiveValue + 1,
           solution.owners.map(x => accounts[x]),
           orderIds,
           solution.buyVolumes,
@@ -1713,12 +1751,13 @@ contract("StablecoinConverter", async (accounts) => {
       const owners = partialSolution.owners.map(x => accounts[x])
       const tokenIdsForPrice = partialSolution.tokenIdsForPrice
       // Fill 90% of these orders in first auction.
-      await stablecoinConverter.submitSolution(batchIndex, owners, orderIds, partialSolution.buyVolumes, prices, tokenIdsForPrice, { from: solver })
+      await stablecoinConverter.submitSolution(batchIndex, partialSolution.objectiveValue, owners, orderIds, partialSolution.buyVolumes, prices, tokenIdsForPrice, { from: solver })
 
       await waitForNSeconds(BATCH_TIME)
       // Fill essentially the remaining amount in 
       const remainingBuyVolumes = [toETH(1), new BN("1998000000000000000")]
-      stablecoinConverter.submitSolution(batchIndex + 1, owners, orderIds, remainingBuyVolumes, prices, tokenIdsForPrice, { from: solver })
+      // Note: The claimed objective value here is actually incorrect (but irrelevant for this test)
+      stablecoinConverter.submitSolution(batchIndex + 1, 1, owners, orderIds, remainingBuyVolumes, prices, tokenIdsForPrice, { from: solver })
 
       assert(basicTradeCase.orders.length == basicTradeCase.deposits.length)
       for (let i = 0; i < basicTradeCase.orders.length; i++) {
