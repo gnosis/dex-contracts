@@ -68,8 +68,8 @@ const biggieSmallTrade = generateTestCase({
   ],
 })
 
-const simpleRingTrade = generateTestCase({
-  name: "Simple Ring",
+const basicRingTrade = generateTestCase({
+  name: "Basic Ring",
   orders: [
     { sellToken: 0, buyToken: 1, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 0 },
     { sellToken: 1, buyToken: 2, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 1 },
@@ -131,7 +131,7 @@ module.exports = Object.assign(
     basicTrade,
     advancedTrade,
     biggieSmallTrade,
-    simpleRingTrade,
+    basicRingTrade,
     shortRingBetterTrade,
     smallExample,
   },
