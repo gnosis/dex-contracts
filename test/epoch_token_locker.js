@@ -32,8 +32,10 @@ contract("EpochTokenLocker", async (accounts) => {
     it("throws, if transferFrom fails", async () => {
       const epochTokenLocker = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
-      await ERC20.givenAnyReturnBool(false)
-      await truffleAssert.reverts(epochTokenLocker.deposit(ERC20.address, 100), "Tokentransfer for deposit was not successful")
+      await ERC20.givenAnyRevert()
+      await truffleAssert.reverts(epochTokenLocker.deposit(ERC20.address, 100),
+        "SafeERC20: low-level call failed"
+      )
     })
 
     it("adds two deposits, if they are deposited during same stateIndex", async () => {

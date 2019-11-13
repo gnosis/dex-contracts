@@ -12,6 +12,7 @@
     "networks-extract": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/extract_network_info.js",
     "networks-inject": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/inject_network_info.js",
     "networks-reset": "mkdir -p build/contracts && npx truffle networks --clean && npm run networks-inject",
+    "verify-stablex": "truffle run verify StablecoinConverter",
     "lint": "./node_modules/.bin/eslint .",
     "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\""
   },
@@ -46,6 +47,7 @@
     "ethereumjs-util": "^6.0.0",
     "fast-memoize": "^2.5.1",
     "merkletreejs": "0.0.22",
+    "node-fetch": "^2.6.0",
     "openzeppelin-solidity": "OpenZeppelin/openzeppelin-contracts#2c11ed59",
     "solidity-bytes-utils": "0.0.8",
     "truffle-contract": "^4.0.31",
@@ -62,11 +64,12 @@
     "husky": "^2.5.0",
     "minimist": "^1.2.0",
     "solhint": "^1.5.0",
-    "solidity-coverage": "^0.5.11",
+    "solidity-coverage": "^0.6.7",
     "solidity-multicall": "^1.0.0",
     "solium": "^1.2.4",
-    "truffle": "^5.0.26",
+    "truffle": "^5.0.44",
     "truffle-assertions": "^0.8.0",
-    "truffle-hdwallet-provider": "^1.0.0-web3one.1"
+    "truffle-hdwallet-provider": "^1.0.0-web3one.1",
+    "truffle-plugin-verify": "^0.3.5"
   }
 }
