@@ -219,6 +219,54 @@ contract("StablecoinConverter", async (accounts) => {
 
   })
   describe("submitSolution()", () => {
+    it("rejects attempt at price scaling hack", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const erc20_2 = await MockContract.new()
+
+      await feeToken.givenAnyReturnBool(true)
+      await erc20_2.givenAnyReturnBool(true)
+
+      await stablecoinConverter.addToken(erc20_2.address)
+
+      for (const deposit of basicTradeCase.deposits) {
+        const tokenAddress = await stablecoinConverter.tokenIdToAddressMap.call(deposit.token)
+        await stablecoinConverter.deposit(tokenAddress, deposit.amount, { from: accounts[deposit.user] })
+      }
+
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = []
+      for (const order of basicTradeCase.orders) {
+        orderIds.push(
+          await sendTxAndGetReturnValue(
+            stablecoinConverter.placeOrder,
+            order.buyToken,
+            order.sellToken,
+            batchIndex + 1,
+            order.buyAmount,
+            order.sellAmount,
+            { from: accounts[order.user] }
+          )
+        )
+      }
+      await closeAuction(stablecoinConverter)
+
+      const solution = basicTradeCase.solutions[0]
+
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(
+          batchIndex,
+          solution.objectiveValue,
+          solution.owners.map(x => accounts[x]),
+          orderIds,
+          solution.buyVolumes,
+          solution.prices.map(x => x.mul(new BN(2))),
+          solution.tokenIdsForPrice,
+          { from: solver }
+        ),
+        "fee token price must be 10^18"
+      )
+    })
     it("rejects if claimed objective is not better than current", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
@@ -1067,7 +1115,7 @@ contract("StablecoinConverter", async (accounts) => {
       }
       await closeAuction(stablecoinConverter)
       const solution = basicTradeCase.solutions[0]
-      const zeroPrices = [0, 0]
+      const zeroPrices = [toETH(1), 0]
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
