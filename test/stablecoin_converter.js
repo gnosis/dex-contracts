@@ -511,9 +511,9 @@ contract("StablecoinConverter", async (accounts) => {
           { from: solver }
         )
         // This is only really necessary for the third submission... but whateva.
-        assert.equal((await stablecoinConverter.getBalance.call(user_1, feeToken.address)).toString(), basicTradeCase.deposits[0].amount.sub(getExecutedSellAmount(volume[0], prices[1], prices[0])).toString(), "Sold tokens were not adjusted correctly")
+        assert.equal((await stablecoinConverter.getBalance.call(user_1, feeToken.address)).toString(), advancedTradeCase.deposits[0].amount.sub(getExecutedSellAmount(volume[0], prices[1], prices[0])).toString(), "Sold tokens were not adjusted correctly")
         assert.equal((await stablecoinConverter.getBalance.call(user_1, erc20_2.address)), volume[0].toString(), "Bought tokens were not adjusted correctly")
-        assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toString(), basicTradeCase.deposits[1].amount.sub(getExecutedSellAmount(volume[1], prices[0], prices[1])).toString(), "Sold tokens were not adjusted correctly")
+        assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2.address)).toString(), advancedTradeCase.deposits[1].amount.sub(getExecutedSellAmount(volume[1], prices[0], prices[1])).toString(), "Sold tokens were not adjusted correctly")
         assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken.address)), volume[1].toString(), "Bought tokens were not adjusted correctly")
       }
     })
@@ -852,12 +852,15 @@ contract("StablecoinConverter", async (accounts) => {
       await closeAuction(stablecoinConverter)
 
       const solution = basicTradeCase.solutions[0]
+      const badVolumes = solution.buyVolumes
+      badVolumes[1] = badVolumes[1].sub(new BN("10"))
+
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
           solution.owners.map(x => accounts[x]),
           orderIds,
-          basicTradeCase.orders.map(x => x.buyAmount),  // <----- THIS IS THE DIFFERENCE!
+          badVolumes,  // <----- THIS IS THE DIFFERENCE!
           solution.prices,
           solution.tokenIdsForPrice,
           { from: solver }

@@ -138,12 +138,12 @@ function generateTestCase(trade, solutions, debug = false) {
 
 const basicTrade = {
   deposits: [
-    { amount: feeAdded(toETH(20)).add(amountEpsilon), token: 0, user: 0 },
+    { amount: feeAdded(toETH(20)), token: 0, user: 0 },
     { amount: toETH(10), token: 1, user: 1 }
   ],
   orders: [
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(amountEpsilon), buyAmount: toETH(10), user: 0 },
-    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(amountEpsilon), user: 1 }
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)), buyAmount: toETH(10), user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)), user: 1 }
   ],
 }
 
