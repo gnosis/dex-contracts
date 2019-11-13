@@ -70,7 +70,7 @@ function generateTestCase(input) {
   return {
     name,
     numTokens: Math.max(...flat(orders.map(o => [o.buyToken, o.sellToken]))) + 1,
-    deposits: orders.map(order => ({
+    deposits: input.deposits || orders.map(order => ({
       amount: order.sellAmount,
       token: order.sellToken,
       user: order.user,

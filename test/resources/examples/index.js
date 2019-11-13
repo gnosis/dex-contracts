@@ -111,6 +111,11 @@ const shortRingBetterTrade = generateTestCase({
 const fiveThouzy = new BN("5000")
 const tenThouzy = new BN("10000")
 const smallExample = generateTestCase({
+  deposits: [
+    { amount: feeAdded(tenThouzy), token: 0, user: 0 },
+    { amount: new BN(19), token: 1, user: 1 },
+    { amount: feeAdded(tenThouzy), token: 1, user: 2 },
+  ],
   orders: [
     { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 0 },
     { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 1 },

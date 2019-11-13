@@ -28,9 +28,6 @@ const {
 
 const {
   basicTradeCase,
-  basicRingTradeCase,
-  shortRingBetterTradeCase,
-  smallExampleCase,
 } = require("./resources/auction_examples.js")
 
 const MAX_ERROR = new BN("999000")
@@ -1659,13 +1656,13 @@ contract("StablecoinConverter", async (accounts) => {
         )
       }
       await closeAuction(stablecoinConverter)
-      const ringSolution = shortRingBetterTradeCase.solutions[0]
+      const ringSolution = solutionSubmissionParams(shortRingBetterTrade.solutions[0], accounts, orderIds)
       await stablecoinConverter.submitSolution(
         batchIndex,
         ringSolution.objectiveValue,
-        ringSolution.owners.map(x => accounts[x]),
-        orderIds,
-        ringSolution.buyVolumes,
+        ringSolution.owners,
+        ringSolution.touchedOrderIds,
+        ringSolution.volumes,
         ringSolution.prices,
         ringSolution.tokenIdsForPrice,
         { from: solver }
@@ -1673,13 +1670,13 @@ contract("StablecoinConverter", async (accounts) => {
 
       assert.equal(ringSolution.prices[2].toString(), (await stablecoinConverter.currentPrices.call(2)).toString(), "CurrentPrice were not adjusted correctly")
 
-      const directSolution = shortRingBetterTradeCase.solutions[1]
+      const directSolution = solutionSubmissionParams(shortRingBetterTrade.solutions[1], accounts, orderIds)
       await stablecoinConverter.submitSolution(
         batchIndex,
         directSolution.objectiveValue,
-        directSolution.owners.map(x => accounts[x]),
-        orderIds,
-        directSolution.buyVolumes,
+        directSolution.owners,
+        directSolution.touchedOrderIds,
+        directSolution.volumes,
         directSolution.prices,
         directSolution.tokenIdsForPrice,
         { from: solver }
@@ -1701,7 +1698,7 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(erc20_2.address)
 
       // Make deposits
-      for (const deposit of smallExampleCase.deposits) {
+      for (const deposit of smallExample.deposits) {
         const tokenAddress = await stablecoinConverter.tokenIdToAddressMap.call(deposit.token)
         await stablecoinConverter.deposit(tokenAddress, deposit.amount, { from: accounts[deposit.user] })
       }
@@ -1709,7 +1706,7 @@ contract("StablecoinConverter", async (accounts) => {
       // Place orders
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       const orderIds = []
-      for (const order of smallExampleCase.orders) {
+      for (const order of smallExample.orders) {
         orderIds.push(
           await sendTxAndGetReturnValue(
             stablecoinConverter.placeOrder,
@@ -1723,27 +1720,27 @@ contract("StablecoinConverter", async (accounts) => {
         )
       }
       await closeAuction(stablecoinConverter)
-      const solution = smallExampleCase.solutions[0]
+      const solution = solutionSubmissionParams(smallExample.solutions[0], accounts, orderIds)
       await stablecoinConverter.submitSolution(
         batchIndex,
         solution.objectiveValue,
-        solution.owners.map(x => accounts[x]),
-        orderIds,
-        solution.buyVolumes,
+        solution.owners,
+        solution.touchedOrderIds,
+        solution.volumes,
         solution.prices,
         solution.tokenIdsForPrice,
         { from: solver }
       )
-      const users = smallExampleCase.deposits.map(d => accounts[d.user])
+      const users = smallExample.deposits.map(d => accounts[d.user])
 
       assert.equal(
         (await stablecoinConverter.getBalance.call(users[0], feeToken.address)).toString(),
-        smallExampleCase.deposits[0].amount.sub(getExecutedSellAmount(solution.buyVolumes[0], solution.prices[0], solution.prices[1])).toString(),
+        smallExample.deposits[0].amount.sub(getExecutedSellAmount(solution.volumes[0], solution.prices[0], solution.prices[1])).toString(),
         "Sold tokens were not adjusted correctly"
       )
       assert.equal(
         (await stablecoinConverter.getBalance.call(users[0], feeToken.address)).toString(),
-        smallExampleCase.deposits[0].amount.sub(getExecutedSellAmount(solution.buyVolumes[0], solution.prices[0], solution.prices[1])).toString(),
+        smallExample.deposits[0].amount.sub(getExecutedSellAmount(solution.volumes[0], solution.prices[0], solution.prices[1])).toString(),
         "Sold tokens were not adjusted correctly"
       )
       assert.equal(
@@ -1753,12 +1750,12 @@ contract("StablecoinConverter", async (accounts) => {
       )
       assert.equal(
         (await stablecoinConverter.getBalance.call(users[2], feeToken.address)).toString(),
-        solution.buyVolumes[3].toString(),
+        solution.volumes[3].toString(),
         "Bought tokens were not adjusted correctly"
       )
       assert.equal(
         (await stablecoinConverter.getBalance.call(users[0], erc20_2.address)).toString(),
-        solution.buyVolumes[0].toString(),
+        solution.volumes[0].toString(),
         "Bought tokens were not adjusted correctly"
       )
       assert.equal(
@@ -1768,7 +1765,7 @@ contract("StablecoinConverter", async (accounts) => {
       )
       assert.equal(
         (await stablecoinConverter.getBalance.call(users[2], erc20_2.address)).toString(),
-        smallExampleCase.deposits[2].amount.sub(getExecutedSellAmount(solution.buyVolumes[3], solution.prices[1], solution.prices[0])).toString(),
+        smallExample.deposits[2].amount.sub(getExecutedSellAmount(solution.volumes[3], solution.prices[1], solution.prices[0])).toString(),
         "Sold tokens were not adjusted correctly"
       )
 
@@ -1777,9 +1774,9 @@ contract("StablecoinConverter", async (accounts) => {
         stablecoinConverter.submitSolution(
           batchIndex,
           solution.objectiveValue + 1,
-          solution.owners.map(x => accounts[x]),
-          orderIds,
-          solution.buyVolumes,
+          solution.owners,
+          solution.touchedOrderIds,
+          solution.volumes,
           solution.prices,
           solution.tokenIdsForPrice,
           { from: solver }
