@@ -852,15 +852,12 @@ contract("StablecoinConverter", async (accounts) => {
       await closeAuction(stablecoinConverter)
 
       const solution = basicTradeCase.solutions[0]
-      const badVolumes = solution.buyVolumes
-      badVolumes[1] = badVolumes[1].sub(new BN("10"))
-
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
           solution.owners.map(x => accounts[x]),
           orderIds,
-          badVolumes,  // <----- THIS IS THE DIFFERENCE!
+          basicTradeCase.orders.map(x => x.buyAmount),  // <----- THIS IS THE DIFFERENCE!
           solution.prices,
           solution.tokenIdsForPrice,
           { from: solver }
