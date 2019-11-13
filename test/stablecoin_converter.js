@@ -1088,7 +1088,7 @@ contract("StablecoinConverter", async (accounts) => {
       }
       await closeAuction(stablecoinConverter)
       const solution = basicTradeCase.solutions[0]
-      const zeroPrices = [0, 0]
+      const zeroPrices = [toETH(1), 0]
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
