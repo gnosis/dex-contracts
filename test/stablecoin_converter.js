@@ -331,7 +331,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       assert(objectiveValue > 0, "the computed objective value is greater than 0")
       assert.equal(objectiveValue, solution.objectiveValue.toString())
-   })
+    })
     it("[Basic Trade] places two orders and matches them in a solution with Utility > 0", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
