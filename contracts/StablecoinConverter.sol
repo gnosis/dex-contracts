@@ -276,10 +276,7 @@ contract StablecoinConverter is EpochTokenLocker {
         }
         // doing all subtractions after all additions (in order to avoid negative values)
         for (uint256 i = 0; i < owners.length; i++) {
-            (, uint128 executedSellAmount) = getTradedAmounts(
-                volumes[i],
-                orders[owners[i]][orderIds[i]]
-            );
+            (, uint128 executedSellAmount) = getTradedAmounts(volumes[i], orders[owners[i]][orderIds[i]]);
             subtractBalance(
                 owners[i],
                 tokenIdToAddressMap(orders[owners[i]][orderIds[i]].sellToken),
@@ -503,7 +500,7 @@ contract StablecoinConverter is EpochTokenLocker {
       * @return disregardedUtility of the order (after it has been applied)
       * Note that:
       * |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
-      * where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken
+      * where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken * (1 - phi)
       * and leftoverSellAmount = order.sellAmt - execSellAmt
       * Balances and orders have all been updated so: sellAmount - execSellAmt == remainingAmount(order).
       * For correctness, we take the minimum of this with the user's token balance.
@@ -513,9 +510,14 @@ contract StablecoinConverter is EpochTokenLocker {
             getRemainingAmount(order),
             getBalance(user, tokenIdToAddressMap(order.sellToken))
         );
-        uint256 limitTerm = currentPrices[order.sellToken].mul(order.priceDenominator)
-            .sub(currentPrices[order.buyToken].mul(order.priceNumerator));
-        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator);
+        uint256 limitTermLeft = currentPrices[order.sellToken].mul(order.priceDenominator);
+        uint256 limitTermRight = order.priceNumerator.mul(currentPrices[order.buyToken])
+            .mul(feeDenominator).div(feeDenominator-1);
+        uint256 limitTerm = 0;
+        if (limitTermLeft > limitTermRight) {
+            limitTerm = limitTermLeft.sub(limitTermRight);
+        }
+        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator).toUint128();
     }
 
     /** @dev Evaluates executedBuy amount based on prices and executedBuyAmout (fees included)
