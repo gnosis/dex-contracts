@@ -1,3 +1,6 @@
+const MockContract = artifacts.require("MockContract")
+const StablecoinConverter = artifacts.require("StablecoinConverter")
+
 const {
   waitForNSeconds,
   sendTxAndGetReturnValue,
@@ -10,6 +13,27 @@ const {
  * @property {number} token The deposited token
  * @property {number} user The user making the deposit
  */
+
+/**
+ * Makes deposit transactions from a list of Deposit Objects
+ * @param {number} numTokens
+ * @param {number} maxTokens
+ * @param {number} feeDenominator
+ * @returns {}
+ */
+const setupGenericStableX = async function (numTokens = 2, maxTokens = 2 ** 16 - 1, feeDenominator = 1000) {
+  const feeToken = await MockContract.new()
+  const instance = await StablecoinConverter.new(maxTokens, feeDenominator, feeToken.address)
+  await feeToken.givenAnyReturnBool(true)
+  const tokens = [feeToken]
+  for (let i = 0; i < numTokens - 1; i++) {
+    const token = await MockContract.new()
+    await instance.addToken(token.address)
+    await token.givenAnyReturnBool(true)
+    tokens.push(token)
+  }
+  return instance
+}
 
 
 /**
@@ -60,6 +84,7 @@ const closeAuction = async (contract) => {
 }
 
 module.exports = {
+  setupGenericStableX,
   makeDeposits,
   placeOrders,
   closeAuction
