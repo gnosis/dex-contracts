@@ -63,13 +63,13 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
     })
   })
-  describe("placeValidFromOrder()", () => {
-    it("places order with sepcified validFrom", async () => {
+  describe("placeValidFromOrders()", () => {
+    it("places single order with specified validFrom", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
 
-      const id = await stablecoinConverter.placeValidFromOrder.call(0, 1, 20, 3, 10, 20, { from: user_1 })
-      await stablecoinConverter.placeValidFromOrder(0, 1, 20, 3, 10, 20, { from: user_1 })
+      const id = await stablecoinConverter.placeValidFromOrders.call([0], [1], [20], [3], [10], [20], { from: user_1 })
+      await stablecoinConverter.placeValidFromOrders([0], [1], [20], [3], [10], [20], { from: user_1 })
       const orderResult = (await stablecoinConverter.orders.call(user_1, id))
       assert.equal((orderResult.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
       assert.equal((orderResult.priceNumerator).toNumber(), 10, "priceNumerator was stored incorrectly")
@@ -78,6 +78,32 @@ contract("StablecoinConverter", async (accounts) => {
       // Note that this order will be stored, but never valid. However, this can not affect the exchange in any maliciouis way!
       assert.equal((orderResult.validFrom).toNumber(), 20, "validFrom was stored incorrectly")
       assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
+    })
+    it("rejects orders with invalid array input", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      await truffleAssert.fails(
+        stablecoinConverter.placeValidFromOrders([0, 1], [1], [20], [3], [10], [20]),
+        "invalid opcode"
+      )
+    })
+    it("places multiple orders with sepcified validFrom", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+
+      const id = stablecoinConverter.placeValidFromOrders.call([0, 1], [1, 0], [20, 30], [3, 4], [10, 11], [20, 21], { from: user_1 })
+      await stablecoinConverter.placeValidFromOrders([0, 1], [1, 0], [20, 30], [3, 4], [10, 11], [20, 21], { from: user_1 })
+
+      for (let i = 1; i <= id; i++) {
+        const orderResult = (await stablecoinConverter.orders.call(user_1, id))
+        assert.equal((orderResult.priceDenominator).toNumber(), 20, `order ${i}: priceDenominator was stored incorrectly`)
+        assert.equal((orderResult.priceNumerator).toNumber(), 10, `order ${i}: priceNumerator was stored incorrectly`)
+        assert.equal((orderResult.sellToken).toNumber(), 1, `order ${i}: sellToken was stored incorrectly`)
+        assert.equal((orderResult.buyToken).toNumber(), 0, `order ${i}: buyToken was stored incorrectly`)
+        // Note that this order will be stored, but never valid. However, this can not affect the exchange in any maliciouis way!
+        assert.equal((orderResult.validFrom).toNumber(), 20, `order ${i}: validFrom was stored incorrectly`)
+        assert.equal((orderResult.validUntil).toNumber(), 3, `order ${i}: validUntil was stored incorrectly`)
+      }
     })
   })
   describe("cancelOrder()", () => {
@@ -94,7 +120,6 @@ contract("StablecoinConverter", async (accounts) => {
         (currentStateIndex.toNumber() - 1),
         "validUntil was stored incorrectly"
       )
-
     })
   })
   describe("freeStorageOfOrder()", () => {
@@ -791,16 +816,16 @@ contract("StablecoinConverter", async (accounts) => {
       for (const order of basicTrade.orders) {
         // NOTE: This is different than usual tests!
         orderIds.push(
-          await sendTxAndGetReturnValue(
-            stablecoinConverter.placeValidFromOrder,  // <------ Right here!
-            order.buyToken,
-            order.sellToken,
-            batchIndex + 1,
-            batchIndex + 2,  // <------ and here!
-            order.buyAmount,
-            order.sellAmount,
+          (await sendTxAndGetReturnValue(
+            stablecoinConverter.placeValidFromOrders,  // <------ Right here!
+            [order.buyToken],
+            [order.sellToken],
+            [batchIndex + 1],
+            [batchIndex + 2],  // <------ and here!
+            [order.buyAmount],
+            [order.sellAmount],
             { from: accounts[order.user] }
-          )
+          ))[0]  // Because placeValidFromOrders returns a list of ids
         )
       }
       await closeAuction(stablecoinConverter)
@@ -1665,7 +1690,7 @@ contract("StablecoinConverter", async (accounts) => {
         solution.owners,
         solution.touchedOrderIds,
         volumes,
-        prices, 
+        prices,
         solution.tokenIdsForPrice,
         { from: solver }
       )
