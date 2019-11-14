@@ -27,6 +27,7 @@ const {
   smallExample,
 } = require("./resources/examples")
 const {
+  closeAuction,
   makeDeposits,
   placeOrders
 } = require("./resources/stablex_utils")
@@ -213,7 +214,6 @@ contract("StablecoinConverter", async (accounts) => {
       const owlProxy = await TokenOWL.at(owlProxyContract.address)
       await owlProxy.setMinter(user_1)
       const owlAmount = (10 * 10 ** (await owlProxy.decimals.call())).toString()
-
 
       const stablecoinConverter = await StablecoinConverter.new(2, feeDenominator, owlProxy.address)
       const token = await ERC20.new()
@@ -1554,8 +1554,3 @@ contract("StablecoinConverter", async (accounts) => {
     })
   })
 })
-
-const closeAuction = async (instance) => {
-  const time_remaining = (await instance.getSecondsRemainingInBatch()).toNumber()
-  await waitForNSeconds(time_remaining + 1)
-}

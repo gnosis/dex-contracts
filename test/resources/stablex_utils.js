@@ -1,3 +1,7 @@
+const {
+  waitForNSeconds,
+  sendTxAndGetReturnValue,
+} = require("../utilities")
 
 /**
  * @typedef Deposit
@@ -9,10 +13,10 @@
 
 
 /**
- * Converts the amount value to `ether` unit.
- * @param {contract}
- * @param {accounts}
- * @param {Deposit[]}
+ * Makes deposit transactions from a list of Deposit Objects
+ * @param {contract} - StablecoinConverter Smart Contract
+ * @param {accounts} - an array of (unlocked) ethereum account addresses
+ * @param {Deposit[]} - an array of Deposit Objects
  */
 const makeDeposits = async function (contract, accounts, depositList) {
   for (const deposit of depositList) {
@@ -22,10 +26,11 @@ const makeDeposits = async function (contract, accounts, depositList) {
 }
 
 /**
- * Converts the amount value to `ether` unit.
- * @param {contract}
- * @param {accounts}
- * @param {Order[]}
+ * Makes placeOrder transactions from a list of Order Objects
+ * @param {contract} - StablecoinConverter Smart Contract
+ * @param {accounts} - an array of (unlocked) ethereum account addresses
+ * @param {Order[]} - an array of Order Objects
+ * @returns {BN[]}
  */
 const placeOrders = async function (contract, accounts, orderList, auctionIndex) {
   const orderIds = []
@@ -45,14 +50,17 @@ const placeOrders = async function (contract, accounts, orderList, auctionIndex)
   return orderIds
 }
 
-
-const sendTxAndGetReturnValue = async function (method, ...args) {
-  const result = await method.call(...args)
-  await method(...args)
-  return result
+/**
+ * Closes current auction
+ * @param {contract} - StablecoinConverter Smart Contract
+ */
+const closeAuction = async (contract) => {
+  const time_remaining = (await contract.getSecondsRemainingInBatch()).toNumber()
+  await waitForNSeconds(time_remaining + 1)
 }
 
 module.exports = {
   makeDeposits,
   placeOrders,
+  closeAuction
 }
