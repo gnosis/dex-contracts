@@ -83,7 +83,7 @@ contract("StablecoinConverter", async (accounts) => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       await truffleAssert.fails(
-        stablecoinConverter.placeValidFromOrders([0], [1], [20], [3], [10], [20]),
+        stablecoinConverter.placeValidFromOrders([0, 1], [1], [20], [3], [10], [20]),
         "invalid opcode"
       )
     })
