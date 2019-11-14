@@ -1,5 +1,5 @@
 {
-  "name": "dex-contracts",
+  "name": "@gnosis.pm/dex-contracts",
   "version": "1.0.0",
   "description": "Contracts for dFusion multi-token batch auction exchange",
   "main": ".eslintrc.js",

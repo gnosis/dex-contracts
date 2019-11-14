@@ -211,6 +211,7 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
       * @param prices list of prices for touched tokens indexed by next parameter
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+      * @return the computed objective value of the solution
       *
       * Requirements:
       * - Solutions for this `batchIndex` are currently being accepted.
@@ -234,10 +235,11 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory volumes,
         uint128[] memory prices,
         uint16[] memory tokenIdsForPrice
-    ) public {
+    ) public returns (uint256) {
         require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
         require(claimedObjectiveValue > getCurrentObjectiveValue(), "Claimed objective is not more than current solution");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
+        require(prices[0] == 1 ether, "fee token price must be 10^18");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
         require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
         undoCurrentSolution(batchIndex);
@@ -282,12 +284,14 @@ contract StablecoinConverter is EpochTokenLocker {
             disregardedUtility = disregardedUtility.add(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]));
         }
         uint256 burntFees = uint256(tokenConservation[0]) / 2;
-        require(utility + burntFees > disregardedUtility, "Solution must be better than trivial");
+        require(utility.add(burntFees) > disregardedUtility, "Solution must be better than trivial");
         // burntFees ensures direct trades (when available) yield better solutions than longer rings
-        checkAndOverrideObjectiveValue(utility - disregardedUtility + burntFees);
+        uint256 objectiveValue = utility - disregardedUtility + burntFees;
+        checkAndOverrideObjectiveValue(objectiveValue);
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
+        return (objectiveValue);
     }
     /**
      * Public View Methods
