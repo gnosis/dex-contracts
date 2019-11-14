@@ -336,7 +336,6 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(0, currentObjectiveValue)
     })
     it("[Basic Trade] places two orders and returns calculated utility", async () => {
-
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const erc20_2 = await MockContract.new()
@@ -346,14 +345,14 @@ contract("StablecoinConverter", async (accounts) => {
 
       await stablecoinConverter.addToken(erc20_2.address)
 
-      for (const deposit of basicTradeCase.deposits) {
+      for (const deposit of basicTrade.deposits) {
         const tokenAddress = await stablecoinConverter.tokenIdToAddressMap.call(deposit.token)
         await stablecoinConverter.deposit(tokenAddress, deposit.amount, { from: accounts[deposit.user] })
       }
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       const orderIds = []
-      for (const order of basicTradeCase.orders) {
+      for (const order of basicTrade.orders) {
         orderIds.push(
           await sendTxAndGetReturnValue(
             stablecoinConverter.placeOrder,
@@ -368,13 +367,13 @@ contract("StablecoinConverter", async (accounts) => {
       }
       await closeAuction(stablecoinConverter)
 
-      const solution = basicTradeCase.solutions[0]
+      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
       const objectiveValue = await stablecoinConverter.submitSolution.call(
         batchIndex,
         solution.objectiveValue,
-        solution.owners.map(x => accounts[x]),
-        orderIds,
-        solution.buyVolumes,
+        solution.owners,
+        solution.touchedOrderIds,
+        solution.volumes,
         solution.prices,
         solution.tokenIdsForPrice,
         { from: solver }
