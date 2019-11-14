@@ -64,7 +64,7 @@ contract("StablecoinConverter", async (accounts) => {
     })
   })
   describe("placeValidFromOrders()", () => {
-    it("places order with sepcified validFrom", async () => {
+    it("places single order with specified validFrom", async () => {
       const feeToken = await MockContract.new()
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
 
@@ -78,6 +78,14 @@ contract("StablecoinConverter", async (accounts) => {
       // Note that this order will be stored, but never valid. However, this can not affect the exchange in any maliciouis way!
       assert.equal((orderResult.validFrom).toNumber(), 20, "validFrom was stored incorrectly")
       assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
+    })
+    it("rejects orders with invalid array input", async () => {
+      const feeToken = await MockContract.new()
+      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      await truffleAssert.fails(
+        stablecoinConverter.placeValidFromOrders([0], [1], [20], [3], [10], [20]),
+        "invalid opcode"
+      )
     })
     it("places multiple orders with sepcified validFrom", async () => {
       const feeToken = await MockContract.new()
@@ -1682,7 +1690,7 @@ contract("StablecoinConverter", async (accounts) => {
         solution.owners,
         solution.touchedOrderIds,
         volumes,
-        prices, 
+        prices,
         solution.tokenIdsForPrice,
         { from: solver }
       )
