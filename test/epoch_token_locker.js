@@ -45,7 +45,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.deposit(ERC20.address, 100)
 
-      assert.equal(await epochTokenLocker.getPendingDepositAmount(user_1, ERC20.address), 200)
+      assert.equal((await epochTokenLocker.getPendingDepositAmount(user_1, ERC20.address)).toNumber(), 200)
     })
 
     it("does not consolidates two deposits, if they are not deposited during same stateIndex", async () => {
