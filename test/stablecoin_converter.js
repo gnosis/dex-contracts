@@ -816,7 +816,7 @@ contract("StablecoinConverter", async (accounts) => {
       for (const order of basicTrade.orders) {
         // NOTE: This is different than usual tests!
         orderIds.push(
-          await sendTxAndGetReturnValue(
+          (await sendTxAndGetReturnValue(
             stablecoinConverter.placeValidFromOrders,  // <------ Right here!
             [order.buyToken],
             [order.sellToken],
@@ -825,7 +825,7 @@ contract("StablecoinConverter", async (accounts) => {
             [order.buyAmount],
             [order.sellAmount],
             { from: accounts[order.user] }
-          )
+          ))[0]  // Because placeValidFromOrders returns a list of ids
         )
       }
       await closeAuction(stablecoinConverter)
