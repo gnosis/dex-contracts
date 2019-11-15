@@ -11,13 +11,13 @@ const {
   waitForNSeconds,
   sendTxAndGetReturnValue,
   decodeAuctionElements
-} = require("./utilities.js")
+} = require("../utilities")
 
 const {
   toETH,
   getExecutedSellAmount,
   ERROR_EPSILON,
-} = require("./resources/math")
+} = require("../resources/math")
 const {
   solutionSubmissionParams,
   basicTrade,
@@ -25,13 +25,13 @@ const {
   basicRingTrade,
   shortRingBetterTrade,
   smallExample,
-} = require("./resources/examples")
+} = require("../resources/examples")
 const {
   closeAuction,
   makeDeposits,
   placeOrders,
   setupGenericStableX,
-} = require("./resources/stablex_utils")
+} = require("../resources/stablex_utils")
 
 const feeDenominator = 1000 // fee is (1 / feeDenominator)
 
