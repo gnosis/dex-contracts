@@ -4,7 +4,7 @@ const MockContract = artifacts.require("MockContract")
 const ERC20Interface = artifacts.require("ERC20")
 
 const truffleAssert = require("truffle-assertions")
-const { waitForNSeconds } = require("./utilities.js")
+const { waitForNSeconds } = require("../utilities")
 
 
 contract("EpochTokenLocker", async (accounts) => {
