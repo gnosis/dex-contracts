@@ -14,6 +14,10 @@ const {
 } = require("./utilities.js")
 
 const {
+  closeAuction
+} = require("../scripts/utilities.js")
+
+const {
   toETH,
   basicTradeCase,
   advancedTradeCase,
@@ -1897,8 +1901,3 @@ contract("StablecoinConverter", async (accounts) => {
     })
   })
 })
-
-const closeAuction = async (instance) => {
-  const time_remaining = (await instance.getSecondsRemainingInBatch()).toNumber()
-  await waitForNSeconds(time_remaining + 1)
-}
