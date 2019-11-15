@@ -14,6 +14,10 @@ const {
 } = require("../utilities")
 
 const {
+  closeAuction
+} = require("../../scripts/utilities.js")
+
+const {
   toETH,
   getExecutedSellAmount,
   ERROR_EPSILON,
@@ -27,7 +31,6 @@ const {
   smallExample,
 } = require("../resources/examples")
 const {
-  closeAuction,
   makeDeposits,
   placeOrders,
   setupGenericStableX,
