@@ -16,9 +16,9 @@ const {
 
 /**
  * Makes deposit transactions from a list of Deposit Objects
- * @param {number} numTokens
- * @param {number} maxTokens
- * @param {number} feeDenominator
+ * @param {number} numTokens - number of tokens to be registered on this exchange.
+ * @param {number} maxTokens - Maximum number of tokens (a contract contructor parameter)
+ * @param {number} feeDenominator - Fee for order execution (a contract contructor parameter)
  * @returns {}
  */
 const setupGenericStableX = async function (numTokens = 2, maxTokens = 2 ** 16 - 1, feeDenominator = 1000) {
@@ -38,9 +38,9 @@ const setupGenericStableX = async function (numTokens = 2, maxTokens = 2 ** 16 -
 
 /**
  * Makes deposit transactions from a list of Deposit Objects
- * @param {contract} - StablecoinConverter Smart Contract
- * @param {accounts} - an array of (unlocked) ethereum account addresses
- * @param {Deposit[]} - an array of Deposit Objects
+ * @param {object} contract StablecoinConverter smart contract
+ * @param {string[]} accounts An array of (unlocked) ethereum account addresses
+ * @param {Deposit[]} depositList an array of Deposit Objects
  */
 const makeDeposits = async function (contract, accounts, depositList) {
   for (const deposit of depositList) {
@@ -51,8 +51,8 @@ const makeDeposits = async function (contract, accounts, depositList) {
 
 /**
  * Makes placeOrder transactions from a list of Order Objects
- * @param {contract} - StablecoinConverter Smart Contract
- * @param {accounts} - an array of (unlocked) ethereum account addresses
+ * @param {object} contract StablecoinConverter smart contract
+ * @param {string[]} accounts An array of (unlocked) ethereum account addresses
  * @param {Order[]} - an array of Order Objects
  * @returns {BN[]}
  */
