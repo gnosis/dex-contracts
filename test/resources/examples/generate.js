@@ -77,7 +77,7 @@ function generateTestCase(input, debug = false) {
     })),
     orders,
     solutions: solutions.map(solution => {
-      let objectiveValue;
+      let objectiveValue
       try {
         objectiveValue = solutionObjectiveValueComputation(orders, solution, true)
       } catch (err) {
@@ -246,8 +246,8 @@ function debugObjectiveValueComputation(objectiveValue) {
     ["Disregarded Utility", ...[
       ...objectiveValue.disregardedUtilities, objectiveValue.totalDisregardedUtility
     ].map(du => du.neg())],
-    ["Burnt Fees", ...objectiveValue.utilities.map(_ => ""), objectiveValue.burntFees],
-    ["Result", ...objectiveValue.utilities.map(_ => ""), objectiveValue.result],
+    ["Burnt Fees", ...objectiveValue.utilities.map(() => ""), objectiveValue.burntFees],
+    ["Result", ...objectiveValue.utilities.map(() => ""), objectiveValue.result],
   ])
 }
 
