@@ -312,6 +312,40 @@ contract("StablecoinConverter", async (accounts) => {
       assert(objectiveValue > 0, "the computed objective value is greater than 0")
       assert.equal(objectiveValue, solution.objectiveValue.toString())
     })
+    it("rejects competing solution with same objective value", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+
+      // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
+      await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(stablecoinConverter, accounts, basicTrade.orders, batchIndex + 1)
+      await closeAuction(stablecoinConverter)
+
+      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
+      await stablecoinConverter.submitSolution(
+        batchIndex,
+        solution.objectiveValue,
+        solution.owners,
+        solution.touchedOrderIds,
+        solution.volumes,
+        solution.prices,
+        solution.tokenIdsForPrice,
+        { from: solver }
+      )
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(
+          batchIndex,
+          solution.objectiveValue.add(new BN(1)),
+          solution.owners,
+          solution.touchedOrderIds,
+          solution.volumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
+          { from: competingSolver }
+        ),
+        "Solution must have a higher objective value than current solution"
+      )
+    })
     it("[Basic Trade] places two orders and matches them in a solution with Utility > 0", async () => {
       const stablecoinConverter = await setupGenericStableX()
       const feeToken = await stablecoinConverter.tokenIdToAddressMap.call(0)
