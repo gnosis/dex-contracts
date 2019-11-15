@@ -1,6 +1,6 @@
 const BN = require("bn.js")
 const SnappAuction = artifacts.require("SnappAuction")
-const MintableERC20 = artifacts.require("./ERC20Mintable.sol")
+const MintableERC20 = artifacts.require("ERC20Mintable.sol")
 
 const truffleAssert = require("truffle-assertions")
 
@@ -8,7 +8,7 @@ const {
   waitForNSeconds,
   setupEnvironment,
   partitionArray,
-  registerTokens } = require("./utilities.js")
+  registerTokens } = require("../utilities.js")
 
 const {
   isActive,
