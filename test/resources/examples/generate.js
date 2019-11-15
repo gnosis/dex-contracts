@@ -62,7 +62,7 @@ const { flat, dedupe } = require("../array-shims.js")
  * @param {TestCaseInput} input The input to the test case
  * @return {TestCase} The test case
  */
-function generateTestCase(input) {
+function generateTestCase(input, debug = false) {
   const { name, orders, solutions } = input
 
   return {
