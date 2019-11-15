@@ -548,7 +548,7 @@ contract("SnappAuction", async (accounts) => {
       const bytes = await instance.calculateOrderHash(curr_slot, standingOrderIndexList)
       assert.notEqual(bytes, "0x0000000000000000000000000000000000000000", "orderHash was not calculated correctly")
     })
-    it("throws is standingOrderIndex is not valid in slot", async () => {
+    it("throws when standingOrderIndex is invalid at slot", async () => {
       const instance = await SnappAuction.new()
 
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
@@ -569,8 +569,9 @@ contract("SnappAuction", async (accounts) => {
       const standingOrderIndexList = new Array(AUCTION_RESERVED_ACCOUNTS.toNumber())
       standingOrderIndexList.fill(0)
       standingOrderIndexList[1] = 1
-      await truffleAssert.reverts(instance.calculateOrderHash.sendTransaction(curr_slot, standingOrderIndexList),
-        "non-valid standingOrderBatch referenced")
+      await truffleAssert.reverts(
+        instance.calculateOrderHash.sendTransaction(curr_slot, standingOrderIndexList),
+        "invalid standingOrderBatch referenced")
     })
   })
 

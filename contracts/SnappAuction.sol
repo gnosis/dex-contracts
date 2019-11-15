@@ -304,7 +304,7 @@ contract SnappAuction is SnappBase {
         for (uint i = 0; i < AUCTION_RESERVED_ACCOUNTS; i++) {
             require(
                 orderBatchIsValidAtAuctionIndex(slot, uint8(i), _standingOrderIndex[i]),
-                "non-valid standingOrderBatch referenced"
+                "invalid standingOrderBatch referenced"
             );
             orderHashes[i] = standingOrders[uint16(i)].reservedAccountOrders[_standingOrderIndex[i]].orderHash;
         }
