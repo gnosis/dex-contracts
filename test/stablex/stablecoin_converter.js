@@ -31,7 +31,7 @@ const {
   makeDeposits,
   placeOrders,
   setupGenericStableX,
-} = require("../resources/stablex_utils")
+} = require("./stablex_utils")
 
 const feeDenominator = 1000 // fee is (1 / feeDenominator)
 
@@ -51,101 +51,6 @@ contract("StablecoinConverter", async (accounts) => {
 
     BATCH_TIME = (await stablecoinConverter.BATCH_TIME.call()).toNumber()
   })
-
-  describe("placeOrder()", () => {
-    it("places Orders and checks parameters", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-
-      const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
-      const id = await stablecoinConverter.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
-      await stablecoinConverter.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
-      const orderResult = (await stablecoinConverter.orders.call(user_1, id))
-      assert.equal((orderResult.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
-      assert.equal((orderResult.priceNumerator).toNumber(), 10, "priceNumerator was stored incorrectly")
-      assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
-      assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
-      assert.equal((orderResult.validFrom).toNumber(), currentStateIndex.toNumber(), "validFrom was stored incorrectly")
-      assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
-    })
-  })
-  describe("placeValidFromOrder()", () => {
-    it("places order with sepcified validFrom", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-
-      const id = await stablecoinConverter.placeValidFromOrder.call(0, 1, 20, 3, 10, 20, { from: user_1 })
-      await stablecoinConverter.placeValidFromOrder(0, 1, 20, 3, 10, 20, { from: user_1 })
-      const orderResult = (await stablecoinConverter.orders.call(user_1, id))
-      assert.equal((orderResult.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
-      assert.equal((orderResult.priceNumerator).toNumber(), 10, "priceNumerator was stored incorrectly")
-      assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
-      assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
-      // Note that this order will be stored, but never valid. However, this can not affect the exchange in any maliciouis way!
-      assert.equal((orderResult.validFrom).toNumber(), 20, "validFrom was stored incorrectly")
-      assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
-    })
-  })
-  describe("cancelOrder()", () => {
-    it("places orders, then cancels it and orders status", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-
-      const id = await stablecoinConverter.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
-      await stablecoinConverter.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
-      const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
-      await stablecoinConverter.cancelOrder([id], { from: user_1 })
-      assert.equal(
-        ((await stablecoinConverter.orders.call(user_1, id)).validUntil).toNumber(),
-        (currentStateIndex.toNumber() - 1),
-        "validUntil was stored incorrectly"
-      )
-
-    })
-  })
-  describe("freeStorageOfOrder()", () => {
-    it("places a order, then cancels and deletes it", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-
-      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
-      await stablecoinConverter.cancelOrder([id])
-      await waitForNSeconds(BATCH_TIME)
-      await stablecoinConverter.freeStorageOfOrder([id])
-
-      assert.equal((await stablecoinConverter.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
-    })
-    it("fails to delete non-canceled order", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-
-      const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
-
-      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, currentStateIndex + 3, 10, 20)
-      await truffleAssert.reverts(
-        stablecoinConverter.freeStorageOfOrder([id]),
-        "Order is still valid"
-      )
-    })
-    it("fails to delete canceled order in same stateIndex", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
-      await stablecoinConverter.cancelOrder([id])
-      await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder([id]), "Order is still valid")
-    })
-    it("deletes several orders successfully", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
-      const id2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
-      await stablecoinConverter.cancelOrder([id, id2])
-      await waitForNSeconds(BATCH_TIME)
-      await stablecoinConverter.freeStorageOfOrder([id, id2])
-      assert.equal((await stablecoinConverter.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
-      assert.equal((await stablecoinConverter.orders(user_1, id2)).priceDenominator, 0, "priceDenominator was stored incorrectly")
-    })
-  })
   describe("addToken()", () => {
     it("feeToken is set by default", async () => {
       const feeToken = await MockContract.new()
@@ -160,12 +65,12 @@ contract("StablecoinConverter", async (accounts) => {
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
 
       const token_1 = await ERC20.new()
-      await stablecoinConverter.addToken(token_1.address)
+      await stablecoinConverter.addToken(token_1.address, { from: user_1 })
 
       assert.equal((await stablecoinConverter.tokenAddressToIdMap.call(token_1.address)).toNumber(), 1)
       assert.equal(await stablecoinConverter.tokenIdToAddressMap.call(1), token_1.address)
       const token_2 = await ERC20.new()
-      await stablecoinConverter.addToken(token_2.address)
+      await stablecoinConverter.addToken(token_2.address, { from: user_2 })
 
       assert.equal((await stablecoinConverter.tokenAddressToIdMap.call(token_2.address)).toNumber(), 2)
       assert.equal(await stablecoinConverter.tokenIdToAddressMap.call(2), token_2.address)
@@ -226,6 +131,92 @@ contract("StablecoinConverter", async (accounts) => {
     })
 
   })
+  describe("placeOrder()", () => {
+    it("places order and verifys contract storage is updated correctly", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+
+      const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
+      const id = await stablecoinConverter.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
+      await stablecoinConverter.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
+      const orderResult = (await stablecoinConverter.orders.call(user_1, id))
+      assert.equal((orderResult.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
+      assert.equal((orderResult.priceNumerator).toNumber(), 10, "priceNumerator was stored incorrectly")
+      assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
+      assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
+      assert.equal((orderResult.validFrom).toNumber(), currentStateIndex.toNumber(), "validFrom was stored incorrectly")
+      assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
+    })
+  })
+  describe("placeValidFromOrder()", () => {
+    it("places order with sepcified validFrom", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+
+      const id = await stablecoinConverter.placeValidFromOrder.call(0, 1, 20, 3, 10, 20, { from: user_1 })
+      await stablecoinConverter.placeValidFromOrder(0, 1, 20, 3, 10, 20, { from: user_1 })
+      const orderResult = (await stablecoinConverter.orders.call(user_1, id))
+      assert.equal((orderResult.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
+      assert.equal((orderResult.priceNumerator).toNumber(), 10, "priceNumerator was stored incorrectly")
+      assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
+      assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
+      assert.equal((orderResult.validFrom).toNumber(), 20, "validFrom was stored incorrectly")
+      assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
+    })
+  })
+  describe("cancelOrder()", () => {
+    it("places orders, then cancels it and orders status", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+
+      const id = await stablecoinConverter.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
+      await stablecoinConverter.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
+      const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
+      await stablecoinConverter.cancelOrder([id], { from: user_1 })
+      assert.equal(
+        ((await stablecoinConverter.orders.call(user_1, id)).validUntil).toNumber(),
+        (currentStateIndex.toNumber() - 1),
+        "validUntil was stored incorrectly"
+      )
+
+    })
+  })
+  describe("freeStorageOfOrder()", () => {
+    it("places a order, then cancels and deletes it", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+
+      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
+      await stablecoinConverter.cancelOrder([id])
+      await waitForNSeconds(BATCH_TIME)
+      await stablecoinConverter.freeStorageOfOrder([id])
+
+      assert.equal((await stablecoinConverter.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
+    })
+    it("fails to delete non-canceled order", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+
+      const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
+
+      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, currentStateIndex + 3, 10, 20)
+      await truffleAssert.reverts(
+        stablecoinConverter.freeStorageOfOrder([id]),
+        "Order is still valid"
+      )
+    })
+    it("fails to delete canceled order in same stateIndex", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
+      await stablecoinConverter.cancelOrder([id])
+      await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder([id]), "Order is still valid")
+    })
+    it("deletes several orders successfully", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+      const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
+      const id2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
+      await stablecoinConverter.cancelOrder([id, id2])
+      await waitForNSeconds(BATCH_TIME)
+      await stablecoinConverter.freeStorageOfOrder([id, id2])
+      assert.equal((await stablecoinConverter.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
+      assert.equal((await stablecoinConverter.orders(user_1, id2)).priceDenominator, 0, "priceDenominator was stored incorrectly")
+    })
+  })
   describe("submitSolution()", () => {
     it("rejects attempt at price scaling hack", async () => {
       const stablecoinConverter = await setupGenericStableX()
@@ -253,8 +244,7 @@ contract("StablecoinConverter", async (accounts) => {
       )
     })
     it("rejects if claimed objective is not better than current", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const stablecoinConverter = await setupGenericStableX()
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       await closeAuction(stablecoinConverter)
@@ -1237,13 +1227,7 @@ contract("StablecoinConverter", async (accounts) => {
   })
   describe("getEncodedAuctionElements()", async () => {
     it("returns all orders that are have ever been submitted", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      const erc20_1 = await MockContract.new()
-      const erc20_2 = await MockContract.new()
-
-      await stablecoinConverter.addToken(erc20_1.address)
-      await stablecoinConverter.addToken(erc20_2.address)
+      const stablecoinConverter = await setupGenericStableX(3)
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
@@ -1276,21 +1260,14 @@ contract("StablecoinConverter", async (accounts) => {
       })
     })
     it("credits balance when it's valid", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      const erc20_1 = await MockContract.new()
-      const erc20_2 = await MockContract.new()
-
-      await erc20_1.givenAnyReturnBool(true)
-      await erc20_2.givenAnyReturnBool(true)
-
-      await stablecoinConverter.addToken(erc20_1.address)
-      await stablecoinConverter.addToken(erc20_2.address)
+      const stablecoinConverter = await setupGenericStableX(3)
+      const erc20_1 = await stablecoinConverter.tokenIdToAddressMap.call(1)
+      const erc20_2 = await stablecoinConverter.tokenIdToAddressMap.call(2)
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
-      await stablecoinConverter.deposit(erc20_1.address, 8, { from: user_1 })
-      await stablecoinConverter.deposit(erc20_2.address, 20, { from: user_1 })
+      await stablecoinConverter.deposit(erc20_1, 8, { from: user_1 })
+      await stablecoinConverter.deposit(erc20_2, 20, { from: user_1 })
       await stablecoinConverter.placeOrder(1, 2, batchIndex, 20, 10, { from: user_1 })
 
       let auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
@@ -1302,13 +1279,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(auctionElements[0].sellTokenBalance, 20)
     })
     it("includes freed orders with empty fields", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
-      const erc20_1 = await MockContract.new()
-      const erc20_2 = await MockContract.new()
-
-      await stablecoinConverter.addToken(erc20_1.address)
-      await stablecoinConverter.addToken(erc20_2.address)
+      const stablecoinConverter = await setupGenericStableX()
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       await stablecoinConverter.placeOrder(1, 0, batchIndex + 10, 20, 10)
@@ -1332,17 +1303,14 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal(auctionElements[0].validFrom, 0)
     })
     it("returns empty list if there are no orders", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const stablecoinConverter = await setupGenericStableX()
       const auctionElements = await stablecoinConverter.getEncodedAuctionElements()
-
       assert.equal(auctionElements, null)
     })
   })
   describe("hasToken()", async () => {
     it("returns whether token was already added", async () => {
-      const feeToken = await MockContract.new()
-      const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const stablecoinConverter = await setupGenericStableX()
       const erc20_1 = await MockContract.new()
       assert.equal(await stablecoinConverter.hasToken.call(erc20_1.address), false)
       await stablecoinConverter.addToken(erc20_1.address)

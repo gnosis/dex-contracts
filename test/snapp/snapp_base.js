@@ -19,7 +19,7 @@ const {
   countDuplicates,
   generateMerkleTree,
   setupEnvironment,
-  setupMultiCaller } = require("../utilities.js")
+  setupMultiCaller } = require("../utilities")
 
 const { encodePacked_16_8_128 } = require("./snapp_utils")
 
