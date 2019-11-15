@@ -581,12 +581,11 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev determines if value is better than currently and updates if it is.
       * @param amounts array of values to be verified with AMOUNT_MINIMUM
       */
-    function verifyAmountThreshold(uint128[] memory amounts) private {
+    function verifyAmountThreshold(uint128[] memory amounts) private pure {
         for (uint256 i = 0; i < amounts.length; i++) {
             require(amounts[i] > AMOUNT_MINIMUM, "All amounts must be greater than AMOUNT_MINIMUM");
         }
     }
-
     // Private view
 
     /** @dev Compute trade execution based on executedBuyAmount and relevant token prices
