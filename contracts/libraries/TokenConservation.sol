@@ -37,7 +37,7 @@ library TokenConservation {
       * @return true if all, but first element of self are zero else false
       */
     function checkTokenConservation(int[] memory self) internal pure {
-        require(self[0] >= 0, "Token conservation at fee must be non-negative");
+        require(self[0] >= 0, "Token conservation at 0 must be non-negative");
         for (uint256 i = 1; i < self.length; i++) {
             require(self[i] == 0, "Token conservation does not hold");
         }

@@ -18,6 +18,14 @@ contract("TokenConservation", async () => {
         // Error message would be: "Token conservation does not hold", but coverage tool will not recognize
       )
     })
+    it("throws, if token conservation does not hold", async () => {
+      const tokenConservation = await TokenConservationWrapper.new()
+      const testArray = [-1]
+      await truffleAssert.reverts(
+        tokenConservation.checkTokenConservationTest(testArray),
+        "Token conservation at 0 must be non-negative"
+      )
+    })
   })
 
   describe("checkPriceOrdering()", () => {
