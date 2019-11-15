@@ -15,7 +15,7 @@ const {
 
 const {
   closeAuction
-} = require("../../scripts/utilities.js")
+} = require("../../scripts/stablex/utilities.js")
 
 const {
   toETH,
