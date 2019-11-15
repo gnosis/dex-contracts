@@ -41,6 +41,7 @@ const { flat, dedupe } = require("../array-shims.js")
  * @property {string?} name An optional descriptive name
  * @property {Token[]} tokens The touched tokens with prices
  * @property {ComputedOrder[]} orders The touched order volumes
+ * @property {ObjectiveValueComputation} objectiveValueComputation The objective value computation details
  * @property {BN} totalFees The accumulated fees
  * @property {BN} totalUtility The objective value of the solution
  * @property {BN} totalDisregardedUtility The objective value of the solution
@@ -60,6 +61,7 @@ const { flat, dedupe } = require("../array-shims.js")
  * Generates a test case to be used for unit and e2e testing with the contract
  * with computed solution values and objective values.
  * @param {TestCaseInput} input The input to the test case
+ * @param {boolean} [debug=false] Print debug information in case of 
  * @return {TestCase} The test case
  */
 function generateTestCase(input, debug = false) {
@@ -75,7 +77,16 @@ function generateTestCase(input, debug = false) {
     })),
     orders,
     solutions: solutions.map(solution => {
-      const objectiveValue = solutionObjectiveValueComputation(orders, solution)
+      let objectiveValue;
+      try {
+        objectiveValue = solutionObjectiveValueComputation(orders, solution, true)
+      } catch (err) {
+        if (debug) {
+          const invalidObjectiveValue = solutionObjectiveValueComputation(orders, solution, false)
+          debugObjectiveValueComputation(invalidObjectiveValue)
+        }
+        throw err
+      }
 
       const touchedOrders = orders
         .map((o, i) => solution.buyVolumes[i].isZero() ?
@@ -107,6 +118,7 @@ function generateTestCase(input, debug = false) {
               conservation: objectiveValue.tokenConservation[i],
             })),
         orders: touchedOrders,
+        objectiveValueComputation: objectiveValue,
         totalFees: objectiveValue.totalFees,
         totalUtility: objectiveValue.totalUtility,
         totalDisregardedUtility: objectiveValue.totalDisregardedUtility,
@@ -124,8 +136,6 @@ function generateTestCase(input, debug = false) {
  * @param {string[]} [accounts] The optional accounts for display, defaults to [1...]
  */
 function debugTestCase(testCase, orderIds, accounts) {
-  /* eslint-disable no-console */
-
   assert(orderIds === undefined || Array.isArray(orderIds), "orderIds is not an array")
   assert(accounts === undefined || Array.isArray(accounts), "accounts is not an array")
 
@@ -147,28 +157,6 @@ function debugTestCase(testCase, orderIds, accounts) {
 
   const usernames = accounts.map(a => a.length > 8 ? `${a.substr(0, 5)}…${a.substr(a.length - 3)}` : a)
 
-  const formatHeader = header => console.log(`=== ${header} ===`)
-  const formatTable = table => {
-    const [width, height] = [Math.max(...table.map(r => r.length)), table.length]
-    const getCell = (i, j) => {
-      const cell = i < height ? table[i][j] : undefined
-      return cell === undefined ? "" : cell === null ? "<NULL>" : `${cell}`
-    }
-
-    const columnWidths = []
-    for (let j = 0; j < width; j++) {
-      columnWidths.push(Math.max(...table.map((_, i) => getCell(i, j).length)) + 1)
-    }
-
-    for (let i = 0; i < height; i++) {
-      const line = columnWidths.map((cw, j) => j === 0 ?
-        getCell(i, j).padEnd(cw) :
-        getCell(i, j).padStart(cw)
-      ).join(" ")
-      console.log(line)
-    }
-  }
-
   formatHeader("Orders")
   formatTable([
     ["Id", "User", "Buy Token", "Buy Amount", "Sell Token", "Sell Amount"],
@@ -176,8 +164,7 @@ function debugTestCase(testCase, orderIds, accounts) {
   ])
   formatHeader("Solutions")
   for (const solution of testCase.solutions) {
-    console.log(` - ${solution.name || "???"}`)
-
+    formatSubHeader(solution.name || "???")
     formatTable([
       ["   Touched Tokens:           ", "Id", "Price", "Conservation"],
       ...solution.tokens.map(t => ["", t.id, t.price, t.conservation]),
@@ -193,8 +180,6 @@ function debugTestCase(testCase, orderIds, accounts) {
       ["   Objective Value:", solution.objectiveValue],
     ])
   }
-
-  /* eslint-enable no-console */
 }
 
 /**
@@ -238,8 +223,65 @@ function solutionSubmissionParams(solution, accounts, orderIds) {
   }
 }
 
+/**
+ * Prints debug information for an objective value compuation.
+ * @param {ObjectiveValueComputation} testCase The test case
+ */
+function debugObjectiveValueComputation(objectiveValue) {
+  formatHeader("Executed Amounts")
+  formatTable([
+    ["Order", "Sell", "Buy"],
+    ...objectiveValue.orderExecutedAmounts.map(({ buy, sell }, i) => [i, buy, sell]),
+  ])
+  formatHeader("Token Conservation")
+  formatTable([
+    ["Order\\Token", ...objectiveValue.tokenConservation.map((_, i) => i)],
+    ...objectiveValue.orderTokenConservation.map((o, i) => [i, ...o]),
+    ["Total", ...objectiveValue.tokenConservation],
+  ])
+  formatHeader("Objective Value")
+  formatTable([
+    ["Order", ...objectiveValue.utilities.map((_, i) => i), "Total"],
+    ["Utility", ...objectiveValue.utilities, objectiveValue.totalUtility],
+    ["Disregarded Utility", ...[
+      ...objectiveValue.disregardedUtilities, objectiveValue.totalDisregardedUtility
+    ].map(du => du.neg())],
+    ["Burnt Fees", ...objectiveValue.utilities.map(_ => ""), objectiveValue.burntFees],
+    ["Result", ...objectiveValue.utilities.map(_ => ""), objectiveValue.result],
+  ])
+}
+
+/* eslint-disable no-console */
+
+const formatHeader = (header) => console.log(`=== ${header} ===`)
+const formatSubHeader = (header) => console.log(` - ${header}`)
+
+function formatTable(table) {
+  const [width, height] = [Math.max(...table.map(r => r.length)), table.length]
+  const getCell = (i, j) => {
+    const cell = i < height ? table[i][j] : undefined
+    return cell === undefined ? "" : cell === null ? "<NULL>" : `${cell}`
+  }
+
+  const columnWidths = []
+  for (let j = 0; j < width; j++) {
+    columnWidths.push(Math.max(...table.map((_, i) => getCell(i, j).length)) + 1)
+  }
+
+  for (let i = 0; i < height; i++) {
+    const line = columnWidths.map((cw, j) => j === 0 ?
+      getCell(i, j).padEnd(cw) :
+      getCell(i, j).padStart(cw)
+    ).join(" ")
+    console.log(line)
+  }
+}
+
+/* eslint-enable no-console */
+
 module.exports = {
   generateTestCase,
   debugTestCase,
+  debugObjectiveValueComputation,
   solutionSubmissionParams,
 }
