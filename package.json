@@ -8,6 +8,8 @@
   },
   "scripts": {
     "test": "truffle test",
+    "test-stablex": "truffle test test/stablex/*",
+    "test-snapp": "truffle test test/snapp/*",
     "coverage": "./node_modules/.bin/solidity-coverage",
     "networks-extract": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/extract_network_info.js",
     "networks-inject": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/inject_network_info.js",
