@@ -195,7 +195,7 @@ function solutionObjectiveValueComputation(orders, solution) {
     ))
   }
   assert(!tokenConservation[0].isNeg(), "fee token conservation is negative")
-  tokenConservation.slice(1).forEach((conservation, i) => assert(conservation.isZero(), `token conservation not respected for token ${i}`))
+  tokenConservation.slice(1).forEach((conservation, i) => assert(conservation.isZero(), `token conservation not respected for token ${i + 1}`))
 
   const utilities = touchedOrders.map(
     ([o, i]) => orderUtility(o, solution.buyVolumes[i], solution.prices))

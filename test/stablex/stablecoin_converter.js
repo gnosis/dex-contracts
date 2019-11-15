@@ -280,31 +280,13 @@ contract("StablecoinConverter", async (accounts) => {
     })
     it("rejects trivial solution (the only solution with zero utility)", async () => {
       const stablecoinConverter = await setupGenericStableX()
-
-      await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
-
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(stablecoinConverter, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(stablecoinConverter)
-
-      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-      const zeroVolumes = Array(solution.volumes.length).fill(0)
-
+      const fakeClaimedObjective = 1
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(
-          batchIndex,
-          solution.objectiveValue,
-          solution.owners,
-          solution.touchedOrderIds,
-          zeroVolumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
-          { from: solver }
-        ),
+        stablecoinConverter.submitSolution(batchIndex, fakeClaimedObjective, [], [], [], [toETH(1)], [0], { from: solver }),
         "Solution must be better than trivial"
       )
-      const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
-      assert.equal(0, currentObjectiveValue)
     })
     it("[Basic Trade] places two orders and returns calculated utility", async () => {
       const stablecoinConverter = await setupGenericStableX()
@@ -803,7 +785,7 @@ contract("StablecoinConverter", async (accounts) => {
         "fee token price has to be specified"
       )
     })
-    it("reverts, if price of sellToken == 0", async () => {
+    it("reverts, if any prices are less than AMOUNT_MINIMUM", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
       await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
@@ -826,7 +808,7 @@ contract("StablecoinConverter", async (accounts) => {
           solution.tokenIdsForPrice,
           { from: solver }
         ),
-        "prices are not allowed to be zero"
+        "All amounts must be greater than AMOUNT_MINIMUM"
       )
     })
     it("checks that findPriceIndex also works, if it decreases the search bounds - all other tests only increase", async () => {
@@ -1127,7 +1109,7 @@ contract("StablecoinConverter", async (accounts) => {
       )
       assert.equal(0, (await stablecoinConverter.currentPrices.call(2)).toString(), "CurrentPrice were not adjusted correctly")
     })
-    it("checks that solution trades are deleted even if balances get temporarily negative while reverting ", async () => {
+    it("checks that solution trades are deleted even if balances are temporarily negative while reverting ", async () => {
       // The following test, a user_2 will receive some tokens and sell these received tokens in one batch.
       // If this batch-trade gets executed and later reverted by another trade, users_2's balance would be temporarily negative, unless
       // in the settlement and reversion not all buyAmounts will be credited first, before the sellAmounts are subtracted.

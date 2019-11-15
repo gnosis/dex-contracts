@@ -28,8 +28,11 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev Maximum number of touched orders in auction (used in submitSolution) */
     uint256 constant public MAX_TOUCHED_ORDERS = 25;
 
-    /** @dev Fee charged for adding a token) */
+    /** @dev Fee charged for adding a token */
     uint256 constant public TOKEN_ADDITION_FEE_IN_OWL = 10 ether;
+
+    /** @dev minimum allowed value (in WEI) of any prices or executed trade amounts */
+    uint256 constant public AMOUNT_MINIMUM = 10**4;
 
     /** @dev maximum number of tokens that can be listed for exchange */
     // solhint-disable-next-line var-name-mixedcase
@@ -236,6 +239,8 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory prices,
         uint16[] memory tokenIdsForPrice
     ) public returns (uint256) {
+        verifyAmountThreshold(prices);
+        verifyAmountThreshold(volumes);
         require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
         require(claimedObjectiveValue > getCurrentObjectiveValue(), "Claimed objective is not more than current solution");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
@@ -270,14 +275,11 @@ contract StablecoinConverter is EpochTokenLocker {
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
             addBalanceAndBlockWithdrawForThisBatch(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
         }
-        // doing all subtractions after all additions (in order to avoid negative values)
+        // Perform all subtractions after additions to avoid negative values
         for (uint256 i = 0; i < owners.length; i++) {
-            (, uint128 executedSellAmount) = getTradedAmounts(volumes[i], orders[owners[i]][orderIds[i]]);
-            subtractBalance(
-                owners[i],
-                tokenIdToAddressMap(orders[owners[i]][orderIds[i]].sellToken),
-                executedSellAmount
-            );
+            Order memory order = orders[owners[i]][orderIds[i]];
+            (, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
+            subtractBalance(owners[i], tokenIdToAddressMap(order.sellToken), executedSellAmount);
         }
         uint256 disregardedUtility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
@@ -286,7 +288,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint256 burntFees = uint256(tokenConservation[0]) / 2;
         require(utility.add(burntFees) > disregardedUtility, "Solution must be better than trivial");
         // burntFees ensures direct trades (when available) yield better solutions than longer rings
-        uint256 objectiveValue = utility - disregardedUtility + burntFees;
+        uint256 objectiveValue = utility.add(burntFees).sub(disregardedUtility);
         checkAndOverrideObjectiveValue(objectiveValue);
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
@@ -575,6 +577,16 @@ contract StablecoinConverter is EpochTokenLocker {
         );
         latestSolution.objectiveValue = newObjectiveValue;
     }
+
+    /** @dev determines if value is better than currently and updates if it is.
+      * @param amounts array of values to be verified with AMOUNT_MINIMUM
+      */
+    function verifyAmountThreshold(uint128[] memory amounts) private {
+        for (uint256 i = 0; i < amounts.length; i++) {
+            require(amounts[i] > AMOUNT_MINIMUM, "All amounts must be greater than AMOUNT_MINIMUM");
+        }
+    }
+
     // Private view
 
     /** @dev Compute trade execution based on executedBuyAmount and relevant token prices
@@ -584,12 +596,12 @@ contract StablecoinConverter is EpochTokenLocker {
       */
     function getTradedAmounts(uint128 volume, Order memory order) private view returns (uint128, uint128) {
         uint128 executedBuyAmount = volume;
-        require(currentPrices[order.sellToken] != 0, "prices are not allowed to be zero");
         uint128 executedSellAmount = getExecutedSellAmount(
             executedBuyAmount,
             currentPrices[order.buyToken],
             currentPrices[order.sellToken]
         );
+        require(executedSellAmount > AMOUNT_MINIMUM, "Can not sell less than AMOUNT_MINIMUM");
         return (executedBuyAmount, executedSellAmount);
     }
     // Private pure
