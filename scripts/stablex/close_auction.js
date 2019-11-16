@@ -5,7 +5,7 @@ module.exports = async (callback) => {
     const StablecoinConverter = artifacts.require("StablecoinConverter")
     const instance = await StablecoinConverter.deployed()
     await closeAuction(instance, web3)
-    console.log("Auction got closed")
+    console.log("Auction closed")
     callback()
   } catch (error) {
     callback(error)
