@@ -3,7 +3,7 @@ const SnappAuction = artifacts.require("SnappAuction")
 const {
   getOrderData
 } = require("../script_utilities.js")
-const { encodeOrder } = require("../../test/snapp_utils.js")
+const { encodeOrder } = require("../../test/snapp/snapp_utils.js")
 const argv = require("yargs")
   .option("accountId", {
     describe: "Account index of the order placer"
