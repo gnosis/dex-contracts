@@ -153,6 +153,24 @@ const smallExample = generateTestCase({
   ],
 })
 
+const stableXExample = generateTestCase({
+  deposits: [
+    { amount: toETH(3000), token: 0, user: 0 },
+    { amount: toETH(3000), token: 1, user: 0 },
+  ],
+  orders: [
+    { sellToken: 0, buyToken: 1, sellAmount: toETH(2000), buyAmount: toETH(999), user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(999), buyAmount: toETH(1996), user: 1 },
+  ],
+  solutions: [
+    {
+      name: "Naive Solver",
+      prices: [toETH(1), new BN("1999998997996995993")],
+      buyVolumes: [toETH(999), new BN("1996000999999999998010")],
+    },
+  ],
+})
+
 module.exports = Object.assign(
   {
     basicTrade,
@@ -162,6 +180,7 @@ module.exports = Object.assign(
     shortRingBetterTrade,
     tinyExample,
     smallExample,
+    stableXExample,
   },
   require("./generate"),
 )

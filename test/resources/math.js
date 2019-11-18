@@ -148,12 +148,13 @@ function orderDisregardedUtility(order, executedBuyAmount, prices) {
  * @return {BN} The solution's objective value
  */
 function solutionObjectiveValue(orders, solution) {
-  return solutionObjectiveValueComputation(orders, solution).result
+  return solutionObjectiveValueComputation(orders, solution, true).result
 }
 
 /**
  * @typedef ObjectiveValueComputation
  * @type {object}
+ * @property {BN[][]} orderTokenConservation The token conservation per token per order
  * @property {BN[]} tokenConservation The token conservation for each token
  * @property {BN[]} utilities The utility of each order
  * @property {BN[]} disregardedUtilities The disregarded utility of each order
@@ -168,9 +169,10 @@ function solutionObjectiveValue(orders, solution) {
  * all the intermediate values - useful for debugging.
  * @param {Order[]} orders The orders
  * @param {Solution} solution The solution
+ * @param {boolean} [strict=true] Throw when solution is determined to be invalid
  * @return {ObjectiveValueComputation} The solution's objective value computation object
  */
-function solutionObjectiveValueComputation(orders, solution) {
+function solutionObjectiveValueComputation(orders, solution, strict = true) {
   const tokenCount = Math.max(...flat(orders.map(o => [o.buyToken, o.sellToken]))) + 1
 
   assert(orders.length === solution.buyVolumes.length, "solution buy volumes do not match orders")
@@ -185,30 +187,55 @@ function solutionObjectiveValueComputation(orders, solution) {
     .map((o, i) => solution.buyVolumes[i].isZero() ? null : [o, i])
     .filter(pair => !!pair)
 
+  const orderExecutedAmounts = orders.map(() => new BN(0))
+  const orderTokenConservation = orders.map(() => solution.prices.map(() => new BN(0)))
   const tokenConservation = solution.prices.map(() => new BN(0))
+  const utilities = orders.map(() => new BN(0))
+  const disregardedUtilities = orders.map(() => new BN(0))
+
   for (const [order, i] of touchedOrders) {
-    tokenConservation[order.buyToken].isub(solution.buyVolumes[i])
-    tokenConservation[order.sellToken].iadd(getExecutedSellAmount(
+    const buyVolume = solution.buyVolumes[i]
+    const sellVolume = getExecutedSellAmount(
       solution.buyVolumes[i],
       solution.prices[order.buyToken],
       solution.prices[order.sellToken]
-    ))
-  }
-  assert(!tokenConservation[0].isNeg(), "fee token conservation is negative")
-  tokenConservation.slice(1).forEach((conservation, i) => assert(conservation.isZero(), `token conservation not respected for token ${i + 1}`))
+    )
 
-  const utilities = touchedOrders.map(
-    ([o, i]) => orderUtility(o, solution.buyVolumes[i], solution.prices))
-  const disregardedUtilities = touchedOrders.map(
-    ([o, i]) => orderDisregardedUtility(o, solution.buyVolumes[i], solution.prices))
+    orderExecutedAmounts[i] = { buy: buyVolume, sell: sellVolume }
+
+    orderTokenConservation[i][order.buyToken].isub(buyVolume)
+    orderTokenConservation[i][order.sellToken].iadd(sellVolume)
+
+    tokenConservation[order.buyToken].isub(buyVolume)
+    tokenConservation[order.sellToken].iadd(sellVolume)
+
+    utilities[i] = orderUtility(order, solution.buyVolumes[i], solution.prices)
+    disregardedUtilities[i] = orderDisregardedUtility(order, solution.buyVolumes[i], solution.prices)
+  }
+
+  if (strict) {
+    assert(!tokenConservation[0].isNeg(), "fee token conservation is negative")
+    tokenConservation.slice(1).forEach(
+      (conservation, i) => assert(conservation.isZero(), `token conservation not respected for token ${i + 1}`)
+    )
+    touchedOrders.forEach(([, id], i) => {
+      assert(!utilities[i].isNeg(), `utility for order ${id} is negative`)
+      assert(!disregardedUtilities[i].isNeg(), `disregarded utility for order ${id} is negative`)
+    })
+  }
 
   const totalUtility = utilities.reduce((acc, du) => acc.iadd(du), toETH(0))
   const totalDisregardedUtility = disregardedUtilities.reduce((acc, du) => acc.iadd(du), toETH(0))
   const burntFees = tokenConservation[0].div(new BN(2))
 
   const result = totalUtility.sub(totalDisregardedUtility).add(burntFees)
+  if (strict) {
+    assert(!result.isNeg() && !result.isZero(), "objective value negative or zero")
+  }
 
   return {
+    orderExecutedAmounts,
+    orderTokenConservation,
     tokenConservation,
     utilities,
     disregardedUtilities,
