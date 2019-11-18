@@ -137,7 +137,8 @@ const HunnitThou = new BN("100000")
 const smallExample = generateTestCase({
   deposits: [
     { amount: feeAdded(HunnitThou), token: 0, user: 0 },
-    { amount: new BN(19), token: 1, user: 1 },
+    { amount: new BN(190), token: 1, user: 1 },
+    { amount: new BN(9), token: 0, user: 1 },
     { amount: feeAdded(HunnitThou), token: 1, user: 2 },
   ],
   orders: [

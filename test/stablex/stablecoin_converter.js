@@ -1153,13 +1153,12 @@ contract("StablecoinConverter", async (accounts) => {
       // This test checks that we have met this "unless condition" and that our test is not failing due to temporarily negative balances
       const stablecoinConverter = await setupGenericStableX()
       const feeToken = await stablecoinConverter.tokenIdToAddressMap.call(0)
-      const erc20_2 = await stablecoinConverter.tokenIdToAddressMap.call(1)
+      const otherToken = await stablecoinConverter.tokenIdToAddressMap.call(1)
 
       await makeDeposits(stablecoinConverter, accounts, smallExample.deposits)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       const orderIds = await placeOrders(stablecoinConverter, accounts, smallExample.orders, batchIndex + 1)
       await closeAuction(stablecoinConverter)
-
       const solution = solutionSubmissionParams(smallExample.solutions[0], accounts, orderIds)
       await stablecoinConverter.submitSolution(
         batchIndex,
@@ -1171,41 +1170,29 @@ contract("StablecoinConverter", async (accounts) => {
         solution.tokenIdsForPrice,
         { from: solver }
       )
-      const users = smallExample.deposits.map(d => accounts[d.user])
-
+      // User 0
       assert.equal(
-        (await stablecoinConverter.getBalance.call(users[0], feeToken)).toString(),
-        smallExample.deposits[0].amount.sub(getExecutedSellAmount(solution.volumes[0], solution.prices[0], solution.prices[1])).toString(),
-        "Sold tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(users[0], feeToken)).toString(),
-        smallExample.deposits[0].amount.sub(getExecutedSellAmount(solution.volumes[0], solution.prices[0], solution.prices[1])).toString(),
-        "Sold tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(users[1], feeToken)),
-        0,
-        "Sold tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(users[2], feeToken)).toString(),
-        solution.volumes[3].toString(),
-        "Bought tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(users[0], erc20_2)).toString(),
+        (await stablecoinConverter.getBalance.call(accounts[0], otherToken)).toString(),
         solution.volumes[0].toString(),
         "Bought tokens were not adjusted correctly"
       )
       assert.equal(
-        (await stablecoinConverter.getBalance.call(users[1], erc20_2)),
-        0,
-        "Bought and sold tokens were not adjusted correctly"
+        (await stablecoinConverter.getBalance.call(accounts[0], feeToken)).toString(),
+        smallExample.deposits[0].amount.sub(getExecutedSellAmount(solution.volumes[0], solution.prices[0], solution.prices[1])).toString(),
+        "Sold tokens were not adjusted correctly"
+      )
+      // User 1
+      assert.equal(0, (await stablecoinConverter.getBalance.call(accounts[1], otherToken)), "Bought and sold tokens were not adjusted correctly")
+      assert.equal(0, (await stablecoinConverter.getBalance.call(accounts[1], feeToken)), 0, "Sold tokens were not adjusted correctly")
+      // User 2
+      assert.equal(
+        (await stablecoinConverter.getBalance.call(accounts[2], feeToken)).toString(),
+        solution.volumes[3].toString(),
+        "Bought tokens were not adjusted correctly"
       )
       assert.equal(
-        (await stablecoinConverter.getBalance.call(users[2], erc20_2)).toString(),
-        smallExample.deposits[2].amount.sub(getExecutedSellAmount(solution.volumes[3], solution.prices[1], solution.prices[0])).toString(),
+        (await stablecoinConverter.getBalance.call(accounts[2], otherToken)).toString(),
+        smallExample.deposits[3].amount.sub(getExecutedSellAmount(solution.volumes[3], solution.prices[1], solution.prices[0])).toString(),
         "Sold tokens were not adjusted correctly"
       )
 
