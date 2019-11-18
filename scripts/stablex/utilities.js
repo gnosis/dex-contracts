@@ -1,4 +1,6 @@
 const BN = require("bn.js")
+const { waitForNSeconds } = require("../../test/utilities.js")
+
 const addTokens = async function (token_addresses, web3, artifacts) {
   const accounts = await web3.eth.getAccounts()
 
@@ -29,6 +31,12 @@ const addTokens = async function (token_addresses, web3, artifacts) {
   }
 }
 
+const closeAuction = async (instance, web3Provider = web3) => {
+  const time_remaining = (await instance.getSecondsRemainingInBatch()).toNumber()
+  await waitForNSeconds(time_remaining + 1, web3Provider)
+}
+
 module.exports = {
-  addTokens
+  addTokens,
+  closeAuction
 }
