@@ -48,7 +48,7 @@ const openAccounts = async function (contract, accounts) {
  * The object consists of:
  * 1.) contract to register account
  * 2.) owner of contract
- * 3.) number of tokens to be registered 
+ * 3.) number of tokens to be registered
  */
 const registerTokens = async function (token_artifact, contract, token_owner, numTokens) {
   const res = []
