@@ -1,5 +1,5 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
-const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
+const { placeOrder } = require("../script_utilities.js")
 const argv = require("yargs")
   .option("accountId", {
     describe: "Account index of the order placer"
@@ -36,7 +36,7 @@ module.exports = async (callback) => {
     const batch_index = (await instance.getCurrentBatchId.call()).toNumber()
     const valid_until = batch_index + parseInt(argv.validFor)
 
-    const id = await sendTxAndGetReturnValue(instance.placeOrder, argv.buyToken, argv.sellToken, valid_until, minBuy, maxSell, { from: account })
+    const id = await placeOrder(argv.buyToken, argv.sellToken, account, argv.validFor, minBuy, maxSell, artifacts)
 
     console.log(`Placed Limit Sell Order successfully with ID ${id}. Valid from batch ${batch_index} until batch: ${valid_until}`)
     callback()

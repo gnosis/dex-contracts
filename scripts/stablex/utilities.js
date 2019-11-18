@@ -47,7 +47,7 @@ const depositTokens = async function (token_address, depositor, amount, artifact
     await token.approve(instance.address, amount, { from: depositor })
   }
 
-  await instance.deposit(token_address, amount, { from: depositor })
+  return await instance.deposit(token_address, amount, { from: depositor })
 
 }
 

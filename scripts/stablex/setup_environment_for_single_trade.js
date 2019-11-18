@@ -13,7 +13,6 @@ module.exports = async function (callback) {
     const account = accounts[0]
 
     const TokenOWL = artifacts.require("TokenOWL")
-    console.log(await instance.feeToken.call())
     const owlToken = await TokenOWL.at(await instance.feeToken.call())
 
     const amount = (10 ** 18).toString()
@@ -27,8 +26,8 @@ module.exports = async function (callback) {
     await depositTokens(token.address, account, amount, artifacts, callback)
 
     const valid_for = 2 ** 10
-    await placeOrder(0, 1, account, valid_for, Math.floor(amount / 1000 * 99).toString(), Math.floor(amount * 1000 / 999).toString(), artifacts)
-    await placeOrder(1, 0, account, valid_for, Math.floor(amount / 1000 * 99).toString(), Math.floor(amount * 1000 / 999).toString(), artifacts)
+    await placeOrder(0, 1, account, valid_for, Math.floor(amount / 1000 * 999).toString(), Math.floor(amount * 1000 / 999).toString(), artifacts)
+    await placeOrder(1, 0, account, valid_for, Math.floor(amount / 1000 * 999).toString(), Math.floor(amount * 1000 / 999).toString(), artifacts)
 
     console.log("Primitive trading against oneself is setup")
     callback()

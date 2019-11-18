@@ -1,5 +1,5 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
-const ERC20 = artifacts.require("ERC20.sol")
+const { depositTokens } = require("../script_utilities.js")
 const argv = require("yargs")
   .option("accountId", {
     describe: "Depositor's account index"
@@ -28,19 +28,7 @@ module.exports = async (callback) => {
     if (token_address == zero_address) {
       callback(`Error: No token registered at index ${argv.tokenId}`)
     }
-
-    const token = await ERC20.at(token_address)
-    const depositor_balance = (await token.balanceOf.call(depositor))
-    if (depositor_balance.lt(amount)) {
-      callback(`Error: Depositor has insufficient balance ${depositor_balance} < ${amount}.`)
-    }
-
-    const allowance = (await token.allowance.call(depositor, instance.address)).toString()
-    if (allowance < amount) {
-      await token.approve(instance.address, amount, { from: depositor })
-    }
-
-    await instance.deposit(token_address, amount, { from: depositor })
+    await depositTokens(token_address, depositor, amount, artifacts)
     const tradeable_at = await instance.getPendingDepositBatchNumber(depositor, token_address)
 
     console.log(`Deposit successful. Can be traded as of batch ${tradeable_at}`)
