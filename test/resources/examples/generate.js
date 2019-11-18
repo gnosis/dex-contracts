@@ -64,7 +64,7 @@ const { flat, dedupe } = require("../array-shims.js")
  * @param {boolean} [debug=false] Print debug information in case of 
  * @return {TestCase} The test case
  */
-function generateTestCase(input, debug = false) {
+function generateTestCase(input, strict = true, debug = false) {
   const { name, orders, solutions } = input
 
   return {
@@ -79,7 +79,7 @@ function generateTestCase(input, debug = false) {
     solutions: solutions.map(solution => {
       let objectiveValue
       try {
-        objectiveValue = solutionObjectiveValueComputation(orders, solution, true)
+        objectiveValue = solutionObjectiveValueComputation(orders, solution, strict)
       } catch (err) {
         if (debug) {
           const invalidObjectiveValue = solutionObjectiveValueComputation(orders, solution, false)
@@ -230,7 +230,7 @@ function solutionSubmissionParams(solution, accounts, orderIds) {
 function debugObjectiveValueComputation(objectiveValue) {
   formatHeader("Executed Amounts")
   formatTable([
-    ["Order", "Sell", "Buy"],
+    ["Order", "Buy", "Sell"],
     ...objectiveValue.orderExecutedAmounts.map(({ buy, sell }, i) => [i, buy, sell]),
   ])
   formatHeader("Token Conservation")

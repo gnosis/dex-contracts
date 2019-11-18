@@ -29,6 +29,7 @@ const {
   basicRingTrade,
   shortRingBetterTrade,
   smallExample,
+  tinyExample,
 } = require("../resources/examples")
 const {
   makeDeposits,
@@ -846,6 +847,30 @@ contract("StablecoinConverter", async (accounts) => {
           { from: solver }
         ),
         "All amounts must be greater than AMOUNT_MINIMUM"
+      )
+    })
+    it("reverts, if any sell amounts are less than AMOUNT_MINIMUM", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+      const tradeExample = tinyExample
+      await makeDeposits(stablecoinConverter, accounts, tradeExample.deposits)
+
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(stablecoinConverter, accounts, tradeExample.orders, batchIndex + 1)
+      await closeAuction(stablecoinConverter)
+
+      const solution = solutionSubmissionParams(tradeExample.solutions[0], accounts, orderIds)
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(
+          batchIndex,
+          solution.objectiveValue,
+          solution.owners,
+          solution.touchedOrderIds,
+          solution.volumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
+          { from: solver }
+        ),
+        "Can't sell less than AMOUNT_MINIMUM"
       )
     })
     it("checks that findPriceIndex also works, if it decreases the search bounds - all other tests only increase", async () => {

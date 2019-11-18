@@ -109,7 +109,7 @@ const shortRingBetterTrade = generateTestCase({
 })
 
 const fiveThouzy = new BN("5000")
-const tenThouzy = new BN("10000")
+const tenThouzy = new BN("10001")
 const tinyExample = generateTestCase({
   deposits: [
     { amount: feeAdded(tenThouzy), token: 0, user: 0 },
@@ -122,11 +122,11 @@ const tinyExample = generateTestCase({
   solutions: [
     {
       name: "Tiny Amounts",
-      prices: [1, 1].map(toETH),
-      buyVolumes: [10001, 9990].map(val => new BN(val)),
+      prices: [1, 0.9].map(toETH),
+      buyVolumes: [tenThouzy, tenThouzy],
     },
   ],
-})
+}, false, true)
 
 
 const fiftyThou = new BN("50000")
