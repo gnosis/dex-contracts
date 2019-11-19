@@ -151,6 +151,14 @@ contract("StablecoinConverter", async (accounts) => {
     })
   })
   describe("placeValidFromOrders()", () => {
+    it("rejects orders places in the past", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+      const currentBatch = (await stablecoinConverter.getCurrentBatchId()).toNumber()
+      await truffleAssert.reverts(
+        stablecoinConverter.placeValidFromOrders.call([0], [1], [currentBatch - 1], [1], [1], [1]),
+        "Orders can't be placed in the past"
+      )
+    })
     it("places single order with specified validFrom", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
