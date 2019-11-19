@@ -161,9 +161,10 @@ contract("StablecoinConverter", async (accounts) => {
     })
     it("places single order with specified validFrom", async () => {
       const stablecoinConverter = await setupGenericStableX()
+      const currentBatch = (await stablecoinConverter.getCurrentBatchId()).toNumber()
+      const id = await stablecoinConverter.placeValidFromOrders.call([0], [1], [currentBatch], [3], [10], [20], { from: user_1 })
 
-      const id = await stablecoinConverter.placeValidFromOrders.call([0], [1], [20], [3], [10], [20], { from: user_1 })
-      await stablecoinConverter.placeValidFromOrders([0], [1], [20], [3], [10], [20], { from: user_1 })
+      await stablecoinConverter.placeValidFromOrders([0], [1], [currentBatch], [3], [10], [20], { from: user_1 })
       const orderResult = (await stablecoinConverter.orders.call(user_1, id))
       assert.equal((orderResult.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
       assert.equal((orderResult.priceNumerator).toNumber(), 10, "priceNumerator was stored incorrectly")
@@ -174,9 +175,9 @@ contract("StablecoinConverter", async (accounts) => {
     })
     it("rejects orders with invalid array input", async () => {
       const stablecoinConverter = await setupGenericStableX()
-
+      const currentBatch = (await stablecoinConverter.getCurrentBatchId()).toNumber()
       await truffleAssert.fails(
-        stablecoinConverter.placeValidFromOrders([0, 1], [1], [20], [3], [10], [20]),
+        stablecoinConverter.placeValidFromOrders([0, 1], [1], [currentBatch], [3], [10], [20]),
         "invalid opcode"
       )
     })
