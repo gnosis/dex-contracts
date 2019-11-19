@@ -190,14 +190,14 @@ contract("StablecoinConverter", async (accounts) => {
       }
     })
   })
-  describe("cancelOrder()", () => {
+  describe("cancelOrders()", () => {
     it("places orders, then cancels it and orders status", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
       const id = await stablecoinConverter.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
       await stablecoinConverter.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
       const currentStateIndex = await stablecoinConverter.getCurrentBatchId()
-      await stablecoinConverter.cancelOrder([id], { from: user_1 })
+      await stablecoinConverter.cancelOrders([id], { from: user_1 })
       assert.equal(
         ((await stablecoinConverter.orders.call(user_1, id)).validUntil).toNumber(),
         (currentStateIndex.toNumber() - 1),
@@ -210,7 +210,7 @@ contract("StablecoinConverter", async (accounts) => {
       const stablecoinConverter = await setupGenericStableX()
 
       const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
-      await stablecoinConverter.cancelOrder([id])
+      await stablecoinConverter.cancelOrders([id])
       await waitForNSeconds(BATCH_TIME)
       await stablecoinConverter.freeStorageOfOrder([id])
 
@@ -230,14 +230,14 @@ contract("StablecoinConverter", async (accounts) => {
     it("fails to delete canceled order in same stateIndex", async () => {
       const stablecoinConverter = await setupGenericStableX()
       const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
-      await stablecoinConverter.cancelOrder([id])
+      await stablecoinConverter.cancelOrders([id])
       await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder([id]), "Order is still valid")
     })
     it("deletes several orders successfully", async () => {
       const stablecoinConverter = await setupGenericStableX()
       const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
       const id2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
-      await stablecoinConverter.cancelOrder([id, id2])
+      await stablecoinConverter.cancelOrders([id, id2])
       await waitForNSeconds(BATCH_TIME)
       await stablecoinConverter.freeStorageOfOrder([id, id2])
       assert.equal((await stablecoinConverter.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
@@ -1310,7 +1310,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       await stablecoinConverter.placeOrder(1, 0, batchIndex + 10, 20, 10)
-      stablecoinConverter.cancelOrder([0])
+      stablecoinConverter.cancelOrders([0])
 
       let auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
       assert.equal(auctionElements.length, 1)
