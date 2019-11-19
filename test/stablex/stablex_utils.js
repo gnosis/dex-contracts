@@ -2,7 +2,6 @@ const MockContract = artifacts.require("MockContract")
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 
 const {
-  waitForNSeconds,
   sendTxAndGetReturnValue,
 } = require("../utilities")
 
@@ -74,18 +73,9 @@ const placeOrders = async function (contract, accounts, orderList, auctionIndex)
   return orderIds
 }
 
-/**
- * Closes current auction
- * @param {contract} - StablecoinConverter Smart Contract
- */
-const closeAuction = async (contract) => {
-  const time_remaining = (await contract.getSecondsRemainingInBatch()).toNumber()
-  await waitForNSeconds(time_remaining + 1)
-}
 
 module.exports = {
   setupGenericStableX,
   makeDeposits,
-  placeOrders,
-  closeAuction
+  placeOrders
 }
