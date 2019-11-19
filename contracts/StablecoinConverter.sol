@@ -183,7 +183,7 @@ contract StablecoinConverter is EpochTokenLocker {
       *
       * Emits an {OrderCancelation} with sender's address and orderId
       */
-    function cancelOrder(uint256[] memory ids) public {
+    function cancelOrders(uint256[] memory ids) public {
         for (uint256 i = 0; i < ids.length; i++) {
             orders[msg.sender][ids[i]].validUntil = getCurrentBatchId() - 1;
             emit OrderCancelation(msg.sender, ids[i]);
