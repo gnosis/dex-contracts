@@ -239,10 +239,10 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory prices,
         uint16[] memory tokenIdsForPrice
     ) public returns (uint256) {
-        verifyAmountThreshold(prices);
-        verifyAmountThreshold(volumes);
         require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
         require(claimedObjectiveValue > getCurrentObjectiveValue(), "Claimed objective is not more than current solution");
+        require(verifyAmountThreshold(prices), "At least one price lower than AMOUNT_MINIMUM");
+        require(verifyAmountThreshold(volumes), "Executed buy amount less than AMOUNT_MINIMUM");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         require(prices[0] == 1 ether, "fee token price must be 10^18");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
@@ -256,7 +256,7 @@ contract StablecoinConverter is EpochTokenLocker {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(checkOrderValidity(order, batchIndex), "Order is invalid");
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
-            require(executedSellAmount > AMOUNT_MINIMUM, "Can't sell less than AMOUNT_MINIMUM");
+            require(executedSellAmount > AMOUNT_MINIMUM, "Executed sell amount less than AMOUNT_MINIMUM");
             tokenConservation.updateTokenConservation(
                 order.buyToken,
                 order.sellToken,
@@ -582,10 +582,13 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev determines if value is better than currently and updates if it is.
       * @param amounts array of values to be verified with AMOUNT_MINIMUM
       */
-    function verifyAmountThreshold(uint128[] memory amounts) private pure {
+    function verifyAmountThreshold(uint128[] memory amounts) private pure returns(bool) {
         for (uint256 i = 0; i < amounts.length; i++) {
-            require(amounts[i] > AMOUNT_MINIMUM, "All amounts must be greater than AMOUNT_MINIMUM");
+            if (amounts[i] < AMOUNT_MINIMUM) {
+                return false;
+            }
         }
+        return true;
     }
     // Private view
 

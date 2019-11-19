@@ -108,41 +108,58 @@ const shortRingBetterTrade = generateTestCase({
   ],
 })
 
-const fiveThouzy = new BN("5000")
-const tenThouzy = new BN("10001")
-const tinyExample = generateTestCase({
+const fiveThousand = new BN("5000")
+const tenThousand = new BN("10000")
+const tooSmallSellAmountTrade = generateTestCase({
   deposits: [
-    { amount: feeAdded(tenThouzy), token: 0, user: 0 },
-    { amount: feeAdded(tenThouzy), token: 1, user: 1 },
+    { amount: feeAdded(tenThousand), token: 0, user: 0 },
+    { amount: feeAdded(tenThousand), token: 1, user: 1 },
   ],
   orders: [
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 0 },
-    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThouzy), buyAmount: fiveThouzy, user: 1 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 },
   ],
   solutions: [
     {
-      name: "Tiny Amounts",
+      name: "Small sell amount",
       prices: [1, 0.9].map(toETH),
-      buyVolumes: [tenThouzy, tenThouzy],
+      buyVolumes: [tenThousand, tenThousand],
     },
   ],
 }, false, true)
 
-
-const fiftyThou = new BN("50000")
-const HunnitThou = new BN("100000")
-const smallExample = generateTestCase({
+const tooSmallBuyAmountTrade = generateTestCase({
   deposits: [
-    { amount: feeAdded(HunnitThou), token: 0, user: 0 },
-    { amount: new BN(190), token: 1, user: 1 },
-    { amount: new BN(9), token: 0, user: 1 },
-    { amount: feeAdded(HunnitThou), token: 1, user: 2 },
+    { amount: feeAdded(tenThousand), token: 0, user: 0 },
+    { amount: feeAdded(tenThousand), token: 1, user: 1 },
   ],
   orders: [
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(HunnitThou), buyAmount: fiftyThou, user: 0 },
-    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(HunnitThou), buyAmount: fiftyThou, user: 1 },
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(HunnitThou), buyAmount: fiftyThou, user: 1 },
-    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(HunnitThou), buyAmount: fiftyThou, user: 2 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 },
+  ],
+  solutions: [
+    {
+      name: "Small buy amounts",
+      prices: [1, 1].map(toETH),
+      buyVolumes: [10000, 9990].map(val => new BN(val)),
+    },
+  ],
+}, false, true)
+
+const fiftyThousand = new BN("50000")
+const hundredThousand = new BN("100000")
+const smallExample = generateTestCase({
+  deposits: [
+    { amount: feeAdded(hundredThousand), token: 0, user: 0 },
+    { amount: new BN(190), token: 1, user: 1 },
+    { amount: new BN(9), token: 0, user: 1 },
+    { amount: feeAdded(hundredThousand), token: 1, user: 2 },
+  ],
+  orders: [
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 1 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 1 },
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 2 },
   ],
   solutions: [
     {
@@ -178,7 +195,8 @@ module.exports = Object.assign(
     biggieSmallTrade,
     basicRingTrade,
     shortRingBetterTrade,
-    tinyExample,
+    tooSmallBuyAmountTrade,
+    tooSmallSellAmountTrade,
     smallExample,
     stableXExample,
   },

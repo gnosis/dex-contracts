@@ -29,7 +29,8 @@ const {
   basicRingTrade,
   shortRingBetterTrade,
   smallExample,
-  tinyExample,
+  tooSmallBuyAmountTrade,
+  tooSmallSellAmountTrade,
 } = require("../resources/examples")
 const {
   makeDeposits,
@@ -846,12 +847,12 @@ contract("StablecoinConverter", async (accounts) => {
           solution.tokenIdsForPrice,
           { from: solver }
         ),
-        "All amounts must be greater than AMOUNT_MINIMUM"
+        "At least one price lower than AMOUNT_MINIMUM"
       )
     })
     it("reverts, if any sell amounts are less than AMOUNT_MINIMUM", async () => {
       const stablecoinConverter = await setupGenericStableX()
-      const tradeExample = tinyExample
+      const tradeExample = tooSmallSellAmountTrade
       await makeDeposits(stablecoinConverter, accounts, tradeExample.deposits)
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
@@ -870,7 +871,31 @@ contract("StablecoinConverter", async (accounts) => {
           solution.tokenIdsForPrice,
           { from: solver }
         ),
-        "Can't sell less than AMOUNT_MINIMUM"
+        "Executed sell amount less than AMOUNT_MINIMUM"
+      )
+    })
+    it("reverts, if any buy amounts are less than AMOUNT_MINIMUM", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+      const tradeExample = tooSmallBuyAmountTrade
+      await makeDeposits(stablecoinConverter, accounts, tradeExample.deposits)
+
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(stablecoinConverter, accounts, tradeExample.orders, batchIndex + 1)
+      await closeAuction(stablecoinConverter)
+
+      const solution = solutionSubmissionParams(tradeExample.solutions[0], accounts, orderIds)
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(
+          batchIndex,
+          solution.objectiveValue,
+          solution.owners,
+          solution.touchedOrderIds,
+          solution.volumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
+          { from: solver }
+        ),
+        "Executed buy amount less than AMOUNT_MINIMUM"
       )
     })
     it("checks that findPriceIndex also works, if it decreases the search bounds - all other tests only increase", async () => {
