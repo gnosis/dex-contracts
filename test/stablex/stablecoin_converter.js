@@ -64,7 +64,6 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.tokenAddressToIdMap.call(feeToken.address)).toNumber(), 0)
       assert.equal(await stablecoinConverter.tokenIdToAddressMap.call(0), feeToken.address)
     })
-
     it("Anyone can add tokens", async () => {
       const feeToken = await MockContract.new()
       await feeToken.givenAnyReturnBool(true)
@@ -81,7 +80,6 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.tokenAddressToIdMap.call(token_2.address)).toNumber(), 2)
       assert.equal(await stablecoinConverter.tokenIdToAddressMap.call(2), token_2.address)
     })
-
     it("Rejects same token added twice", async () => {
       const feeToken = await MockContract.new()
       await feeToken.givenAnyReturnBool(true)
@@ -90,7 +88,6 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(token.address)
       await truffleAssert.reverts(stablecoinConverter.addToken(token.address), "Token already registered")
     })
-
     it("No exceed max tokens", async () => {
       const feeToken = await MockContract.new()
       await feeToken.givenAnyReturnBool(true)
@@ -100,7 +97,6 @@ contract("StablecoinConverter", async (accounts) => {
 
       await truffleAssert.reverts(stablecoinConverter.addToken((await ERC20.new()).address), "Max tokens reached")
     })
-
     it("Burns 10 OWL when adding token", async () => {
       const TokenOWLProxy = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
       const owlToken = await TokenOWL.new()
@@ -118,9 +114,8 @@ contract("StablecoinConverter", async (accounts) => {
       assert(owlAmount.eq(await owlProxy.allowance(user_1, stablecoinConverter.address)))
 
       await stablecoinConverter.addToken(token.address, { from: user_1 })
-      assert(await owlProxy.balanceOf(user_1).eq(new BN(0)))
+      assert((await owlProxy.balanceOf(user_1)).eq(new BN(0)))
     })
-
     it("throws, if fees are not burned", async () => {
       const TokenOWLProxy = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
       const owlToken = await TokenOWL.new()
@@ -137,7 +132,6 @@ contract("StablecoinConverter", async (accounts) => {
       // reverts as owl balance is not sufficient
       await truffleAssert.reverts(stablecoinConverter.addToken(token.address, { from: user_1 }))
     })
-
   })
   describe("placeOrder()", () => {
     it("places order and verifys contract storage is updated correctly", async () => {
