@@ -46,6 +46,29 @@ npx truffle compile
 npm run networks-inject 
 ```
 
+# Deploying a simple market maker order to Rinkeby:
+
+The following script does deploy a simple order market maker order and a relevant
+```
+// Get token id of DAI
+npx truffle exec scripts/stablex/invokeViewFunction.js 'tokenAddressToIdMap' '0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa' --network rinkeby"
+
+// Get token id of TrueUSD
+"npx truffle exec scripts/stablex/invokeViewFunction.js 'tokenAddressToIdMap' '0x0000000000085d4780B73119b644AE5ecd22b376' --network rinkeby"
+
+// Make sure we have enough balances for the trades
+npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=0 --amount=30 --network rinkeby&& \
+npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=$TOKEN_ID_TUSD --amount=100 --network rinkeby
+
+// Place market maker order in current auction
+npx truffle exec scripts/stablex/place_order.js --accountId=0 --buyToken=$TOKEN_ID_DAI --sellToken=$TOKEN_ID_TUSD --minBuy=1000 --maxSell=998 --validFor=20 --network rinkeby
+
+// Place owl token order
+npx truffle exec scripts/stablex/place_order.js --accountId=0 --buyToken=$TOKEN_ID_DAI --sellToken=0 --minBuy=1000 --maxSell=1000 --validFor=20 --network rinkeby
+
+
+```
+
 # Contributions
 Our continuous integration is running several linters which must pass in order to make a contribution to this repo. For your convenience there is a `pre-commit` hook file contained in the project's root directory. You can make your life easier by executing the following command after cloning this project (it will ensure your changes pass linting before allowing commits).
 
