@@ -255,8 +255,8 @@ contract StablecoinConverter is EpochTokenLocker {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(checkOrderValidity(order, batchIndex), "Order is invalid");
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(buyVolumes[i], order);
-            require(executedBuyAmount > AMOUNT_MINIMUM, "buy amount less than AMOUNT_MINIMUM");
-            require(executedSellAmount > AMOUNT_MINIMUM, "sell amount less than AMOUNT_MINIMUM");
+            require(executedBuyAmount >= AMOUNT_MINIMUM, "buy amount less than AMOUNT_MINIMUM");
+            require(executedSellAmount >= AMOUNT_MINIMUM, "sell amount less than AMOUNT_MINIMUM");
             tokenConservation.updateTokenConservation(
                 order.buyToken,
                 order.sellToken,
