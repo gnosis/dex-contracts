@@ -151,32 +151,41 @@ contract("StablecoinConverter", async (accounts) => {
     })
   })
   describe("placeValidFromOrders()", () => {
+    it("rejects orders places in the past", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+      const currentBatch = (await stablecoinConverter.getCurrentBatchId()).toNumber()
+      await truffleAssert.reverts(
+        stablecoinConverter.placeValidFromOrders.call([0], [1], [currentBatch - 1], [1], [1], [1]),
+        "Orders can't be placed in the past"
+      )
+    })
     it("places single order with specified validFrom", async () => {
       const stablecoinConverter = await setupGenericStableX()
+      const currentBatch = (await stablecoinConverter.getCurrentBatchId()).toNumber()
+      const id = await stablecoinConverter.placeValidFromOrders.call([0], [1], [currentBatch], [3], [10], [20], { from: user_1 })
 
-      const id = await stablecoinConverter.placeValidFromOrders.call([0], [1], [20], [3], [10], [20], { from: user_1 })
-      await stablecoinConverter.placeValidFromOrders([0], [1], [20], [3], [10], [20], { from: user_1 })
+      await stablecoinConverter.placeValidFromOrders([0], [1], [currentBatch], [3], [10], [20], { from: user_1 })
       const orderResult = (await stablecoinConverter.orders.call(user_1, id))
       assert.equal((orderResult.priceDenominator).toNumber(), 20, "priceDenominator was stored incorrectly")
       assert.equal((orderResult.priceNumerator).toNumber(), 10, "priceNumerator was stored incorrectly")
       assert.equal((orderResult.sellToken).toNumber(), 1, "sellToken was stored incorrectly")
       assert.equal((orderResult.buyToken).toNumber(), 0, "buyToken was stored incorrectly")
-      assert.equal((orderResult.validFrom).toNumber(), 20, "validFrom was stored incorrectly")
+      assert.equal((orderResult.validFrom).toNumber(), currentBatch, "validFrom was stored incorrectly")
       assert.equal((orderResult.validUntil).toNumber(), 3, "validUntil was stored incorrectly")
     })
     it("rejects orders with invalid array input", async () => {
       const stablecoinConverter = await setupGenericStableX()
-
+      const currentBatch = (await stablecoinConverter.getCurrentBatchId()).toNumber()
       await truffleAssert.fails(
-        stablecoinConverter.placeValidFromOrders([0, 1], [1], [20], [3], [10], [20]),
+        stablecoinConverter.placeValidFromOrders([0, 1], [1], [currentBatch], [3], [10], [20]),
         "invalid opcode"
       )
     })
     it("places multiple orders with sepcified validFrom", async () => {
       const stablecoinConverter = await setupGenericStableX()
-
-      const id = stablecoinConverter.placeValidFromOrders.call([0, 1], [1, 0], [20, 30], [3, 4], [10, 11], [20, 21], { from: user_1 })
-      await stablecoinConverter.placeValidFromOrders([0, 1], [1, 0], [20, 30], [3, 4], [10, 11], [20, 21], { from: user_1 })
+      const currentBatch = (await stablecoinConverter.getCurrentBatchId()).toNumber()
+      const id = stablecoinConverter.placeValidFromOrders.call([0, 1], [1, 0], [currentBatch, currentBatch], [3, 4], [10, 11], [20, 21], { from: user_1 })
+      await stablecoinConverter.placeValidFromOrders([0, 1], [1, 0], [currentBatch, currentBatch], [3, 4], [10, 11], [20, 21], { from: user_1 })
 
       for (let i = 1; i <= id; i++) {
         const orderResult = (await stablecoinConverter.orders.call(user_1, id))
@@ -185,7 +194,7 @@ contract("StablecoinConverter", async (accounts) => {
         assert.equal((orderResult.sellToken).toNumber(), 1, `order ${i}: sellToken was stored incorrectly`)
         assert.equal((orderResult.buyToken).toNumber(), 0, `order ${i}: buyToken was stored incorrectly`)
         // Note that this order will be stored, but never valid. However, this can not affect the exchange in any maliciouis way!
-        assert.equal((orderResult.validFrom).toNumber(), 20, `order ${i}: validFrom was stored incorrectly`)
+        assert.equal((orderResult.validFrom).toNumber(), currentBatch, `order ${i}: validFrom was stored incorrectly`)
         assert.equal((orderResult.validUntil).toNumber(), 3, `order ${i}: validUntil was stored incorrectly`)
       }
     })
