@@ -386,12 +386,12 @@ contract StablecoinConverter is EpochTokenLocker {
         allUsers.insert(msg.sender);
         return orders[msg.sender].length - 1;
     }
-
     /** @dev called at the end of submitSolution with a value of tokenConservation / 2
       * @param feeReward amount to be rewarded to the solver
       */
     function grantRewardToSolutionSubmitter(uint256 feeReward) internal {
-        // Burn the difference from previous solution
+        // Burn the difference from previous solution and this.
+        feeToken.approve(address(this), feeReward - latestSolution.feeReward);
         feeToken.burnOWL(address(this), feeReward - latestSolution.feeReward);
         latestSolution.feeReward = feeReward;
         addBalanceAndBlockWithdrawForThisBatch(msg.sender, tokenIdToAddressMap(0), feeReward);
