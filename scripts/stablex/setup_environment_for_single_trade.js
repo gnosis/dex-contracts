@@ -1,6 +1,6 @@
 // Prerequisite for this script:
 // Have an account funded with Rinkeby OWL 
-// This simple script will set up a trade between OWL and A New Token
+// This simple script will set up a trade between OWL and a new token
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
 const { addTokens, depositTokens, placeOrder } = require("./utilities.js")
