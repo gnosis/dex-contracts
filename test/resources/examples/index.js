@@ -144,7 +144,7 @@ const tooSmallBuyAmountTrade = generateTestCase({
       buyVolumes: [10000, 9990].map(val => new BN(val)),
     },
   ],
-}, false, true)
+}, false)
 
 const fiftyThousand = new BN("50000")
 const hundredThousand = new BN("100000")
