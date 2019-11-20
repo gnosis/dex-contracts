@@ -58,6 +58,7 @@ contract("StablecoinConverter", async (accounts) => {
   describe("addToken()", () => {
     it("feeToken is set by default", async () => {
       const feeToken = await MockContract.new()
+      await feeToken.givenAnyReturnBool(true)
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
 
       assert.equal((await stablecoinConverter.tokenAddressToIdMap.call(feeToken.address)).toNumber(), 0)
@@ -66,6 +67,7 @@ contract("StablecoinConverter", async (accounts) => {
 
     it("Anyone can add tokens", async () => {
       const feeToken = await MockContract.new()
+      await feeToken.givenAnyReturnBool(true)
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
 
       const token_1 = await ERC20.new()
@@ -82,6 +84,7 @@ contract("StablecoinConverter", async (accounts) => {
 
     it("Rejects same token added twice", async () => {
       const feeToken = await MockContract.new()
+      await feeToken.givenAnyReturnBool(true)
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const token = await ERC20.new()
       await stablecoinConverter.addToken(token.address)
@@ -90,6 +93,7 @@ contract("StablecoinConverter", async (accounts) => {
 
     it("No exceed max tokens", async () => {
       const feeToken = await MockContract.new()
+      await feeToken.givenAnyReturnBool(true)
       const stablecoinConverter = await StablecoinConverter.new(3, feeDenominator, feeToken.address)
       await stablecoinConverter.addToken((await ERC20.new()).address)
       await stablecoinConverter.addToken((await ERC20.new()).address)
@@ -110,11 +114,11 @@ contract("StablecoinConverter", async (accounts) => {
       const stablecoinConverter = await StablecoinConverter.new(2, feeDenominator, owlProxy.address)
       const token = await ERC20.new()
       await owlProxy.approve(stablecoinConverter.address, owlAmount)
-      assert.equal(await owlProxy.balanceOf.call(user_1), owlAmount)
-      assert.equal(await owlProxy.allowance.call(user_1, stablecoinConverter.address), owlAmount)
+      assert(owlAmount.eq(await owlProxy.balanceOf.call(user_1)))
+      assert(owlAmount.eq(await owlProxy.allowance.call(user_1, stablecoinConverter.address)))
 
       await stablecoinConverter.addToken(token.address, { from: user_1 })
-      assert.equal(await owlProxy.balanceOf.call(user_1), 0)
+      assert(await owlProxy.balanceOf.call(user_1).eq(new BN(0)))
     })
 
     it("throws, if fees are not burned", async () => {
@@ -128,7 +132,7 @@ contract("StablecoinConverter", async (accounts) => {
       const stablecoinConverter = await StablecoinConverter.new(2, feeDenominator, owlProxy.address)
       const token = await ERC20.new()
       await owlProxy.approve(stablecoinConverter.address, owlAmount)
-      assert.equal(await owlProxy.allowance.call(user_1, stablecoinConverter.address), owlAmount)
+      assert(owlAmount.eq(await owlProxy.allowance.call(user_1, stablecoinConverter.address)))
 
       // reverts as owl balance is not sufficient
       await truffleAssert.reverts(stablecoinConverter.addToken(token.address, { from: user_1 }))
@@ -509,7 +513,7 @@ contract("StablecoinConverter", async (accounts) => {
       const secondOrderIds = await placeOrders(stablecoinConverter, accounts, secondTradeExample.orders, nextBatchIndex + 1)
       await closeAuction(stablecoinConverter)
 
-      const initialFeeTokenBalance = await owlProxy.balanceOf.call(stablecoinConverter.address)
+      const initialFeeTokenBalance = await owlProxy.balanceOf(stablecoinConverter.address)
       const secondSolution = solutionSubmissionParams(secondTradeExample.solutions[0], accounts, secondOrderIds)
       // This is where the first auction's fees should be burned!
       await stablecoinConverter.submitSolution(
@@ -521,7 +525,7 @@ contract("StablecoinConverter", async (accounts) => {
         secondSolution.prices,
         secondSolution.tokenIdsForPrice,
         { from: solver })
-      const afterAuctionFeeTokenBalance = await owlProxy.balanceOf.call(stablecoinConverter.address)
+      const afterAuctionFeeTokenBalance = await owlProxy.balanceOf(stablecoinConverter.address)
       assert(initialFeeTokenBalance.sub(basicTrade.solutions[0].burntFees).eq(afterAuctionFeeTokenBalance))
     })
     it("[Advanced Trade] verifies the 2nd solution is correctly documented and can be reverted by a 3rd", async () => {
