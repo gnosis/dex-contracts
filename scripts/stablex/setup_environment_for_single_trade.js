@@ -1,4 +1,4 @@
-// Prerequisit for this script:
+// Prerequisite for this script:
 // Have an account funded with Rinkeby OWL 
 // This simple script will set up a trade between OWL and A New Token
 const StablecoinConverter = artifacts.require("StablecoinConverter")
