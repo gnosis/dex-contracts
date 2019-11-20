@@ -23,7 +23,7 @@ contract("TokenConservation", async () => {
       const testArray = [-1]
       await truffleAssert.reverts(
         tokenConservation.checkTokenConservationTest(testArray),
-        "Token conservation at 0 must be non-negative"
+        "Token conservation at 0 must be positive"
       )
     })
   })
