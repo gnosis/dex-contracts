@@ -235,14 +235,13 @@ contract StablecoinConverter is EpochTokenLocker {
         uint256 claimedObjectiveValue,
         address[] memory owners,
         uint16[] memory orderIds,
-        uint128[] memory volumes,
+        uint128[] memory buyVolumes,
         uint128[] memory prices,
         uint16[] memory tokenIdsForPrice
     ) public returns (uint256) {
         require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
         require(claimedObjectiveValue > getCurrentObjectiveValue(), "Claimed objective is not more than current solution");
         require(verifyAmountThreshold(prices), "At least one price lower than AMOUNT_MINIMUM");
-        require(verifyAmountThreshold(volumes), "Executed buy amount less than AMOUNT_MINIMUM");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         require(prices[0] == 1 ether, "fee token price must be 10^18");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
@@ -255,8 +254,9 @@ contract StablecoinConverter is EpochTokenLocker {
         for (uint256 i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(checkOrderValidity(order, batchIndex), "Order is invalid");
-            (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
-            require(executedSellAmount > AMOUNT_MINIMUM, "Executed sell amount less than AMOUNT_MINIMUM");
+            (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(buyVolumes[i], order);
+            require(executedBuyAmount > AMOUNT_MINIMUM, "buy amount less than AMOUNT_MINIMUM");
+            require(executedSellAmount > AMOUNT_MINIMUM, "sell amount less than AMOUNT_MINIMUM");
             tokenConservation.updateTokenConservation(
                 order.buyToken,
                 order.sellToken,
@@ -279,7 +279,7 @@ contract StablecoinConverter is EpochTokenLocker {
         // Perform all subtractions after additions to avoid negative values
         for (uint256 i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
-            (, uint128 executedSellAmount) = getTradedAmounts(volumes[i], order);
+            (, uint128 executedSellAmount) = getTradedAmounts(buyVolumes[i], order);
             subtractBalance(owners[i], tokenIdToAddressMap(order.sellToken), executedSellAmount);
         }
         uint256 disregardedUtility = 0;
@@ -293,7 +293,7 @@ contract StablecoinConverter is EpochTokenLocker {
         checkAndOverrideObjectiveValue(objectiveValue);
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
-        documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
+        documentTrades(batchIndex, owners, orderIds, buyVolumes, tokenIdsForPrice);
         return (objectiveValue);
     }
     /**
@@ -593,12 +593,11 @@ contract StablecoinConverter is EpochTokenLocker {
     // Private view
 
     /** @dev Compute trade execution based on executedBuyAmount and relevant token prices
-      * @param volume executed buy amount
+      * @param executedBuyAmount executed buy amount
       * @param order contains relevant buy-sell token information
       * @return (executedBuyAmount, executedSellAmount)
       */
-    function getTradedAmounts(uint128 volume, Order memory order) private view returns (uint128, uint128) {
-        uint128 executedBuyAmount = volume;
+    function getTradedAmounts(uint128 executedBuyAmount, Order memory order) private view returns (uint128, uint128) {
         uint128 executedSellAmount = getExecutedSellAmount(
             executedBuyAmount,
             currentPrices[order.buyToken],

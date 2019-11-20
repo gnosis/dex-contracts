@@ -850,7 +850,7 @@ contract("StablecoinConverter", async (accounts) => {
         "At least one price lower than AMOUNT_MINIMUM"
       )
     })
-    it("reverts, if any sell amounts are less than AMOUNT_MINIMUM", async () => {
+    it("reverts if any sell amounts are less than AMOUNT_MINIMUM", async () => {
       const stablecoinConverter = await setupGenericStableX()
       const tradeExample = tooSmallSellAmountTrade
       await makeDeposits(stablecoinConverter, accounts, tradeExample.deposits)
@@ -871,10 +871,10 @@ contract("StablecoinConverter", async (accounts) => {
           solution.tokenIdsForPrice,
           { from: solver }
         ),
-        "Executed sell amount less than AMOUNT_MINIMUM"
+        "sell amount less than AMOUNT_MINIMUM"
       )
     })
-    it("reverts, if any buy amounts are less than AMOUNT_MINIMUM", async () => {
+    it("reverts if any buy amounts are less than AMOUNT_MINIMUM", async () => {
       const stablecoinConverter = await setupGenericStableX()
       const tradeExample = tooSmallBuyAmountTrade
       await makeDeposits(stablecoinConverter, accounts, tradeExample.deposits)
@@ -895,7 +895,7 @@ contract("StablecoinConverter", async (accounts) => {
           solution.tokenIdsForPrice,
           { from: solver }
         ),
-        "Executed buy amount less than AMOUNT_MINIMUM"
+        "buy amount less than AMOUNT_MINIMUM"
       )
     })
     it("checks that findPriceIndex also works, if it decreases the search bounds - all other tests only increase", async () => {
