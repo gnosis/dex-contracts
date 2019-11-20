@@ -286,13 +286,13 @@ contract StablecoinConverter is EpochTokenLocker {
         for (uint256 i = 0; i < owners.length; i++) {
             disregardedUtility = disregardedUtility.add(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]));
         }
-        tokenConservation.checkTokenConservation();
         uint256 burntFees = uint256(tokenConservation[0]) / 2;
         require(utility.add(burntFees) > disregardedUtility, "Solution must be better than trivial");
         // burntFees ensures direct trades (when available) yield better solutions than longer rings
         uint256 objectiveValue = utility.add(burntFees).sub(disregardedUtility);
         checkAndOverrideObjectiveValue(objectiveValue);
         grantRewardToSolutionSubmitter(burntFees);
+        tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, volumes, tokenIdsForPrice);
         return (objectiveValue);
     }
