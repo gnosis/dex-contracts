@@ -101,6 +101,7 @@ contract StablecoinConverter is EpochTokenLocker {
     constructor(uint256 maxTokens, uint128 _feeDenominator, address _feeToken) public {
         MAX_TOKENS = maxTokens;
         feeToken = TokenOWL(_feeToken);
+        feeToken.approve(address(this), uint(-1));
         feeDenominator = _feeDenominator;
         addToken(_feeToken); // feeToken will always have the token index 0
     }
@@ -237,12 +238,13 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] memory tokenIdsForPrice
     ) public returns (uint256) {
         require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
+        burnPreviousAuctionFees();
         require(claimedObjectiveValue > getCurrentObjectiveValue(), "Claimed objective is not more than current solution");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         require(prices[0] == 1 ether, "fee token price must be 10^18");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
         require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
-        undoCurrentSolution(batchIndex);
+        undoCurrentSolution();
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete latestSolution.trades;
         int[] memory tokenConservation = new int[](prices.length);
@@ -386,15 +388,21 @@ contract StablecoinConverter is EpochTokenLocker {
         allUsers.insert(msg.sender);
         return orders[msg.sender].length - 1;
     }
+
     /** @dev called at the end of submitSolution with a value of tokenConservation / 2
       * @param feeReward amount to be rewarded to the solver
       */
     function grantRewardToSolutionSubmitter(uint256 feeReward) internal {
-        // Burn the difference from previous solution and this.
-        feeToken.approve(address(this), feeReward - latestSolution.feeReward);
-        feeToken.burnOWL(address(this), feeReward - latestSolution.feeReward);
         latestSolution.feeReward = feeReward;
         addBalanceAndBlockWithdrawForThisBatch(msg.sender, tokenIdToAddressMap(0), feeReward);
+    }
+
+    /** @dev called during solution submission to burn fees from previous auction
+      */
+    function burnPreviousAuctionFees() internal {
+        if (!currentBatchHasSolution()) {
+            feeToken.burnOWL(address(this), latestSolution.feeReward);
+        }
     }
 
     /** @dev Called from within submitSolution to update the token prices.
@@ -466,10 +474,9 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     /** @dev reverts all relevant contract storage relating to an overwritten auction solution.
-      * @param batchIndex index of referenced auction
       */
-    function undoCurrentSolution(uint32 batchIndex) internal {
-        if (latestSolution.batchId == batchIndex) {
+    function undoCurrentSolution() internal {
+        if (currentBatchHasSolution()) {
             for (uint256 i = 0; i < latestSolution.trades.length; i++) {
                 address owner = latestSolution.trades[i].owner;
                 uint256 orderId = latestSolution.trades[i].orderId;
@@ -566,6 +573,13 @@ contract StablecoinConverter is EpochTokenLocker {
     /**
      * Private Functions
      */
+
+    /** @dev used to determine if solution if first provided in current batch
+      * @return true if `latestSolution` is storing a solution for current batch, else false
+      */
+    function currentBatchHasSolution() private view returns (bool) {
+        return latestSolution.batchId == getCurrentBatchId() - 1;
+    }
 
     /** @dev determines if value is better than currently and updates if it is.
       * @param newObjectiveValue proposed value to be updated if greater than current.

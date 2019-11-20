@@ -46,6 +46,7 @@ contract("StablecoinConverter", async (accounts) => {
   let BATCH_TIME
   before(async () => {
     const feeToken = await MockContract.new()
+    await feeToken.givenAnyReturnBool(true)
     const lib1 = await IdToAddressBiMap.new()
     const lib2 = await IterableAppendOnlySet.new()
     await StablecoinConverter.link(IdToAddressBiMap, lib1.address)
@@ -467,14 +468,15 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2)).toString(), basicTrade.deposits[1].amount.sub(getExecutedSellAmount(fullBuyVolumes[1], prices[0], prices[1])).toString(), "Sold tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken)), fullBuyVolumes[1].toString(), "Bought tokens were not adjusted correctly")
     })
-    it("Ensure fee token is burnt correctly", async () => {
+    it("Ensure fee token is burnt as expected", async () => {
       // Fee token can't be a Mock here.
       const TokenOWLProxy = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
       const owlToken = await TokenOWL.new()
       const owlProxyContract = await TokenOWLProxy.new(owlToken.address)
       const owlProxy = await TokenOWL.at(owlProxyContract.address)
       await owlProxy.setMinter(user_1)
-      const owlAmount = toETH(1000)
+      const sufficientAmount = toETH(100)
+      const owlAmount = sufficientAmount.mul(new BN(accounts.length))
 
       await owlProxy.mintOWL(user_1, owlAmount)
 
@@ -483,32 +485,44 @@ contract("StablecoinConverter", async (accounts) => {
       await owlProxy.approve(stablecoinConverter.address, owlAmount)
       await stablecoinConverter.addToken(token.address, { from: user_1 })
 
-      // Make some trades
+      // Ensure all user have sufficient feeToken
+      for (const account of accounts) {
+        await owlProxy.transfer(account, sufficientAmount, { from: user_1 })
+        await owlProxy.approve(stablecoinConverter.address, sufficientAmount, { from: account })
+      }
+
+      // First Auction
       const tradeExample = basicTrade
       await makeDeposits(stablecoinConverter, accounts, tradeExample.deposits)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       const orderIds = await placeOrders(stablecoinConverter, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(stablecoinConverter)
 
-      const partialSolution = basicTrade.solutions[1]
-      const partialSolutionParams = solutionSubmissionParams(partialSolution, accounts, orderIds)
-      // shared solution values
-      const owners = partialSolutionParams.owners
-      const touchedOrderIds = partialSolutionParams.touchedOrderIds
-      const prices = partialSolutionParams.prices
-      const tokenIdsForPrice = partialSolutionParams.tokenIdsForPrice
-      const initialFeeTokenBalance = await owlProxy.balanceOf.call(stablecoinConverter.address)
+      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
+      await stablecoinConverter.submitSolution(batchIndex, solution.objectiveValue, solution.owners, solution.touchedOrderIds, solution.volumes, solution.prices, solution.tokenIdsForPrice, { from: solver })
+      await closeAuction(stablecoinConverter)
 
-      // Submit partial Solution
-      await stablecoinConverter.submitSolution(batchIndex, partialSolutionParams.objectiveValue, owners, touchedOrderIds, partialSolutionParams.volumes, prices, tokenIdsForPrice, { from: user_1 })
-      const afterPartialFeeTokenBalance = await owlProxy.balanceOf.call(stablecoinConverter.address)
-      assert(initialFeeTokenBalance.sub(afterPartialFeeTokenBalance).eq(partialSolution.burntFees))
-      // Submit better (full) solution
-      const fullSolution = basicTrade.solutions[0]
-      const fullSolutionParams = solutionSubmissionParams(fullSolution, accounts, orderIds)
-      await stablecoinConverter.submitSolution(batchIndex, fullSolutionParams.objectiveValue, owners, touchedOrderIds, fullSolutionParams.volumes, prices, tokenIdsForPrice, { from: user_1 })
-      const afterFullFeeTokenBalance = await owlProxy.balanceOf.call(stablecoinConverter.address)
-      assert(initialFeeTokenBalance.sub(afterFullFeeTokenBalance).eq(fullSolution.burntFees))
+      // Second Auction
+      const secondTradeExample = advancedTrade
+      await makeDeposits(stablecoinConverter, accounts, secondTradeExample.deposits)
+      const nextBatchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const secondOrderIds = await placeOrders(stablecoinConverter, accounts, secondTradeExample.orders, nextBatchIndex + 1)
+      await closeAuction(stablecoinConverter)
+
+      const initialFeeTokenBalance = await owlProxy.balanceOf.call(stablecoinConverter.address)
+      const secondSolution = solutionSubmissionParams(secondTradeExample.solutions[0], accounts, secondOrderIds)
+      // This is where the first auction's fees should be burned!
+      await stablecoinConverter.submitSolution(
+        nextBatchIndex,
+        secondSolution.objectiveValue,
+        secondSolution.owners,
+        secondSolution.touchedOrderIds,
+        secondSolution.volumes,
+        secondSolution.prices,
+        secondSolution.tokenIdsForPrice,
+        { from: solver })
+      const afterAuctionFeeTokenBalance = await owlProxy.balanceOf.call(stablecoinConverter.address)
+      assert(initialFeeTokenBalance.sub(basicTrade.solutions[0].burntFees).eq(afterAuctionFeeTokenBalance))
     })
     it("[Advanced Trade] verifies the 2nd solution is correctly documented and can be reverted by a 3rd", async () => {
       const stablecoinConverter = await setupGenericStableX()
