@@ -114,11 +114,11 @@ contract("StablecoinConverter", async (accounts) => {
       const stablecoinConverter = await StablecoinConverter.new(2, feeDenominator, owlProxy.address)
       const token = await ERC20.new()
       await owlProxy.approve(stablecoinConverter.address, owlAmount)
-      assert(owlAmount.eq(await owlProxy.balanceOf.call(user_1)))
-      assert(owlAmount.eq(await owlProxy.allowance.call(user_1, stablecoinConverter.address)))
+      assert(owlAmount.eq(await owlProxy.balanceOf(user_1)))
+      assert(owlAmount.eq(await owlProxy.allowance(user_1, stablecoinConverter.address)))
 
       await stablecoinConverter.addToken(token.address, { from: user_1 })
-      assert(await owlProxy.balanceOf.call(user_1).eq(new BN(0)))
+      assert(await owlProxy.balanceOf(user_1).eq(new BN(0)))
     })
 
     it("throws, if fees are not burned", async () => {
