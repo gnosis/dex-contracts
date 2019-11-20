@@ -211,7 +211,7 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param batchIndex index of auction solution is referring to
       * @param owners array of addresses corresponding to touched orders
       * @param orderIds array of order ids used in parallel with owners to identify touched order
-      * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
+      * @param buyVolumes executed buy amounts for each order identified by index of owner-orderId arrays
       * @param prices list of prices for touched tokens indexed by next parameter
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
       * @return the computed objective value of the solution
