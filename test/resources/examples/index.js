@@ -126,7 +126,7 @@ const tooSmallSellAmountTrade = generateTestCase({
       buyVolumes: [tenThousand, tenThousand],
     },
   ],
-}, false, true)
+}, false)
 
 const tooSmallBuyAmountTrade = generateTestCase({
   deposits: [
