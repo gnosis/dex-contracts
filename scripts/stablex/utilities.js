@@ -12,12 +12,12 @@ const addTokens = async function (token_addresses, web3, artifacts) {
 
   const feeForAddingToken = (await instance.TOKEN_ADDITION_FEE_IN_OWL.call()).mul(new BN(token_addresses.length))
   const balanceOfOWL = await owl.balanceOf.call(accounts[0])
-  if (balanceOfOWL < feeForAddingToken) {
+  if (feeForAddingToken.gt(balanceOfOWL)) {
     console.log("More fee tokens are required to add all tokens")
     return
   }
   const allowanceOfOWL = await owl.allowance.call(accounts[0], instance.address)
-  if (allowanceOfOWL < feeForAddingToken) {
+  if (feeForAddingToken.gt(allowanceOfOWL)) {
     await owl.approve(instance.address, feeForAddingToken)
   }
 
