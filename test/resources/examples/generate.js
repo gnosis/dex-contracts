@@ -81,7 +81,7 @@ function generateTestCase(input, strict = true, debug = false) {
       try {
         objectiveValue = solutionObjectiveValueComputation(orders, solution, strict)
       } catch (err) {
-        if (debug) {
+        if (strict && debug) {
           const invalidObjectiveValue = solutionObjectiveValueComputation(orders, solution, false)
           debugObjectiveValueComputation(invalidObjectiveValue)
         }
