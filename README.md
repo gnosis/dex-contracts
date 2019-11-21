@@ -77,7 +77,7 @@ npx truffle exec scripts/stablex/place_order.js --accountId=0 --buyToken=$TOKEN_
 
 Then, after switching to another account, a market order can be placed:
 ```
-//Deposit funds into exchange:
+// Deposit funds into exchange:
 npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=$TOKEN_ID_DAI --amount=100 --network rinkeby
 
 // Place market order with 1/2 limit-price
