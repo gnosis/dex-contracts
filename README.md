@@ -54,7 +54,7 @@ The following script does deploy a simple order market maker order and a relevan
 // Get token id of DAI
 npx truffle exec scripts/stablex/invokeViewFunction.js 'tokenAddressToIdMap' '0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa' --network rinkeby
 
-//export the result
+// Export the resulting token ID
 export TOKEN_ID_DAI=[Result from last call]
 
 // Get token id of TrueUSD
