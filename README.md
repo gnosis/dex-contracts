@@ -67,7 +67,7 @@ export TOKEN_ID_TUSD=[Result from last call]
 npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=0 --amount=30 --network rinkeby&& \
 npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=$TOKEN_ID_TUSD --amount=100 --network rinkeby
 
-// Place market maker order in current auction
+// Place  market-maker order in current auction
 npx truffle exec scripts/stablex/place_order.js --accountId=0 --buyToken=$TOKEN_ID_DAI --sellToken=$TOKEN_ID_TUSD --minBuy=1000 --maxSell=998 --validFor=20 --network rinkeby
 
 // Place owl token order
