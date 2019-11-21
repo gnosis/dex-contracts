@@ -466,7 +466,7 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2)).toString(), basicTrade.deposits[1].amount.sub(getExecutedSellAmount(fullBuyVolumes[1], prices[0], prices[1])).toString(), "Sold tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken)), fullBuyVolumes[1].toString(), "Bought tokens were not adjusted correctly")
     })
-    it("Ensure fee token is burnt as expected", async () => {
+    it("ensures half of the token imbalance (fees) is burned", async () => {
       // Fee token can't be a Mock here.
       const TokenOWLProxy = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
       const owlToken = await TokenOWL.new()
