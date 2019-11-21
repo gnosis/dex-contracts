@@ -51,16 +51,16 @@ npm run networks-inject
 
 The following script deploys a simple market maker order and a necessary owl order, to enable trading:
 ```
-// Get token id of DAI
+// Get token ID of DAI
 npx truffle exec scripts/stablex/invokeViewFunction.js 'tokenAddressToIdMap' '0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa' --network rinkeby
 
 // Export the resulting token ID
 export TOKEN_ID_DAI=[Result from last call]
 
-// Get token id of TrueUSD
+// Get token ID of TrueUSD
 npx truffle exec scripts/stablex/invokeViewFunction.js 'tokenAddressToIdMap' '0x0000000000085d4780B73119b644AE5ecd22b376' --network rinkeby
 
-//export the result
+// Export the resulting token ID
 export TOKEN_ID_TUSD=[Result from last call]
 
 // Make sure there is enough funds in the exchange for the intended trades
