@@ -29,6 +29,8 @@ const {
   basicRingTrade,
   shortRingBetterTrade,
   smallExample,
+  tooSmallBuyAmountTrade,
+  tooSmallSellAmountTrade,
 } = require("../resources/examples")
 const {
   makeDeposits,
@@ -292,31 +294,13 @@ contract("StablecoinConverter", async (accounts) => {
     })
     it("rejects trivial solution (the only solution with zero utility)", async () => {
       const stablecoinConverter = await setupGenericStableX()
-
-      await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
-
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(stablecoinConverter, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(stablecoinConverter)
-
-      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-      const zeroVolumes = Array(solution.volumes.length).fill(0)
-
+      const fakeClaimedObjective = 1
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(
-          batchIndex,
-          solution.objectiveValue,
-          solution.owners,
-          solution.touchedOrderIds,
-          zeroVolumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
-          { from: solver }
-        ),
+        stablecoinConverter.submitSolution(batchIndex, fakeClaimedObjective, [], [], [], [toETH(1)], [0], { from: solver }),
         "Solution must be better than trivial"
       )
-      const currentObjectiveValue = (await stablecoinConverter.getCurrentObjectiveValue.call()).toNumber()
-      assert.equal(0, currentObjectiveValue)
     })
     it("[Basic Trade] places two orders and returns calculated utility", async () => {
       const stablecoinConverter = await setupGenericStableX()
@@ -341,6 +325,40 @@ contract("StablecoinConverter", async (accounts) => {
 
       assert(objectiveValue > 0, "the computed objective value is greater than 0")
       assert.equal(objectiveValue, solution.objectiveValue.toString())
+    })
+    it("rejects competing solution with same objective value", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+
+      // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
+      await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(stablecoinConverter, accounts, basicTrade.orders, batchIndex + 1)
+      await closeAuction(stablecoinConverter)
+
+      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
+      await stablecoinConverter.submitSolution(
+        batchIndex,
+        solution.objectiveValue,
+        solution.owners,
+        solution.touchedOrderIds,
+        solution.volumes,
+        solution.prices,
+        solution.tokenIdsForPrice,
+        { from: solver }
+      )
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(
+          batchIndex,
+          solution.objectiveValue.add(new BN(1)),
+          solution.owners,
+          solution.touchedOrderIds,
+          solution.volumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
+          { from: competingSolver }
+        ),
+        "Solution must have a higher objective value than current solution"
+      )
     })
     it("[Basic Trade] places two orders and matches them in a solution with Utility > 0", async () => {
       const stablecoinConverter = await setupGenericStableX()
@@ -815,7 +833,7 @@ contract("StablecoinConverter", async (accounts) => {
         "fee token price has to be specified"
       )
     })
-    it("reverts, if price of sellToken == 0", async () => {
+    it("reverts, if any prices are less than AMOUNT_MINIMUM", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
       await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
@@ -838,7 +856,55 @@ contract("StablecoinConverter", async (accounts) => {
           solution.tokenIdsForPrice,
           { from: solver }
         ),
-        "prices are not allowed to be zero"
+        "At least one price lower than AMOUNT_MINIMUM"
+      )
+    })
+    it("reverts if any sell amounts are less than AMOUNT_MINIMUM", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+      const tradeExample = tooSmallSellAmountTrade
+      await makeDeposits(stablecoinConverter, accounts, tradeExample.deposits)
+
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(stablecoinConverter, accounts, tradeExample.orders, batchIndex + 1)
+      await closeAuction(stablecoinConverter)
+
+      const solution = solutionSubmissionParams(tradeExample.solutions[0], accounts, orderIds)
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(
+          batchIndex,
+          solution.objectiveValue,
+          solution.owners,
+          solution.touchedOrderIds,
+          solution.volumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
+          { from: solver }
+        ),
+        "sell amount less than AMOUNT_MINIMUM"
+      )
+    })
+    it("reverts if any buy amounts are less than AMOUNT_MINIMUM", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+      const tradeExample = tooSmallBuyAmountTrade
+      await makeDeposits(stablecoinConverter, accounts, tradeExample.deposits)
+
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(stablecoinConverter, accounts, tradeExample.orders, batchIndex + 1)
+      await closeAuction(stablecoinConverter)
+
+      const solution = solutionSubmissionParams(tradeExample.solutions[0], accounts, orderIds)
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(
+          batchIndex,
+          solution.objectiveValue,
+          solution.owners,
+          solution.touchedOrderIds,
+          solution.volumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
+          { from: solver }
+        ),
+        "buy amount less than AMOUNT_MINIMUM"
       )
     })
     it("checks that findPriceIndex also works, if it decreases the search bounds - all other tests only increase", async () => {
@@ -1139,20 +1205,19 @@ contract("StablecoinConverter", async (accounts) => {
       )
       assert.equal(0, (await stablecoinConverter.currentPrices.call(2)).toString(), "CurrentPrice were not adjusted correctly")
     })
-    it("checks that solution trades are deleted even if balances get temporarily negative while reverting ", async () => {
+    it("checks that solution trades are deleted even if balances are temporarily negative while reverting ", async () => {
       // The following test, a user_2 will receive some tokens and sell these received tokens in one batch.
       // If this batch-trade gets executed and later reverted by another trade, users_2's balance would be temporarily negative, unless
       // in the settlement and reversion not all buyAmounts will be credited first, before the sellAmounts are subtracted.
       // This test checks that we have met this "unless condition" and that our test is not failing due to temporarily negative balances
       const stablecoinConverter = await setupGenericStableX()
       const feeToken = await stablecoinConverter.tokenIdToAddressMap.call(0)
-      const erc20_2 = await stablecoinConverter.tokenIdToAddressMap.call(1)
+      const otherToken = await stablecoinConverter.tokenIdToAddressMap.call(1)
 
       await makeDeposits(stablecoinConverter, accounts, smallExample.deposits)
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       const orderIds = await placeOrders(stablecoinConverter, accounts, smallExample.orders, batchIndex + 1)
       await closeAuction(stablecoinConverter)
-
       const solution = solutionSubmissionParams(smallExample.solutions[0], accounts, orderIds)
       await stablecoinConverter.submitSolution(
         batchIndex,
@@ -1164,41 +1229,29 @@ contract("StablecoinConverter", async (accounts) => {
         solution.tokenIdsForPrice,
         { from: solver }
       )
-      const users = smallExample.deposits.map(d => accounts[d.user])
-
+      // User 0
       assert.equal(
-        (await stablecoinConverter.getBalance.call(users[0], feeToken)).toString(),
-        smallExample.deposits[0].amount.sub(getExecutedSellAmount(solution.volumes[0], solution.prices[0], solution.prices[1])).toString(),
-        "Sold tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(users[0], feeToken)).toString(),
-        smallExample.deposits[0].amount.sub(getExecutedSellAmount(solution.volumes[0], solution.prices[0], solution.prices[1])).toString(),
-        "Sold tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(users[1], feeToken)),
-        0,
-        "Sold tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(users[2], feeToken)).toString(),
-        solution.volumes[3].toString(),
-        "Bought tokens were not adjusted correctly"
-      )
-      assert.equal(
-        (await stablecoinConverter.getBalance.call(users[0], erc20_2)).toString(),
+        (await stablecoinConverter.getBalance.call(accounts[0], otherToken)).toString(),
         solution.volumes[0].toString(),
         "Bought tokens were not adjusted correctly"
       )
       assert.equal(
-        (await stablecoinConverter.getBalance.call(users[1], erc20_2)),
-        0,
-        "Bought and sold tokens were not adjusted correctly"
+        (await stablecoinConverter.getBalance.call(accounts[0], feeToken)).toString(),
+        smallExample.deposits[0].amount.sub(getExecutedSellAmount(solution.volumes[0], solution.prices[0], solution.prices[1])).toString(),
+        "Sold tokens were not adjusted correctly"
+      )
+      // User 1
+      assert.equal(0, (await stablecoinConverter.getBalance.call(accounts[1], otherToken)), "Bought and sold tokens were not adjusted correctly")
+      assert.equal(0, (await stablecoinConverter.getBalance.call(accounts[1], feeToken)), 0, "Sold tokens were not adjusted correctly")
+      // User 2
+      assert.equal(
+        (await stablecoinConverter.getBalance.call(accounts[2], feeToken)).toString(),
+        solution.volumes[3].toString(),
+        "Bought tokens were not adjusted correctly"
       )
       assert.equal(
-        (await stablecoinConverter.getBalance.call(users[2], erc20_2)).toString(),
-        smallExample.deposits[2].amount.sub(getExecutedSellAmount(solution.volumes[3], solution.prices[1], solution.prices[0])).toString(),
+        (await stablecoinConverter.getBalance.call(accounts[2], otherToken)).toString(),
+        smallExample.deposits[3].amount.sub(getExecutedSellAmount(solution.volumes[3], solution.prices[1], solution.prices[0])).toString(),
         "Sold tokens were not adjusted correctly"
       )
 
