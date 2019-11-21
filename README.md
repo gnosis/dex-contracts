@@ -86,7 +86,6 @@ npx truffle exec scripts/stablex/place_order.js --accountId=1 --buyToken=$TOKEN_
 
 Now, the market can be inspected by:
 ```
-//view the market status:
 npx truffle exec scripts/stablex/get_auction_elements.js --network rinkeby
 ```
 
