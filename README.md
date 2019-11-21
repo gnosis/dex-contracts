@@ -63,7 +63,7 @@ npx truffle exec scripts/stablex/invokeViewFunction.js 'tokenAddressToIdMap' '0x
 // Export the resulting token ID
 export TOKEN_ID_TUSD=[Result from last call]
 
-// Make sure there is enough funds in the exchange for the intended trades
+// Make sure that the users have deposited sufficient funds into the exchange
 npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=0 --amount=30 --network rinkeby&& \
 npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=$TOKEN_ID_TUSD --amount=100 --network rinkeby
 
