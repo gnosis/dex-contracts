@@ -1307,11 +1307,6 @@ contract("StablecoinConverter", async (accounts) => {
     })
   })
   describe("getEncodedAuctionElements()", async () => {
-    it("returns null when no orders.", async () => {
-      const stablecoinConverter = await setupGenericStableX(3)
-      const auctionElements = await stablecoinConverter.getEncodedAuctionElements()
-      assert(auctionElements === null)
-    })
     it("returns all orders that are have ever been submitted", async () => {
       const stablecoinConverter = await setupGenericStableX(3)
 
