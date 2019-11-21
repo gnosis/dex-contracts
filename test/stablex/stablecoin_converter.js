@@ -14,13 +14,14 @@ const {
 } = require("../utilities")
 
 const {
-  closeAuction
+  closeAuction,
 } = require("../../scripts/stablex/utilities.js")
 
 const {
   toETH,
   getExecutedSellAmount,
   ERROR_EPSILON,
+  feeAdded,
 } = require("../resources/math")
 const {
   solutionSubmissionParams,
@@ -29,8 +30,6 @@ const {
   basicRingTrade,
   shortRingBetterTrade,
   smallExample,
-  tooSmallBuyAmountTrade,
-  tooSmallSellAmountTrade,
 } = require("../resources/examples")
 const {
   makeDeposits,
@@ -39,6 +38,19 @@ const {
 } = require("./stablex_utils")
 
 const feeDenominator = 1000 // fee is (1 / feeDenominator)
+
+const fiveThousand = new BN("5000")
+const tenThousand = new BN("10000")
+const genericDepositsAndOrders = {
+  deposits: [
+    { amount: feeAdded(tenThousand), token: 0, user: 0 },
+    { amount: feeAdded(tenThousand), token: 1, user: 1 },
+  ],
+  orders: [
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 },
+  ]
+}
 
 contract("StablecoinConverter", async (accounts) => {
   const solver = accounts.pop()
@@ -861,48 +873,31 @@ contract("StablecoinConverter", async (accounts) => {
     })
     it("reverts if any sell amounts are less than AMOUNT_MINIMUM", async () => {
       const stablecoinConverter = await setupGenericStableX()
-      const tradeExample = tooSmallSellAmountTrade
-      await makeDeposits(stablecoinConverter, accounts, tradeExample.deposits)
+      await makeDeposits(stablecoinConverter, accounts, genericDepositsAndOrders.deposits)
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(stablecoinConverter, accounts, tradeExample.orders, batchIndex + 1)
+      const orderIds = await placeOrders(stablecoinConverter, accounts, genericDepositsAndOrders.orders, batchIndex + 1)
       await closeAuction(stablecoinConverter)
 
-      const solution = solutionSubmissionParams(tradeExample.solutions[0], accounts, orderIds)
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
-          batchIndex,
-          solution.objectiveValue,
-          solution.owners,
-          solution.touchedOrderIds,
-          solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
-          { from: solver }
+          batchIndex, 1, accounts.slice(0, 2), orderIds, [tenThousand, tenThousand], [1, 0.9].map(toETH), [0, 1], { from: solver }
         ),
         "sell amount less than AMOUNT_MINIMUM"
       )
     })
     it("reverts if any buy amounts are less than AMOUNT_MINIMUM", async () => {
       const stablecoinConverter = await setupGenericStableX()
-      const tradeExample = tooSmallBuyAmountTrade
-      await makeDeposits(stablecoinConverter, accounts, tradeExample.deposits)
+      await makeDeposits(stablecoinConverter, accounts, genericDepositsAndOrders.deposits)
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(stablecoinConverter, accounts, tradeExample.orders, batchIndex + 1)
+      const orderIds = await placeOrders(stablecoinConverter, accounts, genericDepositsAndOrders.orders, batchIndex + 1)
       await closeAuction(stablecoinConverter)
 
-      const solution = solutionSubmissionParams(tradeExample.solutions[0], accounts, orderIds)
+      const tooSmallBuyAmounts = [10000, 9990].map(val => new BN(val))
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
-          batchIndex,
-          solution.objectiveValue,
-          solution.owners,
-          solution.touchedOrderIds,
-          solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
-          { from: solver }
+          batchIndex, 1, accounts.slice(0, 2), orderIds, tooSmallBuyAmounts, [1, 1].map(toETH), [0, 1], { from: solver }
         ),
         "buy amount less than AMOUNT_MINIMUM"
       )
