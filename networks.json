@@ -3,18 +3,18 @@
     "4": {
       "events": {},
       "links": {},
-      "address": "0xfb0cbD725B3970239E0437D92A04b7676992C3be",
-      "transactionHash": "0x19f272db8dd11c989d37f2459dc1c8b84ef75959e8c382b2bd1943ce8af64493"
+      "address": "0xd883bD9968d953bFf389F95a39Fa39E72A2564Ba",
+      "transactionHash": "0x9dbcb240ab37174a483a23c61491acdb1f7364a392a36afe17646a239f2608e7"
     }
   },
   "SnappAuction": {
     "4": {
       "links": {
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53",
-        "SnappBaseCore": "0x391F9a3A6A8752B9feF5f6b13B701c55A2514237"
+        "SnappBaseCore": "0xc0a46071E9F994B4e83e55A112f3Df3d6A9EF3cA"
       },
-      "address": "0x37366ed16e6688D7247e6F46968A1dc1D7eE326c",
-      "transactionHash": "0xe04e424504571c87888fd71436eb27966f2edcaca9bcce82c5f30fc8f550f9b7",
+      "address": "0xEFCf55348536E8500F554B91cd2931994C11F110",
+      "transactionHash": "0xd21881616b75711e022e7f67eb241a8f868ea98c9e6dc6cf87446332ed40648c",
       "events": {
         "0xc1d795e2c9e878c51f00b6ed030b242f37102e68a23abef79414d4f8e74dabc3": {
           "anonymous": false,
@@ -281,8 +281,8 @@
       "links": {
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53"
       },
-      "address": "0x391F9a3A6A8752B9feF5f6b13B701c55A2514237",
-      "transactionHash": "0x953cabef568f681912b7f39e7e38f389abfbf956ad4760c4c5204a6f6573dcc6",
+      "address": "0xc0a46071E9F994B4e83e55A112f3Df3d6A9EF3cA",
+      "transactionHash": "0x95d3a635f9296fd7bb58796bc76532483a4784f1034d42f89dbf60bfbb14dd1f",
       "events": {
         "0xc1d795e2c9e878c51f00b6ed030b242f37102e68a23abef79414d4f8e74dabc3": {
           "anonymous": false,
@@ -410,8 +410,8 @@
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53",
         "IterableAppendOnlySet": "0x85ab87B703265D10Ac025687cB180f7187193F13"
       },
-      "address": "0xf733Ed463e71B668e586FabC40F999728Eb65364",
-      "transactionHash": "0x137f59d709f275dde41124bca74140d2c869c2152882c481f9b93e5e03a4e2da",
+      "address": "0x249a23429dB3d958232528D1De57b04dcbe6bb1E",
+      "transactionHash": "0xa414c051a3c7003d9c9087b8fbe48e886786b72a1a2b66821f14807e9dcd174b",
       "events": {
         "0x951b66125eb3ef23450a52bb65cf4786c423cc944abb7de8a749a7d05642060e": {
           "anonymous": false,
