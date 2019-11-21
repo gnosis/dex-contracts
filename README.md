@@ -49,7 +49,7 @@ npm run networks-inject
 
 # Deploying a simple market maker scenario to Rinkeby:
 
-The following script deploys a simple market maker order and a relevant
+The following script deploys a simple market maker order and a necessary owl order, to enable trading:
 ```
 // Get token id of DAI
 npx truffle exec scripts/stablex/invokeViewFunction.js 'tokenAddressToIdMap' '0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa' --network rinkeby
