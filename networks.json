@@ -3,27 +3,18 @@
     "4": {
       "events": {},
       "links": {},
-      "address": "0xE091F109b721A4A42973595FfEE621c04A2147D1",
-      "transactionHash": "0x172014a549bf2639d98caf903671e2e8bccf5a4734241b797f18b70d690225e9"
+      "address": "0xfb0cbD725B3970239E0437D92A04b7676992C3be",
+      "transactionHash": "0x19f272db8dd11c989d37f2459dc1c8b84ef75959e8c382b2bd1943ce8af64493"
     }
   },
   "SnappAuction": {
     "4": {
       "links": {
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53",
-        "SnappBaseCore": "0x3709B8E6E2a684A1c97809E616877A6577e9e131"
+        "SnappBaseCore": "0x391F9a3A6A8752B9feF5f6b13B701c55A2514237"
       },
-      "address": "0x01Ad09b1AD496407651aa943874bC0664834BFA1",
-      "transactionHash": "0x2b814ea1d93f34719358639f5d499c62cb7a0438d5da9da84eb283477eef89e0"
-    }
-  },
-  "SnappBaseCore": {
-    "4": {
-      "links": {
-        "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53"
-      },
-      "address": "0x3709B8E6E2a684A1c97809E616877A6577e9e131",
-      "transactionHash": "0x221780f742917b8d22d0cfda2a04216b5082099460ade7c79d126b8271399d4e"
+      "address": "0x37366ed16e6688D7247e6F46968A1dc1D7eE326c",
+      "transactionHash": "0xe04e424504571c87888fd71436eb27966f2edcaca9bcce82c5f30fc8f550f9b7"
     }
   },
   "StablecoinConverter": {
@@ -32,8 +23,8 @@
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53",
         "IterableAppendOnlySet": "0x85ab87B703265D10Ac025687cB180f7187193F13"
       },
-      "address": "0x9D1a98dF71420035F67209af8c4138ea1C39b9d2",
-      "transactionHash": "0x1de320c25955cd07dcb57509c68932f27b5588747f771cd63072fba15bf618c3"
+      "address": "0xf733Ed463e71B668e586FabC40F999728Eb65364",
+      "transactionHash": "0x137f59d709f275dde41124bca74140d2c869c2152882c481f9b93e5e03a4e2da"
     }
   }
 }
