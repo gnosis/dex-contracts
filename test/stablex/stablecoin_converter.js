@@ -116,7 +116,7 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.addToken(token.address, { from: user_1 })
       assert((await owlProxy.balanceOf(user_1)).eq(new BN(0)))
     })
-    it("throws, if fees are not burned", async () => {
+    it("throws if OWL is not burned", async () => {
       const TokenOWLProxy = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
       const owlToken = await TokenOWL.new()
       const owlProxyContract = await TokenOWLProxy.new(owlToken.address)
@@ -466,8 +466,8 @@ contract("StablecoinConverter", async (accounts) => {
       assert.equal((await stablecoinConverter.getBalance.call(user_2, erc20_2)).toString(), basicTrade.deposits[1].amount.sub(getExecutedSellAmount(fullBuyVolumes[1], prices[0], prices[1])).toString(), "Sold tokens were not adjusted correctly")
       assert.equal((await stablecoinConverter.getBalance.call(user_2, feeToken)), fullBuyVolumes[1].toString(), "Bought tokens were not adjusted correctly")
     })
-    it("ensures half of the token imbalance (fees) is burned", async () => {
-      // Fee token can't be a Mock here.
+    it("ensures half of the token imbalance (fees) is burned and that better solutions don't double-burn", async () => {
+      // Fee token shouldn't be a mock here, because we need real return values from balanceOf calls.
       const TokenOWLProxy = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
       const owlToken = await TokenOWL.new()
       const owlProxyContract = await TokenOWLProxy.new(owlToken.address)
@@ -521,6 +521,21 @@ contract("StablecoinConverter", async (accounts) => {
         { from: solver })
       const afterAuctionFeeTokenBalance = await owlProxy.balanceOf(stablecoinConverter.address)
       assert(initialFeeTokenBalance.sub(basicTrade.solutions[0].burntFees).eq(afterAuctionFeeTokenBalance))
+
+      // Better second solution
+      const betterSolution = solutionSubmissionParams(secondTradeExample.solutions[1], accounts, secondOrderIds)
+      // This is where the first auction's fees should be burned!
+      await stablecoinConverter.submitSolution(
+        nextBatchIndex,
+        betterSolution.objectiveValue,
+        betterSolution.owners,
+        betterSolution.touchedOrderIds,
+        betterSolution.volumes,
+        betterSolution.prices,
+        betterSolution.tokenIdsForPrice,
+        { from: solver })
+      const afterBetterSolutionFeeBalance = await owlProxy.balanceOf(stablecoinConverter.address)
+      assert(initialFeeTokenBalance.sub(basicTrade.solutions[0].burntFees).eq(afterBetterSolutionFeeBalance))
     })
     it("[Advanced Trade] verifies the 2nd solution is correctly documented and can be reverted by a 3rd", async () => {
       const stablecoinConverter = await setupGenericStableX()
@@ -562,7 +577,7 @@ contract("StablecoinConverter", async (accounts) => {
         )
       }
     })
-    it("throws, if the batchIndex is incorrect", async () => {
+    it("throws if the batchIndex is incorrect", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
       await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
@@ -618,7 +633,7 @@ contract("StablecoinConverter", async (accounts) => {
         "Solutions are no longer accepted for this batch"
       )
     })
-    it("[Basic Trade] throws, if order(s) not yet valid", async () => {
+    it("[Basic Trade] throws if order(s) not yet valid", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
       await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
