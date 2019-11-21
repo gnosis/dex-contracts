@@ -32,12 +32,6 @@ npx truffle migrate --network NETWORKNAME --reset
 npm run networks-extract            // extracts deployed addresses to networks.json
 ```
 
-3. For Rinkeby, you should do additionally the following steps:
-```
-npx truffle exec scripts/stablex/add_token_list.js --network rinkeby
-export MY_ETHERSCAN_API_KEY=[YOUR KEY]
-npm run verify-stablex --network rinkeby
-```
 
 # Retrieving previous deployments
 
