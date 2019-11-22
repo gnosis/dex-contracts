@@ -324,7 +324,20 @@ contract StablecoinConverter is EpochTokenLocker {
         return IdToAddressBiMap.hasAddress(registeredTokens, addr);
     }
 
-    /** @dev View returning all currently stored, byte-encoded sell orders
+    /** @dev View returning all byte-encoded sell orders for specified user
+      * @param user address of user whose orders are being queried
+      * @return encoded bytes representing all orders
+      */
+    function getEncodedUserOrders(address user) public view returns (bytes memory elements) {
+        for (uint256 i = 0; i < orders[user].length; i++) {
+            elements = elements.concat(
+                encodeAuctionElement(user, getBalance(user, tokenIdToAddressMap(orders[user][i].sellToken)), orders[user][i])
+            );
+        }
+        return elements;
+    }
+
+    /** @dev View returning all byte-encoded sell orders
       * @return encoded bytes representing all orders ordered by (user, index)
       */
     function getEncodedAuctionElements() public view returns (bytes memory elements) {
@@ -332,14 +345,7 @@ contract StablecoinConverter is EpochTokenLocker {
             address user = allUsers.first();
             bool stop = false;
             while (!stop) {
-                for (uint256 i = 0; i < orders[user].length; i++) {
-                    Order memory order = orders[user][i];
-                    elements = elements.concat(encodeAuctionElement(
-                        user,
-                        getBalance(user, tokenIdToAddressMap(order.sellToken)),
-                        order
-                    ));
-                }
+                elements = elements.concat(getEncodedUserOrders(user));
                 if (user == allUsers.last) {
                     stop = true;
                 } else {
