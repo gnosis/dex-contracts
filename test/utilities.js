@@ -183,7 +183,7 @@ const UINT128_WIDTH = 16 * 2
 
 function decodeAuctionElements(bytes) {
   if (!bytes) {
-    return [];
+    return []
   }
   const result = []
   bytes = bytes.slice(2) // cutting of 0x
