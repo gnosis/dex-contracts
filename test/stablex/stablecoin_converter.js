@@ -1381,6 +1381,69 @@ contract("StablecoinConverter", async (accounts) => {
       }
     })
   })
+  describe("getEncodedUserOrders()", async () => {
+    it("returns null when there are no orders", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+      const auctionElements = await stablecoinConverter.getEncodedAuctionElements()
+      assert.equal(auctionElements, null)
+    })
+    it("returns correct orders whether valid, canceled or freed", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const validOrderInfo = {
+        user: user_1.toLowerCase(),
+        sellTokenBalance: 0,
+        buyToken: 1,
+        sellToken: 0,
+        validFrom: batchIndex,
+        validUntil: batchIndex + 10,
+        priceNumerator: 20,
+        priceDenominator: 10,
+        remainingAmount: 10,
+      }
+      const canceledOrderInfo = {
+        user: user_1.toLowerCase(),
+        sellTokenBalance: 0,
+        buyToken: 1,
+        sellToken: 0,
+        validFrom: batchIndex,
+        validUntil: batchIndex - 1,
+        priceNumerator: 20,
+        priceDenominator: 10,
+        remainingAmount: 10,
+      }
+      const freedOrderInfo = {
+        user: user_1.toLowerCase(),
+        sellTokenBalance: 0,
+        buyToken: 0,
+        sellToken: 0,
+        validFrom: 0,
+        validUntil: 0,
+        priceNumerator: 0,
+        priceDenominator: 0,
+        remainingAmount: 0,
+      }
+      // Place 3 valid orders, cancel first two, wait one batch till and free storage of middle order
+      for (let i = 0; i < 3; i++) {
+        await stablecoinConverter.placeOrder(
+          validOrderInfo.buyToken,
+          validOrderInfo.sellToken,
+          validOrderInfo.validUntil,
+          validOrderInfo.priceNumerator,
+          validOrderInfo.priceDenominator
+        )
+      }
+      // 
+      await stablecoinConverter.cancelOrders([0, 1])
+      await waitForNSeconds(BATCH_TIME)
+      await stablecoinConverter.freeStorageOfOrder([1])
+
+
+      const auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
+      assert.deepEqual(auctionElements, [canceledOrderInfo, freedOrderInfo, validOrderInfo])
+    })
+  })
   describe("getEncodedAuctionElements()", async () => {
     it("returns all orders that are have ever been submitted", async () => {
       const stablecoinConverter = await setupGenericStableX(3)
@@ -1439,7 +1502,7 @@ contract("StablecoinConverter", async (accounts) => {
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       await stablecoinConverter.placeOrder(1, 0, batchIndex + 10, 20, 10)
-      stablecoinConverter.cancelOrders([0])
+      await stablecoinConverter.cancelOrders([0])
 
       let auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
       assert.equal(auctionElements.length, 1)
