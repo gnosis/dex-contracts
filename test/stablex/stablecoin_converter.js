@@ -496,8 +496,11 @@ contract("StablecoinConverter", async (accounts) => {
       const orderIds = await placeOrders(stablecoinConverter, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(stablecoinConverter)
 
-      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-      await stablecoinConverter.submitSolution(batchIndex, solution.objectiveValue, solution.owners, solution.touchedOrderIds, solution.volumes, solution.prices, solution.tokenIdsForPrice, { from: solver })
+      const partialSolution = solutionSubmissionParams(basicTrade.solutions[1], accounts, orderIds)
+      await stablecoinConverter.submitSolution(batchIndex, partialSolution.objectiveValue, partialSolution.owners, partialSolution.touchedOrderIds, partialSolution.volumes, partialSolution.prices, partialSolution.tokenIdsForPrice, { from: solver })
+
+      const fullSolution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
+      await stablecoinConverter.submitSolution(batchIndex, fullSolution.objectiveValue, fullSolution.owners, fullSolution.touchedOrderIds, fullSolution.volumes, fullSolution.prices, fullSolution.tokenIdsForPrice, { from: solver })
       await closeAuction(stablecoinConverter)
 
       // Second Auction
