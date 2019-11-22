@@ -67,6 +67,7 @@ contract StablecoinConverter is EpochTokenLocker {
 
     event OrderPlacement(
         address owner,
+        uint256 index,
         uint16 buyToken,
         uint16 sellToken,
         uint32 validFrom,
@@ -394,7 +395,16 @@ contract StablecoinConverter is EpochTokenLocker {
             priceDenominator: sellAmount,
             usedAmount: 0
         }));
-        emit OrderPlacement(msg.sender, buyToken, sellToken, validFrom, validUntil, buyAmount, sellAmount);
+        emit OrderPlacement(
+            msg.sender,
+            orders[msg.sender].length - 1,
+            buyToken,
+            sellToken,
+            validFrom,
+            validUntil,
+            buyAmount,
+            sellAmount
+        );
         allUsers.insert(msg.sender);
         return orders[msg.sender].length - 1;
     }
