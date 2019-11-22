@@ -41,7 +41,7 @@ const feeDenominator = 1000 // fee is (1 / feeDenominator)
 
 const fiveThousand = new BN("5000")
 const tenThousand = new BN("10000")
-const genericDepositsAndOrders = {
+const smallTradeData = {
   deposits: [
     { amount: feeAdded(tenThousand), token: 0, user: 0 },
     { amount: feeAdded(tenThousand), token: 1, user: 1 },
@@ -873,10 +873,10 @@ contract("StablecoinConverter", async (accounts) => {
     })
     it("reverts if any sell amounts are less than AMOUNT_MINIMUM", async () => {
       const stablecoinConverter = await setupGenericStableX()
-      await makeDeposits(stablecoinConverter, accounts, genericDepositsAndOrders.deposits)
+      await makeDeposits(stablecoinConverter, accounts, smallTradeData.deposits)
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(stablecoinConverter, accounts, genericDepositsAndOrders.orders, batchIndex + 1)
+      const orderIds = await placeOrders(stablecoinConverter, accounts, smallTradeData.orders, batchIndex + 1)
       await closeAuction(stablecoinConverter)
 
       await truffleAssert.reverts(
@@ -888,10 +888,10 @@ contract("StablecoinConverter", async (accounts) => {
     })
     it("reverts if any buy amounts are less than AMOUNT_MINIMUM", async () => {
       const stablecoinConverter = await setupGenericStableX()
-      await makeDeposits(stablecoinConverter, accounts, genericDepositsAndOrders.deposits)
+      await makeDeposits(stablecoinConverter, accounts, smallTradeData.deposits)
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(stablecoinConverter, accounts, genericDepositsAndOrders.orders, batchIndex + 1)
+      const orderIds = await placeOrders(stablecoinConverter, accounts, smallTradeData.orders, batchIndex + 1)
       await closeAuction(stablecoinConverter)
 
       const tooSmallBuyAmounts = [10000, 9990].map(val => new BN(val))
