@@ -22,8 +22,6 @@ const {
  */
 const setupGenericStableX = async function (numTokens = 2, maxTokens = 2 ** 16 - 1, feeDenominator = 1000) {
   const feeToken = await MockContract.new()
-  await feeToken.givenAnyReturnBool(true)
-
   const instance = await StablecoinConverter.new(maxTokens, feeDenominator, feeToken.address)
   const tokens = [feeToken]
   for (let i = 0; i < numTokens - 1; i++) {

@@ -60,7 +60,6 @@ contract("StablecoinConverter", async (accounts) => {
   let BATCH_TIME
   before(async () => {
     const feeToken = await MockContract.new()
-    await feeToken.givenAnyReturnBool(true)
     const lib1 = await IdToAddressBiMap.new()
     const lib2 = await IterableAppendOnlySet.new()
     await StablecoinConverter.link(IdToAddressBiMap, lib1.address)
@@ -72,7 +71,6 @@ contract("StablecoinConverter", async (accounts) => {
   describe("addToken()", () => {
     it("feeToken is set by default", async () => {
       const feeToken = await MockContract.new()
-      await feeToken.givenAnyReturnBool(true)
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
 
       assert.equal((await stablecoinConverter.tokenAddressToIdMap.call(feeToken.address)).toNumber(), 0)
@@ -80,7 +78,6 @@ contract("StablecoinConverter", async (accounts) => {
     })
     it("Anyone can add tokens", async () => {
       const feeToken = await MockContract.new()
-      await feeToken.givenAnyReturnBool(true)
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
 
       const token_1 = await ERC20.new()
@@ -96,7 +93,6 @@ contract("StablecoinConverter", async (accounts) => {
     })
     it("Rejects same token added twice", async () => {
       const feeToken = await MockContract.new()
-      await feeToken.givenAnyReturnBool(true)
       const stablecoinConverter = await StablecoinConverter.new(2 ** 16 - 1, feeDenominator, feeToken.address)
       const token = await ERC20.new()
       await stablecoinConverter.addToken(token.address)
@@ -104,7 +100,6 @@ contract("StablecoinConverter", async (accounts) => {
     })
     it("No exceed max tokens", async () => {
       const feeToken = await MockContract.new()
-      await feeToken.givenAnyReturnBool(true)
       const stablecoinConverter = await StablecoinConverter.new(3, feeDenominator, feeToken.address)
       await stablecoinConverter.addToken((await ERC20.new()).address)
       await stablecoinConverter.addToken((await ERC20.new()).address)
