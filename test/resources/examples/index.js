@@ -126,7 +126,7 @@ const tooSmallSellAmountTrade = generateTestCase({
       buyVolumes: [tenThousand, tenThousand],
     },
   ],
-}, false)
+}, false, true)
 
 const tooSmallBuyAmountTrade = generateTestCase({
   deposits: [
@@ -144,7 +144,7 @@ const tooSmallBuyAmountTrade = generateTestCase({
       buyVolumes: [10000, 9990].map(val => new BN(val)),
     },
   ],
-}, false)
+}, false, true)
 
 const fiftyThousand = new BN("50000")
 const hundredThousand = new BN("100000")
