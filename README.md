@@ -37,6 +37,10 @@ npm run networks-extract            // extracts deployed addresses to networks.j
 npx truffle run verify SnappAuction --network $NETWORKNAME
 npx truffle run verify StablecoinConverter --network $NETWORKNAME
 ```
+Note, if you have a specific contract address in mind (i.e. one which is not specified in `networks.json`) it may be referred to by address as
+```sh
+npx truffle run verify $CONTRACT_NAME@$CONTRACT_ADDRESS --network $NETWORKNAME
+```
 
 4. List some default tokens on the StableX exchange
 ```sh
