@@ -22,14 +22,38 @@ Checkout our [wiki](https://github.com/gnosis/dex-contracts/wiki/Script-Usage-Ex
 
 For the deployment of the contracts into an official network, follow this steps:
 
-1. Make sure that all depended contracts and libraries - e.g. BytesLib - has been deployed to the intended network and that their network information is available in the npm modules 
+1. Make sure that all depended contracts and libraries - e.g. BytesLib - has been deployed to the intended network and that their network information is available in the npm modules
 
 2. Run the following commands
-```
+```sh
 npm install                         // This installs all dependencies
 npx truffle build                   // This builds the contracts
-npx truffle migrate --network NETWORKNAME --reset
+npx truffle migrate --network $NETWORKNAME --reset
 npm run networks-extract            // extracts deployed addresses to networks.json
+```
+
+3. Verify the contracts for some cool Etherscan.io goodies (see below for more help)
+```sh
+npx truffle run verify SnappAuction --network $NETWORKNAME
+npx truffle run verify StablecoinConverter --network $NETWORKNAME
+```
+
+4. List some default tokens on the StableX exchange
+```sh
+npx truffle exec scripts/stablex/add_token_list.js --network $NETWORKNAME
+```
+
+## Verifying Contracts
+
+In order to verify a contract on Etherscan.io, you need to first creat an account and an API key
+1. Navigate to https://etherscan.io/myapikey
+2. Login or create an account
+3. Generate a new API key
+4. Add `export MY_ETHERSCAN_API_KEY="..."` to your `~/.zshrc`, `~/.bash_profile`, or similar
+
+Note, if you have a specific contract address in mind (i.e. one which is not specified in `networks.json`) it may be referred to by address as
+```sh
+npx truffle run verify $CONTRACT_NAME@$CONTRACT_ADDRESS --network $NETWORKNAME
 ```
 
 # Retrieving previous deployments
