@@ -22,14 +22,25 @@ Checkout our [wiki](https://github.com/gnosis/dex-contracts/wiki/Script-Usage-Ex
 
 For the deployment of the contracts into an official network, follow this steps:
 
-1. Make sure that all depended contracts and libraries - e.g. BytesLib - has been deployed to the intended network and that their network information is available in the npm modules 
+1. Make sure that all depended contracts and libraries - e.g. BytesLib - has been deployed to the intended network and that their network information is available in the npm modules
 
 2. Run the following commands
-```
+```sh
 npm install                         // This installs all dependencies
 npx truffle build                   // This builds the contracts
-npx truffle migrate --network NETWORKNAME --reset
+npx truffle migrate --network $NETWORKNAME --reset
 npm run networks-extract            // extracts deployed addresses to networks.json
+```
+
+3. Verify the contracts for some cool Etherscan.io goodies
+```sh
+npx truffle run verify SnappAuction --network $NETWORKNAME
+npx truffle run verify StablecoinConverter --network $NETWORKNAME
+```
+
+4. List some default tokens on the StableX exchange
+```sh
+npx truffle exec scripts/stablex/add_token_list.js --network $NETWORKNAME
 ```
 
 # Retrieving previous deployments
