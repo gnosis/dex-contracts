@@ -395,9 +395,10 @@ contract StablecoinConverter is EpochTokenLocker {
             priceDenominator: sellAmount,
             usedAmount: 0
         }));
+        uint orderId = orders[msg.sender].length - 1;
         emit OrderPlacement(
             msg.sender,
-            orders[msg.sender].length - 1,
+            orderId,
             buyToken,
             sellToken,
             validFrom,
@@ -406,7 +407,7 @@ contract StablecoinConverter is EpochTokenLocker {
             sellAmount
         );
         allUsers.insert(msg.sender);
-        return orders[msg.sender].length - 1;
+        return orderId;
     }
 
     /** @dev called at the end of submitSolution with a value of tokenConservation / 2
