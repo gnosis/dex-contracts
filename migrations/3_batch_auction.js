@@ -1,7 +1,12 @@
 const migrateSnappAuction = require("../src/migration_scripts_snappAuction/migrate_snapp_auction")
-const argv = require("../src/migration_utilities")
+const argv = require("yargs")
+  .option("onlyMigrateStableX", {
+    describe: "Allows to restrict the migration only to StableX"
+  })
+  .help(false)
+  .version(false).argv
 
-module.exports = async function (deployer, network) {
+module.exports = async function(deployer, network) {
   if (!argv.onlyMigrateStableX) {
     return migrateSnappAuction({
       artifacts,
