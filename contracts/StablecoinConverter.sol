@@ -385,6 +385,7 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 buyAmount,
         uint128 sellAmount
     ) internal returns (uint256) {
+        require(buyToken != sellToken, "Exchange tokens not distinct");
         require(validFrom >= getCurrentBatchId(), "Orders can't be placed in the past");
         orders[msg.sender].push(Order({
             buyToken: buyToken,
