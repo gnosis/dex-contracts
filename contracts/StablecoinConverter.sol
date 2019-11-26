@@ -8,7 +8,6 @@ import "openzeppelin-solidity/contracts/utils/SafeCast.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
 
-
 /** @title Stable Coin Converter - A decentralized exchange for stable tokens as a batch auciton.
  *  @author @gnosis/dfusion-team <https://github.com/orgs/gnosis/teams/dfusion-team/members>
  */
@@ -17,7 +16,7 @@ contract StablecoinConverter is EpochTokenLocker {
     using SafeMath for uint128;
     using BytesLib for bytes32;
     using BytesLib for bytes;
-    using TokenConservation for int[];
+    using TokenConservation for int256[];
     using TokenConservation for uint16[];
     using IterableAppendOnlySet for IterableAppendOnlySet.Data;
 
@@ -26,13 +25,13 @@ contract StablecoinConverter is EpochTokenLocker {
     IdToAddressBiMap.Data private registeredTokens;
 
     /** @dev Maximum number of touched orders in auction (used in submitSolution) */
-    uint256 constant public MAX_TOUCHED_ORDERS = 25;
+    uint256 public constant MAX_TOUCHED_ORDERS = 25;
 
     /** @dev Fee charged for adding a token */
-    uint256 constant public TOKEN_ADDITION_FEE_IN_OWL = 10 ether;
+    uint256 public constant TOKEN_ADDITION_FEE_IN_OWL = 10 ether;
 
     /** @dev minimum allowed value (in WEI) of any prices or executed trade amounts */
-    uint256 constant public AMOUNT_MINIMUM = 10**4;
+    uint256 public constant AMOUNT_MINIMUM = 10**4;
 
     /** @dev maximum number of tokens that can be listed for exchange */
     // solhint-disable-next-line var-name-mixedcase
@@ -51,7 +50,7 @@ contract StablecoinConverter is EpochTokenLocker {
     mapping(address => Order[]) public orders;
 
     /** @dev mapping of type tokenId -> curentPrice of tokenId */
-    mapping (uint16 => uint128) public currentPrices;
+    mapping(uint16 => uint128) public currentPrices;
 
     /** @dev Sufficient information for current winning auction solution */
     SolutionData public latestSolution;
@@ -76,16 +75,13 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 priceDenominator
     );
 
-    event OrderCancelation(
-        address owner,
-        uint256 id
-    );
+    event OrderCancelation(address owner, uint256 id);
 
     struct Order {
         uint16 buyToken;
         uint16 sellToken;
-        uint32 validFrom;   // order is valid from auction collection period: validFrom inclusive
-        uint32 validUntil;  // order is valid till auction collection period: validUntil inclusive
+        uint32 validFrom; // order is valid from auction collection period: validFrom inclusive
+        uint32 validUntil; // order is valid till auction collection period: validUntil inclusive
         uint128 priceNumerator;
         uint128 priceDenominator;
         uint128 usedAmount; // remainingAmount = priceDenominator - usedAmount
@@ -102,10 +98,12 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param _feeDenominator fee as a proportion is (1 / feeDenominator)
       * @param _feeToken Address of ERC20 fee token.
       */
-    constructor(uint256 maxTokens, uint128 _feeDenominator, address _feeToken) public {
+    constructor(uint256 maxTokens, uint128 _feeDenominator, address _feeToken)
+        public
+    {
         MAX_TOKENS = maxTokens;
         feeToken = TokenOWL(_feeToken);
-        feeToken.approve(address(this), uint(-1));
+        feeToken.approve(address(this), uint256(-1));
         feeDenominator = _feeDenominator;
         addToken(_feeToken); // feeToken will always have the token index 0
     }
@@ -180,7 +178,15 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 buyAmount,
         uint128 sellAmount
     ) public returns (uint256) {
-        return placeOrderInternal(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
+        return
+            placeOrderInternal(
+                buyToken,
+                sellToken,
+                getCurrentBatchId(),
+                validUntil,
+                buyAmount,
+                sellAmount
+            );
     }
 
     /** @dev a user facing function used to cancel orders (sets order expiry to previous batchId)
@@ -204,7 +210,10 @@ contract StablecoinConverter is EpochTokenLocker {
       */
     function freeStorageOfOrder(uint256[] memory ids) public {
         for (uint256 i = 0; i < ids.length; i++) {
-            require(orders[msg.sender][ids[i]].validUntil + 1 < getCurrentBatchId(), "Order is still valid");
+            require(
+                orders[msg.sender][ids[i]].validUntil + 1 < getCurrentBatchId(),
+                "Order is still valid"
+            );
             delete orders[msg.sender][ids[i]];
         }
     }
@@ -241,25 +250,52 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128[] memory prices,
         uint16[] memory tokenIdsForPrice
     ) public returns (uint256) {
-        require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
-        require(claimedObjectiveValue > getCurrentObjectiveValue(), "Claimed objective is not more than current solution");
-        require(verifyAmountThreshold(prices), "At least one price lower than AMOUNT_MINIMUM");
-        require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
+        require(
+            acceptingSolutions(batchIndex),
+            "Solutions are no longer accepted for this batch"
+        );
+        require(
+            claimedObjectiveValue > getCurrentObjectiveValue(),
+            "Claimed objective is not more than current solution"
+        );
+        require(
+            verifyAmountThreshold(prices),
+            "At least one price lower than AMOUNT_MINIMUM"
+        );
+        require(
+            tokenIdsForPrice[0] == 0,
+            "fee token price has to be specified"
+        );
         require(prices[0] == 1 ether, "fee token price must be 10^18");
-        require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
-        require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
+        require(
+            tokenIdsForPrice.checkPriceOrdering(),
+            "prices are not ordered by tokenId"
+        );
+        require(
+            owners.length <= MAX_TOUCHED_ORDERS,
+            "Solution exceeds MAX_TOUCHED_ORDERS"
+        );
         burnPreviousAuctionFees();
         undoCurrentSolution();
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete latestSolution.trades;
-        int[] memory tokenConservation = new int[](prices.length);
+        int256[] memory tokenConservation = new int256[](prices.length);
         uint256 utility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             require(checkOrderValidity(order, batchIndex), "Order is invalid");
-            (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(buyVolumes[i], order);
-            require(executedBuyAmount >= AMOUNT_MINIMUM, "buy amount less than AMOUNT_MINIMUM");
-            require(executedSellAmount >= AMOUNT_MINIMUM, "sell amount less than AMOUNT_MINIMUM");
+            (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(
+                buyVolumes[i],
+                order
+            );
+            require(
+                executedBuyAmount >= AMOUNT_MINIMUM,
+                "buy amount less than AMOUNT_MINIMUM"
+            );
+            require(
+                executedSellAmount >= AMOUNT_MINIMUM,
+                "sell amount less than AMOUNT_MINIMUM"
+            );
             tokenConservation.updateTokenConservation(
                 order.buyToken,
                 order.sellToken,
@@ -267,36 +303,65 @@ contract StablecoinConverter is EpochTokenLocker {
                 executedBuyAmount,
                 executedSellAmount
             );
-            require(getRemainingAmount(order) >= executedSellAmount, "executedSellAmount bigger than specified in order");
+            require(
+                getRemainingAmount(order) >= executedSellAmount,
+                "executedSellAmount bigger than specified in order"
+            );
             // Ensure executed price is not lower than the order price:
             //       executedSellAmount / executedBuyAmount <= order.priceDenominator / order.priceNumerator
             require(
-                executedSellAmount.mul(order.priceNumerator) <= executedBuyAmount.mul(order.priceDenominator),
+                executedSellAmount.mul(order.priceNumerator) <=
+                    executedBuyAmount.mul(order.priceDenominator),
                 "limit price not satisfied"
             );
             // accumulate utility before updateRemainingOrder, but after limitPrice verified!
             utility = utility.add(evaluateUtility(executedBuyAmount, order));
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
-            addBalanceAndBlockWithdrawForThisBatch(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
+            addBalanceAndBlockWithdrawForThisBatch(
+                owners[i],
+                tokenIdToAddressMap(order.buyToken),
+                executedBuyAmount
+            );
         }
         // Perform all subtractions after additions to avoid negative values
         for (uint256 i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
-            (, uint128 executedSellAmount) = getTradedAmounts(buyVolumes[i], order);
-            subtractBalance(owners[i], tokenIdToAddressMap(order.sellToken), executedSellAmount);
+            (, uint128 executedSellAmount) = getTradedAmounts(
+                buyVolumes[i],
+                order
+            );
+            subtractBalance(
+                owners[i],
+                tokenIdToAddressMap(order.sellToken),
+                executedSellAmount
+            );
         }
         uint256 disregardedUtility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
-            disregardedUtility = disregardedUtility.add(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]));
+            disregardedUtility = disregardedUtility.add(
+                evaluateDisregardedUtility(
+                    orders[owners[i]][orderIds[i]],
+                    owners[i]
+                )
+            );
         }
         uint256 burntFees = uint256(tokenConservation[0]) / 2;
-        require(utility.add(burntFees) > disregardedUtility, "Solution must be better than trivial");
+        require(
+            utility.add(burntFees) > disregardedUtility,
+            "Solution must be better than trivial"
+        );
         // burntFees ensures direct trades (when available) yield better solutions than longer rings
         uint256 objectiveValue = utility.add(burntFees).sub(disregardedUtility);
         checkAndOverrideObjectiveValue(objectiveValue);
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
-        documentTrades(batchIndex, owners, orderIds, buyVolumes, tokenIdsForPrice);
+        documentTrades(
+            batchIndex,
+            owners,
+            orderIds,
+            buyVolumes,
+            tokenIdsForPrice
+        );
         return (objectiveValue);
     }
     /**
@@ -331,10 +396,21 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param user address of user whose orders are being queried
       * @return encoded bytes representing all orders
       */
-    function getEncodedUserOrders(address user) public view returns (bytes memory elements) {
+    function getEncodedUserOrders(address user)
+        public
+        view
+        returns (bytes memory elements)
+    {
         for (uint256 i = 0; i < orders[user].length; i++) {
             elements = elements.concat(
-                encodeAuctionElement(user, getBalance(user, tokenIdToAddressMap(orders[user][i].sellToken)), orders[user][i])
+                encodeAuctionElement(
+                    user,
+                    getBalance(
+                        user,
+                        tokenIdToAddressMap(orders[user][i].sellToken)
+                    ),
+                    orders[user][i]
+                )
             );
         }
         return elements;
@@ -343,7 +419,11 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev View returning all byte-encoded sell orders
       * @return encoded bytes representing all orders ordered by (user, index)
       */
-    function getEncodedAuctionElements() public view returns (bytes memory elements) {
+    function getEncodedAuctionElements()
+        public
+        view
+        returns (bytes memory elements)
+    {
         if (allUsers.size() > 0) {
             address user = allUsers.first();
             bool stop = false;
@@ -360,13 +440,15 @@ contract StablecoinConverter is EpochTokenLocker {
     }
 
     function acceptingSolutions(uint32 batchIndex) public view returns (bool) {
-        return batchIndex == getCurrentBatchId() - 1 && getSecondsRemainingInBatch() >= 1 minutes;
+        return
+            batchIndex == getCurrentBatchId() - 1 &&
+            getSecondsRemainingInBatch() >= 1 minutes;
     }
 
     /** @dev gets the objective value of currently winning solution.
       * @return objective function evaluation of the currently winning solution, or zero if no solution proposed.
       */
-    function getCurrentObjectiveValue() public view returns(uint256) {
+    function getCurrentObjectiveValue() public view returns (uint256) {
         if (latestSolution.batchId == getCurrentBatchId() - 1) {
             return latestSolution.objectiveValue;
         } else {
@@ -386,17 +468,22 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 sellAmount
     ) internal returns (uint256) {
         require(buyToken != sellToken, "Exchange tokens not distinct");
-        require(validFrom >= getCurrentBatchId(), "Orders can't be placed in the past");
-        orders[msg.sender].push(Order({
-            buyToken: buyToken,
-            sellToken: sellToken,
-            validFrom: validFrom,
-            validUntil: validUntil,
-            priceNumerator: buyAmount,
-            priceDenominator: sellAmount,
-            usedAmount: 0
-        }));
-        uint orderId = orders[msg.sender].length - 1;
+        require(
+            validFrom >= getCurrentBatchId(),
+            "Orders can't be placed in the past"
+        );
+        orders[msg.sender].push(
+            Order({
+                buyToken: buyToken,
+                sellToken: sellToken,
+                validFrom: validFrom,
+                validUntil: validUntil,
+                priceNumerator: buyAmount,
+                priceDenominator: sellAmount,
+                usedAmount: 0
+            })
+        );
+        uint256 orderId = orders[msg.sender].length - 1;
         emit OrderPlacement(
             msg.sender,
             orderId,
@@ -416,7 +503,11 @@ contract StablecoinConverter is EpochTokenLocker {
       */
     function grantRewardToSolutionSubmitter(uint256 feeReward) internal {
         latestSolution.feeReward = feeReward;
-        addBalanceAndBlockWithdrawForThisBatch(msg.sender, tokenIdToAddressMap(0), feeReward);
+        addBalanceAndBlockWithdrawForThisBatch(
+            msg.sender,
+            tokenIdToAddressMap(0),
+            feeReward
+        );
     }
 
     /** @dev called during solution submission to burn fees from previous auction
@@ -453,7 +544,10 @@ contract StablecoinConverter is EpochTokenLocker {
         uint256 orderId,
         uint128 executedAmount
     ) internal {
-        orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.add(executedAmount).toUint128();
+        orders[owner][orderId].usedAmount = orders[owner][orderId]
+            .usedAmount
+            .add(executedAmount)
+            .toUint128();
     }
 
     /** @dev The inverse of updateRemainingOrder, called when reverting a solution in favour of a better one.
@@ -466,7 +560,10 @@ contract StablecoinConverter is EpochTokenLocker {
         uint256 orderId,
         uint128 executedAmount
     ) internal {
-        orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.sub(executedAmount).toUint128();
+        orders[owner][orderId].usedAmount = orders[owner][orderId]
+            .usedAmount
+            .sub(executedAmount)
+            .toUint128();
     }
 
     /** @dev This function writes solution information into contract storage
@@ -485,11 +582,13 @@ contract StablecoinConverter is EpochTokenLocker {
     ) internal {
         latestSolution.batchId = batchIndex;
         for (uint256 i = 0; i < owners.length; i++) {
-            latestSolution.trades.push(TradeData({
-                owner: owners[i],
-                orderId: orderIds[i],
-                volume: volumes[i]
-            }));
+            latestSolution.trades.push(
+                TradeData({
+                    owner: owners[i],
+                    orderId: orderIds[i],
+                    volume: volumes[i]
+                })
+            );
         }
         latestSolution.tokenIdsForPrice = tokenIdsForPrice;
         latestSolution.solutionSubmitter = msg.sender;
@@ -503,16 +602,30 @@ contract StablecoinConverter is EpochTokenLocker {
                 address owner = latestSolution.trades[i].owner;
                 uint256 orderId = latestSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                (, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
-                addBalance(owner, tokenIdToAddressMap(order.sellToken), sellAmount);
+                (, uint128 sellAmount) = getTradedAmounts(
+                    latestSolution.trades[i].volume,
+                    order
+                );
+                addBalance(
+                    owner,
+                    tokenIdToAddressMap(order.sellToken),
+                    sellAmount
+                );
             }
             for (uint256 i = 0; i < latestSolution.trades.length; i++) {
                 address owner = latestSolution.trades[i].owner;
                 uint256 orderId = latestSolution.trades[i].orderId;
                 Order memory order = orders[owner][orderId];
-                (uint128 buyAmount, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
+                (uint128 buyAmount, uint128 sellAmount) = getTradedAmounts(
+                    latestSolution.trades[i].volume,
+                    order
+                );
                 revertRemainingOrder(owner, orderId, sellAmount);
-                subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
+                subtractBalance(
+                    owner,
+                    tokenIdToAddressMap(order.buyToken),
+                    buyAmount
+                );
             }
             // subtract granted fees:
             subtractBalance(
@@ -529,17 +642,26 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param order the sell order whose utility is being evaluated
       * @return Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
       */
-    function evaluateUtility(uint128 execBuy, Order memory order) internal view returns(uint256) {
+    function evaluateUtility(uint128 execBuy, Order memory order)
+        internal
+        view
+        returns (uint256)
+    {
         // Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
         uint256 execSellTimesBuy = getExecutedSellAmount(
             execBuy,
             currentPrices[order.buyToken],
             currentPrices[order.sellToken]
-        ).mul(order.priceNumerator);
+        )
+            .mul(order.priceNumerator);
 
-        uint256 roundedUtility = execBuy.sub(execSellTimesBuy.div(order.priceDenominator)).mul(currentPrices[order.buyToken]);
-        uint256 utilityError = execSellTimesBuy.mod(order.priceDenominator)
-            .mul(currentPrices[order.buyToken]).div(order.priceDenominator);
+        uint256 roundedUtility = execBuy
+            .sub(execSellTimesBuy.div(order.priceDenominator))
+            .mul(currentPrices[order.buyToken]);
+        uint256 utilityError = execSellTimesBuy
+            .mod(order.priceDenominator)
+            .mul(currentPrices[order.buyToken])
+            .div(order.priceDenominator);
         return roundedUtility.sub(utilityError).toUint128();
     }
 
@@ -554,19 +676,32 @@ contract StablecoinConverter is EpochTokenLocker {
       * Balances and orders have all been updated so: sellAmount - execSellAmt == remainingAmount(order).
       * For correctness, we take the minimum of this with the user's token balance.
       */
-    function evaluateDisregardedUtility(Order memory order, address user) internal view returns(uint256) {
+    function evaluateDisregardedUtility(Order memory order, address user)
+        internal
+        view
+        returns (uint256)
+    {
         uint256 leftoverSellAmount = Math.min(
             getRemainingAmount(order),
             getBalance(user, tokenIdToAddressMap(order.sellToken))
         );
-        uint256 limitTermLeft = currentPrices[order.sellToken].mul(order.priceDenominator);
-        uint256 limitTermRight = order.priceNumerator.mul(currentPrices[order.buyToken])
-            .mul(feeDenominator).div(feeDenominator-1);
+        uint256 limitTermLeft = currentPrices[order.sellToken].mul(
+            order.priceDenominator
+        );
+        uint256 limitTermRight = order
+            .priceNumerator
+            .mul(currentPrices[order.buyToken])
+            .mul(feeDenominator)
+            .div(feeDenominator - 1);
         uint256 limitTerm = 0;
         if (limitTermLeft > limitTermRight) {
             limitTerm = limitTermLeft.sub(limitTermRight);
         }
-        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator).toUint128();
+        return
+            leftoverSellAmount
+                .mul(limitTerm)
+                .div(order.priceDenominator)
+                .toUint128();
     }
 
     /** @dev Evaluates executedBuy amount based on prices and executedBuyAmout (fees included)
@@ -589,8 +724,13 @@ contract StablecoinConverter is EpochTokenLocker {
         uint128 buyTokenPrice,
         uint128 sellTokenPrice
     ) internal view returns (uint128) {
-        return uint256(executedBuyAmount).mul(buyTokenPrice).div(feeDenominator - 1)
-            .mul(feeDenominator).div(sellTokenPrice).toUint128();
+        return
+            uint256(executedBuyAmount)
+                .mul(buyTokenPrice)
+                .div(feeDenominator - 1)
+                .mul(feeDenominator)
+                .div(sellTokenPrice)
+                .toUint128();
     }
     /**
      * Private Functions
@@ -617,7 +757,11 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev determines if value is better than currently and updates if it is.
       * @param amounts array of values to be verified with AMOUNT_MINIMUM
       */
-    function verifyAmountThreshold(uint128[] memory amounts) private pure returns(bool) {
+    function verifyAmountThreshold(uint128[] memory amounts)
+        private
+        pure
+        returns (bool)
+    {
         for (uint256 i = 0; i < amounts.length; i++) {
             if (amounts[i] < AMOUNT_MINIMUM) {
                 return false;
@@ -632,7 +776,11 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param order contains relevant buy-sell token information
       * @return (executedBuyAmount, executedSellAmount)
       */
-    function getTradedAmounts(uint128 executedBuyAmount, Order memory order) private view returns (uint128, uint128) {
+    function getTradedAmounts(uint128 executedBuyAmount, Order memory order)
+        private
+        view
+        returns (uint128, uint128)
+    {
         uint128 executedSellAmount = getExecutedSellAmount(
             executedBuyAmount,
             currentPrices[order.buyToken],
@@ -647,7 +795,11 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param batchIndex auction index of validity
       * @return true if order is valid in auction batchIndex else false
       */
-    function checkOrderValidity(Order memory order, uint256 batchIndex) private pure returns (bool) {
+    function checkOrderValidity(Order memory order, uint256 batchIndex)
+        private
+        pure
+        returns (bool)
+    {
         return order.validFrom <= batchIndex && order.validUntil >= batchIndex;
     }
 
@@ -655,7 +807,11 @@ contract StablecoinConverter is EpochTokenLocker {
       * @param order the order for which remaining amount should be calculated
       * @return the remaining sell amount
       */
-    function getRemainingAmount(Order memory order) private pure returns (uint128) {
+    function getRemainingAmount(Order memory order)
+        private
+        pure
+        returns (uint128)
+    {
         return order.priceDenominator - order.usedAmount;
     }
 

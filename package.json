@@ -16,7 +16,8 @@
     "networks-reset": "mkdir -p build/contracts && npx truffle networks --clean && npm run networks-inject",
     "verify-stablex": "truffle run verify StablecoinConverter",
     "lint": "./node_modules/.bin/eslint .",
-    "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\""
+    "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\"",
+    "prettier": "./node_modules/.bin/prettier --write 'contracts/**/*.sol'"
   },
   "repository": {
     "type": "git",
@@ -65,7 +66,10 @@
     "eth-gas-reporter": "^0.2.11",
     "husky": "^2.5.0",
     "minimist": "^1.2.0",
+    "prettier": "^1.19.1",
+    "prettier-plugin-solidity": "^1.0.0-alpha.34",
     "solhint": "^1.5.0",
+    "solhint-plugin-prettier": "0.0.3",
     "solidity-coverage": "^0.6.7",
     "solidity-multicall": "^1.0.0",
     "solium": "^1.2.4",

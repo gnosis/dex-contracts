@@ -4,12 +4,11 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./libraries/SnappBaseCore.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 
-
 contract SnappBase is Ownable {
     using SnappBaseCore for SnappBaseCore.Data;
     SnappBaseCore.Data internal coreData;
 
-    constructor () public {
+    constructor() public {
         coreData.init();
     }
 
@@ -17,7 +16,13 @@ contract SnappBase is Ownable {
      * Modifiers
      */
     modifier onlyRegistered() {
-        require(IdToAddressBiMap.hasAddress(coreData.registeredAccounts, msg.sender), "Must have registered account");
+        require(
+            IdToAddressBiMap.hasAddress(
+                coreData.registeredAccounts,
+                msg.sender
+            ),
+            "Must have registered account"
+        );
         _;
     }
 
@@ -28,7 +33,7 @@ contract SnappBase is Ownable {
         return coreData.numTokens;
     }
 
-    function stateIndex() public view returns (uint) {
+    function stateIndex() public view returns (uint256) {
         return coreData.stateIndex();
     }
 
@@ -36,48 +41,66 @@ contract SnappBase is Ownable {
         return coreData.stateRoots[stateIndex()];
     }
 
-    function getCurrentDepositIndex() public view returns (uint) {
+    function getCurrentDepositIndex() public view returns (uint256) {
         return coreData.depositIndex;
     }
 
-    function hasDepositBeenApplied(uint index) public view returns (bool) {
+    function hasDepositBeenApplied(uint256 index) public view returns (bool) {
         return coreData.deposits[index].appliedAccountStateIndex != 0;
     }
 
-    function getDepositCreationTimestamp(uint slot) public view returns (uint) {
+    function getDepositCreationTimestamp(uint256 slot)
+        public
+        view
+        returns (uint256)
+    {
         return coreData.deposits[slot].creationTimestamp;
     }
 
-    function getDepositHash(uint slot) public view returns (bytes32) {
+    function getDepositHash(uint256 slot) public view returns (bytes32) {
         return coreData.deposits[slot].shaHash;
     }
 
-    function getCurrentWithdrawIndex() public view returns (uint) {
+    function getCurrentWithdrawIndex() public view returns (uint256) {
         return coreData.withdrawIndex;
     }
 
-    function hasWithdrawBeenApplied(uint index) public view returns (bool) {
+    function hasWithdrawBeenApplied(uint256 index) public view returns (bool) {
         return coreData.pendingWithdraws[index].appliedAccountStateIndex != 0;
     }
 
-    function getWithdrawCreationTimestamp(uint slot) public view returns (uint) {
+    function getWithdrawCreationTimestamp(uint256 slot)
+        public
+        view
+        returns (uint256)
+    {
         return coreData.pendingWithdraws[slot].creationTimestamp;
     }
 
-    function getWithdrawHash(uint slot) public view returns (bytes32) {
+    function getWithdrawHash(uint256 slot) public view returns (bytes32) {
         return coreData.pendingWithdraws[slot].shaHash;
     }
 
-    function getClaimableWithdrawHash(uint slot) public view returns (bytes32) {
+    function getClaimableWithdrawHash(uint256 slot)
+        public
+        view
+        returns (bytes32)
+    {
         return coreData.claimableWithdraws[slot].merkleRoot;
     }
 
-    function hasWithdrawBeenClaimed(uint slot, uint16 index) public view returns (bool) {
+    function hasWithdrawBeenClaimed(uint256 slot, uint16 index)
+        public
+        view
+        returns (bool)
+    {
         return coreData.claimableWithdraws[slot].claimedBitmap[index];
     }
 
-    function isPendingWithdrawActive(uint slot) public view returns (bool) {
-        return block.timestamp <= coreData.deposits[slot].creationTimestamp + 3 minutes;
+    function isPendingWithdrawActive(uint256 slot) public view returns (bool) {
+        return
+            block.timestamp <=
+            coreData.deposits[slot].creationTimestamp + 3 minutes;
     }
 
     function publicKeyToAccountMap(address addr) public view returns (uint16) {
@@ -119,43 +142,60 @@ contract SnappBase is Ownable {
     }
 
     function applyDeposits(
-        uint slot,
+        uint256 slot,
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
         bytes32 _depositHash
-    )
-        public onlyOwner()
-    {
-        coreData.applyDeposits(slot, _currStateRoot, _newStateRoot, _depositHash);
+    ) public onlyOwner() {
+        coreData.applyDeposits(
+            slot,
+            _currStateRoot,
+            _newStateRoot,
+            _depositHash
+        );
     }
 
     /**
      * Withdraws
      */
-    function requestWithdrawal(uint8 tokenId, uint128 amount) public onlyRegistered() {
+    function requestWithdrawal(uint8 tokenId, uint128 amount)
+        public
+        onlyRegistered()
+    {
         coreData.requestWithdrawal(tokenId, amount);
     }
 
     function applyWithdrawals(
-        uint slot,
+        uint256 slot,
         bytes32 _merkleRoot,
         bytes32 _currStateRoot,
         bytes32 _newStateRoot,
         bytes32 _withdrawHash
-    )
-        public onlyOwner()
-    {
-        coreData.applyWithdrawals(slot, _merkleRoot, _currStateRoot, _newStateRoot, _withdrawHash);
+    ) public onlyOwner() {
+        coreData.applyWithdrawals(
+            slot,
+            _merkleRoot,
+            _currStateRoot,
+            _newStateRoot,
+            _withdrawHash
+        );
     }
 
     function claimWithdrawal(
-        uint slot,
+        uint256 slot,
         uint16 inclusionIndex,
         uint16 accountId,
         uint8 tokenId,
         uint128 amount,
         bytes memory proof
     ) public {
-        coreData.claimWithdrawal(slot, inclusionIndex, accountId, tokenId, amount, proof);
+        coreData.claimWithdrawal(
+            slot,
+            inclusionIndex,
+            accountId,
+            tokenId,
+            amount,
+            proof
+        );
     }
 }
