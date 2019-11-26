@@ -216,7 +216,7 @@ function solutionObjectiveValueComputation(orders, solution, strict = true) {
   if (strict) {
     assert(!tokenConservation[0].isNeg(), "fee token conservation is negative")
     tokenConservation.slice(1).forEach(
-      (conservation, i) => assert(conservation.isZero(), `token conservation not respected for token ${i+1}`)
+      (conservation, i) => assert(conservation.isZero(), `token conservation not respected for token ${i + 1}`)
     )
     touchedOrders.forEach(([, id], i) => {
       assert(!utilities[i].isNeg(), `utility for order ${id} is negative`)
