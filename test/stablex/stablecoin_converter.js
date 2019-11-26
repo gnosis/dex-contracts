@@ -1389,40 +1389,43 @@ contract("StablecoinConverter", async (accounts) => {
     })
     it("returns correct orders whether valid, canceled or freed", async () => {
       const stablecoinConverter = await setupGenericStableX()
+      const zeroBN = new BN(0)
+      const tenBN = new BN(10)
+      const twentyBN = new BN(20)
 
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       const validOrderInfo = {
         user: user_1.toLowerCase(),
-        sellTokenBalance: 0,
+        sellTokenBalance: zeroBN,
         buyToken: 1,
         sellToken: 0,
         validFrom: batchIndex,
         validUntil: batchIndex + 10,
-        priceNumerator: 20,
-        priceDenominator: 10,
-        remainingAmount: 10,
+        priceNumerator: twentyBN,
+        priceDenominator: tenBN,
+        remainingAmount: tenBN,
       }
       const canceledOrderInfo = {
         user: user_1.toLowerCase(),
-        sellTokenBalance: 0,
+        sellTokenBalance: zeroBN,
         buyToken: 1,
         sellToken: 0,
         validFrom: batchIndex,
         validUntil: batchIndex - 1,
-        priceNumerator: 20,
-        priceDenominator: 10,
-        remainingAmount: 10,
+        priceNumerator: twentyBN,
+        priceDenominator: tenBN,
+        remainingAmount: tenBN,
       }
       const freedOrderInfo = {
         user: user_1.toLowerCase(),
-        sellTokenBalance: 0,
+        sellTokenBalance: zeroBN,
         buyToken: 0,
         sellToken: 0,
         validFrom: 0,
         validUntil: 0,
-        priceNumerator: 0,
-        priceDenominator: 0,
-        remainingAmount: 0,
+        priceNumerator: zeroBN,
+        priceDenominator: zeroBN,
+        remainingAmount: zeroBN,
       }
       // Place 3 valid orders, cancel first two, wait one batch till and free storage of middle order
       for (let i = 0; i < 3; i++) {
@@ -1434,49 +1437,49 @@ contract("StablecoinConverter", async (accounts) => {
           validOrderInfo.priceDenominator
         )
       }
-      // 
+
       await stablecoinConverter.cancelOrders([0, 1])
       await waitForNSeconds(BATCH_TIME)
       await stablecoinConverter.freeStorageOfOrder([1])
 
-
       const auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
-      assert.deepEqual(auctionElements, [canceledOrderInfo, freedOrderInfo, validOrderInfo])
+      assert.equal(JSON.stringify(auctionElements), JSON.stringify([canceledOrderInfo, freedOrderInfo, validOrderInfo]))
     })
   })
   describe("getEncodedAuctionElements()", async () => {
     it("returns all orders that are have ever been submitted", async () => {
       const stablecoinConverter = await setupGenericStableX(3)
-
       const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
+      const zeroBN = new BN(0)
+      const tenBN = new BN(10)
+      const orderInfo = [
+        {
+          user: user_1.toLowerCase(),
+          sellTokenBalance: zeroBN,
+          buyToken: 1,
+          sellToken: 0,
+          validFrom: batchIndex,
+          validUntil: batchIndex,
+          priceNumerator: new BN(20),
+          priceDenominator: tenBN,
+          remainingAmount: tenBN,
+        }, {
+          user: user_2.toLowerCase(),
+          sellTokenBalance: zeroBN,
+          buyToken: 0,
+          sellToken: 1,
+          validFrom: batchIndex,
+          validUntil: batchIndex,
+          priceNumerator: new BN(500),
+          priceDenominator: new BN(400),
+          remainingAmount: new BN(400),
+        }]
       await stablecoinConverter.placeOrder(1, 0, batchIndex, 20, 10, { from: user_1 })
-      await stablecoinConverter.placeOrder(0, 1, batchIndex + 10, 500, 400, { from: user_2 })
+      await stablecoinConverter.placeOrder(0, 1, batchIndex, 500, 400, { from: user_2 })
 
       const auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
-      assert.equal(auctionElements.length, 2)
-      assert.deepEqual(auctionElements[0], {
-        user: user_1.toLowerCase(),
-        sellTokenBalance: 0,
-        buyToken: 1,
-        sellToken: 0,
-        validFrom: batchIndex,
-        validUntil: batchIndex,
-        priceNumerator: 20,
-        priceDenominator: 10,
-        remainingAmount: 10,
-      })
-      assert.deepEqual(auctionElements[1], {
-        user: user_2.toLowerCase(),
-        sellTokenBalance: 0,
-        buyToken: 0,
-        sellToken: 1,
-        validFrom: batchIndex,
-        validUntil: batchIndex + 10,
-        priceNumerator: 500,
-        priceDenominator: 400,
-        remainingAmount: 400,
-      })
+      assert.equal(JSON.stringify(auctionElements), JSON.stringify(orderInfo))
     })
     it("credits balance when it's valid", async () => {
       const stablecoinConverter = await setupGenericStableX(3)
