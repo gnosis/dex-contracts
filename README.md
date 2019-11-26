@@ -1,30 +1,28 @@
 [![Build Status](https://travis-ci.org/gnosis/dex-contracts.svg?branch=master)](https://travis-ci.org/gnosis/dex-contracts?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/gnosis/dex-contracts/badge.svg?branch=master)](https://coveralls.io/github/gnosis/dex-contracts?branch=master)
 
-
-
 # dFusion - Smart Contracts
 
 The **dFusion Exchange** is a fully decentralized trading protocol which facilitates ring trades via discrete auction between several [ERC20](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md) token pairs.
 
 It uses a batch auction for arbitrage-free exchanges while maximizing trader surplus to facilitate the development of a fairer Web3 ecosystem for everyone.
 
-
 # Documentation
+
 Checkout the [Formal Specification](https://github.com/gnosis/dex-research/blob/master/dFusion/dFusion.rst).
 
 # CLI Examples
 
 Checkout our [wiki](https://github.com/gnosis/dex-contracts/wiki/Script-Usage-Examples)
 
-
 # Deployment Process
 
 For the deployment of the contracts into an official network, follow this steps:
 
-1. Make sure that all depended contracts and libraries - e.g. BytesLib - has been deployed to the intended network and that their network information is available in the npm modules 
+1. Make sure that all depended contracts and libraries - e.g. BytesLib - has been deployed to the intended network and that their network information is available in the npm modules
 
 2. Run the following commands
+
 ```
 npm install                         // This installs all dependencies
 npx truffle build                   // This builds the contracts
@@ -32,25 +30,27 @@ npx truffle migrate --network NETWORKNAME --reset
 npm run networks-extract            // extracts deployed addresses to networks.json
 ```
 
-
 # Retrieving previous deployments
 
 In order to use the previously deployed contracts, which are documented in the network.json file, the following steps are necessary:
 
 1. Build the contracts:
+
 ```
 npx truffle compile
 ```
 
 2. Inject address from network.json into the builds:
+
 ```
-npm run networks-inject 
+npm run networks-inject
 ```
 
 # Deploying a simple market maker scenario to Rinkeby:
 
 The following script deploys a simple market maker order and a necessary owl order, to enable trading:
-```
+
+```sh
 // Get token ID of DAI
 npx truffle exec scripts/stablex/invokeViewFunction.js 'tokenAddressToIdMap' '0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa' --network rinkeby
 
@@ -64,19 +64,23 @@ npx truffle exec scripts/stablex/invokeViewFunction.js 'tokenAddressToIdMap' '0x
 export TOKEN_ID_TUSD=[Result from last call]
 
 // Make sure that the users have deposited sufficient funds into the exchange
+// Please be aware that the specified amounts are multiples of 10**18
 npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=0 --amount=30 --network rinkeby&& \
 npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=$TOKEN_ID_TUSD --amount=100 --network rinkeby
 
 // Place  market-maker order in current auction
+// This simulates a strategy expected from market makers: trading stable coins against each other
+// with a spread of 0.02 percent
 npx truffle exec scripts/stablex/place_order.js --accountId=0 --buyToken=$TOKEN_ID_DAI --sellToken=$TOKEN_ID_TUSD --minBuy=1000 --maxSell=998 --validFor=20 --network rinkeby
 
-// Place owl token order
+// Place owl token order for the fee mechanism
 npx truffle exec scripts/stablex/place_order.js --accountId=0 --buyToken=$TOKEN_ID_DAI --sellToken=0 --minBuy=1000 --maxSell=1000 --validFor=20 --network rinkeby
 
 ```
 
-Then, the market order can be place, after switching to another account:
-```
+Then, the market order can be place, after switching to another account. Usually, this is expected to happen via the UI. If it will be done via the console, following commands can be used:
+
+```sh
 //Deposit funds into exchange:
 npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=$TOKEN_ID_DAI --amount=100 --network rinkeby
 
@@ -85,13 +89,15 @@ npx truffle exec scripts/stablex/place_order.js --accountId=1 --buyToken=$TOKEN_
 ```
 
 Now, the market can be inspected by:
-```
+
+```sh
 //view the market status:
 npx truffle exec scripts/stablex/get_auction_elements.js --network rinkeby
 ```
 
 And the output should look like this:
-```
+
+```sh
 [ { user: '0x740a98f8f4fae0986fb3264fe4aacf94ac1ee96f',
     sellTokenBalance: 100000000000000000000,
     buyToken: 7,
@@ -121,8 +127,8 @@ And the output should look like this:
     remainingAmount: 1e+21 } ]
 ```
 
-
 # Contributions
+
 Our continuous integration is running several linters which must pass in order to make a contribution to this repo. For your convenience there is a `pre-commit` hook file contained in the project's root directory. You can make your life easier by executing the following command after cloning this project (it will ensure your changes pass linting before allowing commits).
 
 ```bash
