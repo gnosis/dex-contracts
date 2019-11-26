@@ -93,6 +93,7 @@ Now, the market can be inspected by:
 ```sh
 //view the market status:
 npx truffle exec scripts/stablex/get_auction_elements.js --network rinkeby
+
 ```
 
 And the output should look like this:
