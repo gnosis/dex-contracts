@@ -193,10 +193,10 @@ function decodeAuctionElements(bytes) {
     result.push({
       user: "0x" + element.splice(0, ADDRESS_WIDTH).join(""), // address is only 20 bytes
       sellTokenBalance: new BN(element.splice(0, UINT256_WIDTH).join(""), 16),
-      buyToken: new BN(element.splice(0, UINT16_WIDTH).join(""), 16),
-      sellToken: new BN(element.splice(0, UINT16_WIDTH).join(""), 16),
-      validFrom: new BN(element.splice(0, UINT32_WIDTH).join(""), 16),
-      validUntil: new BN(element.splice(0, UINT32_WIDTH).join(""), 16),
+      buyToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
+      sellToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
+      validFrom: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
+      validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
       priceNumerator: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
       priceDenominator: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
       remainingAmount: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),

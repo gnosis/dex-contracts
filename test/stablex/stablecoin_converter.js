@@ -1390,18 +1390,17 @@ contract("StablecoinConverter", async (accounts) => {
     it("returns correct orders whether valid, canceled or freed", async () => {
       const stablecoinConverter = await setupGenericStableX()
       const zeroBN = new BN(0)
-      const oneBN = new BN(1)
       const tenBN = new BN(10)
       const twentyBN = new BN(20)
 
-      const batchIndex = await stablecoinConverter.getCurrentBatchId.call()
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
       const validOrderInfo = {
         user: user_1.toLowerCase(),
         sellTokenBalance: zeroBN,
-        buyToken: oneBN,
-        sellToken: zeroBN,
+        buyToken: 1,
+        sellToken: 0,
         validFrom: batchIndex,
-        validUntil: batchIndex.add(tenBN),
+        validUntil: batchIndex + 10,
         priceNumerator: twentyBN,
         priceDenominator: tenBN,
         remainingAmount: tenBN,
@@ -1409,10 +1408,10 @@ contract("StablecoinConverter", async (accounts) => {
       const canceledOrderInfo = {
         user: user_1.toLowerCase(),
         sellTokenBalance: zeroBN,
-        buyToken: oneBN,
-        sellToken: zeroBN,
+        buyToken: 1,
+        sellToken: 0,
         validFrom: batchIndex,
-        validUntil: batchIndex.sub(oneBN),
+        validUntil: batchIndex - 1,
         priceNumerator: twentyBN,
         priceDenominator: tenBN,
         remainingAmount: tenBN,
@@ -1420,10 +1419,10 @@ contract("StablecoinConverter", async (accounts) => {
       const freedOrderInfo = {
         user: user_1.toLowerCase(),
         sellTokenBalance: zeroBN,
-        buyToken: zeroBN,
-        sellToken: zeroBN,
-        validFrom: zeroBN,
-        validUntil: zeroBN,
+        buyToken: 0,
+        sellToken: 0,
+        validFrom: 0,
+        validUntil: 0,
         priceNumerator: zeroBN,
         priceDenominator: zeroBN,
         remainingAmount: zeroBN,
@@ -1450,29 +1449,26 @@ contract("StablecoinConverter", async (accounts) => {
   describe("getEncodedAuctionElements()", async () => {
     it("returns all orders that are have ever been submitted", async () => {
       const stablecoinConverter = await setupGenericStableX(3)
-
-      const batchIndex = await stablecoinConverter.getCurrentBatchId.call()
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
 
       const zeroBN = new BN(0)
-      const oneBN = new BN(1)
       const tenBN = new BN(10)
-      const twentyBN = new BN(20)
       const orderInfo = [
         {
           user: user_1.toLowerCase(),
           sellTokenBalance: zeroBN,
-          buyToken: oneBN,
-          sellToken: zeroBN,
+          buyToken: 1,
+          sellToken: 0,
           validFrom: batchIndex,
           validUntil: batchIndex,
-          priceNumerator: twentyBN,
+          priceNumerator: new BN(20),
           priceDenominator: tenBN,
           remainingAmount: tenBN,
         }, {
           user: user_2.toLowerCase(),
           sellTokenBalance: zeroBN,
-          buyToken: zeroBN,
-          sellToken: oneBN,
+          buyToken: 0,
+          sellToken: 1,
           validFrom: batchIndex,
           validUntil: batchIndex,
           priceNumerator: new BN(500),
@@ -1483,7 +1479,6 @@ contract("StablecoinConverter", async (accounts) => {
       await stablecoinConverter.placeOrder(0, 1, batchIndex, 500, 400, { from: user_2 })
 
       const auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
-      assert.equal(auctionElements.length, 2)
       assert.equal(JSON.stringify(auctionElements), JSON.stringify(orderInfo))
     })
     it("credits balance when it's valid", async () => {
