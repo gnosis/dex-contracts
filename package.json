@@ -36,7 +36,7 @@
     "multi-token"
   ],
   "author": "GNOSIS",
-  "license": "ISC",
+  "license": "LGPL-3.0",
   "bugs": {
     "url": "https://github.com/gnosis/dex-contracts/issues"
   },
