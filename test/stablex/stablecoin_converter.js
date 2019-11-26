@@ -148,6 +148,14 @@ contract("StablecoinConverter", async (accounts) => {
     })
   })
   describe("placeOrder()", () => {
+    it("rejects orders between same tokens", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+      const currentBatch = (await stablecoinConverter.getCurrentBatchId()).toNumber()
+      await truffleAssert.reverts(
+        stablecoinConverter.placeValidFromOrders.call([0], [0], [currentBatch - 1], [1], [1], [1]),
+        "Exchange tokens not distinct"
+      )
+    })
     it("places order and verifys contract storage is updated correctly", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
