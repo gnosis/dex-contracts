@@ -41,7 +41,6 @@
     "url": "https://github.com/gnosis/dex-contracts/issues"
   },
   "homepage": "https://github.com/gnosis/dex-contracts#readme",
-  "dependencies": {},
   "devDependencies": {
     "@gnosis.pm/mock-contract": "^3.0.7",
     "@gnosis.pm/owl-token": "^3.1.0",
