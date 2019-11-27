@@ -1,7 +1,12 @@
-const argv = require("../src/migration_utilities")
 const migrateStablecoinConverter = require("../src/migration_scripts_stablecoinConverter/migrate_PoC_dfusion")
+const argv = require("yargs")
+  .option("onlyMigrateSnappAuction", {
+    describe: "Allows to restrict the migration only to SnappAuction"
+  })
+  .help(false)
+  .version(false).argv
 
-module.exports = async function (deployer, network, accounts, web3) {
+module.exports = async function(deployer, network, accounts, web3) {
   if (!argv.onlyMigrateSnappAuction) {
     return migrateStablecoinConverter({
       artifacts,
