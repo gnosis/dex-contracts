@@ -10,13 +10,13 @@
     "test": "truffle test",
     "test-stablex": "truffle test test/stablex/*",
     "test-snapp": "truffle test test/snapp/*",
-    "coverage": "./node_modules/.bin/solidity-coverage",
+    "coverage": "solidity-coverage",
     "networks-extract": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/extract_network_info.js",
     "networks-inject": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/inject_network_info.js",
     "networks-reset": "mkdir -p build/contracts && npx truffle networks --clean && npm run networks-inject",
     "verify-stablex": "truffle run verify StablecoinConverter",
-    "lint": "./node_modules/.bin/eslint .",
-    "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\""
+    "lint": "eslint .",
+    "solhint": "solhint \"contracts/**/*.sol\""
   },
   "repository": {
     "type": "git",
