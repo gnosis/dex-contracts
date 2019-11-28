@@ -196,7 +196,7 @@ contract EpochTokenLocker {
       * @param token address of ERC20 token
       * return stateIndex when withdraw was requested
       */
-    function getWithdrawableAmount(address user, address token)
+    function getClaimableAmount(address user, address token)
         public
         view
         returns (uint256)
