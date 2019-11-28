@@ -1,4 +1,4 @@
-const { getDependency } = require("../migration_utilities")
+const { getDependency } = require("./migration_utilities")
 
 async function migrate({
   artifacts,

@@ -1,4 +1,4 @@
-const migrateSnappAuction = require("../src/migration_scripts_snappAuction/migrate_snapp_auction")
+const migrateSnappAuction = require("../src/migrate_snapp_auction")
 const argv = require("yargs")
   .option("onlyMigrateStableX", {
     describe: "Allows to restrict the migration only to StableX"
