@@ -230,14 +230,14 @@ contract("StablecoinConverter", async accounts => {
       )
     })
   })
-  describe("freeStorageOfOrder()", () => {
+  describe("freeStorageOfOrders()", () => {
     it("places a order, then cancels and deletes it", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
       const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
       await stablecoinConverter.cancelOrders([id])
       await waitForNSeconds(BATCH_TIME)
-      await stablecoinConverter.freeStorageOfOrder([id])
+      await stablecoinConverter.freeStorageOfOrders([id])
 
       assert.equal((await stablecoinConverter.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
     })
@@ -253,7 +253,7 @@ contract("StablecoinConverter", async accounts => {
       const stablecoinConverter = await setupGenericStableX()
       const id = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
       await stablecoinConverter.cancelOrders([id])
-      await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrder([id]), "Order is still valid")
+      await truffleAssert.reverts(stablecoinConverter.freeStorageOfOrders([id]), "Order is still valid")
     })
     it("deletes several orders successfully", async () => {
       const stablecoinConverter = await setupGenericStableX()
@@ -261,7 +261,7 @@ contract("StablecoinConverter", async accounts => {
       const id2 = await sendTxAndGetReturnValue(stablecoinConverter.placeOrder, 0, 1, 3, 10, 20)
       await stablecoinConverter.cancelOrders([id, id2])
       await waitForNSeconds(BATCH_TIME)
-      await stablecoinConverter.freeStorageOfOrder([id, id2])
+      await stablecoinConverter.freeStorageOfOrders([id, id2])
       assert.equal((await stablecoinConverter.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
       assert.equal(
         (await stablecoinConverter.orders(user_1, id2)).priceDenominator,
@@ -1625,7 +1625,7 @@ contract("StablecoinConverter", async accounts => {
 
       await stablecoinConverter.cancelOrders([0, 1])
       await waitForNSeconds(BATCH_TIME)
-      await stablecoinConverter.freeStorageOfOrder([1])
+      await stablecoinConverter.freeStorageOfOrders([1])
 
       const auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
       assert.equal(JSON.stringify(auctionElements), JSON.stringify([canceledOrderInfo, freedOrderInfo, validOrderInfo]))
@@ -1705,7 +1705,7 @@ contract("StablecoinConverter", async accounts => {
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, batchIndex)
 
-      await stablecoinConverter.freeStorageOfOrder([0])
+      await stablecoinConverter.freeStorageOfOrders([0])
 
       auctionElements = decodeAuctionElements(await stablecoinConverter.getEncodedAuctionElements())
       assert.equal(auctionElements.length, 1)

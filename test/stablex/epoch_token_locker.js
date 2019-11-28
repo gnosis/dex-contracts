@@ -4,16 +4,10 @@ const MockContract = artifacts.require("MockContract")
 const ERC20Interface = artifacts.require("ERC20")
 
 const truffleAssert = require("truffle-assertions")
-const {waitForNSeconds} = require("../utilities")
+const {closeAuction} = require("../../scripts/stablex/utilities")
 
 contract("EpochTokenLocker", async accounts => {
   const [user_1, user_2] = accounts
-
-  let BATCH_TIME
-  before(async () => {
-    const instance = await EpochTokenLocker.new()
-    BATCH_TIME = (await instance.BATCH_TIME.call()).toNumber()
-  })
 
   describe("deposit()", () => {
     it("processes a deposit and stores it in the pendingDeposits", async () => {
@@ -47,12 +41,12 @@ contract("EpochTokenLocker", async accounts => {
       assert.equal((await epochTokenLocker.getPendingDepositAmount(user_1, ERC20.address)).toNumber(), 200)
     })
 
-    it("does not consolidates two deposits, if they are not deposited during same stateIndex", async () => {
+    it("does not consolidate two deposits, if they are not deposited during same stateIndex", async () => {
       const epochTokenLocker = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
       await epochTokenLocker.deposit(ERC20.address, 100)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       await epochTokenLocker.deposit(ERC20.address, 200)
       const currentStateIndex = await epochTokenLocker.getCurrentBatchId.call()
 
@@ -83,7 +77,7 @@ contract("EpochTokenLocker", async accounts => {
       await ERC20.givenAnyReturnBool(true)
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
       // checking that the transfer in withdraw was called
       const token = await ERC20Interface.new()
@@ -124,11 +118,11 @@ contract("EpochTokenLocker", async accounts => {
       await ERC20.givenAnyReturnBool(true)
 
       await epochTokenLocker.deposit(ERC20.address, 100)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       assert.equal(await epochTokenLocker.getBalance.call(user_1, ERC20.address), 100)
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       await epochTokenLocker.withdraw(user_1, ERC20.address)
 
       assert.equal(await epochTokenLocker.getPendingWithdrawAmount(user_1, ERC20.address), 0)
@@ -144,7 +138,7 @@ contract("EpochTokenLocker", async accounts => {
       await ERC20.givenAnyReturnBool(true)
 
       await epochTokenLocker.deposit(ERC20.address, 100)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       assert.equal(await epochTokenLocker.getBalance(user_1, ERC20.address), 100)
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
@@ -156,10 +150,10 @@ contract("EpochTokenLocker", async accounts => {
       await ERC20.givenAnyReturnBool(true)
 
       await epochTokenLocker.deposit(ERC20.address, 50)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       await epochTokenLocker.withdraw(user_1, ERC20.address)
 
       const token = await ERC20Interface.new()
@@ -172,7 +166,7 @@ contract("EpochTokenLocker", async accounts => {
       await ERC20.givenAnyReturnBool(true)
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100, {from: user_1})
-      await waitForNSeconds(BATCH_TIME + 1)
+      await closeAuction(epochTokenLocker)
       await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(user_1, ERC20.address, 100)
 
       const batchId = await epochTokenLocker.getCurrentBatchId.call()
@@ -190,7 +184,7 @@ contract("EpochTokenLocker", async accounts => {
       await ERC20.givenAnyReturnBool(true)
 
       await epochTokenLocker.deposit(ERC20.address, 100)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       assert.equal((await epochTokenLocker.getBalance.call(user_1, ERC20.address)).toNumber(), 100)
     })
     it("returns just the balance, if there are no pending deposit from a previous time and no withdraws", async () => {
@@ -207,7 +201,7 @@ contract("EpochTokenLocker", async accounts => {
       await ERC20.givenAnyReturnBool(true)
 
       await epochTokenLocker.deposit(ERC20.address, 100)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       assert.equal(await epochTokenLocker.getBalance.call(user_1, ERC20.address), 100)
     })
     it("returns just the balance + pending deposit - depending withdraws", async () => {
@@ -217,7 +211,7 @@ contract("EpochTokenLocker", async accounts => {
 
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.requestWithdraw(ERC20.address, 50)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       assert.equal(await epochTokenLocker.getBalance.call(user_1, ERC20.address), 50)
     })
     it("returns just the balance + pending deposit - depending withdraws and protects overflows", async () => {
@@ -227,7 +221,7 @@ contract("EpochTokenLocker", async accounts => {
 
       await epochTokenLocker.deposit(ERC20.address, 100)
       await epochTokenLocker.requestWithdraw(ERC20.address, 150)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       assert.equal(await epochTokenLocker.getBalance.call(user_1, ERC20.address), 0)
     })
     it("returns just the balance + pending deposit if withdraw was made in same stateIndex", async () => {
@@ -236,7 +230,7 @@ contract("EpochTokenLocker", async accounts => {
       await ERC20.givenAnyReturnBool(true)
 
       await epochTokenLocker.deposit(ERC20.address, 100)
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       await epochTokenLocker.requestWithdraw(ERC20.address, 150)
       assert.equal(await epochTokenLocker.getBalance.call(user_1, ERC20.address), 100)
     })
@@ -272,7 +266,7 @@ contract("EpochTokenLocker", async accounts => {
 
       const currentStateIndex = await epochTokenLocker.getCurrentBatchId.call()
       await epochTokenLocker.requestWithdraw(ERC20.address, 100, {from: user_1})
-      await waitForNSeconds(BATCH_TIME + 1)
+      await closeAuction(epochTokenLocker)
       await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(user_1, ERC20.address, 100)
 
       const batchId = await epochTokenLocker.getCurrentBatchId.call()
@@ -301,7 +295,7 @@ contract("EpochTokenLocker", async accounts => {
       await ERC20.givenAnyReturnBool(true)
 
       await epochTokenLocker.deposit(ERC20.address, 100, {from: user_2})
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(epochTokenLocker)
       await epochTokenLocker.subtractBalanceTest(user_2, ERC20.address, 50)
 
       assert.equal(await epochTokenLocker.getBalance(user_2, ERC20.address), 50)
