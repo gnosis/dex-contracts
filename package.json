@@ -17,7 +17,8 @@
     "verify-stablex": "truffle run verify StablecoinConverter",
     "lint": "./node_modules/.bin/eslint .",
     "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\"",
-    "prettier": "./node_modules/.bin/prettier --write 'contracts/**/*.sol'"
+    "prettier": "./node_modules/.bin/prettier --write 'contracts/**/*.sol'",
+    "pretty-check": "./node_modules/.bin/prettier --check 'contracts/**/*.sol'"
   },
   "repository": {
     "type": "git",
