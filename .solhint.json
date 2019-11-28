@@ -1,32 +1,17 @@
 {
-    "extends": "solhint:default",
-    "rules": {
-        "indent": [
-            "error",
-            4
-        ],
-        "quotes": [
-            "error",
-            "double"
-        ],
-        "max-line-length": [
-            "error",
-            129
-        ],
-        "function-max-lines": [
-            "warn",
-            57
-        ],
-        "max-states-count": [
-            "error",
-            18
-        ],
-        "compiler-fixed": true,
-        "no-simple-event-func-name": true,
-        "not-rely-on-time": false,
-        "no-empty-blocks": "off",
-        "two-lines-top-level-separator": "warn",
-        "separate-by-one-line-in-contract": "warn",
-        "bracket-align": "warn"
-    }
+  "extends": "solhint:default",
+  "rules": {
+    "indent": ["error", 4],
+    "quotes": ["error", "double"],
+    "max-line-length": ["error", 129],
+    "function-max-lines": ["error", 57],
+    "max-states-count": ["error", 18],
+    "compiler-fixed": true,
+    "no-simple-event-func-name": true,
+    "not-rely-on-time": false,
+    "no-empty-blocks": "off",
+    "two-lines-top-level-separator": "warn",
+    "separate-by-one-line-in-contract": "warn",
+    "bracket-align": "warn"
+  }
 }

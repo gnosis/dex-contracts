@@ -14,28 +14,15 @@ contract TokenConservationWrapper {
         uint128 buyAmount,
         uint128 sellAmount
     ) public pure returns (int256[] memory) {
-        testInstance.updateTokenConservation(
-            buyToken,
-            sellToken,
-            tokenIdsForPrice,
-            buyAmount,
-            sellAmount
-        );
+        testInstance.updateTokenConservation(buyToken, sellToken, tokenIdsForPrice, buyAmount, sellAmount);
         return testInstance;
     }
 
-    function checkTokenConservationTest(int256[] memory testInstance)
-        public
-        pure
-    {
+    function checkTokenConservationTest(int256[] memory testInstance) public pure {
         testInstance.checkTokenConservation();
     }
 
-    function checkPriceOrdering(uint16[] memory tokenIdsForPrice)
-        public
-        pure
-        returns (bool)
-    {
+    function checkPriceOrdering(uint16[] memory tokenIdsForPrice) public pure returns (bool) {
         return tokenIdsForPrice.checkPriceOrdering();
     }
 }

@@ -14,31 +14,10 @@ library SnappBaseCore {
     uint8 public constant DEPOSIT_BATCH_SIZE = 100;
     uint8 public constant WITHDRAW_BATCH_SIZE = 100;
 
-    event WithdrawRequest(
-        uint16 accountId,
-        uint8 tokenId,
-        uint128 amount,
-        uint256 slot,
-        uint16 slotIndex
-    );
-    event Deposit(
-        uint16 accountId,
-        uint8 tokenId,
-        uint128 amount,
-        uint256 slot,
-        uint16 slotIndex
-    );
-    event StateTransition(
-        uint8 transitionType,
-        uint256 stateIndex,
-        bytes32 stateHash,
-        uint256 slot
-    );
-    event SnappInitialization(
-        bytes32 stateHash,
-        uint8 maxTokens,
-        uint16 maxAccounts
-    );
+    event WithdrawRequest(uint16 accountId, uint8 tokenId, uint128 amount, uint256 slot, uint16 slotIndex);
+    event Deposit(uint16 accountId, uint8 tokenId, uint128 amount, uint256 slot, uint16 slotIndex);
+    event StateTransition(uint8 transitionType, uint256 stateIndex, bytes32 stateHash, uint256 slot);
+    event SnappInitialization(bytes32 stateHash, uint8 maxTokens, uint16 maxAccounts);
 
     enum TransitionType {Deposit, Withdraw}
 
@@ -84,27 +63,15 @@ library SnappBaseCore {
         return data.stateRoots.length - 1;
     }
 
-    function publicKeyToAccountMap(Data storage data, address addr)
-        public
-        view
-        returns (uint16)
-    {
+    function publicKeyToAccountMap(Data storage data, address addr) public view returns (uint16) {
         return IdToAddressBiMap.getId(data.registeredAccounts, addr);
     }
 
-    function accountToPublicKeyMap(Data storage data, uint16 id)
-        public
-        view
-        returns (address)
-    {
+    function accountToPublicKeyMap(Data storage data, uint16 id) public view returns (address) {
         return IdToAddressBiMap.getAddressAt(data.registeredAccounts, id);
     }
 
-    function tokenIdToAddressMap(Data storage data, uint16 id)
-        public
-        view
-        returns (address)
-    {
+    function tokenIdToAddressMap(Data storage data, uint16 id) public view returns (address) {
         return IdToAddressBiMap.getAddressAt(data.registeredTokens, id);
     }
 
@@ -114,25 +81,14 @@ library SnappBaseCore {
     function openAccount(Data storage data, uint16 accountId) public {
         require(accountId < MAX_ACCOUNT_ID, "Account index exceeds max");
         require(
-            IdToAddressBiMap.insert(
-                data.registeredAccounts,
-                accountId,
-                msg.sender
-            ),
+            IdToAddressBiMap.insert(data.registeredAccounts, accountId, msg.sender),
             "Address occupies slot or requested slot already taken"
         );
     }
 
     function addToken(Data storage data, address _tokenAddress) public {
         require(data.numTokens + 1 <= MAX_TOKENS, "Max tokens reached");
-        require(
-            IdToAddressBiMap.insert(
-                data.registeredTokens,
-                data.numTokens,
-                _tokenAddress
-            ),
-            "Token already registered"
-        );
+        require(IdToAddressBiMap.insert(data.registeredTokens, data.numTokens, _tokenAddress), "Token already registered");
         data.numTokens++;
     }
 
@@ -141,24 +97,16 @@ library SnappBaseCore {
      */
     function deposit(Data storage data, uint8 tokenId, uint128 amount) public {
         require(amount != 0, "Must deposit positive amount");
+        require(IdToAddressBiMap.hasId(data.registeredTokens, tokenId), "Requested token is not registered");
         require(
-            IdToAddressBiMap.hasId(data.registeredTokens, tokenId),
-            "Requested token is not registered"
-        );
-        require(
-            ERC20(tokenIdToAddressMap(data, tokenId)).transferFrom(
-                msg.sender,
-                address(this),
-                amount
-            ),
+            ERC20(tokenIdToAddressMap(data, tokenId)).transferFrom(msg.sender, address(this), amount),
             "Unsuccessful transfer"
         );
 
         if (
             data.depositIndex == MAX_UINT ||
             data.deposits[data.depositIndex].size == DEPOSIT_BATCH_SIZE ||
-            block.timestamp >
-            data.deposits[data.depositIndex].creationTimestamp + 3 minutes
+            block.timestamp > data.deposits[data.depositIndex].creationTimestamp + 3 minutes
         ) {
             data.depositIndex++;
             data.deposits[data.depositIndex] = PendingBatch({
@@ -172,55 +120,24 @@ library SnappBaseCore {
         // Update Deposit Hash based on request
         uint16 accountId = publicKeyToAccountMap(data, msg.sender);
         bytes32 nextDepositHash = sha256(
-            abi.encodePacked(
-                data.deposits[data.depositIndex].shaHash,
-                encodeFlux(accountId, tokenId, amount)
-            )
+            abi.encodePacked(data.deposits[data.depositIndex].shaHash, encodeFlux(accountId, tokenId, amount))
         );
         data.deposits[data.depositIndex].shaHash = nextDepositHash;
 
-        emit Deposit(
-            accountId,
-            tokenId,
-            amount,
-            data.depositIndex,
-            data.deposits[data.depositIndex].size
-        );
+        emit Deposit(accountId, tokenId, amount, data.depositIndex, data.deposits[data.depositIndex].size);
         // Only increment size after event (so it is emitted as an index)
         data.deposits[data.depositIndex].size++;
     }
 
-    function applyDeposits(
-        Data storage data,
-        uint256 slot,
-        bytes32 _currStateRoot,
-        bytes32 _newStateRoot,
-        bytes32 _depositHash
-    ) public {
-        require(
-            slot != MAX_UINT && slot <= data.depositIndex,
-            "Requested deposit slot does not exist"
-        );
-        require(
-            slot == 0 || data.deposits[slot - 1].appliedAccountStateIndex != 0,
-            "Must apply deposit slots in order!"
-        );
-        require(
-            data.deposits[slot].shaHash == _depositHash,
-            "Deposits have been reorged"
-        );
-        require(
-            data.deposits[slot].appliedAccountStateIndex == 0,
-            "Deposits already processed"
-        );
-        require(
-            block.timestamp > data.deposits[slot].creationTimestamp + 3 minutes,
-            "Requested deposit slot is still active"
-        );
-        require(
-            data.stateRoots[stateIndex(data)] == _currStateRoot,
-            "Incorrect State Root"
-        );
+    function applyDeposits(Data storage data, uint256 slot, bytes32 _currStateRoot, bytes32 _newStateRoot, bytes32 _depositHash)
+        public
+    {
+        require(slot != MAX_UINT && slot <= data.depositIndex, "Requested deposit slot does not exist");
+        require(slot == 0 || data.deposits[slot - 1].appliedAccountStateIndex != 0, "Must apply deposit slots in order!");
+        require(data.deposits[slot].shaHash == _depositHash, "Deposits have been reorged");
+        require(data.deposits[slot].appliedAccountStateIndex == 0, "Deposits already processed");
+        require(block.timestamp > data.deposits[slot].creationTimestamp + 3 minutes, "Requested deposit slot is still active");
+        require(data.stateRoots[stateIndex(data)] == _currStateRoot, "Incorrect State Root");
 
         // Note that the only slot that can ever be empty is the first (at index zero)
         // This occurs when no deposits are made within the first 20 blocks of the contract's deployment
@@ -230,30 +147,17 @@ library SnappBaseCore {
         data.stateRoots.push(_newStateRoot);
         data.deposits[slot].appliedAccountStateIndex = stateIndex(data);
 
-        emit StateTransition(
-            uint8(TransitionType.Deposit),
-            stateIndex(data),
-            _newStateRoot,
-            slot
-        );
+        emit StateTransition(uint8(TransitionType.Deposit), stateIndex(data), _newStateRoot, slot);
     }
 
     /**
      * Withdraws
      */
-    function requestWithdrawal(Data storage data, uint8 tokenId, uint128 amount)
-        public
-    {
+    function requestWithdrawal(Data storage data, uint8 tokenId, uint128 amount) public {
         require(amount != 0, "Must request positive amount");
+        require(IdToAddressBiMap.hasId(data.registeredTokens, tokenId), "Requested token is not registered");
         require(
-            IdToAddressBiMap.hasId(data.registeredTokens, tokenId),
-            "Requested token is not registered"
-        );
-        require(
-            ERC20(tokenIdToAddressMap(data, tokenId)).balanceOf(
-                address(this)
-            ) >=
-                amount,
+            ERC20(tokenIdToAddressMap(data, tokenId)).balanceOf(address(this)) >= amount,
             "Requested amount exceeds contract's balance"
         );
 
@@ -261,11 +165,8 @@ library SnappBaseCore {
         // This is governed by WITHDRAW_BATCH_SIZE and creationTimestamp
         if (
             data.withdrawIndex == MAX_UINT ||
-            data.pendingWithdraws[data.withdrawIndex].size ==
-            WITHDRAW_BATCH_SIZE ||
-            block.timestamp >
-            data.pendingWithdraws[data.withdrawIndex].creationTimestamp +
-                3 minutes
+            data.pendingWithdraws[data.withdrawIndex].size == WITHDRAW_BATCH_SIZE ||
+            block.timestamp > data.pendingWithdraws[data.withdrawIndex].creationTimestamp + 3 minutes
         ) {
             data.withdrawIndex++;
             data.pendingWithdraws[data.withdrawIndex] = PendingBatch({
@@ -279,21 +180,12 @@ library SnappBaseCore {
         // Update Withdraw Hash based on request
         uint16 accountId = publicKeyToAccountMap(data, msg.sender);
         bytes32 nextWithdrawHash = sha256(
-            abi.encodePacked(
-                data.pendingWithdraws[data.withdrawIndex].shaHash,
-                encodeFlux(accountId, tokenId, amount)
-            )
+            abi.encodePacked(data.pendingWithdraws[data.withdrawIndex].shaHash, encodeFlux(accountId, tokenId, amount))
         );
 
         data.pendingWithdraws[data.withdrawIndex].shaHash = nextWithdrawHash;
 
-        emit WithdrawRequest(
-            accountId,
-            tokenId,
-            amount,
-            data.withdrawIndex,
-            data.pendingWithdraws[data.withdrawIndex].size
-        );
+        emit WithdrawRequest(accountId, tokenId, amount, data.withdrawIndex, data.pendingWithdraws[data.withdrawIndex].size);
         // Only increment size after event (so it is emitted as an index)
         data.pendingWithdraws[data.withdrawIndex].size++;
     }
@@ -306,32 +198,18 @@ library SnappBaseCore {
         bytes32 _newStateRoot,
         bytes32 _withdrawHash
     ) public {
+        require(slot != MAX_UINT && slot <= data.withdrawIndex, "Requested withdrawal slot does not exist");
         require(
-            slot != MAX_UINT && slot <= data.withdrawIndex,
-            "Requested withdrawal slot does not exist"
-        );
-        require(
-            slot == 0 ||
-                data.pendingWithdraws[slot - 1].appliedAccountStateIndex != 0,
+            slot == 0 || data.pendingWithdraws[slot - 1].appliedAccountStateIndex != 0,
             "Previous withdraw slot not processed!"
         );
+        require(data.pendingWithdraws[slot].shaHash == _withdrawHash, "Withdraws have been reorged");
+        require(data.pendingWithdraws[slot].appliedAccountStateIndex == 0, "Withdraws already processed");
         require(
-            data.pendingWithdraws[slot].shaHash == _withdrawHash,
-            "Withdraws have been reorged"
-        );
-        require(
-            data.pendingWithdraws[slot].appliedAccountStateIndex == 0,
-            "Withdraws already processed"
-        );
-        require(
-            block.timestamp >
-                data.pendingWithdraws[slot].creationTimestamp + 3 minutes,
+            block.timestamp > data.pendingWithdraws[slot].creationTimestamp + 3 minutes,
             "Requested withdraw slot is still active"
         );
-        require(
-            data.stateRoots[stateIndex(data)] == _currStateRoot,
-            "Incorrect State Root"
-        );
+        require(data.stateRoots[stateIndex(data)] == _currStateRoot, "Incorrect State Root");
 
         // Update account states
         data.stateRoots.push(_newStateRoot);
@@ -344,12 +222,7 @@ library SnappBaseCore {
             appliedAccountStateIndex: stateIndex(data)
         });
 
-        emit StateTransition(
-            uint8(TransitionType.Withdraw),
-            stateIndex(data),
-            _newStateRoot,
-            slot
-        );
+        emit StateTransition(uint8(TransitionType.Withdraw), stateIndex(data), _newStateRoot, slot);
     }
 
     function claimWithdrawal(
@@ -362,24 +235,12 @@ library SnappBaseCore {
         bytes memory proof
     ) public {
         // No need to check tokenId or accountId (wouldn't pass merkle proof if unregistered).
-        require(
-            data.pendingWithdraws[slot].appliedAccountStateIndex > 0,
-            "Requested slot has not been processed"
-        );
-        require(
-            data.claimableWithdraws[slot].claimedBitmap[inclusionIndex] ==
-                false,
-            "Already claimed"
-        );
+        require(data.pendingWithdraws[slot].appliedAccountStateIndex > 0, "Requested slot has not been processed");
+        require(data.claimableWithdraws[slot].claimedBitmap[inclusionIndex] == false, "Already claimed");
 
         bytes32 leaf = encodeFlux(accountId, tokenId, amount);
         require(
-            leaf.checkMembership(
-                inclusionIndex,
-                data.claimableWithdraws[slot].merkleRoot,
-                proof,
-                7
-            ),
+            leaf.checkMembership(inclusionIndex, data.claimableWithdraws[slot].merkleRoot, proof, 7),
             "Failed Merkle membership check."
         );
 
@@ -387,22 +248,10 @@ library SnappBaseCore {
         data.claimableWithdraws[slot].claimedBitmap[inclusionIndex] = true;
 
         // There is no situation where contract balance can't afford the upcoming transfer.
-        ERC20(tokenIdToAddressMap(data, tokenId)).transfer(
-            accountToPublicKeyMap(data, accountId),
-            amount
-        );
+        ERC20(tokenIdToAddressMap(data, tokenId)).transfer(accountToPublicKeyMap(data, accountId), amount);
     }
 
-    function encodeFlux(uint16 accountId, uint8 tokenId, uint128 amount)
-        internal
-        pure
-        returns (bytes32)
-    {
-        return
-            bytes32(
-                uint256(amount) +
-                    (uint256(tokenId) << 128) +
-                    (uint256(accountId) << 136)
-            );
+    function encodeFlux(uint16 accountId, uint8 tokenId, uint128 amount) internal pure returns (bytes32) {
+        return bytes32(uint256(amount) + (uint256(tokenId) << 128) + (uint256(accountId) << 136));
     }
 }

@@ -16,13 +16,7 @@ contract SnappBase is Ownable {
      * Modifiers
      */
     modifier onlyRegistered() {
-        require(
-            IdToAddressBiMap.hasAddress(
-                coreData.registeredAccounts,
-                msg.sender
-            ),
-            "Must have registered account"
-        );
+        require(IdToAddressBiMap.hasAddress(coreData.registeredAccounts, msg.sender), "Must have registered account");
         _;
     }
 
@@ -49,11 +43,7 @@ contract SnappBase is Ownable {
         return coreData.deposits[index].appliedAccountStateIndex != 0;
     }
 
-    function getDepositCreationTimestamp(uint256 slot)
-        public
-        view
-        returns (uint256)
-    {
+    function getDepositCreationTimestamp(uint256 slot) public view returns (uint256) {
         return coreData.deposits[slot].creationTimestamp;
     }
 
@@ -69,11 +59,7 @@ contract SnappBase is Ownable {
         return coreData.pendingWithdraws[index].appliedAccountStateIndex != 0;
     }
 
-    function getWithdrawCreationTimestamp(uint256 slot)
-        public
-        view
-        returns (uint256)
-    {
+    function getWithdrawCreationTimestamp(uint256 slot) public view returns (uint256) {
         return coreData.pendingWithdraws[slot].creationTimestamp;
     }
 
@@ -81,26 +67,16 @@ contract SnappBase is Ownable {
         return coreData.pendingWithdraws[slot].shaHash;
     }
 
-    function getClaimableWithdrawHash(uint256 slot)
-        public
-        view
-        returns (bytes32)
-    {
+    function getClaimableWithdrawHash(uint256 slot) public view returns (bytes32) {
         return coreData.claimableWithdraws[slot].merkleRoot;
     }
 
-    function hasWithdrawBeenClaimed(uint256 slot, uint16 index)
-        public
-        view
-        returns (bool)
-    {
+    function hasWithdrawBeenClaimed(uint256 slot, uint16 index) public view returns (bool) {
         return coreData.claimableWithdraws[slot].claimedBitmap[index];
     }
 
     function isPendingWithdrawActive(uint256 slot) public view returns (bool) {
-        return
-            block.timestamp <=
-            coreData.deposits[slot].creationTimestamp + 3 minutes;
+        return block.timestamp <= coreData.deposits[slot].creationTimestamp + 3 minutes;
     }
 
     function publicKeyToAccountMap(address addr) public view returns (uint16) {
@@ -141,27 +117,17 @@ contract SnappBase is Ownable {
         coreData.deposit(tokenId, amount);
     }
 
-    function applyDeposits(
-        uint256 slot,
-        bytes32 _currStateRoot,
-        bytes32 _newStateRoot,
-        bytes32 _depositHash
-    ) public onlyOwner() {
-        coreData.applyDeposits(
-            slot,
-            _currStateRoot,
-            _newStateRoot,
-            _depositHash
-        );
+    function applyDeposits(uint256 slot, bytes32 _currStateRoot, bytes32 _newStateRoot, bytes32 _depositHash)
+        public
+        onlyOwner()
+    {
+        coreData.applyDeposits(slot, _currStateRoot, _newStateRoot, _depositHash);
     }
 
     /**
      * Withdraws
      */
-    function requestWithdrawal(uint8 tokenId, uint128 amount)
-        public
-        onlyRegistered()
-    {
+    function requestWithdrawal(uint8 tokenId, uint128 amount) public onlyRegistered() {
         coreData.requestWithdrawal(tokenId, amount);
     }
 
@@ -172,13 +138,7 @@ contract SnappBase is Ownable {
         bytes32 _newStateRoot,
         bytes32 _withdrawHash
     ) public onlyOwner() {
-        coreData.applyWithdrawals(
-            slot,
-            _merkleRoot,
-            _currStateRoot,
-            _newStateRoot,
-            _withdrawHash
-        );
+        coreData.applyWithdrawals(slot, _merkleRoot, _currStateRoot, _newStateRoot, _withdrawHash);
     }
 
     function claimWithdrawal(
@@ -189,13 +149,6 @@ contract SnappBase is Ownable {
         uint128 amount,
         bytes memory proof
     ) public {
-        coreData.claimWithdrawal(
-            slot,
-            inclusionIndex,
-            accountId,
-            tokenId,
-            amount,
-            proof
-        );
+        coreData.claimWithdrawal(slot, inclusionIndex, accountId, tokenId, amount, proof);
     }
 }
