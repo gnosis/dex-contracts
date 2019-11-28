@@ -163,6 +163,12 @@ contract EpochTokenLocker {
         view
         returns (uint256)
     {
+        if (
+            balanceStates[user][token].pendingDeposits.stateIndex >=
+            getCurrentBatchId()
+        ) {
+            return 0;
+        }
         return balanceStates[user][token].pendingDeposits.amount;
     }
 
@@ -176,6 +182,12 @@ contract EpochTokenLocker {
         view
         returns (uint256)
     {
+        if (
+            balanceStates[user][token].pendingDeposits.stateIndex >=
+            getCurrentBatchId()
+        ) {
+            return 0;
+        }
         return balanceStates[user][token].pendingDeposits.stateIndex;
     }
 
@@ -184,11 +196,17 @@ contract EpochTokenLocker {
       * @param token address of ERC20 token
       * return stateIndex when withdraw was requested
       */
-    function getPendingWithdrawAmount(address user, address token)
+    function getWithdrawableAmount(address user, address token)
         public
         view
         returns (uint256)
     {
+        if (
+            balanceStates[user][token].pendingWithdraws.stateIndex >=
+            getCurrentBatchId()
+        ) {
+            return 0;
+        }
         return balanceStates[user][token].pendingWithdraws.amount;
     }
 
@@ -202,6 +220,12 @@ contract EpochTokenLocker {
         view
         returns (uint256)
     {
+        if (
+            balanceStates[user][token].pendingWithdraws.stateIndex >=
+            getCurrentBatchId()
+        ) {
+            return 0;
+        }
         return balanceStates[user][token].pendingWithdraws.stateIndex;
     }
 
