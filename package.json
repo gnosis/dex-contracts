@@ -1,24 +1,30 @@
 {
-  "name": "dex-contracts",
-  "version": "1.0.0",
+  "name": "@gnosis.pm/dex-contracts",
+  "version": "0.0.1",
   "description": "Contracts for dFusion multi-token batch auction exchange",
-  "main": ".eslintrc.js",
+  "main": "build/contracts",
   "directories": {
     "test": "test"
   },
   "scripts": {
     "test": "truffle test",
-    "coverage": "./node_modules/.bin/solidity-coverage",
+    "test-stablex": "truffle test test/stablex/*",
+    "test-snapp": "truffle test test/snapp/*",
+    "coverage": "solidity-coverage",
     "networks-extract": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/extract_network_info.js",
     "networks-inject": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/inject_network_info.js",
     "networks-reset": "mkdir -p build/contracts && npx truffle networks --clean && npm run networks-inject",
-    "lint": "./node_modules/.bin/eslint .",
-    "solhint": "./node_modules/.bin/solhint \"contracts/**/*.sol\""
+    "verify-stablex": "truffle run verify StablecoinConverter",
+    "lint": "eslint .",
+    "solhint": "solhint \"contracts/**/*.sol\""
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gnosis/dex-contracts.git"
   },
+  "files": [
+    "build"
+  ],
   "keywords": [
     "decentralized",
     "exchange",
@@ -30,28 +36,18 @@
     "multi-token"
   ],
   "author": "GNOSIS",
-  "license": "ISC",
+  "license": "LGPL-3.0",
   "bugs": {
     "url": "https://github.com/gnosis/dex-contracts/issues"
   },
   "homepage": "https://github.com/gnosis/dex-contracts#readme",
-  "dependencies": {
+  "devDependencies": {
     "@gnosis.pm/mock-contract": "^3.0.7",
     "@gnosis.pm/owl-token": "^3.1.0",
     "@gnosis.pm/solidity-data-structures": "^1.1.0",
     "@gnosis.pm/util-contracts": "^2.0.3",
     "axios": "^0.19.0",
     "bn.js": "^4.11.8",
-    "ethereumjs-abi": "^0.6.6",
-    "ethereumjs-util": "^6.0.0",
-    "fast-memoize": "^2.5.1",
-    "merkletreejs": "0.0.22",
-    "openzeppelin-solidity": "OpenZeppelin/openzeppelin-contracts#2c11ed59",
-    "solidity-bytes-utils": "0.0.8",
-    "truffle-contract": "^4.0.31",
-    "yargs": "^14.0.0"
-  },
-  "devDependencies": {
     "coveralls": "^3.0.4",
     "dotenv": "^8.0.0",
     "es6-promise": "^4.2.5",
@@ -59,14 +55,24 @@
     "eslint-plugin-no-only-tests": "^2.3.0",
     "eslint-plugin-react": "^7.12.3",
     "eth-gas-reporter": "^0.2.11",
+    "ethereumjs-abi": "^0.6.6",
+    "ethereumjs-util": "^6.0.0",
+    "fast-memoize": "^2.5.1",
     "husky": "^2.5.0",
+    "merkletreejs": "0.0.22",
     "minimist": "^1.2.0",
+    "node-fetch": "^2.6.0",
+    "openzeppelin-solidity": "OpenZeppelin/openzeppelin-contracts#2c11ed59",
     "solhint": "^1.5.0",
-    "solidity-coverage": "^0.5.11",
+    "solidity-bytes-utils": "0.0.8",
+    "solidity-coverage": "^0.6.7",
     "solidity-multicall": "^1.0.0",
     "solium": "^1.2.4",
-    "truffle": "^5.0.26",
+    "truffle": "^5.0.44",
     "truffle-assertions": "^0.8.0",
-    "truffle-hdwallet-provider": "^1.0.0-web3one.1"
+    "truffle-contract": "^4.0.31",
+    "truffle-hdwallet-provider": "^1.0.0-web3one.1",
+    "truffle-plugin-verify": "^0.3.5",
+    "yargs": "^14.0.0"
   }
 }

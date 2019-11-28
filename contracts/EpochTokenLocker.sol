@@ -1,6 +1,7 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/Math.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -12,26 +13,26 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
  *  @author @gnosis/dfusion-team <https://github.com/orgs/gnosis/teams/dfusion-team/members>
  */
 contract EpochTokenLocker {
-    using SafeMath for uint;
+    using SafeMath for uint256;
 
     event Deposit(
         address user,
         address token,
-        uint amount,
-        uint stateIndex
+        uint256 amount,
+        uint256 stateIndex
     );
 
     event WithdrawRequest(
         address user,
         address token,
-        uint amount,
-        uint stateIndex
+        uint256 amount,
+        uint256 stateIndex
     );
 
     event Withdraw(
         address user,
         address token,
-        uint amount
+        uint256 amount
     );
 
     uint32 constant public BATCH_TIME = 300;
@@ -39,7 +40,7 @@ contract EpochTokenLocker {
     mapping(address => mapping(address => BalanceState)) private balanceStates;
 
     // user => token => lastCreditBatchId
-    mapping(address => mapping (address => uint)) public lastCreditBatchId;
+    mapping(address => mapping (address => uint256)) public lastCreditBatchId;
 
     struct BalanceState {
         uint256 balance;
@@ -61,12 +62,9 @@ contract EpochTokenLocker {
       * Requirements:
       * - token transfer to contract is successfull
       */
-    function deposit(address token, uint amount) public {
+    function deposit(address token, uint256 amount) public {
         updateDepositsBalance(msg.sender, token);
-        require(
-            ERC20(token).transferFrom(msg.sender, address(this), amount),
-            "Tokentransfer for deposit was not successful"
-        );
+        SafeERC20.safeTransferFrom(IERC20(token), msg.sender, address(this), amount);
         // solhint-disable-next-line max-line-length
         balanceStates[msg.sender][token].pendingDeposits.amount = balanceStates[msg.sender][token].pendingDeposits.amount.add(amount);
         balanceStates[msg.sender][token].pendingDeposits.stateIndex = getCurrentBatchId();
@@ -79,7 +77,7 @@ contract EpochTokenLocker {
       *
       * Emits an {WithdrawRequest} event with relevent request information.
       */
-    function requestWithdraw(address token, uint amount) public {
+    function requestWithdraw(address token, uint256 amount) public {
         requestFutureWithdraw(token, amount, getCurrentBatchId());
     }
 
@@ -90,7 +88,7 @@ contract EpochTokenLocker {
       *
       * Emits an {WithdrawRequest} event with relevent request information.
       */
-    function requestFutureWithdraw(address token, uint amount, uint32 batchId) public {
+    function requestFutureWithdraw(address token, uint256 amount, uint32 batchId) public {
         // First process pendingWithdraw (if any), as otherwise balances might increase for currentBatchId - 1
         if (hasValidWithdrawRequest(msg.sender, token)) {
             withdraw(msg.sender, token);
@@ -120,7 +118,7 @@ contract EpochTokenLocker {
             lastCreditBatchId[msg.sender][token] < getCurrentBatchId(),
             "Withdraw not possible for token that is traded in the current auction"
         );
-        uint amount = Math.min(
+        uint256 amount = Math.min(
             balanceStates[user][token].balance,
             balanceStates[msg.sender][token].pendingWithdraws.amount
         );
@@ -128,7 +126,7 @@ contract EpochTokenLocker {
         balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
         delete balanceStates[user][token].pendingWithdraws;
 
-        ERC20(token).transfer(user, amount);
+        SafeERC20.safeTransfer(IERC20(token), user, amount);
         emit Withdraw(user, token, amount);
     }
     /**
@@ -140,7 +138,7 @@ contract EpochTokenLocker {
       * @param token address of ERC20 token
       * return amount of pending deposit if any (else 0)
       */
-    function getPendingDepositAmount(address user, address token) public view returns(uint) {
+    function getPendingDepositAmount(address user, address token) public view returns(uint256) {
         return balanceStates[user][token].pendingDeposits.amount;
     }
 
@@ -149,7 +147,7 @@ contract EpochTokenLocker {
       * @param token address of ERC20 token
       * return stateIndex of deposit's transfer
       */
-    function getPendingDepositBatchNumber(address user, address token) public view returns(uint) {
+    function getPendingDepositBatchNumber(address user, address token) public view returns(uint256) {
         return balanceStates[user][token].pendingDeposits.stateIndex;
     }
 
@@ -158,7 +156,7 @@ contract EpochTokenLocker {
       * @param token address of ERC20 token
       * return stateIndex when withdraw was requested
       */
-    function getPendingWithdrawAmount(address user, address token) public view returns(uint) {
+    function getPendingWithdrawAmount(address user, address token) public view returns(uint256) {
         return balanceStates[user][token].pendingWithdraws.amount;
     }
 
@@ -167,7 +165,7 @@ contract EpochTokenLocker {
       * @param token address of ERC20 token
       * return stateIndex at time of withdraw's request
       */
-    function getPendingWithdrawBatchNumber(address user, address token) public view returns(uint) {
+    function getPendingWithdrawBatchNumber(address user, address token) public view returns(uint256) {
         return balanceStates[user][token].pendingWithdraws.stateIndex;
     }
 
@@ -181,7 +179,7 @@ contract EpochTokenLocker {
     /** @dev used to determine how much time is left in a batch
       * return seconds remaining in current batch
       */
-    function getSecondsRemainingInBatch() public view returns(uint) {
+    function getSecondsRemainingInBatch() public view returns(uint256) {
         return BATCH_TIME - (now % BATCH_TIME);
     }
 
@@ -191,7 +189,7 @@ contract EpochTokenLocker {
       * return Current `token` balance of `user`'s account
       */
     function getBalance(address user, address token) public view returns(uint256) {
-        uint balance = balanceStates[user][token].balance;
+        uint256 balance = balanceStates[user][token].balance;
         if (balanceStates[user][token].pendingDeposits.stateIndex < getCurrentBatchId()) {
             balance = balance.add(balanceStates[user][token].pendingDeposits.amount);
         }
@@ -222,19 +220,19 @@ contract EpochTokenLocker {
      * by setting lastCreditBatchId to the current batchId and allow only withdraws in batches
      * with a higher batchId.
      */
-    function addBalanceAndBlockWithdrawForThisBatch(address user, address token, uint amount) internal {
+    function addBalanceAndBlockWithdrawForThisBatch(address user, address token, uint256 amount) internal {
         if (hasValidWithdrawRequest(user, token)) {
             lastCreditBatchId[user][token] = getCurrentBatchId();
         }
         addBalance(user, token, amount);
     }
 
-    function addBalance(address user, address token, uint amount) internal {
+    function addBalance(address user, address token, uint256 amount) internal {
         updateDepositsBalance(user, token);
         balanceStates[user][token].balance = balanceStates[user][token].balance.add(amount);
     }
 
-    function subtractBalance(address user, address token, uint amount) internal {
+    function subtractBalance(address user, address token, uint256 amount) internal {
         updateDepositsBalance(user, token);
         balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
     }

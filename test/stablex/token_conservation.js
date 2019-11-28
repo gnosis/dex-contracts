@@ -15,7 +15,15 @@ contract("TokenConservation", async () => {
       const testArray = [0, 1]
       await truffleAssert.reverts(
         tokenConservation.checkTokenConservationTest(testArray)
-        //Error message would be: "Token conservation does not hold", but coverage tool will not recognize
+        // Error message would be: "Token conservation does not hold", but coverage tool will not recognize
+      )
+    })
+    it("throws, if token conservation does not hold", async () => {
+      const tokenConservation = await TokenConservationWrapper.new()
+      const testArray = [-1]
+      await truffleAssert.reverts(
+        tokenConservation.checkTokenConservationTest(testArray),
+        "Token conservation at 0 must be positive"
       )
     })
   })
@@ -35,8 +43,6 @@ contract("TokenConservation", async () => {
       assert.equal(await tokenConservation.checkPriceOrdering([0, 1]), true, "Failed on [0, 1]")
       assert.equal(await tokenConservation.checkPriceOrdering([1, 2, 3]), true, "Failed on [1, 2, 3]")
     })
-
-
   })
 
   describe("updateTokenConservation()", () => {
@@ -70,7 +76,7 @@ contract("TokenConservation", async () => {
 
       await truffleAssert.reverts(
         tokenConservation.updateTokenConservationTest(testArray, buyToken, sellToken, tokenIdsForPrice, buyAmount, sellAmount)
-        //Error message would be: "Price not provided for token", but coverage tool will not recognize
+        // Error message would be: "Price not provided for token", but coverage tool will not recognize
       )
     })
   })

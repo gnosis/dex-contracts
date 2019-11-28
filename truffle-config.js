@@ -16,7 +16,7 @@ if (!privateKey && !mnemonic) {
 
 // Solc
 let solcUseDocker = process.env.SOLC_USE_DOCKER === 'true' || false
-let solcVersion = '<0.5.5'
+let solcVersion = '<0.5.7'
 
 
 // Gas price
@@ -62,5 +62,11 @@ module.exports = {
       gasPrice: 20,
       showTimeSpent: true
     }
+  },
+  plugins: [
+    'truffle-plugin-verify'
+  ],
+  api_keys: {
+    etherscan: process.env.MY_ETHERSCAN_API_KEY
   }
 }

@@ -2,6 +2,7 @@
 const { sha256 } = require("ethereumjs-util")
 const memoize = require("fast-memoize")
 const MerkleTree = require("merkletreejs")
+const BN = require("bn.js")
 
 /**
  * funds accounts with specified value for Mintable Token
@@ -48,7 +49,7 @@ const openAccounts = async function (contract, accounts) {
  * The object consists of:
  * 1.) contract to register account
  * 2.) owner of contract
- * 3.) number of tokens to be registered 
+ * 3.) number of tokens to be registered
  */
 const registerTokens = async function (token_artifact, contract, token_owner, numTokens) {
   const res = []
@@ -181,6 +182,9 @@ const UINT32_WIDTH = 4 * 2
 const UINT128_WIDTH = 16 * 2
 
 function decodeAuctionElements(bytes) {
+  if (!bytes) {
+    return []
+  }
   const result = []
   bytes = bytes.slice(2) // cutting of 0x
   while (bytes.length > 0) {
@@ -188,14 +192,14 @@ function decodeAuctionElements(bytes) {
     bytes = bytes.slice(112 * 2)
     result.push({
       user: "0x" + element.splice(0, ADDRESS_WIDTH).join(""), // address is only 20 bytes
-      sellTokenBalance: parseInt(element.splice(0, UINT256_WIDTH).join(""), 16),
+      sellTokenBalance: new BN(element.splice(0, UINT256_WIDTH).join(""), 16),
       buyToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
       sellToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
       validFrom: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
       validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
-      priceNumerator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
-      priceDenominator: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
-      remainingAmount: parseInt(element.splice(0, UINT128_WIDTH).join(""), 16),
+      priceNumerator: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
+      priceDenominator: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
+      remainingAmount: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
     })
   }
   return result
