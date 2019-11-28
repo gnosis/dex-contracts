@@ -2,7 +2,6 @@ pragma solidity ^0.5.0;
 
 import "openzeppelin-solidity/contracts/drafts/SignedSafeMath.sol";
 
-
 /** @title Token Conservation
  *  A library for updating and verifying the tokenConservation contraint for StablecoinConverter's batch auction
  *  @author @gnosis/dfusion-team <https://github.com/orgs/gnosis/teams/dfusion-team/members>
@@ -19,7 +18,7 @@ library TokenConservation {
       * @param sellAmount amount to be added at `self[sellTokenIndex]`
       */
     function updateTokenConservation(
-        int[] memory self,
+        int256[] memory self,
         uint16 buyToken,
         uint16 sellToken,
         uint16[] memory tokenIdsForPrice,
@@ -28,15 +27,15 @@ library TokenConservation {
     ) internal pure {
         uint256 buyTokenIndex = findPriceIndex(buyToken, tokenIdsForPrice);
         uint256 sellTokenIndex = findPriceIndex(sellToken, tokenIdsForPrice);
-        self[buyTokenIndex] = self[buyTokenIndex].sub(int(buyAmount));
-        self[sellTokenIndex] = self[sellTokenIndex].add(int(sellAmount));
+        self[buyTokenIndex] = self[buyTokenIndex].sub(int256(buyAmount));
+        self[sellTokenIndex] = self[sellTokenIndex].add(int256(sellAmount));
     }
 
     /** @dev Ensures all array's elements are zero except the first.
       * @param self list of token imbalances
       * @return true if all, but first element of self are zero else false
       */
-    function checkTokenConservation(int[] memory self) internal pure {
+    function checkTokenConservation(int256[] memory self) internal pure {
         require(self[0] > 0, "Token conservation at 0 must be positive.");
         for (uint256 i = 1; i < self.length; i++) {
             require(self[i] == 0, "Token conservation does not hold");
@@ -47,8 +46,12 @@ library TokenConservation {
       * @param tokenIdsForPrice list of tokenIds
       * @return true if tokenIdsForPrice is sorted else false
       */
-    function checkPriceOrdering(uint16[] memory tokenIdsForPrice) internal pure returns (bool) {
-        for (uint i = 1; i < tokenIdsForPrice.length; i++) {
+    function checkPriceOrdering(uint16[] memory tokenIdsForPrice)
+        internal
+        pure
+        returns (bool)
+    {
+        for (uint256 i = 1; i < tokenIdsForPrice.length; i++) {
             if (tokenIdsForPrice[i] <= tokenIdsForPrice[i - 1]) {
                 return false;
             }
@@ -61,12 +64,16 @@ library TokenConservation {
       * @param tokenIdsForPrice list of (sorted) tokenIds for which binary search is applied.
       * @return `index` in `tokenIdsForPrice` where `tokenId` appears (reverts if not found).
       */
-    function findPriceIndex(uint16 tokenId, uint16[] memory tokenIdsForPrice) private pure returns (uint256) {
+    function findPriceIndex(uint16 tokenId, uint16[] memory tokenIdsForPrice)
+        private
+        pure
+        returns (uint256)
+    {
         // binary search for the other tokens
         uint256 leftValue = 0;
         uint256 rightValue = tokenIdsForPrice.length - 1;
         while (rightValue >= leftValue) {
-            uint256 middleValue = leftValue + (rightValue-leftValue) / 2;
+            uint256 middleValue = leftValue + (rightValue - leftValue) / 2;
             if (tokenIdsForPrice[middleValue] == tokenId) {
                 return middleValue;
             } else if (tokenIdsForPrice[middleValue] < tokenId) {

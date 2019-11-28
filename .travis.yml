@@ -11,5 +11,6 @@ before_script:
 script:
   - npm run lint
   - npm run solhint
+  - npm run pretty-check
   - solium -d contracts/
   - npm run coverage && cat ./coverage/lcov.info | coveralls

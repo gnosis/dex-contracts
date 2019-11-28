@@ -12,10 +12,6 @@
       "error",
       "double"
     ],
-    "indentation": [
-      "error",
-      4
-    ],
     "linebreak-style": [
       "error",
       "unix"
