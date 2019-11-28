@@ -11,10 +11,9 @@ const argv = require("yargs")
   })
   .demand(["slot", "newStateRoot", "merkleRoot"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const instance = await SnappAuction.deployed()
 

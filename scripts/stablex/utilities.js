@@ -1,7 +1,7 @@
 const BN = require("bn.js")
-const { waitForNSeconds } = require("../../test/utilities.js")
+const {waitForNSeconds} = require("../../test/utilities.js")
 
-const addTokens = async function (token_addresses, web3, artifacts) {
+const addTokens = async function(token_addresses, web3, artifacts) {
   const accounts = await web3.eth.getAccounts()
 
   const StablecoinConverter = artifacts.require("StablecoinConverter")

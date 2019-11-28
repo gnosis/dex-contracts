@@ -2,7 +2,6 @@ const TokenConservationWrapper = artifacts.require("TokenConservationWrapper")
 const truffleAssert = require("truffle-assertions")
 
 contract("TokenConservation", async () => {
-
   describe("checkTokenConservation()", () => {
     it("checks successfully the token conservation", async () => {
       const tokenConservation = await TokenConservationWrapper.new()
@@ -56,10 +55,16 @@ contract("TokenConservation", async () => {
       const buyAmount = 10
       const sellAmount = 3
 
-      const updatedArray = (await tokenConservation
-        .updateTokenConservationTest.
-        call(testArray, buyToken, sellToken, tokenIdsForPrice, buyAmount, sellAmount))
-        .map(a => a.toNumber())
+      const updatedArray = (
+        await tokenConservation.updateTokenConservationTest.call(
+          testArray,
+          buyToken,
+          sellToken,
+          tokenIdsForPrice,
+          buyAmount,
+          sellAmount
+        )
+      ).map(a => a.toNumber())
       const expectedArray = [0, 3, -10]
       assert.deepEqual(updatedArray, expectedArray)
     })

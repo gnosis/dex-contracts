@@ -12,10 +12,9 @@ const argv = require("yargs")
   })
   .demand(["accountId", "tokenId", "amount"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const amount = web3.utils.toWei(String(argv.amount))
 
@@ -30,11 +29,11 @@ module.exports = async (callback) => {
       callback(`Error: No token registered at index ${argv.tokenId}`)
     }
 
-    const tx = await instance.requestWithdrawal(argv.tokenId, amount, { from: depositor })
+    const tx = await instance.requestWithdrawal(argv.tokenId, amount, {from: depositor})
     const slot = tx.logs[0].args.slot.toNumber()
     const slot_index = tx.logs[0].args.slotIndex.toNumber()
 
-    const withdraw_hash = (await instance.getWithdrawHash(slot))
+    const withdraw_hash = await instance.getWithdrawHash(slot)
     console.log("Withdraw Request successful: Slot %s - Index %s - Hash %s", slot, slot_index, withdraw_hash)
     callback()
   } catch (error) {

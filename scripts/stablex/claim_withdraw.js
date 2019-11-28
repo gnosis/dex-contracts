@@ -10,10 +10,9 @@ const argv = require("yargs")
   })
   .demand(["accountId", "tokenId"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const instance = await StablecoinConverter.deployed()
     const accounts = await web3.eth.getAccounts()
@@ -26,7 +25,7 @@ module.exports = async (callback) => {
     const token = await ERC20.at(token_address)
 
     const balance_before = await token.balanceOf(withdrawer)
-    await instance.withdraw(withdrawer, token_address, { from: withdrawer })
+    await instance.withdraw(withdrawer, token_address, {from: withdrawer})
     const balance_after = await token.balanceOf(withdrawer)
 
     console.log(`Success! Balance of token ${argv.tokenId} before claim: ${balance_before}, after claim: ${balance_after}`)

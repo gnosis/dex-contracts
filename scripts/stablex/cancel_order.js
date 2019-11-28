@@ -5,16 +5,13 @@ const argv = require("yargs")
   })
   .demand(["accountId", "orderId"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
-
-
     const accounts = await web3.eth.getAccounts()
     const instance = await StablecoinConverter.deployed()
-    await instance.cancelOrders([argv.orderId], { from: accounts[argv.accountId] })
+    await instance.cancelOrders([argv.orderId], {from: accounts[argv.accountId]})
 
     console.log(`Successfully cancelled order with ID ${argv.orderId}`)
     callback()

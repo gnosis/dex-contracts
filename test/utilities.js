@@ -1,5 +1,4 @@
-
-const { sha256 } = require("ethereumjs-util")
+const {sha256} = require("ethereumjs-util")
 const memoize = require("fast-memoize")
 const MerkleTree = require("merkletreejs")
 const BN = require("bn.js")
@@ -12,9 +11,9 @@ const BN = require("bn.js")
  * 3.) ERC20Mintable token
  * 4.) amount to be funded
  */
-const fundAccounts = async function (minter, accounts, token, amount) {
+const fundAccounts = async function(minter, accounts, token, amount) {
   for (let i = 0; i < accounts.length; i++) {
-    await token.mint(accounts[i], amount, { from: minter })
+    await token.mint(accounts[i], amount, {from: minter})
   }
 }
 
@@ -26,9 +25,9 @@ const fundAccounts = async function (minter, accounts, token, amount) {
  * 3.) ERC20Mintable token
  * 4.) amount to be approved
  */
-const approveContract = async function (contract, accounts, token, value) {
+const approveContract = async function(contract, accounts, token, value) {
   for (let i = 0; i < accounts.length; i++) {
-    await token.approve(contract.address, value, { from: accounts[i] })
+    await token.approve(contract.address, value, {from: accounts[i]})
   }
 }
 
@@ -38,9 +37,9 @@ const approveContract = async function (contract, accounts, token, value) {
  * 1.) contract to register account
  * 2.) list of accounts
  */
-const openAccounts = async function (contract, accounts) {
+const openAccounts = async function(contract, accounts) {
   for (let i = 0; i < accounts.length; i++) {
-    await contract.openAccount(i, { from: accounts[i] })
+    await contract.openAccount(i, {from: accounts[i]})
   }
 }
 
@@ -51,13 +50,13 @@ const openAccounts = async function (contract, accounts) {
  * 2.) owner of contract
  * 3.) number of tokens to be registered
  */
-const registerTokens = async function (token_artifact, contract, token_owner, numTokens) {
+const registerTokens = async function(token_artifact, contract, token_owner, numTokens) {
   const res = []
   const owner = await contract.owner()
   for (let i = 0; i < numTokens; i++) {
-    const token = await token_artifact.new({ from: token_owner })
+    const token = await token_artifact.new({from: token_owner})
     res.push(token)
-    await contract.addToken(token.address, { from: owner })
+    await contract.addToken(token.address, {from: owner})
   }
   return res
 }
@@ -71,7 +70,7 @@ const registerTokens = async function (token_artifact, contract, token_owner, nu
  * 4.) number of tokens to be registered
  * @returns {Array} tokens
  */
-const setupEnvironment = async function (token_artifact, contract, token_owner, accounts, numTokens) {
+const setupEnvironment = async function(token_artifact, contract, token_owner, accounts, numTokens) {
   const tokens = await registerTokens(token_artifact, contract, token_owner, numTokens)
   const amount = "300000000000000000000"
   for (let i = 0; i < tokens.length; i++) {
@@ -88,9 +87,9 @@ const setupEnvironment = async function (token_artifact, contract, token_owner, 
  * @param snappInstance: dFusion - base contract address
  * @param tokenOwner: Someone who can mint requested token (to fund account)
  * @param tokens: tokens that multiCaller will have balance in
- * @param multiCaller: contract address 
+ * @param multiCaller: contract address
  */
-const setupMultiCaller = async function (snappInstance, tokenOwner, tokens, multiCaller) {
+const setupMultiCaller = async function(snappInstance, tokenOwner, tokens, multiCaller) {
   const amount = "300000000000000000000"
   for (let i = 0; i < tokens.length; i++) {
     await fundAccounts(tokenOwner, [multiCaller.address], tokens[i], amount)
@@ -104,9 +103,9 @@ const setupMultiCaller = async function (snappInstance, tokenOwner, tokens, mult
 
 const jsonrpc = "2.0"
 const id = 0
-const send = function (method, params, web3Provider) {
-  return new Promise(function (resolve, reject) {
-    web3Provider.currentProvider.send({ id, jsonrpc, method, params }, (error, result) => {
+const send = function(method, params, web3Provider) {
+  return new Promise(function(resolve, reject) {
+    web3Provider.currentProvider.send({id, jsonrpc, method, params}, (error, result) => {
       if (error) {
         reject(error)
       } else {
@@ -122,28 +121,27 @@ const send = function (method, params, web3Provider) {
  * @param seconds: int
  * @param web3Provider: potentially different in contract tests and system end-to-end testing.
  */
-const waitForNSeconds = async function (seconds, web3Provider = web3) {
+const waitForNSeconds = async function(seconds, web3Provider = web3) {
   await send("evm_increaseTime", [seconds], web3Provider)
   await send("evm_mine", [], web3Provider)
 }
 
-const toHex = function (buffer) {
+const toHex = function(buffer) {
   buffer = buffer.toString("hex")
-  if (buffer.substring(0, 2) == "0x")
-    return buffer
+  if (buffer.substring(0, 2) == "0x") return buffer
   return "0x" + buffer.toString("hex")
 }
 
-const countDuplicates = function (obj, num) {
-  obj[num] = (++obj[num] || 1)
+const countDuplicates = function(obj, num) {
+  obj[num] = ++obj[num] || 1
   return obj
 }
 
 /**
- * Given a sequence of index1, elements1, ..., indexN elementN this function returns 
+ * Given a sequence of index1, elements1, ..., indexN elementN this function returns
  * the corresponding MerkleTree of height 7.
  */
-const _generateMerkleTree = function (...args) {
+const _generateMerkleTree = function(...args) {
   const txs = Array(2 ** 7).fill(sha256(0x0))
   for (let i = 0; i < args.length; i += 2) {
     txs[args[i]] = args[i + 1]
@@ -154,7 +152,7 @@ const generateMerkleTree = memoize(_generateMerkleTree, {
   strategy: memoize.strategies.variadic
 })
 
-const sendTxAndGetReturnValue = async function (method, ...args) {
+const sendTxAndGetReturnValue = async function(method, ...args) {
   const result = await method.call(...args)
   await method(...args)
   return result
@@ -173,7 +171,6 @@ function partitionArray(input, spacing) {
   }
   return output
 }
-
 
 const ADDRESS_WIDTH = 20 * 2
 const UINT256_WIDTH = 32 * 2
@@ -199,7 +196,7 @@ function decodeAuctionElements(bytes) {
       validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
       priceNumerator: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
       priceDenominator: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
-      remainingAmount: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
+      remainingAmount: new BN(element.splice(0, UINT128_WIDTH).join(""), 16)
     })
   }
   return result

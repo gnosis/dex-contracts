@@ -8,10 +8,9 @@ const argv = require("yargs")
   })
   .demand(["slot", "newStateRoot"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const instance = await SnappAuction.deployed()
     const curr_state = await instance.getCurrentStateRoot()

@@ -12,12 +12,11 @@ const argv = require("yargs")
   })
   .demand(["accountId", "tokenId", "amount"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
 const zero_address = 0x0
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const amount = web3.utils.toWei(String(argv.amount))
     const instance = await StablecoinConverter.deployed()
@@ -30,17 +29,17 @@ module.exports = async (callback) => {
     }
 
     const token = await ERC20.at(token_address)
-    const depositor_balance = (await token.balanceOf.call(depositor))
+    const depositor_balance = await token.balanceOf.call(depositor)
     if (depositor_balance.lt(amount)) {
       callback(`Error: Depositor has insufficient balance ${depositor_balance} < ${amount}.`)
     }
 
     const allowance = (await token.allowance.call(depositor, instance.address)).toString()
     if (allowance < amount) {
-      await token.approve(instance.address, amount, { from: depositor })
+      await token.approve(instance.address, amount, {from: depositor})
     }
 
-    await instance.deposit(token_address, amount, { from: depositor })
+    await instance.deposit(token_address, amount, {from: depositor})
     const tradeable_at = await instance.getPendingDepositBatchNumber(depositor, token_address)
 
     console.log(`Deposit successful. Can be traded as of batch ${tradeable_at}`)

@@ -1,7 +1,5 @@
 const SnappAuction = artifacts.require("SnappAuction")
-const {
-  getOrderData
-} = require("../script_utilities.js")
+const {getOrderData} = require("../script_utilities.js")
 const argv = require("yargs")
   .option("accountId", {
     describe: "Account index of the order placer"
@@ -20,15 +18,14 @@ const argv = require("yargs")
   })
   .demand(["accountId", "sellToken", "buyToken", "minBuy", "maxSell"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const instance = await SnappAuction.deployed()
     const [buyToken, sellToken, minBuy, maxSell, sender] = await getOrderData(instance, callback, web3, argv)
 
-    const tx = await instance.placeSellOrder(buyToken, sellToken, minBuy, maxSell, { from: sender })
+    const tx = await instance.placeSellOrder(buyToken, sellToken, minBuy, maxSell, {from: sender})
     const auction_id = tx.logs[0].args.auctionId.toNumber()
     const slot_index = tx.logs[0].args.slotIndex.toNumber()
 

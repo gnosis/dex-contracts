@@ -12,10 +12,9 @@ const argv = require("yargs")
   })
   .demand(["accountId", "tokenId", "amount"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const amount = web3.utils.toWei(String(argv.amount))
 
@@ -28,7 +27,7 @@ module.exports = async (callback) => {
       callback(`Error: No token registered at index ${argv.tokenId}`)
     }
 
-    await instance.requestWithdraw(token_address, amount, { from: withdrawer })
+    await instance.requestWithdraw(token_address, amount, {from: withdrawer})
     const claimable_at = await instance.getPendingWithdrawBatchNumber(withdrawer, token_address)
 
     console.log(`Withdraw Request successful. Can be claimed in batch ${claimable_at}`)

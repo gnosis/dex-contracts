@@ -3,17 +3,16 @@ const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
 const argv = require("yargs")
   .option("numAccounts", {
     describe: "Number of accounts to register with exchange",
-    default: 3,
+    default: 3
   })
   .option("numTokens", {
     describe: "Number of tokens to create, fund and add to exchange",
-    default: 3,
+    default: 3
   })
   .help()
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async function (callback) {
+module.exports = async function(callback) {
   try {
     const instance = await StablecoinConverter.deployed()
     const TokenOWL = artifacts.require("TokenOWL")
@@ -29,7 +28,6 @@ module.exports = async function (callback) {
     await owlProxy.approve(instance.address, amount)
 
     console.log(`Beginning environment setup with ${argv.numAccounts} accounts and ${argv.numTokens} tokens`)
-
 
     // Create and register tokens (feeToken is already registered)
     const tokens = [owlProxy]
@@ -47,7 +45,7 @@ module.exports = async function (callback) {
         } else {
           await tokens[token].mint(accounts[account], amount)
         }
-        await tokens[token].approve(instance.address, amount, { from: accounts[account] })
+        await tokens[token].approve(instance.address, amount, {from: accounts[account]})
       }
     }
 

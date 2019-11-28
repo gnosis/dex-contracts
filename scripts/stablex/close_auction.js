@@ -1,6 +1,6 @@
-const { closeAuction } = require("./utilities.js")
+const {closeAuction} = require("./utilities.js")
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const StablecoinConverter = artifacts.require("StablecoinConverter")
     const instance = await StablecoinConverter.deployed()
