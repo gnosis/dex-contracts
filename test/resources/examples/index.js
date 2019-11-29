@@ -14,12 +14,12 @@ const basicTrade = generateTestCase({
     {
       name: "Full Solution",
       prices: [1, 2].map(toETH),
-      buyVolumes: [toETH(10), feeSubtracted(toETH(20))]
+      buyVolumes: [toETH(10), feeSubtracted(toETH(20))],
     },
     {
       name: "Partial Solution",
       prices: [1, 2].map(toETH),
-      buyVolumes: [toETH(9), feeSubtracted(toETH(18))]
+      buyVolumes: [toETH(9), feeSubtracted(toETH(18))],
     },
   ],
 })
@@ -38,17 +38,24 @@ const advancedTrade = generateTestCase({
     {
       name: "Match 1 Pair",
       prices: [1, 2].map(toETH),
-      buyVolumes: [toETH(10), feeSubtracted(toETH(20)), ZERO, ZERO, ZERO, ZERO]
+      buyVolumes: [toETH(10), feeSubtracted(toETH(20)), ZERO, ZERO, ZERO, ZERO],
     },
     {
       name: "Match 2 Pairs",
       prices: [1, 2].map(toETH),
-      buyVolumes: [toETH(10), feeSubtracted(toETH(20)), toETH(10), feeSubtracted(toETH(20)), ZERO, ZERO]
+      buyVolumes: [toETH(10), feeSubtracted(toETH(20)), toETH(10), feeSubtracted(toETH(20)), ZERO, ZERO],
     },
     {
       name: "Match 3 Pairs",
       prices: [1, 2].map(toETH),
-      buyVolumes: [toETH(10), feeSubtracted(toETH(20)), toETH(10), feeSubtracted(toETH(20)), toETH(10), feeSubtracted(toETH(20))]
+      buyVolumes: [
+        toETH(10),
+        feeSubtracted(toETH(20)),
+        toETH(10),
+        feeSubtracted(toETH(20)),
+        toETH(10),
+        feeSubtracted(toETH(20)),
+      ],
     },
   ],
 })
@@ -110,41 +117,49 @@ const shortRingBetterTrade = generateTestCase({
 
 const fiveThousand = new BN("5000")
 const tenThousand = new BN("10000")
-const tooSmallSellAmountTrade = generateTestCase({
-  deposits: [
-    { amount: feeAdded(tenThousand), token: 0, user: 0 },
-    { amount: feeAdded(tenThousand), token: 1, user: 1 },
-  ],
-  orders: [
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0 },
-    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 },
-  ],
-  solutions: [
-    {
-      name: "Small sell amount",
-      prices: [1, 0.9].map(toETH),
-      buyVolumes: [tenThousand, tenThousand],
-    },
-  ],
-}, false, true)
+const tooSmallSellAmountTrade = generateTestCase(
+  {
+    deposits: [
+      { amount: feeAdded(tenThousand), token: 0, user: 0 },
+      { amount: feeAdded(tenThousand), token: 1, user: 1 },
+    ],
+    orders: [
+      { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0 },
+      { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 },
+    ],
+    solutions: [
+      {
+        name: "Small sell amount",
+        prices: [1, 0.9].map(toETH),
+        buyVolumes: [tenThousand, tenThousand],
+      },
+    ],
+  },
+  false,
+  true
+)
 
-const tooSmallBuyAmountTrade = generateTestCase({
-  deposits: [
-    { amount: feeAdded(tenThousand), token: 0, user: 0 },
-    { amount: feeAdded(tenThousand), token: 1, user: 1 },
-  ],
-  orders: [
-    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0 },
-    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 },
-  ],
-  solutions: [
-    {
-      name: "Small buy amounts",
-      prices: [1, 1].map(toETH),
-      buyVolumes: [10000, 9990].map(val => new BN(val)),
-    },
-  ],
-}, false, true)
+const tooSmallBuyAmountTrade = generateTestCase(
+  {
+    deposits: [
+      { amount: feeAdded(tenThousand), token: 0, user: 0 },
+      { amount: feeAdded(tenThousand), token: 1, user: 1 },
+    ],
+    orders: [
+      { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0 },
+      { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 },
+    ],
+    solutions: [
+      {
+        name: "Small buy amounts",
+        prices: [1, 1].map(toETH),
+        buyVolumes: [10000, 9990].map(val => new BN(val)),
+      },
+    ],
+  },
+  false,
+  true
+)
 
 const fiftyThousand = new BN("50000")
 const hundredThousand = new BN("100000")
@@ -200,5 +215,5 @@ module.exports = Object.assign(
     smallExample,
     stableXExample,
   },
-  require("./generate"),
+  require("./generate")
 )

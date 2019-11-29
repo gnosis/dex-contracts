@@ -1,17 +1,16 @@
 const SnappAuction = artifacts.require("SnappAuction")
 const argv = require("yargs")
   .option("slot", {
-    describe: "Deposit slot to apply"
+    describe: "Deposit slot to apply",
   })
   .option("newStateRoot", {
-    describe: "Updated account state after applying deposits"
+    describe: "Updated account state after applying deposits",
   })
   .demand(["slot", "newStateRoot"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const instance = await SnappAuction.deployed()
     const curr_state = await instance.getCurrentStateRoot()

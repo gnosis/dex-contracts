@@ -10,10 +10,9 @@ const argv = require("yargs")
     default: 3,
   })
   .help()
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async function (callback) {
+module.exports = async function(callback) {
   try {
     const instance = await StablecoinConverter.deployed()
     const TokenOWL = artifacts.require("TokenOWL")
@@ -29,7 +28,6 @@ module.exports = async function (callback) {
     await owlProxy.approve(instance.address, amount)
 
     console.log(`Beginning environment setup with ${argv.numAccounts} accounts and ${argv.numTokens} tokens`)
-
 
     // Create and register tokens (feeToken is already registered)
     const tokens = [owlProxy]

@@ -2,20 +2,19 @@ const SnappAuction = artifacts.require("SnappAuction")
 const zero_address = 0x0
 const argv = require("yargs")
   .option("accountId", {
-    describe: "Withdrawers's account index"
+    describe: "Withdrawers's account index",
   })
   .option("tokenId", {
-    describe: "Token to withdraw"
+    describe: "Token to withdraw",
   })
   .option("amount", {
-    describe: "Amount in to withdraw (in 10**18 WEI, e.g. 1 = 1 ETH)"
+    describe: "Amount in to withdraw (in 10**18 WEI, e.g. 1 = 1 ETH)",
   })
   .demand(["accountId", "tokenId", "amount"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const amount = web3.utils.toWei(String(argv.amount))
 
@@ -34,7 +33,7 @@ module.exports = async (callback) => {
     const slot = tx.logs[0].args.slot.toNumber()
     const slot_index = tx.logs[0].args.slotIndex.toNumber()
 
-    const withdraw_hash = (await instance.getWithdrawHash(slot))
+    const withdraw_hash = await instance.getWithdrawHash(slot)
     console.log("Withdraw Request successful: Slot %s - Index %s - Hash %s", slot, slot_index, withdraw_hash)
     callback()
   } catch (error) {

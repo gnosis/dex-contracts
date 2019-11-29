@@ -1,9 +1,7 @@
 const MockContract = artifacts.require("MockContract")
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 
-const {
-  sendTxAndGetReturnValue,
-} = require("../utilities")
+const { sendTxAndGetReturnValue } = require("../utilities")
 
 /**
  * @typedef Deposit
@@ -20,7 +18,7 @@ const {
  * @param {number} feeDenominator - Fee for order execution (a contract contructor parameter)
  * @returns {}
  */
-const setupGenericStableX = async function (numTokens = 2, maxTokens = 2 ** 16 - 1, feeDenominator = 1000) {
+const setupGenericStableX = async function(numTokens = 2, maxTokens = 2 ** 16 - 1, feeDenominator = 1000) {
   const feeToken = await MockContract.new()
   await feeToken.givenAnyReturnBool(true)
 
@@ -35,14 +33,13 @@ const setupGenericStableX = async function (numTokens = 2, maxTokens = 2 ** 16 -
   return instance
 }
 
-
 /**
  * Makes deposit transactions from a list of Deposit Objects
  * @param {object} contract StablecoinConverter smart contract
  * @param {string[]} accounts An array of (unlocked) ethereum account addresses
  * @param {Deposit[]} depositList an array of Deposit Objects
  */
-const makeDeposits = async function (contract, accounts, depositList) {
+const makeDeposits = async function(contract, accounts, depositList) {
   for (const deposit of depositList) {
     const tokenAddress = await contract.tokenIdToAddressMap.call(deposit.token)
     await contract.deposit(tokenAddress, deposit.amount, { from: accounts[deposit.user] })
@@ -56,7 +53,7 @@ const makeDeposits = async function (contract, accounts, depositList) {
  * @param {Order[]} - an array of Order Objects
  * @returns {BN[]}
  */
-const placeOrders = async function (contract, accounts, orderList, auctionIndex) {
+const placeOrders = async function(contract, accounts, orderList, auctionIndex) {
   const orderIds = []
   for (const order of orderList) {
     orderIds.push(
@@ -74,9 +71,8 @@ const placeOrders = async function (contract, accounts, orderList, auctionIndex)
   return orderIds
 }
 
-
 module.exports = {
   setupGenericStableX,
   makeDeposits,
-  placeOrders
+  placeOrders,
 }

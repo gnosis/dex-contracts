@@ -1,9 +1,7 @@
+/* eslint-disable indent */
 const assert = require("assert")
 const BN = require("bn.js")
-const {
-  getExecutedSellAmount,
-  solutionObjectiveValueComputation,
-} = require("../math.js")
+const { getExecutedSellAmount, solutionObjectiveValueComputation } = require("../math.js")
 const { flat, dedupe } = require("../array-shims.js")
 
 /**
@@ -47,7 +45,7 @@ const { flat, dedupe } = require("../array-shims.js")
  * @property {BN} totalDisregardedUtility The objective value of the solution
  * @property {BN} burntFees The burnt fees included in the objective value, equal to `totalFees / 2`
  * @property {BN} objectiveValue The objective value of the solution
- * 
+ *
  * @typedef TestCase
  * @type {object}
  * @property {number} numTokens The required number of tokens
@@ -61,7 +59,7 @@ const { flat, dedupe } = require("../array-shims.js")
  * Generates a test case to be used for unit and e2e testing with the contract
  * with computed solution values and objective values.
  * @param {TestCaseInput} input The input to the test case
- * @param {boolean} [debug=false] Print debug information in case of 
+ * @param {boolean} [debug=false] Print debug information in case of
  * @return {TestCase} The test case
  */
 function generateTestCase(input, strict = true, debug = false) {
@@ -70,11 +68,13 @@ function generateTestCase(input, strict = true, debug = false) {
   return {
     name,
     numTokens: Math.max(...flat(orders.map(o => [o.buyToken, o.sellToken]))) + 1,
-    deposits: input.deposits || orders.map(order => ({
-      amount: order.sellAmount,
-      token: order.sellToken,
-      user: order.user,
-    })),
+    deposits:
+      input.deposits ||
+      orders.map(order => ({
+        amount: order.sellAmount,
+        token: order.sellToken,
+        user: order.user,
+      })),
     orders,
     solutions: solutions.map(solution => {
       let objectiveValue
@@ -89,34 +89,28 @@ function generateTestCase(input, strict = true, debug = false) {
       }
 
       const touchedOrders = orders
-        .map((o, i) => solution.buyVolumes[i].isZero() ?
-          null :
-          {
-            idx: i,
-            user: o.user,
-            buy: solution.buyVolumes[i],
-            sell: getExecutedSellAmount(
-              solution.buyVolumes[i],
-              solution.prices[o.buyToken],
-              solution.prices[o.sellToken],
-            ),
-            utility: objectiveValue.utilities[i],
-            disregardedUtility: objectiveValue.disregardedUtilities[i],
-          })
+        .map((o, i) =>
+          solution.buyVolumes[i].isZero()
+            ? null
+            : {
+                idx: i,
+                user: o.user,
+                buy: solution.buyVolumes[i],
+                sell: getExecutedSellAmount(solution.buyVolumes[i], solution.prices[o.buyToken], solution.prices[o.sellToken]),
+                utility: objectiveValue.utilities[i],
+                disregardedUtility: objectiveValue.disregardedUtilities[i],
+              }
+        )
         .filter(o => !!o)
       return {
         name: solution.name,
-        tokens:
-          dedupe(flat(
-            touchedOrders
-              .map(o => orders[o.idx])
-              .map(o => [o.buyToken, o.sellToken])
-          )).sort()
-            .map(i => ({
-              id: i,
-              price: solution.prices[i],
-              conservation: objectiveValue.tokenConservation[i],
-            })),
+        tokens: dedupe(flat(touchedOrders.map(o => orders[o.idx]).map(o => [o.buyToken, o.sellToken])))
+          .sort()
+          .map(i => ({
+            id: i,
+            price: solution.prices[i],
+            conservation: objectiveValue.tokenConservation[i],
+          })),
         orders: touchedOrders,
         objectiveValueComputation: objectiveValue,
         totalFees: objectiveValue.totalFees,
@@ -141,13 +135,15 @@ function debugTestCase(testCase, orderIds, accounts) {
 
   const userCount = Math.max(...testCase.orders.map(o => o.user)) + 1
   orderIds = orderIds || testCase.orders.map((_, i) => i)
-  accounts = accounts || (() => {
-    const accounts = []
-    for (let i = 0; i < userCount; i++) {
-      accounts.push(`0x${i.toString(16).padStart(40, "0")}`)
-    }
-    return accounts
-  })()
+  accounts =
+    accounts ||
+    (() => {
+      const accounts = []
+      for (let i = 0; i < userCount; i++) {
+        accounts.push(`0x${i.toString(16).padStart(40, "0")}`)
+      }
+      return accounts
+    })()
 
   assert(testCase.orders.length === orderIds.length, "missing orders in orderIds")
   assert(userCount <= accounts.length, "missing users in accounts")
@@ -155,7 +151,7 @@ function debugTestCase(testCase, orderIds, accounts) {
   orderIds.forEach((o, i) => assert(BN.isBN(o) || Number.isInteger(o), `invalid order id at index ${i}`))
   accounts.forEach((a, i) => assert(typeof a === "string", `invalid account at index ${i}`))
 
-  const usernames = accounts.map(a => a.length > 8 ? `${a.substr(0, 5)}…${a.substr(a.length - 3)}` : a)
+  const usernames = accounts.map(a => (a.length > 8 ? `${a.substr(0, 5)}…${a.substr(a.length - 3)}` : a))
 
   formatHeader("Orders")
   formatTable([
@@ -229,10 +225,7 @@ function solutionSubmissionParams(solution, accounts, orderIds) {
  */
 function debugObjectiveValueComputation(objectiveValue) {
   formatHeader("Executed Amounts")
-  formatTable([
-    ["Order", "Buy", "Sell"],
-    ...objectiveValue.orderExecutedAmounts.map(({ buy, sell }, i) => [i, buy, sell]),
-  ])
+  formatTable([["Order", "Buy", "Sell"], ...objectiveValue.orderExecutedAmounts.map(({ buy, sell }, i) => [i, buy, sell])])
   formatHeader("Token Conservation")
   formatTable([
     ["Order\\Token", ...objectiveValue.tokenConservation.map((_, i) => i)],
@@ -243,9 +236,10 @@ function debugObjectiveValueComputation(objectiveValue) {
   formatTable([
     ["Order", ...objectiveValue.utilities.map((_, i) => i), "Total"],
     ["Utility", ...objectiveValue.utilities, objectiveValue.totalUtility],
-    ["Disregarded Utility", ...[
-      ...objectiveValue.disregardedUtilities, objectiveValue.totalDisregardedUtility
-    ].map(du => du.neg())],
+    [
+      "Disregarded Utility",
+      ...[...objectiveValue.disregardedUtilities, objectiveValue.totalDisregardedUtility].map(du => du.neg()),
+    ],
     ["Burnt Fees", ...objectiveValue.utilities.map(() => ""), objectiveValue.burntFees],
     ["Result", ...objectiveValue.utilities.map(() => ""), objectiveValue.result],
   ])
@@ -253,8 +247,8 @@ function debugObjectiveValueComputation(objectiveValue) {
 
 /* eslint-disable no-console */
 
-const formatHeader = (header) => console.log(`=== ${header} ===`)
-const formatSubHeader = (header) => console.log(` - ${header}`)
+const formatHeader = header => console.log(`=== ${header} ===`)
+const formatSubHeader = header => console.log(` - ${header}`)
 
 function formatTable(table) {
   const [width, height] = [Math.max(...table.map(r => r.length)), table.length]
@@ -269,10 +263,7 @@ function formatTable(table) {
   }
 
   for (let i = 0; i < height; i++) {
-    const line = columnWidths.map((cw, j) => j === 0 ?
-      getCell(i, j).padEnd(cw) :
-      getCell(i, j).padStart(cw)
-    ).join(" ")
+    const line = columnWidths.map((cw, j) => (j === 0 ? getCell(i, j).padEnd(cw) : getCell(i, j).padStart(cw))).join(" ")
     console.log(line)
   }
 }

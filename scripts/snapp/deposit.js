@@ -2,22 +2,21 @@ const SnappAuction = artifacts.require("SnappAuction")
 const ERC20 = artifacts.require("ERC20")
 const argv = require("yargs")
   .option("accountId", {
-    describe: "Depositor's account index"
+    describe: "Depositor's account index",
   })
   .option("tokenId", {
-    describe: "Token to deposit"
+    describe: "Token to deposit",
   })
   .option("amount", {
-    describe: "Amount in to deposit (in 10**18 WEI, e.g. 1 = 1 ETH)"
+    describe: "Amount in to deposit (in 10**18 WEI, e.g. 1 = 1 ETH)",
   })
   .demand(["accountId", "tokenId", "amount"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
 const zero_address = 0x0
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const amount = web3.utils.toWei(String(argv.amount))
 
@@ -33,7 +32,7 @@ module.exports = async (callback) => {
     }
 
     const token = await ERC20.at(token_address)
-    const depositor_balance = (await token.balanceOf.call(depositor))
+    const depositor_balance = await token.balanceOf.call(depositor)
     if (depositor_balance.lt(amount)) {
       callback(`Error: Depositor has insufficient balance ${depositor_balance} < ${amount}.`)
     }
@@ -42,7 +41,7 @@ module.exports = async (callback) => {
     const slot = tx.logs[0].args.slot.toNumber()
     const slot_index = tx.logs[0].args.slotIndex.toNumber()
 
-    const deposit_hash = (await instance.getDepositHash(slot))
+    const deposit_hash = await instance.getDepositHash(slot)
     console.log("Deposit successful: Slot %s - Index %s - Hash %s", slot, slot_index, deposit_hash)
     callback()
   } catch (error) {

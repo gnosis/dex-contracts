@@ -6,9 +6,8 @@ const argv = require("yargs")
     default: "https://raw.githubusercontent.com/gnosis/dex-react/develop/src/api/tokenList/tokenList.json",
   })
   .help(false)
-  .version(false)
-  .argv
-module.exports = async function (callback) {
+  .version(false).argv
+module.exports = async function(callback) {
   try {
     const token_list = await (await fetch(argv.token_list_url)).json()
     const network_id = String(await web3.eth.net.getId())

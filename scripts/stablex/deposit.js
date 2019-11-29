@@ -2,22 +2,21 @@ const StablecoinConverter = artifacts.require("StablecoinConverter")
 const ERC20 = artifacts.require("ERC20.sol")
 const argv = require("yargs")
   .option("accountId", {
-    describe: "Depositor's account index"
+    describe: "Depositor's account index",
   })
   .option("tokenId", {
-    describe: "Token to deposit"
+    describe: "Token to deposit",
   })
   .option("amount", {
-    describe: "Amount in to deposit (in 10**18 WEI, e.g. 1 = 1 ETH)"
+    describe: "Amount in to deposit (in 10**18 WEI, e.g. 1 = 1 ETH)",
   })
   .demand(["accountId", "tokenId", "amount"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
 const zero_address = 0x0
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const amount = web3.utils.toWei(String(argv.amount))
     const instance = await StablecoinConverter.deployed()
@@ -30,7 +29,7 @@ module.exports = async (callback) => {
     }
 
     const token = await ERC20.at(token_address)
-    const depositor_balance = (await token.balanceOf.call(depositor))
+    const depositor_balance = await token.balanceOf.call(depositor)
     if (depositor_balance.lt(amount)) {
       callback(`Error: Depositor has insufficient balance ${depositor_balance} < ${amount}.`)
     }

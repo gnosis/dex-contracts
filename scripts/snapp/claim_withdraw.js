@@ -2,18 +2,17 @@ const SnappAuction = artifacts.require("SnappAuction")
 const ERC20 = artifacts.require("ERC20")
 const argv = require("yargs")
   .option("accountId", {
-    describe: "Claimer's account index"
+    describe: "Claimer's account index",
   })
   .option("tokenId", {
-    describe: "Token to claim"
+    describe: "Token to claim",
   })
   .option("slot", {
-    describe: "The slot in which the to be claimed withdraw was requested"
+    describe: "The slot in which the to be claimed withdraw was requested",
   })
   .demand(["accountId", "tokenId", "slot"])
   .help(false)
-  .version(false)
-  .argv
+  .version(false).argv
 
 const zero_address = 0x0
 
@@ -26,9 +25,12 @@ const { toHex } = require("../../test/utilities.js")
 const axios = require("axios")
 const url = process.env.GRAPH_URL || "http://localhost:8000/subgraphs/name/dfusion"
 
-const withdraw_search = async function (_slot, valid = null, a_id = null, t_id = null) {
+const withdraw_search = async function(_slot, valid = null, a_id = null, t_id = null) {
   let where_clause = `slot: ${_slot} `
-  if (a_id) where_clause += `accountId: "${parseInt(a_id).toString(16).padStart(40, "0")}" `
+  if (a_id)
+    where_clause += `accountId: "${parseInt(a_id)
+      .toString(16)
+      .padStart(40, "0")}" `
   if (t_id) where_clause += `tokenId: ${parseInt(t_id)} `
   if (valid) where_clause += `valid: ${valid}`
 
@@ -37,14 +39,14 @@ const withdraw_search = async function (_slot, valid = null, a_id = null, t_id =
               withdraws(where: { ${where_clause} }) {
                 id, accountId, tokenId, amount, slot, slotIndex, valid
               }
-            }`
+            }`,
   })
   // GraphQL returns "bad" json in that keys are not surrounded by quotes ({"data": {}" vs {data: {}}).
   // Therefore JSON.parse() fails, since this is only used in tests, using eval should be ok
   return eval(response.data).data.withdraws
 }
 
-module.exports = async (callback) => {
+module.exports = async callback => {
   try {
     const instance = await SnappAuction.deployed()
 

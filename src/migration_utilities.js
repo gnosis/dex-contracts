@@ -14,14 +14,10 @@ function getDependency(artifacts, network, deployer, path) {
 }
 
 function isDevelopmentNetwork(network) {
-  return (
-    network === "development" ||
-    network === "coverage" ||
-    network === "developmentdocker"
-  )
+  return network === "development" || network === "coverage" || network === "developmentdocker"
 }
 
 module.exports = {
   getDependency,
-  isDevelopmentNetwork
+  isDevelopmentNetwork,
 }

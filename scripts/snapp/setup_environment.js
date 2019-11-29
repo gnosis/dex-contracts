@@ -11,10 +11,9 @@ const argv = require("yargs")
     default: 3,
   })
   .help()
-  .version(false)
-  .argv
+  .version(false).argv
 
-module.exports = async function (callback) {
+module.exports = async function(callback) {
   try {
     const instance = await SnappAuction.deployed()
     const accounts = await web3.eth.getAccounts()

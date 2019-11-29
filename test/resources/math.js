@@ -35,9 +35,7 @@ function feeSubtracted(x, n = 1) {
   assert(Number.isInteger(n) && n > 0, "n is not a valid integer")
 
   const result = x.mul(FEE_DENOMINATOR_MINUS_ONE).div(FEE_DENOMINATOR)
-  return n === 1 ?
-    result :
-    feeSubtracted(result, n - 1)
+  return n === 1 ? result : feeSubtracted(result, n - 1)
 }
 
 /**
@@ -71,7 +69,11 @@ function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice)
   assert(BN.isBN(buyTokenPrice), "buyTokenPrice is not a bignum")
   assert(BN.isBN(sellTokenPrice), "sellTokenPrice is not a bignum")
 
-  return executedBuyAmount.mul(buyTokenPrice).div(FEE_DENOMINATOR_MINUS_ONE).mul(FEE_DENOMINATOR).div(sellTokenPrice)
+  return executedBuyAmount
+    .mul(buyTokenPrice)
+    .div(FEE_DENOMINATOR_MINUS_ONE)
+    .mul(FEE_DENOMINATOR)
+    .div(sellTokenPrice)
 }
 
 /**
@@ -101,7 +103,10 @@ function orderUtility(order, executedBuyAmount, prices) {
   const executedSellAmount = getExecutedSellAmount(executedBuyAmount, prices[order.buyToken], prices[order.sellToken])
   const execSellTimesBuy = executedSellAmount.mul(order.buyAmount)
   const roundedUtility = executedBuyAmount.sub(execSellTimesBuy.div(order.sellAmount)).mul(prices[order.buyToken])
-  const utilityError = execSellTimesBuy.mod(order.sellAmount).mul(prices[order.buyToken]).div(order.sellAmount)
+  const utilityError = execSellTimesBuy
+    .mod(order.sellAmount)
+    .mul(prices[order.buyToken])
+    .div(order.sellAmount)
   return roundedUtility.sub(utilityError)
 }
 
@@ -124,7 +129,10 @@ function orderDisregardedUtility(order, executedBuyAmount, prices) {
   // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
   const leftoverSellAmount = order.sellAmount.sub(executedSellAmount)
   const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
-  const limitTermRight = prices[order.buyToken].mul(order.buyAmount).mul(FEE_DENOMINATOR).div(FEE_DENOMINATOR_MINUS_ONE)
+  const limitTermRight = prices[order.buyToken]
+    .mul(order.buyAmount)
+    .mul(FEE_DENOMINATOR)
+    .div(FEE_DENOMINATOR_MINUS_ONE)
   let limitTerm = toETH(0)
   if (limitTermLeft.gt(limitTermRight)) {
     limitTerm = limitTermLeft.sub(limitTermRight)
@@ -179,13 +187,11 @@ function solutionObjectiveValueComputation(orders, solution, strict = true) {
   assert(tokenCount === solution.prices.length, "solution prices does not include all tokens")
   assert(toETH(1).eq(solution.prices[0]), "fee token price is not 1 ether")
 
-  const feeTokenTouched = orders.findIndex((o, i) =>
-    !solution.buyVolumes[i].isZero() && (o.buyToken === 0 || o.sellToken === 0)) !== -1
+  const feeTokenTouched =
+    orders.findIndex((o, i) => !solution.buyVolumes[i].isZero() && (o.buyToken === 0 || o.sellToken === 0)) !== -1
   assert(feeTokenTouched, "fee token is not touched")
 
-  const touchedOrders = orders
-    .map((o, i) => solution.buyVolumes[i].isZero() ? null : [o, i])
-    .filter(pair => !!pair)
+  const touchedOrders = orders.map((o, i) => (solution.buyVolumes[i].isZero() ? null : [o, i])).filter(pair => !!pair)
 
   const orderExecutedAmounts = orders.map(() => new BN(0))
   const orderTokenConservation = orders.map(() => solution.prices.map(() => new BN(0)))
@@ -215,9 +221,9 @@ function solutionObjectiveValueComputation(orders, solution, strict = true) {
 
   if (strict) {
     assert(!tokenConservation[0].isNeg(), "fee token conservation is negative")
-    tokenConservation.slice(1).forEach(
-      (conservation, i) => assert(conservation.isZero(), `token conservation not respected for token ${i + 1}`)
-    )
+    tokenConservation
+      .slice(1)
+      .forEach((conservation, i) => assert(conservation.isZero(), `token conservation not respected for token ${i + 1}`))
     touchedOrders.forEach(([, id], i) => {
       assert(!utilities[i].isNeg(), `utility for order ${id} is negative`)
       assert(!disregardedUtilities[i].isNeg(), `disregarded utility for order ${id} is negative`)
