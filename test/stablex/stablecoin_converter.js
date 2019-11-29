@@ -403,6 +403,13 @@ contract("StablecoinConverter", async accounts => {
         { from: solver }
       )
       const insufficientlyBetterSolution = solutionSubmissionParams(tradeCase.solutions[1], accounts, orderIds)
+      const improvementDenominator = await stablecoinConverter.IMPROVEMENT_DENOMINATOR.call()
+      assert(
+        insufficientlyBetterSolution.objectiveValue
+          .mul(improvementDenominator)
+          .lt(firstSolution.objectiveValue.mul(improvementDenominator.addn(1))),
+        `Expected ${insufficientlyBetterSolution.objectiveValue} to be less than marginally better than ${firstSolution.objectiveValue}`
+      )
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
