@@ -1,5 +1,5 @@
 const MockContract = artifacts.require("MockContract")
-const StablecoinConverter = artifacts.require("StablecoinConverter")
+const BatchExchange = artifacts.require("BatchExchange")
 
 const { sendTxAndGetReturnValue } = require("../utilities")
 
@@ -22,7 +22,7 @@ const setupGenericStableX = async function(numTokens = 2, maxTokens = 2 ** 16 - 
   const feeToken = await MockContract.new()
   await feeToken.givenAnyReturnBool(true)
 
-  const instance = await StablecoinConverter.new(maxTokens, feeDenominator, feeToken.address)
+  const instance = await BatchExchange.new(maxTokens, feeDenominator, feeToken.address)
   const tokens = [feeToken]
   for (let i = 0; i < numTokens - 1; i++) {
     const token = await MockContract.new()
@@ -35,7 +35,7 @@ const setupGenericStableX = async function(numTokens = 2, maxTokens = 2 ** 16 - 
 
 /**
  * Makes deposit transactions from a list of Deposit Objects
- * @param {object} contract StablecoinConverter smart contract
+ * @param {object} contract BatchExchange smart contract
  * @param {string[]} accounts An array of (unlocked) ethereum account addresses
  * @param {Deposit[]} depositList an array of Deposit Objects
  */
@@ -48,7 +48,7 @@ const makeDeposits = async function(contract, accounts, depositList) {
 
 /**
  * Makes placeOrder transactions from a list of Order Objects
- * @param {object} contract StablecoinConverter smart contract
+ * @param {object} contract BatchExchange smart contract
  * @param {string[]} accounts An array of (unlocked) ethereum account addresses
  * @param {Order[]} - an array of Order Objects
  * @returns {BN[]}

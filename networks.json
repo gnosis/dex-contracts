@@ -404,7 +404,7 @@
       }
     }
   },
-  "StablecoinConverter": {
+  "BatchExchange": {
     "4": {
       "links": {
         "IdToAddressBiMap": "0x31172bB2B5f97E8E89cf3376495d7Bc7252f5a53",

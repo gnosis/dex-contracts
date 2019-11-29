@@ -11,7 +11,7 @@ import "./libraries/TokenConservation.sol";
 /** @title Stable Coin Converter - A decentralized exchange for stable tokens as a batch auciton.
  *  @author @gnosis/dfusion-team <https://github.com/orgs/gnosis/teams/dfusion-team/members>
  */
-contract StablecoinConverter is EpochTokenLocker {
+contract BatchExchange is EpochTokenLocker {
     using SafeCast for uint256;
     using SafeMath for uint128;
     using BytesLib for bytes32;
