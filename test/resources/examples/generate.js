@@ -1,8 +1,8 @@
 /* eslint-disable indent */
 const assert = require("assert")
 const BN = require("bn.js")
-const {getExecutedSellAmount, solutionObjectiveValueComputation} = require("../math.js")
-const {flat, dedupe} = require("../array-shims.js")
+const { getExecutedSellAmount, solutionObjectiveValueComputation } = require("../math.js")
+const { flat, dedupe } = require("../array-shims.js")
 
 /**
  * @typedef TestCaseInput
@@ -63,7 +63,7 @@ const {flat, dedupe} = require("../array-shims.js")
  * @return {TestCase} The test case
  */
 function generateTestCase(input, strict = true, debug = false) {
-  const {name, orders, solutions} = input
+  const { name, orders, solutions } = input
 
   return {
     name,
@@ -225,7 +225,7 @@ function solutionSubmissionParams(solution, accounts, orderIds) {
  */
 function debugObjectiveValueComputation(objectiveValue) {
   formatHeader("Executed Amounts")
-  formatTable([["Order", "Buy", "Sell"], ...objectiveValue.orderExecutedAmounts.map(({buy, sell}, i) => [i, buy, sell])])
+  formatTable([["Order", "Buy", "Sell"], ...objectiveValue.orderExecutedAmounts.map(({ buy, sell }, i) => [i, buy, sell])])
   formatHeader("Token Conservation")
   formatTable([
     ["Order\\Token", ...objectiveValue.tokenConservation.map((_, i) => i)],

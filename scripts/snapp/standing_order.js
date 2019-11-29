@@ -1,7 +1,7 @@
 const BN = require("bn.js")
 const SnappAuction = artifacts.require("SnappAuction")
-const {getOrderData} = require("../script_utilities.js")
-const {encodeOrder} = require("../../test/snapp/snapp_utils.js")
+const { getOrderData } = require("../script_utilities.js")
+const { encodeOrder } = require("../../test/snapp/snapp_utils.js")
 const argv = require("yargs")
   .option("accountId", {
     describe: "Account index of the order placer"
@@ -33,7 +33,7 @@ module.exports = async callback => {
     const [buyToken, sellToken, minBuy, maxSell, sender] = await getOrderData(instance, callback, web3, argv)
 
     const packedOrder = encodeOrder(new BN(buyToken, 10), new BN(sellToken, 10), new BN(minBuy, 10), new BN(maxSell, 10))
-    const tx = await instance.placeStandingSellOrder(packedOrder, {from: sender})
+    const tx = await instance.placeStandingSellOrder(packedOrder, { from: sender })
     const batch_index = tx.logs[0].args.currentBatchIndex.toNumber()
 
     const order_hash = await instance.getStandingOrderHash(accountId, batch_index)

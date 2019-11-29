@@ -2,7 +2,7 @@ const send = function(method, params, web3Provider) {
   return new Promise(function(resolve, reject) {
     const jsonrpc = "2.0"
     const id = 0
-    web3Provider.currentProvider.send({id, jsonrpc, method, params}, (error, result) => {
+    web3Provider.currentProvider.send({ id, jsonrpc, method, params }, (error, result) => {
       if (error) {
         reject(error)
       } else {

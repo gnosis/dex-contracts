@@ -15,7 +15,8 @@
       "files": "*.js",
       "options": {
         "semi": false,
-        "printWidth": 129
+        "printWidth": 129,
+        "bracketSpacing": true
       }
     }
   ]

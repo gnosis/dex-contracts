@@ -29,7 +29,7 @@ module.exports = async callback => {
       callback(`Error: No token registered at index ${argv.tokenId}`)
     }
 
-    const tx = await instance.requestWithdrawal(argv.tokenId, amount, {from: depositor})
+    const tx = await instance.requestWithdrawal(argv.tokenId, amount, { from: depositor })
     const slot = tx.logs[0].args.slot.toNumber()
     const slot_index = tx.logs[0].args.slotIndex.toNumber()
 

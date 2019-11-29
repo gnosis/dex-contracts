@@ -4,7 +4,7 @@ const MockContract = artifacts.require("MockContract")
 const ERC20Interface = artifacts.require("ERC20")
 
 const truffleAssert = require("truffle-assertions")
-const {closeAuction} = require("../../scripts/stablex/utilities")
+const { closeAuction } = require("../../scripts/stablex/utilities")
 
 contract("EpochTokenLocker", async accounts => {
   const [user_1, user_2] = accounts
@@ -165,7 +165,7 @@ contract("EpochTokenLocker", async accounts => {
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
 
-      await epochTokenLocker.requestWithdraw(ERC20.address, 100, {from: user_1})
+      await epochTokenLocker.requestWithdraw(ERC20.address, 100, { from: user_1 })
       await closeAuction(epochTokenLocker)
       await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(user_1, ERC20.address, 100)
 
@@ -250,7 +250,7 @@ contract("EpochTokenLocker", async accounts => {
       const epochTokenLocker = await EpochTokenLockerTestInterface.new()
       const ERC20 = await MockContract.new()
       const currentStateIndex = await epochTokenLocker.getCurrentBatchId.call()
-      await epochTokenLocker.requestWithdraw(ERC20.address, 100, {from: user_1})
+      await epochTokenLocker.requestWithdraw(ERC20.address, 100, { from: user_1 })
       await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(user_1, ERC20.address, 100)
 
       assert.equal(
@@ -265,7 +265,7 @@ contract("EpochTokenLocker", async accounts => {
       await ERC20.givenAnyReturnBool(true)
 
       const currentStateIndex = await epochTokenLocker.getCurrentBatchId.call()
-      await epochTokenLocker.requestWithdraw(ERC20.address, 100, {from: user_1})
+      await epochTokenLocker.requestWithdraw(ERC20.address, 100, { from: user_1 })
       await closeAuction(epochTokenLocker)
       await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(user_1, ERC20.address, 100)
 
@@ -294,7 +294,7 @@ contract("EpochTokenLocker", async accounts => {
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
 
-      await epochTokenLocker.deposit(ERC20.address, 100, {from: user_2})
+      await epochTokenLocker.deposit(ERC20.address, 100, { from: user_2 })
       await closeAuction(epochTokenLocker)
       await epochTokenLocker.subtractBalanceTest(user_2, ERC20.address, 50)
 

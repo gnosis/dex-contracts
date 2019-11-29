@@ -17,10 +17,10 @@ const argv = require("yargs")
 const zero_address = 0x0
 
 // Merkle Requirements
-const {sha256} = require("ethereumjs-util")
-const {encodePacked_16_8_128} = require("../../test/snapp/snapp_utils.js")
+const { sha256 } = require("ethereumjs-util")
+const { encodePacked_16_8_128 } = require("../../test/snapp/snapp_utils.js")
 const MerkleTree = require("merkletreejs")
-const {toHex} = require("../../test/utilities.js")
+const { toHex } = require("../../test/utilities.js")
 
 const axios = require("axios")
 const url = process.env.GRAPH_URL || "http://localhost:8000/subgraphs/name/dfusion"

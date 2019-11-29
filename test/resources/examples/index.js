@@ -1,14 +1,14 @@
 const BN = require("bn.js")
-const {toETH, feeAdded, feeSubtracted, ERROR_EPSILON} = require("../math")
-const {generateTestCase} = require("./generate")
+const { toETH, feeAdded, feeSubtracted, ERROR_EPSILON } = require("../math")
+const { generateTestCase } = require("./generate")
 
 const ZERO = new BN(0)
 
 const basicTrade = generateTestCase({
   name: "Basic Trade",
   orders: [
-    {sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 0},
-    {sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 1}
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 1 }
   ],
   solutions: [
     {
@@ -27,12 +27,12 @@ const basicTrade = generateTestCase({
 const advancedTrade = generateTestCase({
   name: "Advanced Trade",
   orders: [
-    {sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 0},
-    {sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 1},
-    {sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 2},
-    {sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 3},
-    {sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 4},
-    {sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 5}
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 1 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 2 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 3 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 4 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 5 }
   ],
   solutions: [
     {
@@ -56,8 +56,8 @@ const advancedTrade = generateTestCase({
 const biggieSmallTrade = generateTestCase({
   name: "Biggie Small",
   orders: [
-    {sellToken: 0, buyToken: 1, sellAmount: toETH(185), buyAmount: toETH(1), user: 0},
-    {sellToken: 1, buyToken: 0, sellAmount: toETH(1000), buyAmount: toETH(184000), user: 1}
+    { sellToken: 0, buyToken: 1, sellAmount: toETH(185), buyAmount: toETH(1), user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(1000), buyAmount: toETH(184000), user: 1 }
   ],
   solutions: [
     {
@@ -71,9 +71,9 @@ const biggieSmallTrade = generateTestCase({
 const basicRingTrade = generateTestCase({
   name: "Basic Ring",
   orders: [
-    {sellToken: 0, buyToken: 1, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 0},
-    {sellToken: 1, buyToken: 2, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 1},
-    {sellToken: 2, buyToken: 0, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 2}
+    { sellToken: 0, buyToken: 1, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 0 },
+    { sellToken: 1, buyToken: 2, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 1 },
+    { sellToken: 2, buyToken: 0, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 2 }
   ],
   solutions: [
     {
@@ -87,12 +87,12 @@ const basicRingTrade = generateTestCase({
 const shortRingBetterTrade = generateTestCase({
   orders: [
     // ring trade orders
-    {sellToken: 0, buyToken: 1, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 0},
-    {sellToken: 1, buyToken: 2, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 1},
-    {sellToken: 2, buyToken: 0, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 2},
+    { sellToken: 0, buyToken: 1, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 0 },
+    { sellToken: 1, buyToken: 2, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 1 },
+    { sellToken: 2, buyToken: 0, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 2 },
     // biggie small orders
-    {sellToken: 0, buyToken: 1, sellAmount: toETH(185), buyAmount: toETH(1), user: 3},
-    {sellToken: 1, buyToken: 0, sellAmount: toETH(1000), buyAmount: toETH(184000), user: 4}
+    { sellToken: 0, buyToken: 1, sellAmount: toETH(185), buyAmount: toETH(1), user: 3 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(1000), buyAmount: toETH(184000), user: 4 }
   ],
   solutions: [
     {
@@ -113,12 +113,12 @@ const tenThousand = new BN("10000")
 const tooSmallSellAmountTrade = generateTestCase(
   {
     deposits: [
-      {amount: feeAdded(tenThousand), token: 0, user: 0},
-      {amount: feeAdded(tenThousand), token: 1, user: 1}
+      { amount: feeAdded(tenThousand), token: 0, user: 0 },
+      { amount: feeAdded(tenThousand), token: 1, user: 1 }
     ],
     orders: [
-      {sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0},
-      {sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1}
+      { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0 },
+      { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 }
     ],
     solutions: [
       {
@@ -135,12 +135,12 @@ const tooSmallSellAmountTrade = generateTestCase(
 const tooSmallBuyAmountTrade = generateTestCase(
   {
     deposits: [
-      {amount: feeAdded(tenThousand), token: 0, user: 0},
-      {amount: feeAdded(tenThousand), token: 1, user: 1}
+      { amount: feeAdded(tenThousand), token: 0, user: 0 },
+      { amount: feeAdded(tenThousand), token: 1, user: 1 }
     ],
     orders: [
-      {sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0},
-      {sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1}
+      { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0 },
+      { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 }
     ],
     solutions: [
       {
@@ -158,16 +158,16 @@ const fiftyThousand = new BN("50000")
 const hundredThousand = new BN("100000")
 const smallExample = generateTestCase({
   deposits: [
-    {amount: feeAdded(hundredThousand), token: 0, user: 0},
-    {amount: new BN(190), token: 1, user: 1},
-    {amount: new BN(9), token: 0, user: 1},
-    {amount: feeAdded(hundredThousand), token: 1, user: 2}
+    { amount: feeAdded(hundredThousand), token: 0, user: 0 },
+    { amount: new BN(190), token: 1, user: 1 },
+    { amount: new BN(9), token: 0, user: 1 },
+    { amount: feeAdded(hundredThousand), token: 1, user: 2 }
   ],
   orders: [
-    {sellToken: 0, buyToken: 1, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 0},
-    {sellToken: 1, buyToken: 0, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 1},
-    {sellToken: 0, buyToken: 1, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 1},
-    {sellToken: 1, buyToken: 0, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 2}
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 1 },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 1 },
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 2 }
   ],
   solutions: [
     {
@@ -180,12 +180,12 @@ const smallExample = generateTestCase({
 
 const stableXExample = generateTestCase({
   deposits: [
-    {amount: toETH(3000), token: 0, user: 0},
-    {amount: toETH(3000), token: 1, user: 0}
+    { amount: toETH(3000), token: 0, user: 0 },
+    { amount: toETH(3000), token: 1, user: 0 }
   ],
   orders: [
-    {sellToken: 0, buyToken: 1, sellAmount: toETH(2000), buyAmount: toETH(999), user: 0},
-    {sellToken: 1, buyToken: 0, sellAmount: toETH(999), buyAmount: toETH(1996), user: 1}
+    { sellToken: 0, buyToken: 1, sellAmount: toETH(2000), buyAmount: toETH(999), user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: toETH(999), buyAmount: toETH(1996), user: 1 }
   ],
   solutions: [
     {

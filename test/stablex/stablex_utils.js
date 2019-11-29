@@ -1,7 +1,7 @@
 const MockContract = artifacts.require("MockContract")
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 
-const {sendTxAndGetReturnValue} = require("../utilities")
+const { sendTxAndGetReturnValue } = require("../utilities")
 
 /**
  * @typedef Deposit
@@ -42,7 +42,7 @@ const setupGenericStableX = async function(numTokens = 2, maxTokens = 2 ** 16 - 
 const makeDeposits = async function(contract, accounts, depositList) {
   for (const deposit of depositList) {
     const tokenAddress = await contract.tokenIdToAddressMap.call(deposit.token)
-    await contract.deposit(tokenAddress, deposit.amount, {from: accounts[deposit.user]})
+    await contract.deposit(tokenAddress, deposit.amount, { from: accounts[deposit.user] })
   }
 }
 
@@ -64,7 +64,7 @@ const placeOrders = async function(contract, accounts, orderList, auctionIndex) 
         auctionIndex,
         order.buyAmount,
         order.sellAmount,
-        {from: accounts[order.user]}
+        { from: accounts[order.user] }
       )
     )
   }

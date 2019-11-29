@@ -27,7 +27,7 @@ module.exports = async callback => {
       callback(`Error: No token registered at index ${argv.tokenId}`)
     }
 
-    await instance.requestWithdraw(token_address, amount, {from: withdrawer})
+    await instance.requestWithdraw(token_address, amount, { from: withdrawer })
     const claimable_at = await instance.getPendingWithdrawBatchNumber(withdrawer, token_address)
 
     console.log(`Withdraw Request successful. Can be claimed in batch ${claimable_at}`)

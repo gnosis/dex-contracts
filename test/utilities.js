@@ -1,4 +1,4 @@
-const {sha256} = require("ethereumjs-util")
+const { sha256 } = require("ethereumjs-util")
 const memoize = require("fast-memoize")
 const MerkleTree = require("merkletreejs")
 const BN = require("bn.js")
@@ -13,7 +13,7 @@ const BN = require("bn.js")
  */
 const fundAccounts = async function(minter, accounts, token, amount) {
   for (let i = 0; i < accounts.length; i++) {
-    await token.mint(accounts[i], amount, {from: minter})
+    await token.mint(accounts[i], amount, { from: minter })
   }
 }
 
@@ -27,7 +27,7 @@ const fundAccounts = async function(minter, accounts, token, amount) {
  */
 const approveContract = async function(contract, accounts, token, value) {
   for (let i = 0; i < accounts.length; i++) {
-    await token.approve(contract.address, value, {from: accounts[i]})
+    await token.approve(contract.address, value, { from: accounts[i] })
   }
 }
 
@@ -39,7 +39,7 @@ const approveContract = async function(contract, accounts, token, value) {
  */
 const openAccounts = async function(contract, accounts) {
   for (let i = 0; i < accounts.length; i++) {
-    await contract.openAccount(i, {from: accounts[i]})
+    await contract.openAccount(i, { from: accounts[i] })
   }
 }
 
@@ -54,9 +54,9 @@ const registerTokens = async function(token_artifact, contract, token_owner, num
   const res = []
   const owner = await contract.owner()
   for (let i = 0; i < numTokens; i++) {
-    const token = await token_artifact.new({from: token_owner})
+    const token = await token_artifact.new({ from: token_owner })
     res.push(token)
-    await contract.addToken(token.address, {from: owner})
+    await contract.addToken(token.address, { from: owner })
   }
   return res
 }
@@ -105,7 +105,7 @@ const jsonrpc = "2.0"
 const id = 0
 const send = function(method, params, web3Provider) {
   return new Promise(function(resolve, reject) {
-    web3Provider.currentProvider.send({id, jsonrpc, method, params}, (error, result) => {
+    web3Provider.currentProvider.send({ id, jsonrpc, method, params }, (error, result) => {
       if (error) {
         reject(error)
       } else {

@@ -37,7 +37,7 @@ module.exports = async callback => {
       callback(`Error: Depositor has insufficient balance ${depositor_balance} < ${amount}.`)
     }
 
-    const tx = await instance.deposit(argv.tokenId, amount, {from: depositor})
+    const tx = await instance.deposit(argv.tokenId, amount, { from: depositor })
     const slot = tx.logs[0].args.slot.toNumber()
     const slot_index = tx.logs[0].args.slotIndex.toNumber()
 

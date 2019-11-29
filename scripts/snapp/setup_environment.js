@@ -1,6 +1,6 @@
 const SnappAuction = artifacts.require("SnappAuction")
 const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
-const {setupEnvironment} = require("../../test/utilities.js")
+const { setupEnvironment } = require("../../test/utilities.js")
 const argv = require("yargs")
   .option("numAccounts", {
     describe: "Number of accounts to register with exchange",

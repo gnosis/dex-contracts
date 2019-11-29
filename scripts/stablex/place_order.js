@@ -1,5 +1,5 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
-const {sendTxAndGetReturnValue} = require("../../test/utilities.js")
+const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
 const argv = require("yargs")
   .option("accountId", {
     describe: "Account index of the order placer"

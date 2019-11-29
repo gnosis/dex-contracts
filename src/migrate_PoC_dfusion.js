@@ -1,7 +1,7 @@
-const {isDevelopmentNetwork, getDependency} = require("./migration_utilities.js")
+const { isDevelopmentNetwork, getDependency } = require("./migration_utilities.js")
 const deployOwl = require("@gnosis.pm/owl-token/src/migrations-truffle-5/3_deploy_OWL")
 
-async function migrate({artifacts, deployer, network, accounts, web3, feeDenominator = 1000, maxTokens = 2 ** 16 - 1}) {
+async function migrate({ artifacts, deployer, network, accounts, web3, feeDenominator = 1000, maxTokens = 2 ** 16 - 1 }) {
   let fee_token
   if (isDevelopmentNetwork(network)) {
     await deployOwl({

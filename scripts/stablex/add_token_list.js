@@ -1,4 +1,4 @@
-const {addTokens} = require("./utilities.js")
+const { addTokens } = require("./utilities.js")
 const fetch = require("node-fetch")
 const argv = require("yargs")
   .option("token_list_url", {

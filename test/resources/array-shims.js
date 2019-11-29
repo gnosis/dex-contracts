@@ -31,4 +31,4 @@ function dedupe(arr) {
   return [...new Set(arr)]
 }
 
-module.exports = {flat, dedupe}
+module.exports = { flat, dedupe }

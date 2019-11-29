@@ -1,6 +1,6 @@
 const assert = require("assert")
 const BN = require("bn.js")
-const {flat} = require("./array-shims.js")
+const { flat } = require("./array-shims.js")
 
 /**
  * Converts the amount value to `ether` unit.
@@ -207,7 +207,7 @@ function solutionObjectiveValueComputation(orders, solution, strict = true) {
       solution.prices[order.sellToken]
     )
 
-    orderExecutedAmounts[i] = {buy: buyVolume, sell: sellVolume}
+    orderExecutedAmounts[i] = { buy: buyVolume, sell: sellVolume }
 
     orderTokenConservation[i][order.buyToken].isub(buyVolume)
     orderTokenConservation[i][order.sellToken].iadd(sellVolume)

@@ -1,6 +1,6 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 
-const {decodeAuctionElements} = require("../../test/utilities.js")
+const { decodeAuctionElements } = require("../../test/utilities.js")
 
 module.exports = async callback => {
   try {

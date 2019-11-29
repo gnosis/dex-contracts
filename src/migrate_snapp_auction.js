@@ -1,6 +1,6 @@
-const {getDependency} = require("./migration_utilities")
+const { getDependency } = require("./migration_utilities")
 
-async function migrate({artifacts, network, deployer}) {
+async function migrate({ artifacts, network, deployer }) {
   const BiMap = getDependency(
     artifacts,
     network,
