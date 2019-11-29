@@ -1,4 +1,4 @@
-const StablecoinConverter = artifacts.require("StablecoinConverter")
+const BatchExchange = artifacts.require("BatchExchange")
 const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
 const argv = require("yargs")
   .option("accountId", {
@@ -28,7 +28,7 @@ module.exports = async callback => {
     const minBuy = web3.utils.toWei(String(argv.minBuy))
     const maxSell = web3.utils.toWei(String(argv.maxSell))
 
-    const instance = await StablecoinConverter.deployed()
+    const instance = await BatchExchange.deployed()
     const accounts = await web3.eth.getAccounts()
     const account = accounts[argv.accountId]
 

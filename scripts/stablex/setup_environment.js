@@ -1,4 +1,4 @@
-const StablecoinConverter = artifacts.require("StablecoinConverter")
+const BatchExchange = artifacts.require("BatchExchange")
 const ERC20Mintable = artifacts.require("ERC20Mintable.sol")
 const argv = require("yargs")
   .option("numAccounts", {
@@ -14,7 +14,7 @@ const argv = require("yargs")
 
 module.exports = async function(callback) {
   try {
-    const instance = await StablecoinConverter.deployed()
+    const instance = await BatchExchange.deployed()
     const TokenOWL = artifacts.require("TokenOWL")
     const TokenOWLProxy = artifacts.require("TokenOWLProxy")
     const owlProxyContract = await TokenOWLProxy.deployed()

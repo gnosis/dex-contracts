@@ -42,7 +42,7 @@ E.g:
 
 ```sh
 npx truffle run verify SnappAuction --network $NETWORKNAME
-npx truffle run verify StablecoinConverter --network $NETWORKNAME
+npx truffle run verify BatchExchange --network $NETWORKNAME
 ```
 
 4. List some default tokens on the StableX exchange

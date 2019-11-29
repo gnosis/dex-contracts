@@ -17,7 +17,7 @@ async function migrate({ artifacts, deployer, network, accounts, web3, feeDenomi
     const TokenOWLProxy = getDependency(artifacts, network, deployer, "@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
     fee_token = await TokenOWLProxy.deployed()
   }
-  const StablecoinConverter = artifacts.require("StablecoinConverter")
+  const BatchExchange = artifacts.require("BatchExchange")
   const BiMap = getDependency(
     artifacts,
     network,
@@ -32,12 +32,12 @@ async function migrate({ artifacts, deployer, network, accounts, web3, feeDenomi
   )
 
   //linking libraries
-  await deployer.link(BiMap, StablecoinConverter)
-  await deployer.link(IterableAppendOnlySet, StablecoinConverter)
+  await deployer.link(BiMap, BatchExchange)
+  await deployer.link(IterableAppendOnlySet, BatchExchange)
 
   // eslint-disable-next-line no-console
-  console.log("Deploy StablecoinConverter contract")
-  await deployer.deploy(StablecoinConverter, maxTokens, feeDenominator, fee_token.address)
+  console.log("Deploy BatchExchange contract")
+  await deployer.deploy(BatchExchange, maxTokens, feeDenominator, fee_token.address)
 }
 
 module.exports = migrate

@@ -1,4 +1,4 @@
-const StablecoinConverter = artifacts.require("StablecoinConverter")
+const BatchExchange = artifacts.require("BatchExchange")
 const zero_address = 0x0
 const argv = require("yargs")
   .option("accountId", {
@@ -18,7 +18,7 @@ module.exports = async callback => {
   try {
     const amount = web3.utils.toWei(String(argv.amount))
 
-    const instance = await StablecoinConverter.deployed()
+    const instance = await BatchExchange.deployed()
     const accounts = await web3.eth.getAccounts()
     const withdrawer = accounts[argv.accountId]
 

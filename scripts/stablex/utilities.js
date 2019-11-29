@@ -4,8 +4,8 @@ const { waitForNSeconds } = require("../../test/utilities.js")
 const addTokens = async function(token_addresses, web3, artifacts) {
   const accounts = await web3.eth.getAccounts()
 
-  const StablecoinConverter = artifacts.require("StablecoinConverter")
-  const instance = await StablecoinConverter.deployed()
+  const BatchExchange = artifacts.require("BatchExchange")
+  const instance = await BatchExchange.deployed()
 
   const TokenOWL = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWL")
   const owl = await TokenOWL.at(await instance.feeToken.call())

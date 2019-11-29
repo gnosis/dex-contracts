@@ -3,7 +3,7 @@ pragma solidity ^0.5.0;
 import "openzeppelin-solidity/contracts/drafts/SignedSafeMath.sol";
 
 /** @title Token Conservation
- *  A library for updating and verifying the tokenConservation contraint for StablecoinConverter's batch auction
+ *  A library for updating and verifying the tokenConservation contraint for BatchExchange's batch auction
  *  @author @gnosis/dfusion-team <https://github.com/orgs/gnosis/teams/dfusion-team/members>
  */
 library TokenConservation {
