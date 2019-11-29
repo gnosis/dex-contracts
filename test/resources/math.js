@@ -248,7 +248,7 @@ function solutionObjectiveValueComputation(orders, solution, strict = true) {
     totalUtility,
     totalDisregardedUtility,
     burntFees,
-    result
+    result,
   }
 }
 
@@ -261,5 +261,5 @@ module.exports = {
   orderUtility,
   orderDisregardedUtility,
   solutionObjectiveValue,
-  solutionObjectiveValueComputation
+  solutionObjectiveValueComputation,
 }

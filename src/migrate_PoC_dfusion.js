@@ -9,7 +9,7 @@ async function migrate({ artifacts, deployer, network, accounts, web3, feeDenomi
       deployer,
       network,
       accounts,
-      web3
+      web3,
     })
     const TokenOWLProxy = artifacts.require("TokenOWLProxy")
     fee_token = await TokenOWLProxy.deployed()

@@ -2,14 +2,14 @@ module.exports = {
   env: {
     browser: true,
     commonjs: true,
-    es6: true
+    es6: true,
   },
   extends: "eslint:recommended",
   parserOptions: {
     ecmaFeatures: {
-      jsx: true
+      jsx: true,
     },
-    ecmaVersion: 2018
+    ecmaVersion: 2018,
   },
   plugins: ["react"],
   rules: {
@@ -18,12 +18,12 @@ module.exports = {
     quotes: ["error", "double"],
     semi: ["error", "never"],
     "prefer-const": ["error"],
-    "no-var": ["error"]
+    "no-var": ["error"],
   },
   globals: {
     artifacts: false,
     contract: false,
     assert: false,
-    web3: false
-  }
+    web3: false,
+  },
 }

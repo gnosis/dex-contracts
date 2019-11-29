@@ -3,10 +3,10 @@ const ERC20 = artifacts.require("ERC20")
 const zero_address = 0x0
 const argv = require("yargs")
   .option("accountId", {
-    describe: "Claimer's account index"
+    describe: "Claimer's account index",
   })
   .option("tokenId", {
-    describe: "Token to claim"
+    describe: "Token to claim",
   })
   .demand(["accountId", "tokenId"])
   .help(false)

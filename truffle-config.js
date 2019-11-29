@@ -48,7 +48,7 @@ module.exports = {
     additionalNetwork,
     optimizedEnabled: true,
     solcUseDocker,
-    solcVersion
+    solcVersion,
   }),
   // https://github.com/mochajs/mocha/wiki/Using-mocha-programmatically#set-options
   mocha: {
@@ -56,11 +56,11 @@ module.exports = {
     reporterOptions: {
       currency: "USD",
       gasPrice: 20,
-      showTimeSpent: true
-    }
+      showTimeSpent: true,
+    },
   },
   plugins: ["truffle-plugin-verify"],
   api_keys: {
-    etherscan: process.env.MY_ETHERSCAN_API_KEY
-  }
+    etherscan: process.env.MY_ETHERSCAN_API_KEY,
+  },
 }

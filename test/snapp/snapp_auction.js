@@ -180,7 +180,7 @@ contract("SnappAuction", async accounts => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       let orders = [
         [0, 0, 3, 3],
-        [0, 1, 1, 1]
+        [0, 1, 1, 1],
       ]
       orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
@@ -198,14 +198,14 @@ contract("SnappAuction", async accounts => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       let orders = [
         [0, 0, 3, 3],
-        [0, 1, 1, 1]
+        [0, 1, 1, 1],
       ]
       orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
       await instance.placeStandingSellOrder(orders, { from: user_1 })
       orders = [
         [0, 0, 3, 3],
-        [0, 1, 1, 0]
+        [0, 1, 1, 0],
       ]
       orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
@@ -227,7 +227,7 @@ contract("SnappAuction", async accounts => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       let orders = [
         [0, 0, 3, 3],
-        [0, 1, 1, 1]
+        [0, 1, 1, 1],
       ]
       orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
@@ -237,7 +237,7 @@ contract("SnappAuction", async accounts => {
       await waitForNSeconds(181)
       orders = [
         [0, 0, 3, 3],
-        [0, 1, 1, 0]
+        [0, 1, 1, 0],
       ]
       orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
@@ -444,7 +444,7 @@ contract("SnappAuction", async accounts => {
       standingOrderIndexList.fill(0)
       const orderhash = await instance.calculateOrderHash(current_slot, standingOrderIndexList)
       await instance.auctionSolutionBid(current_slot, current_state, orderhash, standingOrderIndexList, new_state, 1, {
-        from: user_1
+        from: user_1,
       })
 
       // Wait for bidding phase to pass
@@ -473,7 +473,7 @@ contract("SnappAuction", async accounts => {
       standingOrderIndexList.fill(0)
       const orderhash = await instance.calculateOrderHash(current_slot, standingOrderIndexList)
       await instance.auctionSolutionBid(current_slot, current_state, orderhash, standingOrderIndexList, new_state, 1, {
-        from: user_1
+        from: user_1,
       })
       // Wait for bidding phase to pass
       await waitForNSeconds(181)
@@ -543,7 +543,7 @@ contract("SnappAuction", async accounts => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       let orders = [
         [0, 0, 3, 3],
-        [0, 1, 1, 1]
+        [0, 1, 1, 1],
       ]
       orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
@@ -553,7 +553,7 @@ contract("SnappAuction", async accounts => {
       await waitForNSeconds(181)
       orders = [
         [0, 0, 3, 3],
-        [0, 1, 1, 0]
+        [0, 1, 1, 0],
       ]
       orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
@@ -583,7 +583,7 @@ contract("SnappAuction", async accounts => {
       await setupEnvironment(MintableERC20, instance, token_owner, [user_1], 2)
       let orders = [
         [0, 0, 3, 3],
-        [0, 1, 1, 1]
+        [0, 1, 1, 1],
       ]
       orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
@@ -593,7 +593,7 @@ contract("SnappAuction", async accounts => {
       await waitForNSeconds(181)
       orders = [
         [0, 0, 3, 3],
-        [0, 1, 1, 0]
+        [0, 1, 1, 0],
       ]
       orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
@@ -918,7 +918,7 @@ contract("SnappAuction", async accounts => {
       await waitForNSeconds(181)
 
       await instance.auctionSolutionBid(current_slot, current_state, orderhash, standingOrderIndexList, new_state, 1, {
-        from: user_1
+        from: user_1,
       })
 
       const auction_results = await instance.auctions(current_slot)

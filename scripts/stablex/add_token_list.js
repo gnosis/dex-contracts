@@ -3,7 +3,7 @@ const fetch = require("node-fetch")
 const argv = require("yargs")
   .option("token_list_url", {
     describe: "A url which can be fetched with node-fetch",
-    default: "https://raw.githubusercontent.com/gnosis/dex-react/develop/src/api/tokenList/tokenList.json"
+    default: "https://raw.githubusercontent.com/gnosis/dex-react/develop/src/api/tokenList/tokenList.json",
   })
   .help(false)
   .version(false).argv

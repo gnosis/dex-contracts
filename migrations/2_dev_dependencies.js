@@ -4,6 +4,6 @@ module.exports = function(deployer, network) {
   return migrateDependencies({
     artifacts,
     deployer,
-    network
+    network,
   })
 }

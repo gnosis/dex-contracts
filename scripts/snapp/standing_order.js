@@ -4,19 +4,19 @@ const { getOrderData } = require("../script_utilities.js")
 const { encodeOrder } = require("../../test/snapp/snapp_utils.js")
 const argv = require("yargs")
   .option("accountId", {
-    describe: "Account index of the order placer"
+    describe: "Account index of the order placer",
   })
   .option("sellToken", {
-    describe: "Token to be sold"
+    describe: "Token to be sold",
   })
   .option("buyToken", {
-    describe: "token to be bought"
+    describe: "token to be bought",
   })
   .option("minBuy", {
-    describe: "minimum amount to be bought (in 10**18 WEI of buyToken, e.g. 1 = 1ETH)"
+    describe: "minimum amount to be bought (in 10**18 WEI of buyToken, e.g. 1 = 1ETH)",
   })
   .option("maxSell", {
-    describe: "minimum amount to be sold (in 10**18 WEI of sellToken, e.g. 1 = 1ETH)"
+    describe: "minimum amount to be sold (in 10**18 WEI of sellToken, e.g. 1 = 1ETH)",
   })
   .demand(["accountId", "sellToken", "buyToken", "minBuy", "maxSell"])
   .help(false)

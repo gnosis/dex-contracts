@@ -73,7 +73,7 @@ function generateTestCase(input, strict = true, debug = false) {
       orders.map(order => ({
         amount: order.sellAmount,
         token: order.sellToken,
-        user: order.user
+        user: order.user,
       })),
     orders,
     solutions: solutions.map(solution => {
@@ -98,7 +98,7 @@ function generateTestCase(input, strict = true, debug = false) {
                 buy: solution.buyVolumes[i],
                 sell: getExecutedSellAmount(solution.buyVolumes[i], solution.prices[o.buyToken], solution.prices[o.sellToken]),
                 utility: objectiveValue.utilities[i],
-                disregardedUtility: objectiveValue.disregardedUtilities[i]
+                disregardedUtility: objectiveValue.disregardedUtilities[i],
               }
         )
         .filter(o => !!o)
@@ -109,7 +109,7 @@ function generateTestCase(input, strict = true, debug = false) {
           .map(i => ({
             id: i,
             price: solution.prices[i],
-            conservation: objectiveValue.tokenConservation[i]
+            conservation: objectiveValue.tokenConservation[i],
           })),
         orders: touchedOrders,
         objectiveValueComputation: objectiveValue,
@@ -117,9 +117,9 @@ function generateTestCase(input, strict = true, debug = false) {
         totalUtility: objectiveValue.totalUtility,
         totalDisregardedUtility: objectiveValue.totalDisregardedUtility,
         burntFees: objectiveValue.burntFees,
-        objectiveValue: objectiveValue.result
+        objectiveValue: objectiveValue.result,
       }
-    })
+    }),
   }
 }
 
@@ -156,24 +156,24 @@ function debugTestCase(testCase, orderIds, accounts) {
   formatHeader("Orders")
   formatTable([
     ["Id", "User", "Buy Token", "Buy Amount", "Sell Token", "Sell Amount"],
-    ...testCase.orders.map((o, i) => [orderIds[i], usernames[o.user], o.buyToken, o.buyAmount, o.sellToken, o.sellAmount])
+    ...testCase.orders.map((o, i) => [orderIds[i], usernames[o.user], o.buyToken, o.buyAmount, o.sellToken, o.sellAmount]),
   ])
   formatHeader("Solutions")
   for (const solution of testCase.solutions) {
     formatSubHeader(solution.name || "???")
     formatTable([
       ["   Touched Tokens:           ", "Id", "Price", "Conservation"],
-      ...solution.tokens.map(t => ["", t.id, t.price, t.conservation])
+      ...solution.tokens.map(t => ["", t.id, t.price, t.conservation]),
     ])
     formatTable([
       ["   Executed Orders:          ", "Id", "User", "Buy Amount", "Sell Amount", "Utility", "Disregarded Utility"],
-      ...solution.orders.map(o => ["", orderIds[o.idx], usernames[o.user], o.buy, o.sell, o.utility, o.disregardedUtility])
+      ...solution.orders.map(o => ["", orderIds[o.idx], usernames[o.user], o.buy, o.sell, o.utility, o.disregardedUtility]),
     ])
     formatTable([
       ["   Total Utility:", solution.totalUtility],
       ["   Total Disregarded Utility:", solution.totalDisregardedUtility],
       ["   Burnt Fees:", solution.burntFees],
-      ["   Objective Value:", solution.objectiveValue]
+      ["   Objective Value:", solution.objectiveValue],
     ])
   }
 }
@@ -215,7 +215,7 @@ function solutionSubmissionParams(solution, accounts, orderIds) {
     touchedOrderIds: solution.orders.map(o => orderIds[o.idx]),
     volumes: solution.orders.map(o => o.buy),
     prices: solution.tokens.map(t => t.price),
-    tokenIdsForPrice: solution.tokens.map(t => t.id)
+    tokenIdsForPrice: solution.tokens.map(t => t.id),
   }
 }
 
@@ -230,7 +230,7 @@ function debugObjectiveValueComputation(objectiveValue) {
   formatTable([
     ["Order\\Token", ...objectiveValue.tokenConservation.map((_, i) => i)],
     ...objectiveValue.orderTokenConservation.map((o, i) => [i, ...o]),
-    ["Total", ...objectiveValue.tokenConservation]
+    ["Total", ...objectiveValue.tokenConservation],
   ])
   formatHeader("Objective Value")
   formatTable([
@@ -238,10 +238,10 @@ function debugObjectiveValueComputation(objectiveValue) {
     ["Utility", ...objectiveValue.utilities, objectiveValue.totalUtility],
     [
       "Disregarded Utility",
-      ...[...objectiveValue.disregardedUtilities, objectiveValue.totalDisregardedUtility].map(du => du.neg())
+      ...[...objectiveValue.disregardedUtilities, objectiveValue.totalDisregardedUtility].map(du => du.neg()),
     ],
     ["Burnt Fees", ...objectiveValue.utilities.map(() => ""), objectiveValue.burntFees],
-    ["Result", ...objectiveValue.utilities.map(() => ""), objectiveValue.result]
+    ["Result", ...objectiveValue.utilities.map(() => ""), objectiveValue.result],
   ])
 }
 
@@ -274,5 +274,5 @@ module.exports = {
   generateTestCase,
   debugTestCase,
   debugObjectiveValueComputation,
-  solutionSubmissionParams
+  solutionSubmissionParams,
 }

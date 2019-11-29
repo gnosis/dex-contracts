@@ -16,7 +16,8 @@
       "options": {
         "semi": false,
         "printWidth": 129,
-        "bracketSpacing": true
+        "bracketSpacing": true,
+        "trailingComma": "es5"
       }
     }
   ]

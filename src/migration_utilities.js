@@ -19,5 +19,5 @@ function isDevelopmentNetwork(network) {
 
 module.exports = {
   getDependency,
-  isDevelopmentNetwork
+  isDevelopmentNetwork,
 }

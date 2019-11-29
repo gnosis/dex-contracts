@@ -149,7 +149,7 @@ const _generateMerkleTree = function(...args) {
   return new MerkleTree(txs, sha256)
 }
 const generateMerkleTree = memoize(_generateMerkleTree, {
-  strategy: memoize.strategies.variadic
+  strategy: memoize.strategies.variadic,
 })
 
 const sendTxAndGetReturnValue = async function(method, ...args) {
@@ -196,7 +196,7 @@ function decodeAuctionElements(bytes) {
       validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
       priceNumerator: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
       priceDenominator: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
-      remainingAmount: new BN(element.splice(0, UINT128_WIDTH).join(""), 16)
+      remainingAmount: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
     })
   }
   return result
@@ -215,5 +215,5 @@ module.exports = {
   partitionArray,
   setupMultiCaller,
   sendTxAndGetReturnValue,
-  decodeAuctionElements
+  decodeAuctionElements,
 }

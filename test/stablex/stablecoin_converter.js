@@ -18,7 +18,7 @@ const {
   advancedTrade,
   basicRingTrade,
   shortRingBetterTrade,
-  smallExample
+  smallExample,
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
@@ -29,12 +29,12 @@ const tenThousand = new BN("10000")
 const smallTradeData = {
   deposits: [
     { amount: feeAdded(tenThousand), token: 0, user: 0 },
-    { amount: feeAdded(tenThousand), token: 1, user: 1 }
+    { amount: feeAdded(tenThousand), token: 1, user: 1 },
   ],
   orders: [
     { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0 },
-    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 }
-  ]
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 },
+  ],
 }
 
 contract("StablecoinConverter", async accounts => {
@@ -200,7 +200,7 @@ contract("StablecoinConverter", async accounts => {
         { from: user_1 }
       )
       await stablecoinConverter.placeValidFromOrders([0, 1], [1, 0], [currentBatch, currentBatch], [3, 4], [10, 11], [20, 21], {
-        from: user_1
+        from: user_1,
       })
 
       for (let i = 1; i <= id; i++) {
@@ -1588,7 +1588,7 @@ contract("StablecoinConverter", async accounts => {
         validUntil: batchIndex + 10,
         priceNumerator: twentyBN,
         priceDenominator: tenBN,
-        remainingAmount: tenBN
+        remainingAmount: tenBN,
       }
       const canceledOrderInfo = {
         user: user_1.toLowerCase(),
@@ -1599,7 +1599,7 @@ contract("StablecoinConverter", async accounts => {
         validUntil: batchIndex - 1,
         priceNumerator: twentyBN,
         priceDenominator: tenBN,
-        remainingAmount: tenBN
+        remainingAmount: tenBN,
       }
       const freedOrderInfo = {
         user: user_1.toLowerCase(),
@@ -1610,7 +1610,7 @@ contract("StablecoinConverter", async accounts => {
         validUntil: 0,
         priceNumerator: zeroBN,
         priceDenominator: zeroBN,
-        remainingAmount: zeroBN
+        remainingAmount: zeroBN,
       }
       // Place 3 valid orders, cancel first two, wait one batch till and free storage of middle order
       for (let i = 0; i < 3; i++) {
@@ -1648,7 +1648,7 @@ contract("StablecoinConverter", async accounts => {
           validUntil: batchIndex,
           priceNumerator: new BN(20),
           priceDenominator: tenBN,
-          remainingAmount: tenBN
+          remainingAmount: tenBN,
         },
         {
           user: user_2.toLowerCase(),
@@ -1659,8 +1659,8 @@ contract("StablecoinConverter", async accounts => {
           validUntil: batchIndex,
           priceNumerator: new BN(500),
           priceDenominator: new BN(400),
-          remainingAmount: new BN(400)
-        }
+          remainingAmount: new BN(400),
+        },
       ]
       await stablecoinConverter.placeOrder(1, 0, batchIndex, 20, 10, { from: user_1 })
       await stablecoinConverter.placeOrder(0, 1, batchIndex, 500, 400, { from: user_2 })

@@ -2,13 +2,13 @@ const StablecoinConverter = artifacts.require("StablecoinConverter")
 const ERC20 = artifacts.require("ERC20.sol")
 const argv = require("yargs")
   .option("accountId", {
-    describe: "Depositor's account index"
+    describe: "Depositor's account index",
   })
   .option("tokenId", {
-    describe: "Token to deposit"
+    describe: "Token to deposit",
   })
   .option("amount", {
-    describe: "Amount in to deposit (in 10**18 WEI, e.g. 1 = 1 ETH)"
+    describe: "Amount in to deposit (in 10**18 WEI, e.g. 1 = 1 ETH)",
   })
   .demand(["accountId", "tokenId", "amount"])
   .help(false)

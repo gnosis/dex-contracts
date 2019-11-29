@@ -38,5 +38,5 @@ const closeAuction = async (instance, web3Provider = web3) => {
 
 module.exports = {
   addTokens,
-  closeAuction
+  closeAuction,
 }

@@ -1,10 +1,10 @@
 const SnappAuction = artifacts.require("SnappAuction")
 const argv = require("yargs")
   .option("slot", {
-    describe: "Deposit slot to apply"
+    describe: "Deposit slot to apply",
   })
   .option("newStateRoot", {
-    describe: "Updated account state after applying deposits"
+    describe: "Updated account state after applying deposits",
   })
   .demand(["slot", "newStateRoot"])
   .help(false)

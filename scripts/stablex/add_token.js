@@ -1,7 +1,7 @@
 const { addTokens } = require("../script_utilities.js")
 const argv = require("yargs")
   .option("tokenAddress", {
-    describe: "Address of the token to be added"
+    describe: "Address of the token to be added",
   })
   .demand(["tokenAddress"])
   .help(false)

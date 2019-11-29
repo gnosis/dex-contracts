@@ -50,5 +50,5 @@ const invokeViewFunction = async function(contract, callback) {
 module.exports = {
   getArgumentsHelper,
   getOrderData,
-  invokeViewFunction
+  invokeViewFunction,
 }

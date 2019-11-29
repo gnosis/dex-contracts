@@ -37,5 +37,5 @@ const toHex = function(buffer) {
 module.exports = {
   toHex,
   waitForNSeconds,
-  sendTxAndGetReturnValue
+  sendTxAndGetReturnValue,
 }

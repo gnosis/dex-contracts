@@ -19,7 +19,7 @@ const {
   countDuplicates,
   generateMerkleTree,
   setupEnvironment,
-  setupMultiCaller
+  setupMultiCaller,
 } = require("../utilities")
 
 const { encodePacked_16_8_128 } = require("./snapp_utils")
@@ -879,7 +879,7 @@ contract("SnappBase", async accounts => {
 
       const prev_balance = await tokens[0].balanceOf.call(user_1)
       await instance.claimWithdrawal(withdraw_slot, withdraw_slot_index, account_id, token_id, withdraw_amount, proof, {
-        from: user_1
+        from: user_1,
       })
       const after_balance = await tokens[0].balanceOf.call(user_1)
       assert.equal(after_balance.sub(prev_balance).toNumber(), 1)
@@ -918,12 +918,12 @@ contract("SnappBase", async accounts => {
       await instance.applyWithdrawals(withdraw_slot, merkle_root, await instance.getCurrentStateRoot(), "0x2", withdraw_hash)
 
       await instance.claimWithdrawal(withdraw_slot, withdraw_slot_index, account_id, token_id, withdraw_amount, proof, {
-        from: user_1
+        from: user_1,
       })
 
       await truffleAssert.reverts(
         instance.claimWithdrawal(withdraw_slot, withdraw_slot_index, account_id, token_id, withdraw_amount, proof, {
-          from: user_1
+          from: user_1,
         }),
         "Already claimed"
       )
@@ -963,7 +963,7 @@ contract("SnappBase", async accounts => {
 
       await truffleAssert.reverts(
         instance.claimWithdrawal(withdraw_slot, withdraw_slot_index + 1, account_id, token_id, withdraw_amount, proof, {
-          from: user_1
+          from: user_1,
         }),
         "Failed Merkle membership check."
       )

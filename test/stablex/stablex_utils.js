@@ -74,5 +74,5 @@ const placeOrders = async function(contract, accounts, orderList, auctionIndex) 
 module.exports = {
   setupGenericStableX,
   makeDeposits,
-  placeOrders
+  placeOrders,
 }

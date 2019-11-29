@@ -8,5 +8,5 @@ const NETWORKS_FILE_PATH = path.join(__dirname, "networks.json")
 module.exports = {
   buildPath: BUILD_DIR,
   buildDirDependencies: [],
-  networkFilePath: NETWORKS_FILE_PATH
+  networkFilePath: NETWORKS_FILE_PATH,
 }

@@ -2,13 +2,13 @@ const SnappAuction = artifacts.require("SnappAuction")
 const zero_address = 0x0
 const argv = require("yargs")
   .option("accountId", {
-    describe: "Withdrawers's account index"
+    describe: "Withdrawers's account index",
   })
   .option("tokenId", {
-    describe: "Token to withdraw"
+    describe: "Token to withdraw",
   })
   .option("amount", {
-    describe: "Amount in to withdraw (in 10**18 WEI, e.g. 1 = 1 ETH)"
+    describe: "Amount in to withdraw (in 10**18 WEI, e.g. 1 = 1 ETH)",
   })
   .demand(["accountId", "tokenId", "amount"])
   .help(false)

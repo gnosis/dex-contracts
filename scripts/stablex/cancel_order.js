@@ -1,7 +1,7 @@
 const StablecoinConverter = artifacts.require("StablecoinConverter")
 const argv = require("yargs")
   .option("accountId", {
-    describe: "Account index of the order placer"
+    describe: "Account index of the order placer",
   })
   .demand(["accountId", "orderId"])
   .help(false)
