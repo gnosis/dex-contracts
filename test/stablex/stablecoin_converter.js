@@ -19,6 +19,7 @@ const {
   basicRingTrade,
   shortRingBetterTrade,
   smallExample,
+  marginalTrade,
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
@@ -340,6 +341,81 @@ contract("StablecoinConverter", async accounts => {
 
       assert(objectiveValue > 0, "the computed objective value is greater than 0")
       assert.equal(objectiveValue, solution.objectiveValue.toString())
+    })
+    it("rejects aclaimed marginally improved solutions", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+
+      // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
+      await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(stablecoinConverter, accounts, basicTrade.orders, batchIndex + 1)
+      await closeAuction(stablecoinConverter)
+
+      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
+      await stablecoinConverter.submitSolution(
+        batchIndex,
+        solution.objectiveValue,
+        solution.owners,
+        solution.touchedOrderIds,
+        solution.volumes,
+        solution.prices,
+        solution.tokenIdsForPrice,
+        { from: solver }
+      )
+      const objectiveValue = await stablecoinConverter.getCurrentObjectiveValue.call()
+      const improvementDenominator = await stablecoinConverter.IMPROVEMENT_DENOMINATOR.call()
+
+      const tooLowNewObjective = objectiveValue.mul(improvementDenominator.addn(1)).div(improvementDenominator)
+
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(
+          batchIndex,
+          tooLowNewObjective,
+          solution.owners,
+          solution.touchedOrderIds,
+          solution.volumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
+          { from: solver }
+        ),
+        "Claimed objective doesn't sufficiently improve current solution"
+      )
+    })
+    it("rejects marginally better solutions", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+
+      // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
+      const tradeCase = marginalTrade
+      await makeDeposits(stablecoinConverter, accounts, tradeCase.deposits)
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(stablecoinConverter, accounts, tradeCase.orders, batchIndex + 1)
+      await closeAuction(stablecoinConverter)
+
+      const firstSolution = solutionSubmissionParams(tradeCase.solutions[0], accounts, orderIds)
+      await stablecoinConverter.submitSolution(
+        batchIndex,
+        firstSolution.objectiveValue,
+        firstSolution.owners,
+        firstSolution.touchedOrderIds,
+        firstSolution.volumes,
+        firstSolution.prices,
+        firstSolution.tokenIdsForPrice,
+        { from: solver }
+      )
+      const insufficientlyBetterSolution = solutionSubmissionParams(tradeCase.solutions[1], accounts, orderIds)
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(
+          batchIndex,
+          firstSolution.objectiveValue.muln(2), // Note must claim better improvement than we have to get this case!
+          insufficientlyBetterSolution.owners,
+          insufficientlyBetterSolution.touchedOrderIds,
+          insufficientlyBetterSolution.volumes,
+          insufficientlyBetterSolution.prices,
+          insufficientlyBetterSolution.tokenIdsForPrice,
+          { from: solver }
+        ),
+        "New objective doesn't sufficiently improve current solution"
+      )
     })
     it("rejects competing solution with same objective value", async () => {
       const stablecoinConverter = await setupGenericStableX()

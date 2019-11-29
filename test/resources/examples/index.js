@@ -203,6 +203,32 @@ const stableXExample = generateTestCase({
   ],
 })
 
+const marginalTrade = generateTestCase(
+  {
+    name: "Marginal Trade",
+    orders: [
+      { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 0 },
+      { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 1 },
+      { sellToken: 0, buyToken: 1, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 2 },
+      { sellToken: 1, buyToken: 0, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 3 },
+    ],
+    solutions: [
+      {
+        name: "First Solution",
+        prices: [1, 2].map(toETH),
+        buyVolumes: [toETH(10), feeSubtracted(toETH(20)), ZERO, ZERO],
+      },
+      {
+        name: "Marginally Improved Solution",
+        prices: [1, 2].map(toETH),
+        buyVolumes: [toETH(10), feeSubtracted(toETH(20)), toETH(5), feeSubtracted(toETH(10))],
+      },
+    ],
+  },
+  true,
+  true
+)
+
 module.exports = Object.assign(
   {
     basicTrade,
@@ -214,6 +240,7 @@ module.exports = Object.assign(
     tooSmallSellAmountTrade,
     smallExample,
     stableXExample,
+    marginalTrade,
   },
   require("./generate")
 )
