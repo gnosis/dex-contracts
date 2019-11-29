@@ -304,7 +304,7 @@ contract("StablecoinConverter", async accounts => {
 
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(batchIndex, 0, [], [], [], [], []),
-        "Claimed objective is not more than current solution"
+        "Claimed objective doesn't sufficiently improve current solution"
       )
     })
     it("rejects trivial solution (the only solution with zero utility)", async () => {
@@ -372,7 +372,7 @@ contract("StablecoinConverter", async accounts => {
           solution.tokenIdsForPrice,
           { from: competingSolver }
         ),
-        "Solution must have a higher objective value than current solution"
+        "Claimed objective doesn't sufficiently improve current solution"
       )
     })
     it("[Basic Trade] places two orders and matches them in a solution with Utility > 0", async () => {
@@ -1499,7 +1499,7 @@ contract("StablecoinConverter", async accounts => {
           solution.tokenIdsForPrice,
           { from: solver }
         ),
-        "Solution must have a higher objective value than current solution"
+        "New objective doesn't sufficiently improve current solution"
       )
     })
     it("partially fills orders in one auction and then fills them some more in the next.", async () => {
