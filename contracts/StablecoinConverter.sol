@@ -43,6 +43,11 @@ contract StablecoinConverter is EpochTokenLocker {
     /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/feeDenominator */
     uint128 public feeDenominator;
 
+    /** Corresponds to percentage that competing solution must improve on current
+      * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
+      */
+    uint256 public constant IMPROVEMENT_DENOMINATOR = 100; // 1%
+
     /** @dev The feeToken of the exchange will be the OWL Token */
     TokenOWL public feeToken;
 
@@ -232,7 +237,10 @@ contract StablecoinConverter is EpochTokenLocker {
         uint16[] memory tokenIdsForPrice
     ) public returns (uint256) {
         require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
-        require(claimedObjectiveValue > getCurrentObjectiveValue(), "Claimed objective is not more than current solution");
+        require(
+            claimedObjectiveValue.mul(IMPROVEMENT_DENOMINATOR) > getCurrentObjectiveValue().mul(IMPROVEMENT_DENOMINATOR + 1),
+            "Claimed objective doesn't sufficiently improve current solution"
+        );
         require(verifyAmountThreshold(prices), "At least one price lower than AMOUNT_MINIMUM");
         require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
         require(prices[0] == 1 ether, "fee token price must be 10^18");
@@ -573,7 +581,7 @@ contract StablecoinConverter is EpochTokenLocker {
       */
     function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
         require(
-            newObjectiveValue > getCurrentObjectiveValue(),
+            newObjectiveValue.mul(IMPROVEMENT_DENOMINATOR) > getCurrentObjectiveValue().mul(IMPROVEMENT_DENOMINATOR + 1),
             "Solution must have a higher objective value than current solution"
         );
         latestSolution.objectiveValue = newObjectiveValue;
