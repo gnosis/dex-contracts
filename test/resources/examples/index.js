@@ -24,6 +24,24 @@ const basicTrade = generateTestCase({
   ],
 })
 
+const tradeWithoutFeeToken = generateTestCase(
+  {
+    name: "Basic Trade",
+    orders: [
+      { sellToken: 1, buyToken: 2, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 0 },
+      { sellToken: 2, buyToken: 1, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 1 },
+    ],
+    solutions: [
+      {
+        name: "Full Solution",
+        prices: [1, 1, 2].map(toETH),
+        buyVolumes: [toETH(10), feeSubtracted(toETH(20))],
+      },
+    ],
+  },
+  false
+)
+
 const advancedTrade = generateTestCase({
   name: "Advanced Trade",
   orders: [
@@ -243,6 +261,7 @@ module.exports = Object.assign(
     smallExample,
     stableXExample,
     marginalTrade,
+    tradeWithoutFeeToken,
   },
   require("./generate")
 )
