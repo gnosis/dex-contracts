@@ -62,12 +62,15 @@ library TokenConservation {
       */
     function findPriceIndex(uint16 tokenId, uint16[] memory tokenIdsForPrice) private pure returns (uint256) {
         // binary search for the other tokens
+        if (tokenId == 0) {
+            return 0;
+        }
         uint256 leftValue = 0;
         uint256 rightValue = tokenIdsForPrice.length - 1;
         while (rightValue >= leftValue) {
             uint256 middleValue = leftValue + (rightValue - leftValue) / 2;
             if (tokenIdsForPrice[middleValue] == tokenId) {
-                return middleValue;
+                return middleValue + 1;
             } else if (tokenIdsForPrice[middleValue] < tokenId) {
                 leftValue = middleValue + 1;
             } else {
