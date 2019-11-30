@@ -20,6 +20,7 @@ const {
   shortRingBetterTrade,
   smallExample,
   marginalTrade,
+  tradeWithoutFeeToken,
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
@@ -268,31 +269,6 @@ contract("BatchExchange", async accounts => {
     })
   })
   describe("submitSolution()", () => {
-    it("rejects attempt at price scaling hack", async () => {
-      const batchExchange = await setupGenericStableX()
-      await makeDeposits(batchExchange, accounts, basicTrade.deposits)
-
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
-
-      await closeAuction(batchExchange)
-
-      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-
-      await truffleAssert.reverts(
-        batchExchange.submitSolution(
-          batchIndex,
-          solution.objectiveValue,
-          solution.owners,
-          solution.touchedOrderIds,
-          solution.volumes,
-          solution.prices.map(x => x.mul(new BN(2))),
-          solution.tokenIdsForPrice,
-          { from: solver }
-        ),
-        "fee token price must be 10^18"
-      )
-    })
     it("rejects if claimed objective is not better than current", async () => {
       const batchExchange = await setupGenericStableX()
 
@@ -330,15 +306,39 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
-        solution.prices,
-        solution.tokenIdsForPrice,
+        solution.prices.slice(1),
+        solution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
       assert(objectiveValue > 0, "the computed objective value is greater than 0")
       assert.equal(objectiveValue, solution.objectiveValue.toString())
     })
-    it("rejects aclaimed marginally improved solutions", async () => {
+    it("rejects if fee token not traded", async () => {
+      const batchExchange = await setupGenericStableX(3)
+
+      // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
+      await makeDeposits(batchExchange, accounts, tradeWithoutFeeToken.deposits)
+      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(batchExchange, accounts, tradeWithoutFeeToken.orders, batchIndex + 1)
+      await closeAuction(batchExchange)
+
+      const solution = solutionSubmissionParams(tradeWithoutFeeToken.solutions[0], accounts, orderIds)
+      await truffleAssert.reverts(
+        batchExchange.submitSolution(
+          batchIndex,
+          solution.objectiveValue,
+          solution.owners,
+          solution.touchedOrderIds,
+          solution.volumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
+          { from: solver }
+        ),
+        "Token conservation at 0 must be positive"
+      )
+    })
+    it("rejects acclaimed marginally improved solutions", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
@@ -354,8 +354,8 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
-        solution.prices,
-        solution.tokenIdsForPrice,
+        solution.prices.slice(1),
+        solution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
       const objectiveValue = await stablecoinConverter.getCurrentObjectiveValue.call()
@@ -370,8 +370,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
+          solution.prices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "Claimed objective doesn't sufficiently improve current solution"
@@ -394,8 +394,8 @@ contract("BatchExchange", async accounts => {
         firstSolution.owners,
         firstSolution.touchedOrderIds,
         firstSolution.volumes,
-        firstSolution.prices,
-        firstSolution.tokenIdsForPrice,
+        firstSolution.prices.slice(1),
+        firstSolution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
       const insufficientlyBetterSolution = solutionSubmissionParams(tradeCase.solutions[1], accounts, orderIds)
@@ -413,8 +413,8 @@ contract("BatchExchange", async accounts => {
           insufficientlyBetterSolution.owners,
           insufficientlyBetterSolution.touchedOrderIds,
           insufficientlyBetterSolution.volumes,
-          insufficientlyBetterSolution.prices,
-          insufficientlyBetterSolution.tokenIdsForPrice,
+          insufficientlyBetterSolution.prices.slice(1),
+          insufficientlyBetterSolution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "New objective doesn't sufficiently improve current solution"
@@ -436,8 +436,8 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
-        solution.prices,
-        solution.tokenIdsForPrice,
+        solution.prices.slice(1),
+        solution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
       await truffleAssert.reverts(
@@ -447,8 +447,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
+          solution.prices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: competingSolver }
         ),
         "Claimed objective doesn't sufficiently improve current solution"
@@ -476,8 +476,8 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         volume,
-        prices,
-        tokenIdsForPrice,
+        prices.slice(1),
+        tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
@@ -529,8 +529,8 @@ contract("BatchExchange", async accounts => {
         partialSolution.owners,
         partialSolution.touchedOrderIds,
         volume,
-        prices,
-        tokenIdsForPrice,
+        prices.slice(1),
+        tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
@@ -617,8 +617,8 @@ contract("BatchExchange", async accounts => {
         owners,
         touchedOrderIds,
         partialBuyVolumes,
-        prices,
-        tokenIdsForPrice,
+        prices.slice(1),
+        tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
@@ -656,8 +656,8 @@ contract("BatchExchange", async accounts => {
         owners,
         touchedOrderIds,
         fullBuyVolumes,
-        prices,
-        tokenIdsForPrice,
+        prices.slice(1),
+        tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
@@ -722,8 +722,8 @@ contract("BatchExchange", async accounts => {
         partialSolution.owners,
         partialSolution.touchedOrderIds,
         partialSolution.volumes,
-        partialSolution.prices,
-        partialSolution.tokenIdsForPrice,
+        partialSolution.prices.slice(1),
+        partialSolution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
@@ -734,8 +734,8 @@ contract("BatchExchange", async accounts => {
         fullSolution.owners,
         fullSolution.touchedOrderIds,
         fullSolution.volumes,
-        fullSolution.prices,
-        fullSolution.tokenIdsForPrice,
+        fullSolution.prices.slice(1),
+        fullSolution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
       await closeAuction(batchExchange)
@@ -756,8 +756,8 @@ contract("BatchExchange", async accounts => {
         secondSolution.owners,
         secondSolution.touchedOrderIds,
         secondSolution.volumes,
-        secondSolution.prices,
-        secondSolution.tokenIdsForPrice,
+        secondSolution.prices.slice(1),
+        secondSolution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
       const afterAuctionFeeTokenBalance = await owlProxy.balanceOf(batchExchange.address)
@@ -772,8 +772,8 @@ contract("BatchExchange", async accounts => {
         betterSolution.owners,
         betterSolution.touchedOrderIds,
         betterSolution.volumes,
-        betterSolution.prices,
-        betterSolution.tokenIdsForPrice,
+        betterSolution.prices.slice(1),
+        betterSolution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
       const afterBetterSolutionFeeBalance = await owlProxy.balanceOf(batchExchange.address)
@@ -805,8 +805,8 @@ contract("BatchExchange", async accounts => {
           owners,
           touchedOrderIds,
           volumes,
-          prices,
-          tokenIdsForPrice,
+          prices.slice(1),
+          tokenIdsForPrice.slice(1),
           { from: solver }
         )
         // This is only really necessary for the third submission... but whateva.
@@ -851,8 +851,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
+          solution.prices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "Solutions are no longer accepted for this batch"
@@ -880,8 +880,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
+          solution.prices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "Solutions are no longer accepted for this batch"
@@ -921,8 +921,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
+          solution.prices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "Order is invalid"
@@ -949,8 +949,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
+          solution.prices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "Order is invalid"
@@ -986,8 +986,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
+          solution.prices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "limit price not satisfied"
@@ -1012,8 +1012,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           badVolumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
+          solution.prices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "executedSellAmount bigger than specified in order"
@@ -1036,8 +1036,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           basicTrade.orders.map(x => x.buyAmount), // <----- THIS IS THE DIFFERENCE!
-          solution.prices,
-          solution.tokenIdsForPrice,
+          solution.prices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "Token conservation does not hold"
@@ -1063,8 +1063,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
+          solution.prices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "SafeMath: subtraction overflow"
@@ -1087,7 +1087,7 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          solution.prices,
+          solution.prices.slice(1),
           [0, 1, 1],
           { from: solver }
         ),
@@ -1100,36 +1100,11 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          solution.prices,
+          solution.prices.slice(1),
           [0, 2, 1],
           { from: solver }
         ),
         "prices are not ordered by tokenId"
-      )
-    })
-    it("reverts, fee token not included in solution", async () => {
-      const batchExchange = await setupGenericStableX()
-
-      await makeDeposits(batchExchange, accounts, basicTrade.deposits)
-
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
-      await closeAuction(batchExchange)
-
-      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-      const badFeeTokenIdsForPrices = [1, 2]
-      await truffleAssert.reverts(
-        batchExchange.submitSolution(
-          batchIndex,
-          solution.objectiveValue,
-          solution.owners,
-          solution.touchedOrderIds,
-          solution.volumes,
-          solution.prices,
-          badFeeTokenIdsForPrices,
-          { from: solver }
-        ),
-        "fee token price has to be specified"
       )
     })
     it("reverts, if any prices are less than AMOUNT_MINIMUM", async () => {
@@ -1151,8 +1126,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          zeroPrices,
-          solution.tokenIdsForPrice,
+          zeroPrices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "At least one price lower than AMOUNT_MINIMUM"
@@ -1241,8 +1216,8 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
-        solution.prices,
-        solution.tokenIdsForPrice,
+        solution.prices.slice(1),
+        solution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
@@ -1269,8 +1244,8 @@ contract("BatchExchange", async accounts => {
         partialSolution.owners,
         partialSolution.touchedOrderIds,
         partialSolution.volumes,
-        partialSolution.prices,
-        partialSolution.tokenIdsForPrice,
+        partialSolution.prices.slice(1),
+        partialSolution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
@@ -1287,8 +1262,8 @@ contract("BatchExchange", async accounts => {
         fullSolution.owners,
         fullSolution.touchedOrderIds,
         fullSolution.volumes,
-        fullSolution.prices,
-        fullSolution.tokenIdsForPrice,
+        fullSolution.prices.slice(1),
+        fullSolution.tokenIdsForPrice.slice(1),
         { from: competingSolver }
       )
 
@@ -1315,8 +1290,8 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
-        solution.prices,
-        solution.tokenIdsForPrice,
+        solution.prices.slice(1),
+        solution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
       assert.equal(
@@ -1348,8 +1323,8 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
-        solution.prices,
-        solution.tokenIdsForPrice,
+        solution.prices.slice(1),
+        solution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
@@ -1375,8 +1350,8 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
-        solution.prices,
-        solution.tokenIdsForPrice,
+        solution.prices.slice(1),
+        solution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
       await closeAuction(batchExchange)
@@ -1400,8 +1375,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          wayTooBigPrices,
-          solution.tokenIdsForPrice,
+          wayTooBigPrices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "SafeCast: value doesn't fit in 128 bits"
@@ -1437,8 +1412,8 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         volumes,
-        prices,
-        solution.tokenIdsForPrice,
+        prices.slice(1),
+        solution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
@@ -1480,8 +1455,8 @@ contract("BatchExchange", async accounts => {
         ringSolution.owners,
         ringSolution.touchedOrderIds,
         ringSolution.volumes,
-        ringSolution.prices,
-        ringSolution.tokenIdsForPrice,
+        ringSolution.prices.slice(1),
+        ringSolution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
@@ -1498,8 +1473,8 @@ contract("BatchExchange", async accounts => {
         directSolution.owners,
         directSolution.touchedOrderIds,
         directSolution.volumes,
-        directSolution.prices,
-        directSolution.tokenIdsForPrice,
+        directSolution.prices.slice(1),
+        directSolution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
       assert.equal(0, (await batchExchange.currentPrices.call(2)).toString(), "CurrentPrice were not adjusted correctly")
@@ -1524,8 +1499,8 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
-        solution.prices,
-        solution.tokenIdsForPrice,
+        solution.prices.slice(1),
+        solution.tokenIdsForPrice.slice(1),
         { from: solver }
       )
       // User 0
@@ -1569,8 +1544,8 @@ contract("BatchExchange", async accounts => {
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
+          solution.prices.slice(1),
+          solution.tokenIdsForPrice.slice(1),
           { from: solver }
         ),
         "New objective doesn't sufficiently improve current solution"
@@ -1596,8 +1571,8 @@ contract("BatchExchange", async accounts => {
         owners,
         touchedOrderIds,
         partialSolution.volumes,
-        prices,
-        tokenIdsForPrice,
+        prices.slice(1),
+        tokenIdsForPrice.slice(1),
         { from: solver }
       )
 
@@ -1605,9 +1580,18 @@ contract("BatchExchange", async accounts => {
       // Fill essentially the remaining amount in
       const remainingBuyVolumes = [toETH(1), new BN("1998000000000000000")]
       // Note: The claimed objective value here is actually incorrect (but irrelevant for this test)
-      batchExchange.submitSolution(batchIndex + 1, 1, owners, touchedOrderIds, remainingBuyVolumes, prices, tokenIdsForPrice, {
-        from: solver,
-      })
+      batchExchange.submitSolution(
+        batchIndex + 1,
+        1,
+        owners,
+        touchedOrderIds,
+        remainingBuyVolumes,
+        prices.slice(1),
+        tokenIdsForPrice.slice(1),
+        {
+          from: solver,
+        }
+      )
 
       assert(basicTrade.orders.length == basicTrade.deposits.length)
       for (let i = 0; i < basicTrade.orders.length; i++) {
