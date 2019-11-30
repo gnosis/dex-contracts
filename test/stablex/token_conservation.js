@@ -26,7 +26,6 @@ contract("TokenConservation", async () => {
       )
     })
   })
-
   describe("checkPriceOrdering()", () => {
     it("returns false when unordered", async () => {
       const tokenConservation = await TokenConservationWrapper.new()
@@ -43,13 +42,12 @@ contract("TokenConservation", async () => {
       assert.equal(await tokenConservation.checkPriceOrdering([1, 2, 3]), true, "Failed on [1, 2, 3]")
     })
   })
-
   describe("updateTokenConservation()", () => {
     it("calculates the updated tokenConservation array", async () => {
       const tokenConservation = await TokenConservationWrapper.new()
 
       const testArray = [0, 0, 0]
-      const tokenIdsForPrice = [0, 1, 2]
+      const tokenIdsForPrice = [1, 2]
       const buyToken = 2
       const sellToken = 1
       const buyAmount = 10
