@@ -338,6 +338,16 @@ contract("BatchExchange", async accounts => {
         "Token conservation at 0 must be positive"
       )
     })
+    it("rejects solutions attempting to set fee token price", async () => {
+      const batchExchange = await setupGenericStableX()
+
+      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      await closeAuction(batchExchange)
+      await truffleAssert.reverts(
+        batchExchange.submitSolution(batchIndex, 1, [], [], [], [10000], [0]),
+        "Fee token has fixed price!"
+      )
+    })
     it("rejects acclaimed marginally improved solutions", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
