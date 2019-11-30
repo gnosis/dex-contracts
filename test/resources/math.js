@@ -125,7 +125,7 @@ function orderDisregardedUtility(order, executedBuyAmount, prices) {
   assert(prices.length > order.sellToken, "order sell token not included in prices")
 
   const executedSellAmount = getExecutedSellAmount(executedBuyAmount, prices[order.buyToken], prices[order.sellToken])
-  // Not accounting for balances here.
+  // TODO: account for balances here.
   // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
   const leftoverSellAmount = order.sellAmount.sub(executedSellAmount)
   const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
