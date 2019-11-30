@@ -291,9 +291,11 @@ contract BatchExchange is EpochTokenLocker {
         require(utility.add(burntFees) > disregardedUtility, "Solution must be better than trivial");
         // burntFees ensures direct trades (when available) yield better solutions than longer rings
         uint256 objectiveValue = utility.add(burntFees).sub(disregardedUtility);
-        checkAndOverrideObjectiveValue(objectiveValue);
-        grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
+        // Verify and override objective value
+        require(objectiveValue == claimedObjectiveValue, "Computed objective must agree with claimed");
+        latestSolution.objectiveValue = objectiveValue;
+        grantRewardToSolutionSubmitter(burntFees);
         documentTrades(batchIndex, owners, orderIds, buyVolumes, tokenIdsForPrice);
         return (objectiveValue);
     }
@@ -574,17 +576,6 @@ contract BatchExchange is EpochTokenLocker {
       */
     function currentBatchHasSolution() private view returns (bool) {
         return latestSolution.batchId == getCurrentBatchId() - 1;
-    }
-
-    /** @dev determines if value is better than currently and updates if it is.
-      * @param newObjectiveValue proposed value to be updated if greater than current.
-      */
-    function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
-        require(
-            newObjectiveValue.mul(IMPROVEMENT_DENOMINATOR) > getCurrentObjectiveValue().mul(IMPROVEMENT_DENOMINATOR + 1),
-            "New objective doesn't sufficiently improve current solution"
-        );
-        latestSolution.objectiveValue = newObjectiveValue;
     }
 
     /** @dev determines if value is better than currently and updates if it is.
