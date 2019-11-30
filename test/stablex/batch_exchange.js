@@ -286,7 +286,7 @@ contract("BatchExchange", async accounts => {
       await closeAuction(batchExchange)
       const fakeClaimedObjective = 1
       await truffleAssert.reverts(
-        batchExchange.submitSolution(batchIndex, fakeClaimedObjective, [], [], [], [toETH(1)], [0], { from: solver }),
+        batchExchange.submitSolution(batchIndex, fakeClaimedObjective, [], [], [], [toETH(1)], [1], { from: solver }),
         "Solution must be better than trivial"
       )
     })
@@ -1088,7 +1088,7 @@ contract("BatchExchange", async accounts => {
           solution.touchedOrderIds,
           solution.volumes,
           solution.prices.slice(1),
-          [0, 1, 1],
+          [1, 1],
           { from: solver }
         ),
         "prices are not ordered by tokenId"
@@ -1101,7 +1101,7 @@ contract("BatchExchange", async accounts => {
           solution.touchedOrderIds,
           solution.volumes,
           solution.prices.slice(1),
-          [0, 2, 1],
+          [2, 1],
           { from: solver }
         ),
         "prices are not ordered by tokenId"
@@ -1148,8 +1148,8 @@ contract("BatchExchange", async accounts => {
           accounts.slice(0, 2),
           orderIds,
           [tenThousand, tenThousand],
-          [1, 0.9].map(toETH),
-          [0, 1],
+          [toETH(0.9)],
+          [1],
           { from: solver }
         ),
         "sell amount less than AMOUNT_MINIMUM"
@@ -1165,16 +1165,9 @@ contract("BatchExchange", async accounts => {
 
       const tooSmallBuyAmounts = [10000, 9990].map(val => new BN(val))
       await truffleAssert.reverts(
-        batchExchange.submitSolution(
-          batchIndex,
-          1,
-          accounts.slice(0, 2),
-          orderIds,
-          tooSmallBuyAmounts,
-          [1, 1].map(toETH),
-          [0, 1],
-          { from: solver }
-        ),
+        batchExchange.submitSolution(batchIndex, 1, accounts.slice(0, 2), orderIds, tooSmallBuyAmounts, [toETH(1)], [1], {
+          from: solver,
+        }),
         "buy amount less than AMOUNT_MINIMUM"
       )
     })
@@ -1194,8 +1187,8 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
-        [1, 2, 3, 4].map(toETH),
-        [0, 1, 2, 3],
+        [2, 3, 4].map(toETH),
+        [1, 2, 3],
         { from: solver }
       )
     })
@@ -1390,7 +1383,7 @@ contract("BatchExchange", async accounts => {
 
       const tooManyOwners = Array(maxTouchedOrders + 1).fill(user_1)
       await truffleAssert.reverts(
-        batchExchange.submitSolution(batchIndex - 1, 1, tooManyOwners, [], [], [toETH(1)], [0]),
+        batchExchange.submitSolution(batchIndex - 1, 1, tooManyOwners, [], [], [toETH(1)], [1]),
         "Solution exceeds MAX_TOUCHED_ORDERS"
       )
     })
