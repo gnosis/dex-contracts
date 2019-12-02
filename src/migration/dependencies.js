@@ -1,4 +1,4 @@
-const { isDevelopmentNetwork } = require("./migration_utilities.js")
+const { isDevelopmentNetwork } = require("./utilities.js")
 
 async function migrate({ artifacts, deployer, network }) {
   if (isDevelopmentNetwork(network)) {
