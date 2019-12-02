@@ -3,6 +3,8 @@ const memoize = require("fast-memoize")
 const MerkleTree = require("merkletreejs")
 const BN = require("bn.js")
 
+const { decodeRawAuctionElements } = require("../src/index")
+
 /**
  * funds accounts with specified value for Mintable Token
  * The object consists of:
@@ -172,34 +174,18 @@ function partitionArray(input, spacing) {
   return output
 }
 
-const ADDRESS_WIDTH = 20 * 2
-const UINT256_WIDTH = 32 * 2
-const UINT16_WIDTH = 2 * 2
-const UINT32_WIDTH = 4 * 2
-const UINT128_WIDTH = 16 * 2
-
 function decodeAuctionElements(bytes) {
-  if (!bytes) {
-    return []
-  }
-  const result = []
-  bytes = bytes.slice(2) // cutting of 0x
-  while (bytes.length > 0) {
-    const element = bytes.slice(0, 112 * 2).split("")
-    bytes = bytes.slice(112 * 2)
-    result.push({
-      user: "0x" + element.splice(0, ADDRESS_WIDTH).join(""), // address is only 20 bytes
-      sellTokenBalance: new BN(element.splice(0, UINT256_WIDTH).join(""), 16),
-      buyToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
-      sellToken: parseInt(element.splice(0, UINT16_WIDTH).join(""), 16),
-      validFrom: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
-      validUntil: parseInt(element.splice(0, UINT32_WIDTH).join(""), 16),
-      priceNumerator: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
-      priceDenominator: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
-      remainingAmount: new BN(element.splice(0, UINT128_WIDTH).join(""), 16),
-    })
-  }
-  return result
+  return decodeRawAuctionElements(bytes).map(e => ({
+      user: e.user,
+      sellTokenBalance: new BN(e.sellTokenBalance),
+      buyToken: parseInt(e.buyToken),
+      sellToken: parseInt(e.sellToken),
+      validFrom: parseInt(e.validFrom),
+      validUntil: parseInt(e.validUntil),
+      priceNumerator: new BN(e.priceNumerator),
+      priceDenominator: new BN(e.priceDenominator),
+      remainingAmount: new BN(e.remainingAmount),
+  }))
 }
 
 module.exports = {
