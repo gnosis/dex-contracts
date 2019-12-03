@@ -250,7 +250,7 @@ contract BatchExchange is EpochTokenLocker {
         undoCurrentSolution();
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete latestSolution.trades;
-        int256[] memory tokenConservation = new int256[](prices.length + 1);
+        int256[] memory tokenConservation = TokenConservation.init(tokenIdsForPrice);
         uint256 utility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
@@ -287,7 +287,7 @@ contract BatchExchange is EpochTokenLocker {
         for (uint256 i = 0; i < owners.length; i++) {
             disregardedUtility = disregardedUtility.add(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]));
         }
-        uint256 burntFees = uint256(tokenConservation[0]) / 2;
+        uint256 burntFees = uint256(tokenConservation.feeTokenImbalance()) / 2;
         require(utility.add(burntFees) > disregardedUtility, "Solution must be better than trivial");
         // burntFees ensures direct trades (when available) yield better solutions than longer rings
         uint256 objectiveValue = utility.add(burntFees).sub(disregardedUtility);

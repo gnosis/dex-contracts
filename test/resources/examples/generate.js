@@ -93,13 +93,13 @@ function generateTestCase(input, strict = true, debug = false) {
           solution.buyVolumes[i].isZero()
             ? null
             : {
-                idx: i,
-                user: o.user,
-                buy: solution.buyVolumes[i],
-                sell: getExecutedSellAmount(solution.buyVolumes[i], solution.prices[o.buyToken], solution.prices[o.sellToken]),
-                utility: objectiveValue.utilities[i],
-                disregardedUtility: objectiveValue.disregardedUtilities[i],
-              }
+              idx: i,
+              user: o.user,
+              buy: solution.buyVolumes[i],
+              sell: getExecutedSellAmount(solution.buyVolumes[i], solution.prices[o.buyToken], solution.prices[o.sellToken]),
+              utility: objectiveValue.utilities[i],
+              disregardedUtility: objectiveValue.disregardedUtilities[i],
+            }
         )
         .filter(o => !!o)
       return {
@@ -214,8 +214,8 @@ function solutionSubmissionParams(solution, accounts, orderIds) {
     owners: solution.orders.map(o => accounts[o.user]),
     touchedOrderIds: solution.orders.map(o => orderIds[o.idx]),
     volumes: solution.orders.map(o => o.buy),
-    prices: solution.tokens.map(t => t.price),
-    tokenIdsForPrice: solution.tokens.map(t => t.id),
+    prices: solution.tokens.slice(1).map(t => t.price),
+    tokenIdsForPrice: solution.tokens.slice(1).map(t => t.id),
   }
 }
 
