@@ -2,63 +2,35 @@
 
 STAGED_JS_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep ".jsx\{0,1\}$")
 STAGED_SOL_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep ".sol$")
-ESLINT="$(git rev-parse --show-toplevel)/node_modules/.bin/eslint"
+PASS=true
+
+# Usage: validate <files> <command> <name>
+validate() {
+  for FILE in $1
+  do
+    $2 "$FILE"
+    if [[ "$?" == 0 ]]; then
+      printf "\t\033[32m$3 Passed: $FILE\033[0m\n"
+    else
+      printf "\t\033[41m$3 Failed: $FILE\033[0m\n"
+      PASS=false
+    fi
+  done
+}
 
 if [[ ("$STAGED_JS_FILES" = "") && ("$STAGED_SOL_FILES" = "") ]]; then
   exit 0
 fi
 
-PASS=true
-
 printf "\nValidating Javascript:\n"
-
-for FILE in $STAGED_JS_FILES
-do
-  "$ESLINT" "$FILE"
-
-  if [[ "$?" == 0 ]]; then
-    printf "\t\033[32mESLint Passed: $FILE\033[0m"
-  else
-    printf "\t\033[41mESLint Failed: $FILE\033[0m"
-    PASS=false
-  fi
-done
-
+validate $STAGED_JS_FILES "npx eslint" "ESLint"
+validate $STAGED_JS_FILES "npx prettier --check" "Prettier"
 printf "\nJavascript validation completed!\n"
 
 printf "\nValidating Solidity:\n"
-
-# Check for solhint
-which solhint &> /dev/null
-if [[ "$?" == 1 ]]; then
-  echo "\t\033[41mPlease install solhint\033[0m"
-  exit 1
-fi
-
-for FILE in $STAGED_SOL_FILES
-do
-  solhint "$FILE"
-
-  if [[ "$?" == 0 ]]; then
-    printf "\t\033[32msolhint Passed: $FILE\033[0m"
-  else
-    printf "\t\033[41msolhint Failed: $FILE\033[0m"
-    PASS=false
-  fi
-done
-
-for FILE in $STAGED_SOL_FILES
-do
-  solium --file "$FILE"
-
-  if [[ "$?" == 0 ]]; then
-    printf "\t\033[32msolium Passed: $FILE\033[0m"
-  else
-    printf "\t\033[41msolium Failed: $FILE\033[0m"
-    PASS=false
-  fi
-done
-
+validate $STAGED_SOL_FILES "npx solhint" "Solhint"
+validate $STAGED_SOL_FILES "npx solium --file" "Solium"
+validate $STAGED_SOL_FILES "npx prettier --check" "Prettier"
 printf "\nSolidity validation completed!\n"
 
 if ! $PASS; then
