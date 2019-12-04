@@ -214,8 +214,8 @@ function solutionSubmissionParams(solution, accounts, orderIds) {
     owners: solution.orders.map(o => accounts[o.user]),
     touchedOrderIds: solution.orders.map(o => orderIds[o.idx]),
     volumes: solution.orders.map(o => o.buy),
-    prices: solution.tokens.map(t => t.price),
-    tokenIdsForPrice: solution.tokens.map(t => t.id),
+    prices: solution.tokens.slice(1).map(t => t.price),
+    tokenIdsForPrice: solution.tokens.slice(1).map(t => t.id),
   }
 }
 
