@@ -11,12 +11,6 @@ PASS=true
 
 printf "\nValidating Javascript:\n"
 
-# Check for eslint
-if [[ ! -x "$ESLINT" ]]; then
-  printf "\t\033[41mPlease install ESlint\033[0m (npm i --save-dev eslint)"
-  exit 1
-fi
-
 for FILE in $STAGED_JS_FILES
 do
   npx eslint "$FILE"
