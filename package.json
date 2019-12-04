@@ -59,7 +59,7 @@
     "eslint-plugin-react": "^7.12.3",
     "eth-gas-reporter": "^0.2.11",
     "ethereumjs-abi": "^0.6.6",
-    "ethereumjs-util": "^6.0.0",
+    "ethereumjs-util": "^6.2.0",
     "fast-memoize": "^2.5.1",
     "husky": "^2.5.0",
     "merkletreejs": "0.0.22",
