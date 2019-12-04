@@ -1,6 +1,6 @@
 const { sha256 } = require("ethereumjs-util")
 const memoize = require("fast-memoize")
-const MerkleTree = require("merkletreejs")
+const { MerkleTree } = require("merkletreejs")
 const BN = require("bn.js")
 
 const { decodeOrders } = require("../src/index")
