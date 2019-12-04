@@ -14,7 +14,7 @@ library TokenConservation {
       * @param tokenIdsForPrice sorted list of tokenIds for which token conservation should be checked
       */
     function init(uint16[] memory tokenIdsForPrice) internal pure returns (int256[] memory) {
-        return new int256[](tokenIdsForPrice.length + 1);   
+        return new int256[](tokenIdsForPrice.length + 1);
     }
 
     /** @dev returns the token imbalance of the fee token
