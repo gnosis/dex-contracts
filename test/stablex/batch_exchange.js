@@ -339,8 +339,8 @@ contract("BatchExchange", async accounts => {
       await truffleAssert.reverts(
         batchExchange.submitSolution(
           batchIndex,
-          1, /* objective value */
-          [accounts[0], accounts[1]], /* user ids */
+          1 /* objective value */,
+          [accounts[0], accounts[1]] /* user ids */,
           orderIds,
           solution.buyVolumes,
           solution.prices.slice(1),
@@ -1448,7 +1448,11 @@ contract("BatchExchange", async accounts => {
         const buyTokenBalance = await batchExchange.getBalance.call(relevantUser, buyToken)
 
         const expectedSellBalance = deposit.amount.sub(
-          getExecutedSellAmount(volumes[i], basicRingTrade.solutions[0].tokens[order.buyToken].price, basicRingTrade.solutions[0].tokens[order.buyToken].price)
+          getExecutedSellAmount(
+            volumes[i],
+            basicRingTrade.solutions[0].tokens[order.buyToken].price,
+            basicRingTrade.solutions[0].tokens[order.buyToken].price
+          )
         )
         assert(sellTokenBalance.eq(expectedSellBalance), `Sold tokens were not adjusted correctly at order index ${i}`)
         assert(buyTokenBalance.eq(volumes[i]), `Bought tokens were not adjusted correctly at order index ${i}`)
@@ -1526,9 +1530,7 @@ contract("BatchExchange", async accounts => {
       )
       assert.equal(
         (await batchExchange.getBalance.call(accounts[0], feeToken)).toString(),
-        smallExample.deposits[0].amount
-          .sub(getExecutedSellAmount(solution.volumes[0], toETH(1), solution.prices[0]))
-          .toString(),
+        smallExample.deposits[0].amount.sub(getExecutedSellAmount(solution.volumes[0], toETH(1), solution.prices[0])).toString(),
         "Sold tokens were not adjusted correctly"
       )
       // User 1
@@ -1546,9 +1548,7 @@ contract("BatchExchange", async accounts => {
       )
       assert.equal(
         (await batchExchange.getBalance.call(accounts[2], otherToken)).toString(),
-        smallExample.deposits[3].amount
-          .sub(getExecutedSellAmount(solution.volumes[3], solution.prices[0], toETH(1)))
-          .toString(),
+        smallExample.deposits[3].amount.sub(getExecutedSellAmount(solution.volumes[3], solution.prices[0], toETH(1))).toString(),
         "Sold tokens were not adjusted correctly"
       )
       // Now reverting should not throw due to temporarily negative balances, only later due to objective value criteria
@@ -1595,18 +1595,9 @@ contract("BatchExchange", async accounts => {
       // Fill essentially the remaining amount in
       const remainingBuyVolumes = [toETH(1), new BN("1998000000000000000")]
       // Note: The claimed objective value here is actually incorrect (but irrelevant for this test)
-      batchExchange.submitSolution(
-        batchIndex + 1,
-        1,
-        owners,
-        touchedOrderIds,
-        remainingBuyVolumes,
-        prices,
-        tokenIdsForPrice,
-        {
-          from: solver,
-        }
-      )
+      batchExchange.submitSolution(batchIndex + 1, 1, owners, touchedOrderIds, remainingBuyVolumes, prices, tokenIdsForPrice, {
+        from: solver,
+      })
 
       assert(basicTrade.orders.length == basicTrade.deposits.length)
       for (let i = 0; i < basicTrade.orders.length; i++) {
@@ -1623,7 +1614,13 @@ contract("BatchExchange", async accounts => {
 
         assert.equal(
           deposit.amount
-            .sub(getExecutedSellAmount(totalExecutedBuy, basicTrade.solutions[1].tokens[order.buyToken].price, basicTrade.solutions[1].tokens[order.sellToken].price))
+            .sub(
+              getExecutedSellAmount(
+                totalExecutedBuy,
+                basicTrade.solutions[1].tokens[order.buyToken].price,
+                basicTrade.solutions[1].tokens[order.sellToken].price
+              )
+            )
             .toString(),
           sellTokenBalance.toString(),
           `Sold tokens were not adjusted correctly ${i}`

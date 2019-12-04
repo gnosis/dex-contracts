@@ -93,13 +93,13 @@ function generateTestCase(input, strict = true, debug = false) {
           solution.buyVolumes[i].isZero()
             ? null
             : {
-              idx: i,
-              user: o.user,
-              buy: solution.buyVolumes[i],
-              sell: getExecutedSellAmount(solution.buyVolumes[i], solution.prices[o.buyToken], solution.prices[o.sellToken]),
-              utility: objectiveValue.utilities[i],
-              disregardedUtility: objectiveValue.disregardedUtilities[i],
-            }
+                idx: i,
+                user: o.user,
+                buy: solution.buyVolumes[i],
+                sell: getExecutedSellAmount(solution.buyVolumes[i], solution.prices[o.buyToken], solution.prices[o.sellToken]),
+                utility: objectiveValue.utilities[i],
+                disregardedUtility: objectiveValue.disregardedUtilities[i],
+              }
         )
         .filter(o => !!o)
       return {
