@@ -199,7 +199,7 @@ contract BatchExchange is EpochTokenLocker {
       */
     function freeStorageOfOrders(uint256[] memory ids) public {
         for (uint256 i = 0; i < ids.length; i++) {
-            require(orders[msg.sender][ids[i]].validUntil + 1 < getCurrentBatchId(), "Order is still valid");
+            require(!checkOrderValidity(orders[msg.sender][ids[i]], getCurrentBatchId()), "Order is still valid");
             delete orders[msg.sender][ids[i]];
         }
     }

@@ -240,7 +240,17 @@ contract("BatchExchange", async accounts => {
       await waitForNSeconds(BATCH_TIME)
       await batchExchange.freeStorageOfOrders([id])
 
-      assert.equal((await batchExchange.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
+      assert.equal((await batchExchange.orders(user_1, id)).priceDenominator, 0, "Order data was not cleared")
+    })
+    it("cancels and deletes order that is not yet valid", async () => {
+      const batchExchange = await setupGenericStableX()
+
+      const currentStateIndex = await batchExchange.getCurrentBatchId()
+
+      const id = await sendTxAndGetReturnValue(batchExchange.placeOrder, 0, 1, currentStateIndex + 3, 10, 20)
+      await batchExchange.cancelOrders([id])
+      await batchExchange.freeStorageOfOrders([id])
+      assert.equal((await batchExchange.orders(user_1, id)).priceDenominator, 0, "Order data was not cleared")
     })
     it("fails to delete non-canceled order", async () => {
       const batchExchange = await setupGenericStableX()
@@ -250,7 +260,7 @@ contract("BatchExchange", async accounts => {
       const id = await sendTxAndGetReturnValue(batchExchange.placeOrder, 0, 1, currentStateIndex + 3, 10, 20)
       await truffleAssert.reverts(batchExchange.freeStorageOfOrders([id]), "Order is still valid")
     })
-    it("fails to delete canceled order in same stateIndex", async () => {
+    it("fails to delete order that is still valid", async () => {
       const batchExchange = await setupGenericStableX()
       const id = await sendTxAndGetReturnValue(batchExchange.placeOrder, 0, 1, 3, 10, 20)
       await batchExchange.cancelOrders([id])
@@ -263,8 +273,8 @@ contract("BatchExchange", async accounts => {
       await batchExchange.cancelOrders([id, id2])
       await waitForNSeconds(BATCH_TIME)
       await batchExchange.freeStorageOfOrders([id, id2])
-      assert.equal((await batchExchange.orders(user_1, id)).priceDenominator, 0, "priceDenominator was stored incorrectly")
-      assert.equal((await batchExchange.orders(user_1, id2)).priceDenominator, 0, "priceDenominator was stored incorrectly")
+      assert.equal((await batchExchange.orders(user_1, id)).priceDenominator, 0, "Order data was not cleared")
+      assert.equal((await batchExchange.orders(user_1, id2)).priceDenominator, 0, "Order data was not cleared")
     })
   })
   describe("submitSolution()", () => {
