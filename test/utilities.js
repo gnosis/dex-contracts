@@ -3,7 +3,7 @@ const memoize = require("fast-memoize")
 const MerkleTree = require("merkletreejs")
 const BN = require("bn.js")
 
-const { decodeRawAuctionElements } = require("../src/index")
+const { decodeOrders } = require("../src/index")
 
 /**
  * funds accounts with specified value for Mintable Token
@@ -175,7 +175,7 @@ function partitionArray(input, spacing) {
 }
 
 function decodeAuctionElements(bytes) {
-  return decodeRawAuctionElements(bytes).map(e => ({
+  return decodeOrders(bytes).map(e => ({
     user: e.user,
     sellTokenBalance: new BN(e.sellTokenBalance),
     buyToken: parseInt(e.buyToken),

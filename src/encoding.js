@@ -10,12 +10,13 @@ const assert = require("assert")
 const BN = require("bn.js")
 
 /**
- * Decodes auction elements returned from `BatchExchange.getEncodedAuctionElements`
- * which are manually encoded into bytes to get around Solidity ABI limitations.
+ * Decodes a byte-encoded variable length array of orders. This can be used to
+ * decode the result of `BatchExchange.getEncodedUserOrders` and
+ * `BatchExchange.getEncodedAuctionElements`.
  * @param {string} bytes The encoded bytes in hex in the form '0x...'
- * @return {Object[]} The decoded auction elements
+ * @return {Object[]} The decoded array of orders
  */
-function decodeRawAuctionElements(bytes) {
+function decodeOrders(bytes) {
   assert(typeof bytes === "string" || bytes instanceof String, "bytes parameter must be a string")
   assert((bytes.length - 2) % 112 === 0, "malformed bytes")
 
@@ -43,5 +44,5 @@ function decodeRawAuctionElements(bytes) {
 }
 
 module.exports = {
-  decodeRawAuctionElements,
+  decodeOrders,
 }
