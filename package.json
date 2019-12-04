@@ -2,7 +2,7 @@
   "name": "@gnosis.pm/dex-contracts",
   "version": "0.0.1",
   "description": "Contracts for dFusion multi-token batch auction exchange",
-  "main": "build/contracts",
+  "main": "src/index.js",
   "directories": {
     "test": "test"
   },
@@ -17,6 +17,7 @@
     "verify-stablex": "truffle run verify BatchExchange",
     "lint": "eslint .",
     "solhint": "solhint \"contracts/**/*.sol\"",
+    "prepack": "truffle build && npm run networks-inject",
     "prettier:solidity": "prettier --write 'contracts/**/*.sol'",
     "prettier:js": "prettier --write './**/*.js'",
     "pretty-check": "prettier --check 'contracts/**/*.sol' && prettier --check './**/*.js'"
@@ -26,7 +27,15 @@
     "url": "git+https://github.com/gnosis/dex-contracts.git"
   },
   "files": [
-    "build"
+    "build/contracts/BatchExchange.json",
+    "build/contracts/EpochTokenLocker.json",
+    "build/contracts/Migrations.json",
+    "build/contracts/SnappAuction.json",
+    "build/contracts/SnappBase.json",
+    "build/contracts/SnappBaseCore.json",
+    "build/contracts/TokenConservation.json",
+    "networks.json",
+    "src"
   ],
   "keywords": [
     "decentralized",
@@ -44,13 +53,15 @@
     "url": "https://github.com/gnosis/dex-contracts/issues"
   },
   "homepage": "https://github.com/gnosis/dex-contracts#readme",
+  "dependencies": {
+    "bn.js": "^4.11.8"
+  },
   "devDependencies": {
-    "@gnosis.pm/mock-contract": "^3.0.7",
+    "@gnosis.pm/mock-contract": "^3.0.8",
     "@gnosis.pm/owl-token": "^3.1.0",
     "@gnosis.pm/solidity-data-structures": "^1.1.0",
     "@gnosis.pm/util-contracts": "^2.0.3",
     "axios": "^0.19.0",
-    "bn.js": "^4.11.8",
     "coveralls": "^3.0.9",
     "dotenv": "^8.0.0",
     "es6-promise": "^4.2.8",
@@ -62,7 +73,7 @@
     "ethereumjs-util": "^6.2.0",
     "fast-memoize": "^2.5.1",
     "husky": "^2.5.0",
-    "merkletreejs": "0.0.22",
+    "merkletreejs": "0.1.7",
     "minimist": "^1.2.0",
     "node-fetch": "^2.6.0",
     "openzeppelin-solidity": "OpenZeppelin/openzeppelin-contracts#2c11ed59",
