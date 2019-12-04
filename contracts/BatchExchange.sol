@@ -104,6 +104,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param _feeToken Address of ERC20 fee token.
       */
     constructor(uint256 maxTokens, uint128 _feeDenominator, address _feeToken) public {
+        currentPrices[0] = 1 ether;
         MAX_TOKENS = maxTokens;
         feeToken = TokenOWL(_feeToken);
         feeToken.approve(address(this), uint256(-1));
@@ -242,15 +243,14 @@ contract BatchExchange is EpochTokenLocker {
             "Claimed objective doesn't sufficiently improve current solution"
         );
         require(verifyAmountThreshold(prices), "At least one price lower than AMOUNT_MINIMUM");
-        require(tokenIdsForPrice[0] == 0, "fee token price has to be specified");
-        require(prices[0] == 1 ether, "fee token price must be 10^18");
+        require(tokenIdsForPrice[0] != 0, "Fee token has fixed price!");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
         require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
         burnPreviousAuctionFees();
         undoCurrentSolution();
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete latestSolution.trades;
-        int256[] memory tokenConservation = new int256[](prices.length);
+        int256[] memory tokenConservation = TokenConservation.init(tokenIdsForPrice);
         uint256 utility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
@@ -287,7 +287,7 @@ contract BatchExchange is EpochTokenLocker {
         for (uint256 i = 0; i < owners.length; i++) {
             disregardedUtility = disregardedUtility.add(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]));
         }
-        uint256 burntFees = uint256(tokenConservation[0]) / 2;
+        uint256 burntFees = uint256(tokenConservation.feeTokenImbalance()) / 2;
         require(utility.add(burntFees) > disregardedUtility, "Solution must be better than trivial");
         // burntFees ensures direct trades (when available) yield better solutions than longer rings
         uint256 objectiveValue = utility.add(burntFees).sub(disregardedUtility);

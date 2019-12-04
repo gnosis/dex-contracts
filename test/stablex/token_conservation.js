@@ -26,7 +26,6 @@ contract("TokenConservation", async () => {
       )
     })
   })
-
   describe("checkPriceOrdering()", () => {
     it("returns false when unordered", async () => {
       const tokenConservation = await TokenConservationWrapper.new()
@@ -43,13 +42,12 @@ contract("TokenConservation", async () => {
       assert.equal(await tokenConservation.checkPriceOrdering([1, 2, 3]), true, "Failed on [1, 2, 3]")
     })
   })
-
   describe("updateTokenConservation()", () => {
     it("calculates the updated tokenConservation array", async () => {
       const tokenConservation = await TokenConservationWrapper.new()
 
-      const testArray = [0, 0, 0]
-      const tokenIdsForPrice = [0, 1, 2]
+      const testArray = [0, 0, 0, 0]
+      const tokenIdsForPrice = [1, 2, 3]
       const buyToken = 2
       const sellToken = 1
       const buyAmount = 10
@@ -65,8 +63,13 @@ contract("TokenConservation", async () => {
           sellAmount
         )
       ).map(a => a.toNumber())
-      const expectedArray = [0, 3, -10]
+      const expectedArray = [0, 3, -10, 0]
       assert.deepEqual(updatedArray, expectedArray)
+
+      const secondUpdatedArray = (
+        await tokenConservation.updateTokenConservationTest.call(testArray, 2, 3, tokenIdsForPrice, 1, 2)
+      ).map(a => a.toNumber())
+      assert.deepEqual([0, 0, -1, 2], secondUpdatedArray)
     })
     it("throws, if findPriceIndex does not find the token, as it is not supplied", async () => {
       const tokenConservation = await TokenConservationWrapper.new()

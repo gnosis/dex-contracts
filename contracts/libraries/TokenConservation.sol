@@ -9,8 +9,22 @@ import "openzeppelin-solidity/contracts/drafts/SignedSafeMath.sol";
 library TokenConservation {
     using SignedSafeMath for int256;
 
+    /** @dev initialize the token conservation data structure
+      * @param tokenIdsForPrice sorted list of tokenIds for which token conservation should be checked
+      */
+    function init(uint16[] memory tokenIdsForPrice) internal pure returns (int256[] memory) {
+        return new int256[](tokenIdsForPrice.length + 1);
+    }
+
+    /** @dev returns the token imbalance of the fee token
+      * @param self internal datastructure created by TokenConservation.init()
+      */
+    function feeTokenImbalance(int256[] memory self) internal pure returns (int256) {
+        return self[0];
+    }
+
     /** @dev updated token conservation array.
-      * @param self list of token imbalances
+      * @param self internal datastructure created by TokenConservation.init()
       * @param buyToken id of token whose imbalance should be subtracted from
       * @param sellToken id of token whose imbalance should be added to
       * @param tokenIdsForPrice sorted list of tokenIds
@@ -32,7 +46,7 @@ library TokenConservation {
     }
 
     /** @dev Ensures all array's elements are zero except the first.
-      * @param self list of token imbalances
+      * @param self internal datastructure created by TokenConservation.init()
       * @return true if all, but first element of self are zero else false
       */
     function checkTokenConservation(int256[] memory self) internal pure {
@@ -61,13 +75,18 @@ library TokenConservation {
       * @return `index` in `tokenIdsForPrice` where `tokenId` appears (reverts if not found).
       */
     function findPriceIndex(uint16 tokenId, uint16[] memory tokenIdsForPrice) private pure returns (uint256) {
+        // Fee token is not included in tokenIdsForPrice
+        if (tokenId == 0) {
+            return 0;
+        }
         // binary search for the other tokens
         uint256 leftValue = 0;
         uint256 rightValue = tokenIdsForPrice.length - 1;
         while (rightValue >= leftValue) {
             uint256 middleValue = leftValue + (rightValue - leftValue) / 2;
             if (tokenIdsForPrice[middleValue] == tokenId) {
-                return middleValue;
+                // shifted one to the right to account for fee token at index 0
+                return middleValue + 1;
             } else if (tokenIdsForPrice[middleValue] < tokenId) {
                 leftValue = middleValue + 1;
             } else {

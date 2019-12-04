@@ -187,10 +187,6 @@ function solutionObjectiveValueComputation(orders, solution, strict = true) {
   assert(tokenCount === solution.prices.length, "solution prices does not include all tokens")
   assert(toETH(1).eq(solution.prices[0]), "fee token price is not 1 ether")
 
-  const feeTokenTouched =
-    orders.findIndex((o, i) => !solution.buyVolumes[i].isZero() && (o.buyToken === 0 || o.sellToken === 0)) !== -1
-  assert(feeTokenTouched, "fee token is not touched")
-
   const touchedOrders = orders.map((o, i) => (solution.buyVolumes[i].isZero() ? null : [o, i])).filter(pair => !!pair)
 
   const orderExecutedAmounts = orders.map(() => new BN(0))
@@ -220,6 +216,9 @@ function solutionObjectiveValueComputation(orders, solution, strict = true) {
   }
 
   if (strict) {
+    const feeTokenTouched =
+      orders.findIndex((o, i) => !solution.buyVolumes[i].isZero() && (o.buyToken === 0 || o.sellToken === 0)) !== -1
+    assert(feeTokenTouched, "fee token is not touched")
     assert(!tokenConservation[0].isNeg(), "fee token conservation is negative")
     tokenConservation
       .slice(1)

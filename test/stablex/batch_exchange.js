@@ -11,7 +11,7 @@ const { waitForNSeconds, sendTxAndGetReturnValue, decodeAuctionElements } = requ
 
 const { closeAuction } = require("../../scripts/stablex/utilities.js")
 
-const { toETH, getExecutedSellAmount, ERROR_EPSILON, feeAdded } = require("../resources/math")
+const { toETH, getExecutedSellAmount, ERROR_EPSILON, feeAdded, feeSubtracted } = require("../resources/math")
 const {
   solutionSubmissionParams,
   basicTrade,
@@ -268,31 +268,6 @@ contract("BatchExchange", async accounts => {
     })
   })
   describe("submitSolution()", () => {
-    it("rejects attempt at price scaling hack", async () => {
-      const batchExchange = await setupGenericStableX()
-      await makeDeposits(batchExchange, accounts, basicTrade.deposits)
-
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
-
-      await closeAuction(batchExchange)
-
-      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-
-      await truffleAssert.reverts(
-        batchExchange.submitSolution(
-          batchIndex,
-          solution.objectiveValue,
-          solution.owners,
-          solution.touchedOrderIds,
-          solution.volumes,
-          solution.prices.map(x => x.mul(new BN(2))),
-          solution.tokenIdsForPrice,
-          { from: solver }
-        ),
-        "fee token price must be 10^18"
-      )
-    })
     it("rejects if claimed objective is not better than current", async () => {
       const batchExchange = await setupGenericStableX()
 
@@ -310,7 +285,7 @@ contract("BatchExchange", async accounts => {
       await closeAuction(batchExchange)
       const fakeClaimedObjective = 1
       await truffleAssert.reverts(
-        batchExchange.submitSolution(batchIndex, fakeClaimedObjective, [], [], [], [toETH(1)], [0], { from: solver }),
+        batchExchange.submitSolution(batchIndex, fakeClaimedObjective, [], [], [], [toETH(1)], [1], { from: solver }),
         "Solution must be better than trivial"
       )
     })
@@ -338,7 +313,54 @@ contract("BatchExchange", async accounts => {
       assert(objectiveValue > 0, "the computed objective value is greater than 0")
       assert.equal(objectiveValue, solution.objectiveValue.toString())
     })
-    it("rejects aclaimed marginally improved solutions", async () => {
+    it("rejects if fee token not traded", async () => {
+      const batchExchange = await setupGenericStableX(3)
+
+      const deposits = [
+        { amount: toETH(100), token: 1, user: 0 },
+        { amount: toETH(100), token: 2, user: 1 },
+      ]
+      const orders = [
+        { sellToken: 1, buyToken: 2, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 0 },
+        { sellToken: 2, buyToken: 1, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 1 },
+      ]
+      const solution = {
+        prices: [1, 1, 2].map(toETH),
+        buyVolumes: [toETH(10), feeSubtracted(toETH(20))],
+      }
+
+      // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
+      await makeDeposits(batchExchange, accounts, deposits)
+      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+
+      const orderIds = await placeOrders(batchExchange, accounts, orders, batchIndex + 1)
+      await closeAuction(batchExchange)
+
+      await truffleAssert.reverts(
+        batchExchange.submitSolution(
+          batchIndex,
+          1 /* objective value */,
+          [accounts[0], accounts[1]] /* user ids */,
+          orderIds,
+          solution.buyVolumes,
+          solution.prices.slice(1),
+          [1, 2],
+          { from: solver }
+        ),
+        "Token conservation at 0 must be positive"
+      )
+    })
+    it("rejects solutions attempting to set fee token price", async () => {
+      const batchExchange = await setupGenericStableX()
+
+      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      await closeAuction(batchExchange)
+      await truffleAssert.reverts(
+        batchExchange.submitSolution(batchIndex, 1, [], [], [], [10000], [0]),
+        "Fee token has fixed price!"
+      )
+    })
+    it("rejects acclaimed marginally improved solutions", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
@@ -484,7 +506,7 @@ contract("BatchExchange", async accounts => {
       // TODO - make this general (no user_i, no feeToken and no erc20_2)
       assert.equal(
         (await batchExchange.getBalance.call(user_1, feeToken)).toString(),
-        basicTrade.deposits[0].amount.sub(getExecutedSellAmount(volume[0], prices[1], prices[0])).toString(),
+        basicTrade.deposits[0].amount.sub(getExecutedSellAmount(volume[0], prices[0], toETH(1))).toString(),
         "Sold tokens were not adjusted correctly"
       )
       assert.equal(
@@ -494,7 +516,7 @@ contract("BatchExchange", async accounts => {
       )
       assert.equal(
         (await batchExchange.getBalance.call(user_2, erc20_2)).toString(),
-        basicTrade.deposits[1].amount.sub(getExecutedSellAmount(volume[1], prices[0], prices[1])).toString(),
+        basicTrade.deposits[1].amount.sub(getExecutedSellAmount(volume[1], toETH(1), prices[0])).toString(),
         "Sold tokens were not adjusted correctly"
       )
       assert.equal(
@@ -537,7 +559,7 @@ contract("BatchExchange", async accounts => {
       // TODO - make this more general(no user_i, etc...)
       assert.equal(
         (await batchExchange.getBalance.call(user_1, feeToken)).toString(),
-        basicTrade.deposits[0].amount.sub(getExecutedSellAmount(volume[0], prices[1], prices[0])).toString(),
+        basicTrade.deposits[0].amount.sub(getExecutedSellAmount(volume[0], prices[0], toETH(1))).toString(),
         "Sold tokens were not adjusted correctly"
       )
       assert.equal(
@@ -547,7 +569,7 @@ contract("BatchExchange", async accounts => {
       )
       assert.equal(
         (await batchExchange.getBalance.call(user_2, erc20_2)).toString(),
-        basicTrade.deposits[1].amount.sub(getExecutedSellAmount(volume[1], prices[0], prices[1])).toString(),
+        basicTrade.deposits[1].amount.sub(getExecutedSellAmount(volume[1], toETH(1), prices[0])).toString(),
         "Sold tokens were not adjusted correctly"
       )
       assert.equal(
@@ -561,7 +583,7 @@ contract("BatchExchange", async accounts => {
 
       assert.equal(
         orderResult1.usedAmount,
-        getExecutedSellAmount(volume[0], prices[1], prices[0]).toString(),
+        getExecutedSellAmount(volume[0], prices[0], toETH(1)).toString(),
         "usedAmount was stored incorrectly"
       )
       assert.equal(
@@ -577,7 +599,7 @@ contract("BatchExchange", async accounts => {
 
       assert.equal(
         orderResult2.usedAmount,
-        getExecutedSellAmount(volume[1], prices[0], prices[1]).toString(),
+        getExecutedSellAmount(volume[1], toETH(1), prices[0]).toString(),
         "usedAmount was stored incorrectly"
       )
       assert.equal(
@@ -628,7 +650,7 @@ contract("BatchExchange", async accounts => {
       // Checks that contract updates the partial solution correctly as expected (only needs to be checked once)
       assert.equal(
         (await batchExchange.getBalance.call(user_1, feeToken)).toString(),
-        basicTrade.deposits[0].amount.sub(getExecutedSellAmount(partialBuyVolumes[0], prices[1], prices[0])).toString(),
+        basicTrade.deposits[0].amount.sub(getExecutedSellAmount(partialBuyVolumes[0], prices[0], toETH(1))).toString(),
         "Sold tokens were not adjusted correctly"
       )
       assert.equal(
@@ -638,7 +660,7 @@ contract("BatchExchange", async accounts => {
       )
       assert.equal(
         (await batchExchange.getBalance.call(user_2, erc20_2)).toString(),
-        basicTrade.deposits[1].amount.sub(getExecutedSellAmount(partialBuyVolumes[1], prices[0], prices[1])).toString(),
+        basicTrade.deposits[1].amount.sub(getExecutedSellAmount(partialBuyVolumes[1], toETH(1), prices[0])).toString(),
         "Sold tokens were not adjusted correctly"
       )
       assert.equal(
@@ -666,7 +688,7 @@ contract("BatchExchange", async accounts => {
       // Note that full solution trade execution values have already been verified, but we want to make sure the contract reverted previous solution.
       assert.equal(
         (await batchExchange.getBalance.call(user_1, feeToken)).toString(),
-        basicTrade.deposits[0].amount.sub(getExecutedSellAmount(fullBuyVolumes[0], prices[1], prices[0])).toString(),
+        basicTrade.deposits[0].amount.sub(getExecutedSellAmount(fullBuyVolumes[0], prices[0], toETH(1))).toString(),
         "Sold tokens were not adjusted correctly"
       )
       assert.equal(
@@ -676,7 +698,7 @@ contract("BatchExchange", async accounts => {
       )
       assert.equal(
         (await batchExchange.getBalance.call(user_2, erc20_2)).toString(),
-        basicTrade.deposits[1].amount.sub(getExecutedSellAmount(fullBuyVolumes[1], prices[0], prices[1])).toString(),
+        basicTrade.deposits[1].amount.sub(getExecutedSellAmount(fullBuyVolumes[1], toETH(1), prices[0])).toString(),
         "Sold tokens were not adjusted correctly"
       )
       assert.equal(
@@ -812,7 +834,7 @@ contract("BatchExchange", async accounts => {
         // This is only really necessary for the third submission... but whateva.
         assert.equal(
           (await batchExchange.getBalance.call(user_1, feeToken)).toString(),
-          advancedTrade.deposits[0].amount.sub(getExecutedSellAmount(volumes[0], prices[1], prices[0])).toString(),
+          advancedTrade.deposits[0].amount.sub(getExecutedSellAmount(volumes[0], prices[0], toETH(1))).toString(),
           "Sold tokens were not adjusted correctly"
         )
         assert.equal(
@@ -822,7 +844,7 @@ contract("BatchExchange", async accounts => {
         )
         assert.equal(
           (await batchExchange.getBalance.call(user_2, erc20_2)).toString(),
-          advancedTrade.deposits[1].amount.sub(getExecutedSellAmount(volumes[1], prices[0], prices[1])).toString(),
+          advancedTrade.deposits[1].amount.sub(getExecutedSellAmount(volumes[1], toETH(1), prices[0])).toString(),
           "Sold tokens were not adjusted correctly"
         )
         assert.equal(
@@ -1088,7 +1110,7 @@ contract("BatchExchange", async accounts => {
           solution.touchedOrderIds,
           solution.volumes,
           solution.prices,
-          [0, 1, 1],
+          [1, 1],
           { from: solver }
         ),
         "prices are not ordered by tokenId"
@@ -1101,35 +1123,10 @@ contract("BatchExchange", async accounts => {
           solution.touchedOrderIds,
           solution.volumes,
           solution.prices,
-          [0, 2, 1],
+          [2, 1],
           { from: solver }
         ),
         "prices are not ordered by tokenId"
-      )
-    })
-    it("reverts, fee token not included in solution", async () => {
-      const batchExchange = await setupGenericStableX()
-
-      await makeDeposits(batchExchange, accounts, basicTrade.deposits)
-
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
-      await closeAuction(batchExchange)
-
-      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-      const badFeeTokenIdsForPrices = [1, 2]
-      await truffleAssert.reverts(
-        batchExchange.submitSolution(
-          batchIndex,
-          solution.objectiveValue,
-          solution.owners,
-          solution.touchedOrderIds,
-          solution.volumes,
-          solution.prices,
-          badFeeTokenIdsForPrices,
-          { from: solver }
-        ),
-        "fee token price has to be specified"
       )
     })
     it("reverts, if any prices are less than AMOUNT_MINIMUM", async () => {
@@ -1173,8 +1170,8 @@ contract("BatchExchange", async accounts => {
           accounts.slice(0, 2),
           orderIds,
           [tenThousand, tenThousand],
-          [1, 0.9].map(toETH),
-          [0, 1],
+          [toETH(0.9)],
+          [1],
           { from: solver }
         ),
         "sell amount less than AMOUNT_MINIMUM"
@@ -1190,16 +1187,9 @@ contract("BatchExchange", async accounts => {
 
       const tooSmallBuyAmounts = [10000, 9990].map(val => new BN(val))
       await truffleAssert.reverts(
-        batchExchange.submitSolution(
-          batchIndex,
-          1,
-          accounts.slice(0, 2),
-          orderIds,
-          tooSmallBuyAmounts,
-          [1, 1].map(toETH),
-          [0, 1],
-          { from: solver }
-        ),
+        batchExchange.submitSolution(batchIndex, 1, accounts.slice(0, 2), orderIds, tooSmallBuyAmounts, [toETH(1)], [1], {
+          from: solver,
+        }),
         "buy amount less than AMOUNT_MINIMUM"
       )
     })
@@ -1219,8 +1209,8 @@ contract("BatchExchange", async accounts => {
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
-        [1, 2, 3, 4].map(toETH),
-        [0, 1, 2, 3],
+        [2, 3, 4].map(toETH),
+        [1, 2, 3],
         { from: solver }
       )
     })
@@ -1392,7 +1382,7 @@ contract("BatchExchange", async accounts => {
       await closeAuction(batchExchange)
 
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-      const wayTooBigPrices = [toETH(1), "340282366920938463463374607431768211455"]
+      const wayTooBigPrices = ["340282366920938463463374607431768211455"]
       await truffleAssert.reverts(
         batchExchange.submitSolution(
           batchIndex,
@@ -1415,7 +1405,7 @@ contract("BatchExchange", async accounts => {
 
       const tooManyOwners = Array(maxTouchedOrders + 1).fill(user_1)
       await truffleAssert.reverts(
-        batchExchange.submitSolution(batchIndex - 1, 1, tooManyOwners, [], [], [toETH(1)], [0]),
+        batchExchange.submitSolution(batchIndex - 1, 1, tooManyOwners, [], [], [toETH(1)], [1]),
         "Solution exceeds MAX_TOUCHED_ORDERS"
       )
     })
@@ -1458,7 +1448,11 @@ contract("BatchExchange", async accounts => {
         const buyTokenBalance = await batchExchange.getBalance.call(relevantUser, buyToken)
 
         const expectedSellBalance = deposit.amount.sub(
-          getExecutedSellAmount(volumes[i], prices[order.buyToken], prices[order.sellToken])
+          getExecutedSellAmount(
+            volumes[i],
+            basicRingTrade.solutions[0].tokens[order.buyToken].price,
+            basicRingTrade.solutions[0].tokens[order.buyToken].price
+          )
         )
         assert(sellTokenBalance.eq(expectedSellBalance), `Sold tokens were not adjusted correctly at order index ${i}`)
         assert(buyTokenBalance.eq(volumes[i]), `Bought tokens were not adjusted correctly at order index ${i}`)
@@ -1486,7 +1480,7 @@ contract("BatchExchange", async accounts => {
       )
 
       assert.equal(
-        ringSolution.prices[2].toString(),
+        ringSolution.prices[1].toString(),
         (await batchExchange.currentPrices.call(2)).toString(),
         "CurrentPrice were not adjusted correctly"
       )
@@ -1536,9 +1530,7 @@ contract("BatchExchange", async accounts => {
       )
       assert.equal(
         (await batchExchange.getBalance.call(accounts[0], feeToken)).toString(),
-        smallExample.deposits[0].amount
-          .sub(getExecutedSellAmount(solution.volumes[0], solution.prices[0], solution.prices[1]))
-          .toString(),
+        smallExample.deposits[0].amount.sub(getExecutedSellAmount(solution.volumes[0], toETH(1), solution.prices[0])).toString(),
         "Sold tokens were not adjusted correctly"
       )
       // User 1
@@ -1556,9 +1548,7 @@ contract("BatchExchange", async accounts => {
       )
       assert.equal(
         (await batchExchange.getBalance.call(accounts[2], otherToken)).toString(),
-        smallExample.deposits[3].amount
-          .sub(getExecutedSellAmount(solution.volumes[3], solution.prices[1], solution.prices[0]))
-          .toString(),
+        smallExample.deposits[3].amount.sub(getExecutedSellAmount(solution.volumes[3], solution.prices[0], toETH(1))).toString(),
         "Sold tokens were not adjusted correctly"
       )
       // Now reverting should not throw due to temporarily negative balances, only later due to objective value criteria
@@ -1624,7 +1614,13 @@ contract("BatchExchange", async accounts => {
 
         assert.equal(
           deposit.amount
-            .sub(getExecutedSellAmount(totalExecutedBuy, prices[order.buyToken], prices[order.sellToken]))
+            .sub(
+              getExecutedSellAmount(
+                totalExecutedBuy,
+                basicTrade.solutions[1].tokens[order.buyToken].price,
+                basicTrade.solutions[1].tokens[order.sellToken].price
+              )
+            )
             .toString(),
           sellTokenBalance.toString(),
           `Sold tokens were not adjusted correctly ${i}`
