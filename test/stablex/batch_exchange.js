@@ -720,8 +720,10 @@ contract("BatchExchange", async accounts => {
       await owlProxy.mintOWL(user_1, owlAmount)
 
       const batchExchange = await BatchExchange.new(2, feeDenominator, owlProxy.address)
-      const token = await MockContract.new()
       await owlProxy.approve(batchExchange.address, owlAmount)
+
+      const token = await MockContract.new()
+      await token.givenAnyReturnBool(true)
       await batchExchange.addToken(token.address, { from: user_1 })
 
       // Ensure all user have sufficient feeToken
