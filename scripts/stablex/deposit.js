@@ -40,7 +40,7 @@ module.exports = async callback => {
     }
 
     await instance.deposit(token_address, amount, { from: depositor })
-    const tradeable_at = await instance.getPendingDepositBatchNumber(depositor, token_address)
+    const tradeable_at = (await instance.getPendingDeposit(depositor, token_address))[1]
 
     console.log(`Deposit successful. Can be traded as of batch ${tradeable_at}`)
     callback()

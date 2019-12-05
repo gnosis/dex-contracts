@@ -28,7 +28,7 @@ module.exports = async callback => {
     }
 
     await instance.requestWithdraw(token_address, amount, { from: withdrawer })
-    const claimable_at = await instance.getPendingWithdrawBatchNumber(withdrawer, token_address)
+    const claimable_at = (await instance.getPendingWithdraw(withdrawer, token_address))[1]
 
     console.log(`Withdraw Request successful. Can be claimed in batch ${claimable_at}`)
     callback()
