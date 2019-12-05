@@ -359,31 +359,6 @@ contract("BatchExchange", async accounts => {
         "Fee token has fixed price!"
       )
     })
-    it("rejects solutions whose claimed objective does not agree with internally computed.", async () => {
-      const stablecoinConverter = await setupGenericStableX()
-
-      // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
-      await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
-      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(stablecoinConverter, accounts, basicTrade.orders, batchIndex + 1)
-      await closeAuction(stablecoinConverter)
-
-      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-
-      await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(
-          batchIndex,
-          1,
-          solution.owners,
-          solution.touchedOrderIds,
-          solution.volumes,
-          solution.prices,
-          solution.tokenIdsForPrice,
-          { from: solver }
-        ),
-        "Computed objective must agree with claimed"
-      )
-    })
     it("rejects marginally better solutions", async () => {
       const stablecoinConverter = await setupGenericStableX()
 
