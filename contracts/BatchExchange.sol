@@ -613,10 +613,11 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev Checks that the proposed objective value is a significant enough improvement on the latest one
-      * @param objectiveValue The proposed objective value to check
+      * @param objectiveValue the proposed objective value to check
       * @return true if the objectiveValue is a significant enough improvement, false otherwise
+      */
     function isObjectiveValueGoodEnough(uint256 objectiveValue) private view returns (bool) {
-        return (newObjectiveValue.mul(IMPROVEMENT_DENOMINATOR) > getCurrentObjectiveValue().mul(IMPROVEMENT_DENOMINATOR + 1));
+        return (objectiveValue.mul(IMPROVEMENT_DENOMINATOR) > getCurrentObjectiveValue().mul(IMPROVEMENT_DENOMINATOR + 1));
     }
 
     // Private pure
