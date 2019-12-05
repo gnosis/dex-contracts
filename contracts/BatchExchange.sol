@@ -208,6 +208,31 @@ contract BatchExchange is EpochTokenLocker {
         }
     }
 
+    /** @dev A user facing wrapper to cancel and place new orders in the same transaction.
+      * @param cancellations ids of orders to be cancelled
+      * @param buyTokens ids of tokens to be bought in new orders
+      * @param sellTokens ids of tokens to be sold in new orders
+      * @param validFroms batchIds representing order's validity start time in new orders
+      * @param validUntils batchIds represnnting order's expiry in new orders
+      * @param buyAmounts relative minimum amount of requested buy amounts in new orders
+      * @param sellAmounts maximum amounts of sell token to be exchanged in new orders
+      * @return `orderIds` an array of indices in which `msg.sender`'s new orders are included
+      *
+      * Emits {OrderCancelation} events for all cancelled orders and {OrderPlacement} events with all relevant new order details.
+      */
+    function replaceOrders(
+        uint256[] memory cancellations,
+        uint16[] memory buyTokens,
+        uint16[] memory sellTokens,
+        uint32[] memory validFroms,
+        uint32[] memory validUntils,
+        uint128[] memory buyAmounts,
+        uint128[] memory sellAmounts
+    ) public returns (uint256[] memory orderIds) {
+        cancelOrders(cancellations);
+        return placeValidFromOrders(buyTokens, sellTokens, validFroms, validUntils, buyAmounts, sellAmounts);
+    }
+
     /** @dev a solver facing function called for auction settlement
       * @param batchIndex index of auction solution is referring to
       * @param owners array of addresses corresponding to touched orders
