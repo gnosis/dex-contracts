@@ -81,8 +81,8 @@ contract BatchExchange is EpochTokenLocker {
     );
 
     /** @dev Event emitted when an order is cancelled but still valid in the batch that is
-     * curretnly being solved. It remains in storage but not be tradable in the next batch
-     * to be solved.
+     * currently being solved. It remains in storage but will not be tradable in any future
+     * batch to be solved.
      */
     event OrderCancelation(address owner, uint256 id);
 
