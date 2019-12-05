@@ -246,6 +246,30 @@ contract("BatchExchange", async accounts => {
       assert.equal((await batchExchange.orders(user_1, 0)).priceDenominator, 0, "Order data was not cleared")
     })
   })
+  describe("replaceOrders()", () => {
+    it("cancels and creates new orders", async () => {
+      const batchExchange = await setupGenericStableX()
+
+      await batchExchange.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
+      const order2 = await sendTxAndGetReturnValue(batchExchange.placeOrder, 2, 4, 5, 30, 40, { from: user_1 })
+
+      const currentStateIndex = (await batchExchange.getCurrentBatchId()).toNumber()
+      await batchExchange.replaceOrders(
+        [order2],
+        [5, 6],
+        [7, 8],
+        [currentStateIndex, currentStateIndex],
+        [11, 12],
+        [13, 14],
+        [15, 16]
+      )
+
+      assert.equal((await batchExchange.orders(user_1, 0)).sellToken, 1, "First order should be present")
+      assert.equal((await batchExchange.orders(user_1, 1)).sellToken, 0, "Second order should be removed")
+      assert.equal((await batchExchange.orders(user_1, 2)).sellToken, 7, "Third order should be present")
+      assert.equal((await batchExchange.orders(user_1, 3)).sellToken, 8, "Fourth order should be present")
+    })
+  })
   describe("submitSolution()", () => {
     it("rejects if claimed objective is not better than current", async () => {
       const batchExchange = await setupGenericStableX()
