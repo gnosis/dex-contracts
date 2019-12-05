@@ -18,6 +18,7 @@ const {
   advancedTrade,
   basicRingTrade,
   shortRingBetterTrade,
+  smallExample,
   marginalTrade,
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
@@ -433,7 +434,7 @@ contract("BatchExchange", async accounts => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
-          insufficientlyBetterSolution.objectiveValue,
+          firstSolution.objectiveValue.muln(2),
           insufficientlyBetterSolution.owners,
           insufficientlyBetterSolution.touchedOrderIds,
           insufficientlyBetterSolution.volumes,
@@ -441,7 +442,7 @@ contract("BatchExchange", async accounts => {
           insufficientlyBetterSolution.tokenIdsForPrice,
           { from: solver }
         ),
-        "Claimed objective doesn't sufficiently improve current solution"
+        "New objective doesn't sufficiently improve current solution"
       )
     })
     it("rejects competing solution with same objective value", async () => {
@@ -467,7 +468,7 @@ contract("BatchExchange", async accounts => {
       await truffleAssert.reverts(
         batchExchange.submitSolution(
           batchIndex,
-          solution.objectiveValue.add(new BN(1)),
+          solution.objectiveValue.addn(1),
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
