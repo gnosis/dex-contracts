@@ -240,7 +240,7 @@ contract BatchExchange is EpochTokenLocker {
     ) public returns (uint256) {
         require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
         require(
-            isObjectiveValueGoodEnough(claimedObjectiveValue),
+            isObjectiveValueSufficientlyImproved(claimedObjectiveValue),
             "Claimed objective doesn't sufficiently improve current solution"
         );
         require(verifyAmountThreshold(prices), "At least one price lower than AMOUNT_MINIMUM");
@@ -580,7 +580,10 @@ contract BatchExchange is EpochTokenLocker {
       * @param newObjectiveValue proposed value to be updated if a great enough improvement on the current objective value
       */
     function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
-        require(isObjectiveValueGoodEnough(newObjectiveValue), "New objective doesn't sufficiently improve current solution");
+        require(
+            isObjectiveValueSufficientlyImproved(newObjectiveValue),
+            "New objective doesn't sufficiently improve current solution"
+        );
         latestSolution.objectiveValue = newObjectiveValue;
     }
 
@@ -616,7 +619,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param objectiveValue the proposed objective value to check
       * @return true if the objectiveValue is a significant enough improvement, false otherwise
       */
-    function isObjectiveValueGoodEnough(uint256 objectiveValue) private view returns (bool) {
+    function isObjectiveValueSufficientlyImproved(uint256 objectiveValue) private view returns (bool) {
         return (objectiveValue.mul(IMPROVEMENT_DENOMINATOR) > getCurrentObjectiveValue().mul(IMPROVEMENT_DENOMINATOR + 1));
     }
 
