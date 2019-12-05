@@ -23,14 +23,14 @@ if [[ ("$STAGED_JS_FILES" = "") && ("$STAGED_SOL_FILES" = "") ]]; then
 fi
 
 printf "\nValidating Javascript:\n"
-validate $STAGED_JS_FILES "npx eslint" "ESLint"
-validate $STAGED_JS_FILES "npx prettier --check" "Prettier"
+validate "$STAGED_JS_FILES" "npx eslint" "ESLint"
+validate "$STAGED_JS_FILES" "npx prettier --check" "Prettier"
 printf "\nJavascript validation completed!\n"
 
 printf "\nValidating Solidity:\n"
-validate $STAGED_SOL_FILES "npx solhint" "Solhint"
-validate $STAGED_SOL_FILES "npx solium --file" "Solium"
-validate $STAGED_SOL_FILES "npx prettier --check" "Prettier"
+validate "$STAGED_SOL_FILES" "npx solhint" "Solhint"
+validate "$STAGED_SOL_FILES" "npx solium --file" "Solium"
+validate "$STAGED_SOL_FILES" "npx prettier --check" "Prettier"
 printf "\nSolidity validation completed!\n"
 
 if ! $PASS; then
