@@ -286,7 +286,7 @@ contract("BatchExchange", async accounts => {
       const fakeClaimedObjective = 1
       await truffleAssert.reverts(
         batchExchange.submitSolution(batchIndex, fakeClaimedObjective, [], [], [], [toETH(1)], [1], { from: solver }),
-        "Solution must be better than trivial"
+        "New objective doesn't sufficiently improve current solution"
       )
     })
     it("[Basic Trade] places two orders and returns calculated utility", async () => {
