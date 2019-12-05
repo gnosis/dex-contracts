@@ -72,7 +72,7 @@
     "ethereumjs-abi": "^0.6.6",
     "ethereumjs-util": "^6.2.0",
     "fast-memoize": "^2.5.1",
-    "husky": "^2.5.0",
+    "husky": "^3.1.0",
     "merkletreejs": "0.1.7",
     "minimist": "^1.2.0",
     "node-fetch": "^2.6.0",
