@@ -240,7 +240,7 @@ contract BatchExchange is EpochTokenLocker {
     ) public returns (uint256) {
         require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
         require(
-            checkProposedObjectiveValue(claimedObjectiveValue),
+            isObjectiveValueGoodEnough(claimedObjectiveValue),
             "Claimed objective doesn't sufficiently improve current solution"
         );
         require(verifyAmountThreshold(prices), "At least one price lower than AMOUNT_MINIMUM");
@@ -581,7 +581,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param newObjectiveValue proposed value to be updated if a great enough improvement on the current objective value
       */
     function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
-        require(checkProposedObjectiveValue(newObjectiveValue), "New objective doesn't sufficiently improve current solution");
+        require(isObjectiveValueGoodEnough(newObjectiveValue), "New objective doesn't sufficiently improve current solution");
         latestSolution.objectiveValue = newObjectiveValue;
     }
 
@@ -613,10 +613,10 @@ contract BatchExchange is EpochTokenLocker {
         return (executedBuyAmount, executedSellAmount);
     }
 
-    /** @dev Check that a proposed objective value is a significant enough improvement on the latest one
+    /** @dev Checks that the proposed objective value is a significant enough improvement on the latest one
       * @param objectiveValue The proposed objective value to check
-      * @return True if the objectiveValue is a significant enough improvement, false otherwise
-    function checkProposedObjectiveValue(uint256 objectiveValue) private view returns (bool) {
+      * @return true if the objectiveValue is a significant enough improvement, false otherwise
+    function isObjectiveValueGoodEnough(uint256 objectiveValue) private view returns (bool) {
         return (newObjectiveValue.mul(IMPROVEMENT_DENOMINATOR) > getCurrentObjectiveValue().mul(IMPROVEMENT_DENOMINATOR + 1));
     }
 
