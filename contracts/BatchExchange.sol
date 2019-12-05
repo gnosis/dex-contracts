@@ -8,7 +8,7 @@ import "openzeppelin-solidity/contracts/utils/SafeCast.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
 
-/** @title Stable Coin Converter - A decentralized exchange for stable tokens as a batch auciton.
+/** @title BatchExchange - A decentralized exchange for any ERC20 token as a multi-token batch auction with uniform clearing prices.
  *  @author @gnosis/dfusion-team <https://github.com/orgs/gnosis/teams/dfusion-team/members>
  */
 contract BatchExchange is EpochTokenLocker {
