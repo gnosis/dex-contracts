@@ -66,7 +66,7 @@
     "dotenv": "^8.0.0",
     "es6-promise": "^4.2.8",
     "eslint": "^5.16.0",
-    "eslint-plugin-no-only-tests": "^2.3.0",
+    "eslint-plugin-no-only-tests": "^2.4.0",
     "eslint-plugin-react": "^7.12.3",
     "eth-gas-reporter": "^0.2.11",
     "ethereumjs-abi": "^0.6.6",
