@@ -217,64 +217,33 @@ contract("BatchExchange", async accounts => {
     })
   })
   describe("cancelOrders()", () => {
-    it("places orders, then cancels it and orders status", async () => {
+    it("invalidates valid order as of next batch", async () => {
       const batchExchange = await setupGenericStableX()
 
       const id = await batchExchange.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
-      await batchExchange.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
-      const currentStateIndex = await batchExchange.getCurrentBatchId()
+      const currentStateIndex = (await batchExchange.getCurrentBatchId()).toNumber()
+
+      await batchExchange.placeOrder(0, 1, currentStateIndex + 3, 10, 20, { from: user_1 })
+      await closeAuction(batchExchange)
+
       await batchExchange.cancelOrders([id], { from: user_1 })
+
       assert.equal(
         (await batchExchange.orders.call(user_1, id)).validUntil.toNumber(),
-        currentStateIndex.toNumber() - 1,
+        currentStateIndex,
         "validUntil was stored incorrectly"
       )
     })
-  })
-  describe("freeStorageOfOrders()", () => {
-    it("places a order, then cancels and deletes it", async () => {
+    it("frees storage of orders that are not yet valid", async () => {
       const batchExchange = await setupGenericStableX()
+      const currentStateIndex = (await batchExchange.getCurrentBatchId()).toNumber()
 
-      const id = await sendTxAndGetReturnValue(batchExchange.placeOrder, 0, 1, 3, 10, 20)
-      await batchExchange.cancelOrders([id])
-      await waitForNSeconds(BATCH_TIME)
-      await batchExchange.freeStorageOfOrders([id])
+      await batchExchange.placeValidFromOrders([0], [1], [currentStateIndex + 2], [currentStateIndex + 3], [10], [20], {
+        from: user_1,
+      })
+      await batchExchange.cancelOrders([0], { from: user_1 })
 
-      assert.equal((await batchExchange.orders(user_1, id)).priceDenominator, 0, "Order data was not cleared")
-    })
-    it("cancels and deletes order that is not yet valid", async () => {
-      const batchExchange = await setupGenericStableX()
-
-      const currentStateIndex = await batchExchange.getCurrentBatchId()
-
-      const id = await sendTxAndGetReturnValue(batchExchange.placeOrder, 0, 1, currentStateIndex + 3, 10, 20)
-      await batchExchange.cancelOrders([id])
-      await batchExchange.freeStorageOfOrders([id])
-      assert.equal((await batchExchange.orders(user_1, id)).priceDenominator, 0, "Order data was not cleared")
-    })
-    it("fails to delete non-canceled order", async () => {
-      const batchExchange = await setupGenericStableX()
-
-      const currentStateIndex = await batchExchange.getCurrentBatchId()
-
-      const id = await sendTxAndGetReturnValue(batchExchange.placeOrder, 0, 1, currentStateIndex + 3, 10, 20)
-      await truffleAssert.reverts(batchExchange.freeStorageOfOrders([id]), "Order is still valid")
-    })
-    it("fails to delete order that is still valid", async () => {
-      const batchExchange = await setupGenericStableX()
-      const id = await sendTxAndGetReturnValue(batchExchange.placeOrder, 0, 1, 3, 10, 20)
-      await batchExchange.cancelOrders([id])
-      await truffleAssert.reverts(batchExchange.freeStorageOfOrders([id]), "Order is still valid")
-    })
-    it("deletes several orders successfully", async () => {
-      const batchExchange = await setupGenericStableX()
-      const id = await sendTxAndGetReturnValue(batchExchange.placeOrder, 0, 1, 3, 10, 20)
-      const id2 = await sendTxAndGetReturnValue(batchExchange.placeOrder, 0, 1, 3, 10, 20)
-      await batchExchange.cancelOrders([id, id2])
-      await waitForNSeconds(BATCH_TIME)
-      await batchExchange.freeStorageOfOrders([id, id2])
-      assert.equal((await batchExchange.orders(user_1, id)).priceDenominator, 0, "Order data was not cleared")
-      assert.equal((await batchExchange.orders(user_1, id2)).priceDenominator, 0, "Order data was not cleared")
+      assert.equal((await batchExchange.orders(user_1, 0)).priceDenominator, 0, "Order data was not cleared")
     })
   })
   describe("submitSolution()", () => {
@@ -1673,7 +1642,7 @@ contract("BatchExchange", async accounts => {
         buyToken: 1,
         sellToken: 0,
         validFrom: batchIndex,
-        validUntil: batchIndex - 1,
+        validUntil: batchIndex,
         priceNumerator: twentyBN,
         priceDenominator: tenBN,
         remainingAmount: tenBN,
@@ -1700,9 +1669,9 @@ contract("BatchExchange", async accounts => {
         )
       }
 
-      await batchExchange.cancelOrders([0, 1])
+      await batchExchange.cancelOrders([1])
       await waitForNSeconds(BATCH_TIME)
-      await batchExchange.freeStorageOfOrders([1])
+      await batchExchange.cancelOrders([0])
 
       const auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
       assert.equal(JSON.stringify(auctionElements), JSON.stringify([canceledOrderInfo, freedOrderInfo, validOrderInfo]))
@@ -1769,20 +1738,21 @@ contract("BatchExchange", async accounts => {
 
       const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
       await batchExchange.placeOrder(1, 0, batchIndex + 10, 20, 10)
-      await batchExchange.cancelOrders([0])
 
       let auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, batchIndex)
 
-      await waitForNSeconds(BATCH_TIME)
+      await closeAuction(batchExchange)
+      await batchExchange.cancelOrders([0])
 
       // Cancellation is active but not yet freed
       auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, batchIndex)
 
-      await batchExchange.freeStorageOfOrders([0])
+      await closeAuction(batchExchange)
+      await batchExchange.cancelOrders([0])
 
       auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
       assert.equal(auctionElements.length, 1)

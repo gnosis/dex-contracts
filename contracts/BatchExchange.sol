@@ -178,29 +178,22 @@ contract BatchExchange is EpochTokenLocker {
         return placeOrderInternal(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
     }
 
-    /** @dev a user facing function used to cancel orders (sets order expiry to previous batchId)
+    /** @dev a user facing function used to cancel orders. If the order is valid for the batch that is currently
+      * being solved, it sets order expiry to that batchId. Otherwise it removes it from storage. Can be called
+      * multiple times (e.g. to eventually free storage once order is expired).
+      *
       * @param ids referencing the index of user's order to be canceled
       *
       * Emits an {OrderCancelation} with sender's address and orderId
       */
     function cancelOrders(uint256[] memory ids) public {
         for (uint256 i = 0; i < ids.length; i++) {
-            orders[msg.sender][ids[i]].validUntil = getCurrentBatchId() - 1;
+            if (!checkOrderValidity(orders[msg.sender][ids[i]], getCurrentBatchId() - 1)) {
+                delete orders[msg.sender][ids[i]];
+            } else {
+                orders[msg.sender][ids[i]].validUntil = getCurrentBatchId() - 1;
+            }
             emit OrderCancelation(msg.sender, ids[i]);
-        }
-    }
-
-    /** @dev A user facing function used to delete expired orders.
-      * This release of storage gives a gas refund to msg.sender and requires that all orders are expired.
-      * @param ids referencing the indices of user's orders to be deleted
-      *
-      * Requirements:
-      * - Each requested order is expired
-      */
-    function freeStorageOfOrders(uint256[] memory ids) public {
-        for (uint256 i = 0; i < ids.length; i++) {
-            require(!checkOrderValidity(orders[msg.sender][ids[i]], getCurrentBatchId()), "Order is still valid");
-            delete orders[msg.sender][ids[i]];
         }
     }
 
