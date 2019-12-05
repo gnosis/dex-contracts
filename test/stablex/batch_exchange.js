@@ -1510,46 +1510,26 @@ contract("BatchExchange", async accounts => {
       const batchExchange = await setupGenericStableX()
       const feeToken = await batchExchange.tokenIdToAddressMap.call(0)
       const otherToken = await batchExchange.tokenIdToAddressMap.call(1)
-      const fiftyThousand = new BN("50000")
-      const hundredThousand = new BN("100000")
-      const specialExample = {
-        deposits: [
-          { amount: feeAdded(hundredThousand), token: 0, user: 0 },
-          { amount: new BN(190), token: 1, user: 1 },
-          { amount: new BN(9), token: 0, user: 1 },
-          { amount: feeAdded(hundredThousand), token: 1, user: 2 },
-        ],
-        orders: [
-          { sellToken: 0, buyToken: 1, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 0 },
-          { sellToken: 1, buyToken: 0, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 1 },
-          { sellToken: 0, buyToken: 1, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 1 },
-          { sellToken: 1, buyToken: 0, sellAmount: feeAdded(hundredThousand), buyAmount: fiftyThousand, user: 2 },
-        ],
-      }
-      const volumes = [100000, 99900, 99810, 99711].map(val => new BN(val))
-      const prices = [1, 1].map(toETH)
-      // TODO: objectiveValue can't be computed externally with our currently available tools
-      // since the disregaded utility depends on the balances in this example.
-      const objectiveValue = new BN("199566209935209935210135")
 
-      await makeDeposits(batchExchange, accounts, specialExample.deposits)
+      await makeDeposits(batchExchange, accounts, smallExample.deposits)
       const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(batchExchange, accounts, specialExample.orders, batchIndex + 1)
+      const orderIds = await placeOrders(batchExchange, accounts, smallExample.orders, batchIndex + 1)
       await closeAuction(batchExchange)
+      const solution = solutionSubmissionParams(smallExample.solutions[0], accounts, orderIds)
       await batchExchange.submitSolution(
         batchIndex,
-        objectiveValue,
-        specialExample.orders.map(o => accounts[o.user]),
-        orderIds,
-        volumes,
-        prices,
-        [0, 1],
+        solution.objectiveValue,
+        solution.owners,
+        solution.touchedOrderIds,
+        solution.volumes,
+        solution.prices,
+        solution.tokenIdsForPrice,
         { from: solver }
       )
       // User 0
       assert.equal(
         (await batchExchange.getBalance.call(accounts[0], otherToken)).toString(),
-        volumes[0].toString(),
+        solution.volumes[0].toString(),
         "Bought tokens were not adjusted correctly"
       )
       assert.equal(
@@ -1567,7 +1547,7 @@ contract("BatchExchange", async accounts => {
       // User 2
       assert.equal(
         (await batchExchange.getBalance.call(accounts[2], feeToken)).toString(),
-        volumes[3].toString(),
+        solution.volumes[3].toString(),
         "Bought tokens were not adjusted correctly"
       )
       assert.equal(
@@ -1579,15 +1559,15 @@ contract("BatchExchange", async accounts => {
       await truffleAssert.reverts(
         batchExchange.submitSolution(
           batchIndex,
-          objectiveValue.muln(2), // Must be better than marginally better.
-          specialExample.orders.map(o => accounts[o.user]),
-          orderIds,
-          volumes,
-          prices,
-          [0, 1],
+          solution.objectiveValue + 1,
+          solution.owners,
+          solution.touchedOrderIds,
+          solution.volumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
           { from: solver }
         ),
-        "Computed objective must agree with claimed"
+        "New objective doesn't sufficiently improve current solution"
       )
     })
     it("partially fills orders in one auction and then fills them some more in the next.", async () => {
