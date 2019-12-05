@@ -292,9 +292,9 @@ contract BatchExchange is EpochTokenLocker {
         require(utility.add(burntFees) > disregardedUtility, "Solution must be better than trivial");
         // burntFees ensures direct trades (when available) yield better solutions than longer rings
         uint256 objectiveValue = utility.add(burntFees).sub(disregardedUtility);
-        tokenConservation.checkTokenConservation();
         checkAndOverrideObjectiveValue(objectiveValue);
         grantRewardToSolutionSubmitter(burntFees);
+        tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, buyVolumes, tokenIdsForPrice);
         return (objectiveValue);
     }
