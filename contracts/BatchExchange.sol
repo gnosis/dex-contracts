@@ -80,7 +80,15 @@ contract BatchExchange is EpochTokenLocker {
         uint128 priceDenominator
     );
 
+    /** @dev Event emitted when an order is cancelled but still valid in the batch that is
+     * curretnly being solved. It remains in storage but not be tradable in the next batch
+     * to be solved.
+     */
     event OrderCancelation(address owner, uint256 id);
+
+    /** @dev Event emitted when an order is removed from storage.
+     */
+    event OrderDeletion(address owner, uint256 id);
 
     struct Order {
         uint16 buyToken;
@@ -184,16 +192,17 @@ contract BatchExchange is EpochTokenLocker {
       *
       * @param ids referencing the index of user's order to be canceled
       *
-      * Emits an {OrderCancelation} with sender's address and orderId
+      * Emits an {OrderCancelation} or {OrderDeletion} with sender's address and orderId
       */
     function cancelOrders(uint256[] memory ids) public {
         for (uint256 i = 0; i < ids.length; i++) {
             if (!checkOrderValidity(orders[msg.sender][ids[i]], getCurrentBatchId() - 1)) {
                 delete orders[msg.sender][ids[i]];
+                emit OrderDeletion(msg.sender, ids[i]);
             } else {
                 orders[msg.sender][ids[i]].validUntil = getCurrentBatchId() - 1;
+                emit OrderCancelation(msg.sender, ids[i]);
             }
-            emit OrderCancelation(msg.sender, ids[i]);
         }
     }
 
