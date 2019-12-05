@@ -117,40 +117,24 @@ contract EpochTokenLocker {
      * Public view functions
      */
 
-    /** @dev getter function used to display pending deposit amount
+    /** @dev getter function used to display pending deposit
       * @param user address of user
       * @param token address of ERC20 token
-      * return amount of pending deposit if any (else 0)
+      * return amount and stateIndex of deposit's transfer if any (else 0)
       */
-    function getPendingDepositAmount(address user, address token) public view returns (uint256) {
-        return balanceStates[user][token].pendingDeposits.amount;
+    function getPendingDeposit(address user, address token) public view returns (uint256, uint256) {
+        PendingFlux memory pendingDeposit = balanceStates[user][token].pendingDeposits;
+        return (pendingDeposit.amount, pendingDeposit.stateIndex);
     }
 
-    /** @dev getter function used to display pending deposit batchIndex
+    /** @dev getter function used to display pending withdraw
       * @param user address of user
       * @param token address of ERC20 token
-      * return stateIndex of deposit's transfer
+      * return amount and stateIndex when withdraw was requested if any (else 0)
       */
-    function getPendingDepositBatchNumber(address user, address token) public view returns (uint256) {
-        return balanceStates[user][token].pendingDeposits.stateIndex;
-    }
-
-    /** @dev getter function used to display pending withdraw amount
-      * @param user address of user
-      * @param token address of ERC20 token
-      * return stateIndex when withdraw was requested
-      */
-    function getPendingWithdrawAmount(address user, address token) public view returns (uint256) {
-        return balanceStates[user][token].pendingWithdraws.amount;
-    }
-
-    /** @dev getter function used to display pending withdraw's batchIndex
-      * @param user address of user
-      * @param token address of ERC20 token
-      * return stateIndex at time of withdraw's request
-      */
-    function getPendingWithdrawBatchNumber(address user, address token) public view returns (uint256) {
-        return balanceStates[user][token].pendingWithdraws.stateIndex;
+    function getPendingWithdraw(address user, address token) public view returns (uint256, uint256) {
+        PendingFlux memory pendingWithdraw = balanceStates[user][token].pendingWithdraws;
+        return (pendingWithdraw.amount, pendingWithdraw.stateIndex);
     }
 
     /** @dev getter function to determine current auction id.
