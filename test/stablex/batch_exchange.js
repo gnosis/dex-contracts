@@ -298,9 +298,12 @@ contract("BatchExchange", async accounts => {
       await closeAuction(batchExchange)
 
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
+
+      // Note: the claimed objective value is intentionally incorrect, this is to make sure that a call
+      // to `submitSolution` can be used to acurately determine the objective value of a solution
       const objectiveValue = await batchExchange.submitSolution.call(
         batchIndex,
-        solution.objectiveValue,
+        1,
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
@@ -357,6 +360,45 @@ contract("BatchExchange", async accounts => {
       await truffleAssert.reverts(
         batchExchange.submitSolution(batchIndex, 1, [], [], [], [10000], [0]),
         "Fee token has fixed price!"
+      )
+    })
+    it("rejects acclaimed marginally improved solutions", async () => {
+      const stablecoinConverter = await setupGenericStableX()
+
+      // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
+      await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
+      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(stablecoinConverter, accounts, basicTrade.orders, batchIndex + 1)
+      await closeAuction(stablecoinConverter)
+
+      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
+      await stablecoinConverter.submitSolution(
+        batchIndex,
+        solution.objectiveValue,
+        solution.owners,
+        solution.touchedOrderIds,
+        solution.volumes,
+        solution.prices,
+        solution.tokenIdsForPrice,
+        { from: solver }
+      )
+      const objectiveValue = await stablecoinConverter.getCurrentObjectiveValue.call()
+      const improvementDenominator = await stablecoinConverter.IMPROVEMENT_DENOMINATOR.call()
+
+      const tooLowNewObjective = objectiveValue.mul(improvementDenominator.addn(1)).div(improvementDenominator)
+
+      await truffleAssert.reverts(
+        stablecoinConverter.submitSolution(
+          batchIndex,
+          tooLowNewObjective,
+          solution.owners,
+          solution.touchedOrderIds,
+          solution.volumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
+          { from: solver }
+        ),
+        "Claimed objective doesn't sufficiently improve current solution"
       )
     })
     it("rejects marginally better solutions", async () => {
@@ -1576,11 +1618,10 @@ contract("BatchExchange", async accounts => {
       await waitForNSeconds(BATCH_TIME)
       // Fill essentially the remaining amount in
       const remainingBuyVolumes = [toETH(1), new BN("1998000000000000000")]
-      const objectiveValue = "199700102000946170822171"
-      // Note: The objective value is not of interest to the problem, so it is hard-coded to pass.
+      // Note: The claimed objective value here is actually incorrect (but irrelevant for this test)
       await batchExchange.submitSolution(
         batchIndex + 1,
-        objectiveValue,
+        1,
         owners,
         touchedOrderIds,
         remainingBuyVolumes,
@@ -1588,7 +1629,9 @@ contract("BatchExchange", async accounts => {
         tokenIdsForPrice,
         { from: solver }
       )
+
       assert(basicTrade.orders.length == basicTrade.deposits.length)
+
       for (let i = 0; i < basicTrade.orders.length; i++) {
         const deposit = basicTrade.deposits[i]
         const order = basicTrade.orders[i]
