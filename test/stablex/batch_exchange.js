@@ -434,7 +434,7 @@ contract("BatchExchange", async accounts => {
       await truffleAssert.reverts(
         stablecoinConverter.submitSolution(
           batchIndex,
-          firstSolution.objectiveValue.muln(2),
+          firstSolution.objectiveValue.muln(2), // Note must claim better improvement than we have to get this case!
           insufficientlyBetterSolution.owners,
           insufficientlyBetterSolution.touchedOrderIds,
           insufficientlyBetterSolution.volumes,
