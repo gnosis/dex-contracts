@@ -10,6 +10,7 @@ import "./libraries/TokenConservation.sol";
 
 /** @title BatchExchange - A decentralized exchange for any ERC20 token as a multi-token batch
  *  auction with uniform clearing prices.
+ * For more information visit: <https://github.com/gnosis/dex-contracts>
  *  @author @gnosis/dfusion-team <https://github.com/orgs/gnosis/teams/dfusion-team/members>
  */
 contract BatchExchange is EpochTokenLocker {
