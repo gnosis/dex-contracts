@@ -1507,7 +1507,7 @@ contract("BatchExchange", async accounts => {
       // The following test, a user_2 will receive some tokens and sell these received tokens in one batch.
       // If this batch-trade gets executed and later reverted by another trade, users_2's balance would be temporarily negative, unless
       // in the settlement and reversion not all buyAmounts will be credited first, before the sellAmounts are subtracted.
-      // This test checks that we have met this "unless condition" and that our test is not failing due to temporarily negative balances
+      // This test checks that we have met this "unless condition" and that the test is not failing due to temporarily negative balances
       const batchExchange = await setupGenericStableX()
       const feeToken = await batchExchange.tokenIdToAddressMap.call(0)
       const otherToken = await batchExchange.tokenIdToAddressMap.call(1)
