@@ -65,7 +65,7 @@
     "coveralls": "^3.0.9",
     "dotenv": "^8.0.0",
     "es6-promise": "^4.2.8",
-    "eslint": "^5.16.0",
+    "eslint": "^6.7.2",
     "eslint-plugin-no-only-tests": "^2.4.0",
     "eslint-plugin-react": "^7.17.0",
     "eth-gas-reporter": "^0.2.11",
