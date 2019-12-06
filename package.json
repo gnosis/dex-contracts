@@ -68,7 +68,7 @@
     "eslint": "^6.7.2",
     "eslint-plugin-no-only-tests": "^2.4.0",
     "eslint-plugin-react": "^7.17.0",
-    "eth-gas-reporter": "^0.2.11",
+    "eth-gas-reporter": "^0.2.14",
     "ethereumjs-abi": "^0.6.8",
     "ethereumjs-util": "^6.2.0",
     "fast-memoize": "^2.5.1",
