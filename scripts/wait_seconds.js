@@ -3,8 +3,8 @@ const { getArgumentsHelper } = require("./script_utilities.js")
 
 module.exports = async callback => {
   try {
-    const arguments = getArgumentsHelper()
-    if (arguments.length != 1) {
+    const args = getArgumentsHelper()
+    if (args.length != 1) {
       callback("Error: This script requires arguments - <seconds>")
     }
     const [seconds] = arguments
