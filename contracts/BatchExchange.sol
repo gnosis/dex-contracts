@@ -118,8 +118,8 @@ contract BatchExchange is EpochTokenLocker {
         currentPrices[0] = 1 ether;
         MAX_TOKENS = maxTokens;
         feeToken = TokenOWL(_feeToken);
-        // The burn functionallity of OWL requires an approval. In the following line,
-        // the approval is set for all future burn calls.
+        // The burn functionallity of OWL requires an approval.
+        // In the following line the approval is set for all future burn calls.
         feeToken.approve(address(this), uint256(-1));
         feeDenominator = _feeDenominator;
         addToken(_feeToken); // feeToken will always have the token index 0
