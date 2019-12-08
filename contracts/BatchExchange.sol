@@ -244,6 +244,7 @@ contract BatchExchange is EpochTokenLocker {
       *
       * Requirements:
       * - Solutions for this `batchIndex` are currently being accepted.
+      * - Claimed objetive value is a great enough improvement on the current winning solution
       * - Fee Token price is non-zero
       * - `tokenIdsForPrice` is sorted.
       * - Number of touched orders does not exceed `MAX_TOUCHED_ORDERS`.
@@ -253,7 +254,7 @@ contract BatchExchange is EpochTokenLocker {
       * - Solution's objective evaluation must be positive.
       *
       * Sub Requirements: Those nested within other functions
-      * - checkAndOverrideObjectiveValue; Objetive Evaluation is greater than current winning solution
+      * - checkAndOverrideObjectiveValue; Objetive value is a great enough improvement on the current winning solution
       * - checkTokenConservation; for all, non-fee, tokens total amount sold == total amount bought
       */
     function submitSolution(
@@ -267,7 +268,7 @@ contract BatchExchange is EpochTokenLocker {
     ) public returns (uint256) {
         require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
         require(
-            claimedObjectiveValue.mul(IMPROVEMENT_DENOMINATOR) > getCurrentObjectiveValue().mul(IMPROVEMENT_DENOMINATOR + 1),
+            isObjectiveValueSufficientlyImproved(claimedObjectiveValue),
             "Claimed objective doesn't sufficiently improve current solution"
         );
         require(verifyAmountThreshold(prices), "At least one price lower than AMOUNT_MINIMUM");
@@ -316,7 +317,6 @@ contract BatchExchange is EpochTokenLocker {
             disregardedUtility = disregardedUtility.add(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]));
         }
         uint256 burntFees = uint256(tokenConservation.feeTokenImbalance()) / 2;
-        require(utility.add(burntFees) > disregardedUtility, "Solution must be better than trivial");
         // burntFees ensures direct trades (when available) yield better solutions than longer rings
         uint256 objectiveValue = utility.add(burntFees).sub(disregardedUtility);
         checkAndOverrideObjectiveValue(objectiveValue);
@@ -605,11 +605,11 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev determines if value is better than currently and updates if it is.
-      * @param newObjectiveValue proposed value to be updated if greater than current.
+      * @param newObjectiveValue proposed value to be updated if a great enough improvement on the current objective value
       */
     function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
         require(
-            newObjectiveValue.mul(IMPROVEMENT_DENOMINATOR) > getCurrentObjectiveValue().mul(IMPROVEMENT_DENOMINATOR + 1),
+            isObjectiveValueSufficientlyImproved(newObjectiveValue),
             "New objective doesn't sufficiently improve current solution"
         );
         latestSolution.objectiveValue = newObjectiveValue;
@@ -626,6 +626,7 @@ contract BatchExchange is EpochTokenLocker {
         }
         return true;
     }
+
     // Private view
 
     /** @dev Compute trade execution based on executedBuyAmount and relevant token prices
@@ -641,6 +642,15 @@ contract BatchExchange is EpochTokenLocker {
         );
         return (executedBuyAmount, executedSellAmount);
     }
+
+    /** @dev Checks that the proposed objective value is a significant enough improvement on the latest one
+      * @param objectiveValue the proposed objective value to check
+      * @return true if the objectiveValue is a significant enough improvement, false otherwise
+      */
+    function isObjectiveValueSufficientlyImproved(uint256 objectiveValue) private view returns (bool) {
+        return (objectiveValue.mul(IMPROVEMENT_DENOMINATOR) > getCurrentObjectiveValue().mul(IMPROVEMENT_DENOMINATOR + 1));
+    }
+
     // Private pure
 
     /** @dev used to determine if an order is valid for specific auction/batch
