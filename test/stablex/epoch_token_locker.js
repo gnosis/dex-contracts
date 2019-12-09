@@ -29,7 +29,7 @@ contract("EpochTokenLocker", async accounts => {
       await truffleAssert.reverts(epochTokenLocker.deposit(ERC20.address, 100), "SafeERC20: low-level call failed")
     })
 
-    it("adds two deposits, if they are deposited during same stateIndex", async () => {
+    it("adds two deposits, if they are deposited during same batchId", async () => {
       const epochTokenLocker = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
@@ -39,7 +39,7 @@ contract("EpochTokenLocker", async accounts => {
       assert.equal((await epochTokenLocker.getPendingDeposit(user_1, ERC20.address))[0].toNumber(), 200)
     })
 
-    it("does not consolidate two deposits, if they are not deposited during same stateIndex", async () => {
+    it("does not consolidate two deposits, if they are not deposited during same batchId", async () => {
       const epochTokenLocker = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
@@ -104,7 +104,7 @@ contract("EpochTokenLocker", async accounts => {
     })
   })
   describe("withdraw()", () => {
-    it("processes a deposit, then processes a withdraw request and withdraws in next stateIndex", async () => {
+    it("processes a deposit, then processes a withdraw request and withdraws in next batchId", async () => {
       const epochTokenLocker = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
@@ -125,7 +125,7 @@ contract("EpochTokenLocker", async accounts => {
       const depositTransfer = token.contract.methods.transfer(accounts[0], 100).encodeABI()
       assert.equal(await ERC20.invocationCountForCalldata.call(depositTransfer), 1)
     })
-    it("processes a deposit, then processes a withdraw request and withdraws fails in current stateIndex", async () => {
+    it("processes a deposit, then processes a withdraw request and withdraws fails in current batchId", async () => {
       const epochTokenLocker = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
@@ -217,7 +217,7 @@ contract("EpochTokenLocker", async accounts => {
       await closeAuction(epochTokenLocker)
       assert.equal(await epochTokenLocker.getBalance.call(user_1, ERC20.address), 0)
     })
-    it("returns just the balance + pending deposit if withdraw was made in same stateIndex", async () => {
+    it("returns just the balance + pending deposit if withdraw was made in same batchId", async () => {
       const epochTokenLocker = await EpochTokenLocker.new()
       const ERC20 = await MockContract.new()
       await ERC20.givenAnyReturnBool(true)
