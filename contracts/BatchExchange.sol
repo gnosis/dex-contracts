@@ -113,9 +113,13 @@ contract BatchExchange is EpochTokenLocker {
       * @param _feeToken Address of ERC20 fee token.
       */
     constructor(uint256 maxTokens, uint128 _feeDenominator, address _feeToken) public {
+        // All solutions for the batches must have normalized prices. The following line sets the
+        // price of OWL to 10**18 for all solutions and hence enforces a normalization.
         currentPrices[0] = 1 ether;
         MAX_TOKENS = maxTokens;
         feeToken = TokenOWL(_feeToken);
+        // The burn functionallity of OWL requires an approval.
+        // In the following line the approval is set for all future burn calls.
         feeToken.approve(address(this), uint256(-1));
         feeDenominator = _feeDenominator;
         addToken(_feeToken); // feeToken will always have the token index 0
