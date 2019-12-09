@@ -92,7 +92,7 @@
             },
             {
               "indexed": false,
-              "name": "stateIndex",
+              "name": "batchId",
               "type": "uint256"
             },
             {
@@ -214,7 +214,7 @@
             },
             {
               "indexed": false,
-              "name": "stateIndex",
+              "name": "batchId",
               "type": "uint256"
             },
             {
@@ -360,7 +360,7 @@
             },
             {
               "indexed": false,
-              "name": "stateIndex",
+              "name": "batchId",
               "type": "uint256"
             },
             {
@@ -494,7 +494,7 @@
             },
             {
               "indexed": false,
-              "name": "stateIndex",
+              "name": "batchId",
               "type": "uint256"
             }
           ],
@@ -522,7 +522,7 @@
             },
             {
               "indexed": false,
-              "name": "stateIndex",
+              "name": "batchId",
               "type": "uint256"
             }
           ],

@@ -289,7 +289,7 @@ contract("BatchExchange", async accounts => {
       const fakeClaimedObjective = 1
       await truffleAssert.reverts(
         batchExchange.submitSolution(batchIndex, fakeClaimedObjective, [], [], [], [toETH(1)], [1], { from: solver }),
-        "Solution must be better than trivial"
+        "New objective doesn't sufficiently improve current solution"
       )
     })
     it("[Basic Trade] places two orders and returns calculated utility", async () => {
@@ -302,9 +302,12 @@ contract("BatchExchange", async accounts => {
       await closeAuction(batchExchange)
 
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
+
+      // Note: the claimed objective value is intentionally incorrect, this is to make sure that a call
+      // to `submitSolution` can be used to acurately determine the objective value of a solution
       const objectiveValue = await batchExchange.submitSolution.call(
         batchIndex,
-        solution.objectiveValue,
+        1,
         solution.owners,
         solution.touchedOrderIds,
         solution.volumes,
@@ -468,7 +471,7 @@ contract("BatchExchange", async accounts => {
       await truffleAssert.reverts(
         batchExchange.submitSolution(
           batchIndex,
-          solution.objectiveValue.add(new BN(1)),
+          solution.objectiveValue.addn(1),
           solution.owners,
           solution.touchedOrderIds,
           solution.volumes,
@@ -1507,7 +1510,7 @@ contract("BatchExchange", async accounts => {
       // The following test, a user_2 will receive some tokens and sell these received tokens in one batch.
       // If this batch-trade gets executed and later reverted by another trade, users_2's balance would be temporarily negative, unless
       // in the settlement and reversion not all buyAmounts will be credited first, before the sellAmounts are subtracted.
-      // This test checks that we have met this "unless condition" and that our test is not failing due to temporarily negative balances
+      // This test checks that we have met this "unless condition" and that the test is not failing due to temporarily negative balances
       const batchExchange = await setupGenericStableX()
       const feeToken = await batchExchange.tokenIdToAddressMap.call(0)
       const otherToken = await batchExchange.tokenIdToAddressMap.call(1)
@@ -1600,11 +1603,19 @@ contract("BatchExchange", async accounts => {
       // Fill essentially the remaining amount in
       const remainingBuyVolumes = [toETH(1), new BN("1998000000000000000")]
       // Note: The claimed objective value here is actually incorrect (but irrelevant for this test)
-      batchExchange.submitSolution(batchIndex + 1, 1, owners, touchedOrderIds, remainingBuyVolumes, prices, tokenIdsForPrice, {
-        from: solver,
-      })
+      await batchExchange.submitSolution(
+        batchIndex + 1,
+        1,
+        owners,
+        touchedOrderIds,
+        remainingBuyVolumes,
+        prices,
+        tokenIdsForPrice,
+        { from: solver }
+      )
 
       assert(basicTrade.orders.length == basicTrade.deposits.length)
+
       for (let i = 0; i < basicTrade.orders.length; i++) {
         const deposit = basicTrade.deposits[i]
         const order = basicTrade.orders[i]

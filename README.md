@@ -13,7 +13,7 @@ Checkout the [Formal Specification](https://github.com/gnosis/dex-research/blob/
 
 # CLI Examples
 
-Checkout our [wiki](https://github.com/gnosis/dex-contracts/wiki/Script-Usage-Examples)
+Checkout [wiki](https://github.com/gnosis/dex-contracts/wiki/Script-Usage-Examples)
 
 # Deployment Process
 
@@ -166,7 +166,7 @@ And the output should look like this:
 
 # Contributions
 
-Our continuous integration is running several linters which must pass in order to make a contribution to this repo. For your convenience there is a `pre-commit` hook file contained in the project's root directory. You can make your life easier by executing the following command after cloning this project (it will ensure your changes pass linting before allowing commits).
+The continuous integration is running several linters which must pass in order to make a contribution to this repo. For your convenience there is a `pre-commit` hook file contained in the project's root directory. You can make your life easier by executing the following command after cloning this project (it will ensure your changes pass linting before allowing commits).
 
 ```bash
 cp pre-commit .git/hooks/
