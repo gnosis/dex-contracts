@@ -114,7 +114,7 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev Event emitted when an already exectued trade gets reverted
      */
-    event TradeRevertion(address indexed owner, uint256 indexed orderIds, uint256 executedSellAmount, uint256 executedBuyAmount);
+    event TradeReversion(address indexed owner, uint256 indexed orderIds, uint256 executedSellAmount, uint256 executedBuyAmount);
 
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
@@ -532,7 +532,7 @@ contract BatchExchange is EpochTokenLocker {
                 (uint128 buyAmount, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
                 revertRemainingOrder(owner, orderId, sellAmount);
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
-                emit TradeRevertion(owner, orderId, sellAmount, buyAmount);
+                emit TradeReversion(owner, orderId, sellAmount, buyAmount);
             }
             // subtract granted fees:
             subtractBalance(latestSolution.solutionSubmitter, tokenIdToAddressMap(0), latestSolution.feeReward);
