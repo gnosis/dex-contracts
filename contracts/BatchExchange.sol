@@ -432,7 +432,7 @@ contract BatchExchange is EpochTokenLocker {
         uint256 orderIndex = orders[msg.sender].length - 1;
         emit OrderPlacement(msg.sender, orderIndex, buyToken, sellToken, validFrom, validUntil, buyAmount, sellAmount);
         allUsers.insert(msg.sender);
-        return orderId;
+        return orderIndex;
     }
 
     /** @dev called at the end of submitSolution with a value of tokenConservation / 2
