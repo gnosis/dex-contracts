@@ -374,7 +374,7 @@ contract BatchExchange is EpochTokenLocker {
     /** @dev View returning all byte-encoded sell orders
       * @return encoded bytes representing all orders ordered by (user, index)
       */
-    function getEncodedAuctionElements() public view returns (bytes memory elements) {
+    function getEncodedOrders() public view returns (bytes memory elements) {
         if (allUsers.size() > 0) {
             address user = allUsers.first();
             bool stop = false;
@@ -429,8 +429,8 @@ contract BatchExchange is EpochTokenLocker {
                 usedAmount: 0
             })
         );
-        uint256 orderId = orders[msg.sender].length - 1;
-        emit OrderPlacement(msg.sender, orderId, buyToken, sellToken, validFrom, validUntil, buyAmount, sellAmount);
+        uint256 orderIndex = orders[msg.sender].length - 1;
+        emit OrderPlacement(msg.sender, orderIndex, buyToken, sellToken, validFrom, validUntil, buyAmount, sellAmount);
         allUsers.insert(msg.sender);
         return orderId;
     }
@@ -675,7 +675,7 @@ contract BatchExchange is EpochTokenLocker {
         return order.priceDenominator - order.usedAmount;
     }
 
-    /** @dev called only by getEncodedAuctionElements and used to pack auction info into bytes
+    /** @dev called only by getEncodedOrders and used to pack auction info into bytes
       * @param user list of tokenIds
       * @param sellTokenBalance user's account balance of sell token
       * @param order a sell order
