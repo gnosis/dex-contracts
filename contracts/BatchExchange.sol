@@ -22,10 +22,6 @@ contract BatchExchange is EpochTokenLocker {
     using TokenConservation for uint16[];
     using IterableAppendOnlySet for IterableAppendOnlySet.Data;
 
-    // Iterable set of all users, required to collect auction information
-    IterableAppendOnlySet.Data private allUsers;
-    IdToAddressBiMap.Data private registeredTokens;
-
     /** @dev Maximum number of touched orders in auction (used in submitSolution) */
     uint256 public constant MAX_TOUCHED_ORDERS = 25;
 
@@ -34,6 +30,11 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev minimum allowed value (in WEI) of any prices or executed trade amounts */
     uint256 public constant AMOUNT_MINIMUM = 10**4;
+
+    /** Corresponds to percentage that competing solution must improve on current
+      * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
+      */
+    uint256 public constant IMPROVEMENT_DENOMINATOR = 100; // 1%
 
     /** @dev maximum number of tokens that can be listed for exchange */
     // solhint-disable-next-line var-name-mixedcase
@@ -44,11 +45,6 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/feeDenominator */
     uint128 public feeDenominator;
-
-    /** Corresponds to percentage that competing solution must improve on current
-      * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
-      */
-    uint256 public constant IMPROVEMENT_DENOMINATOR = 100; // 1%
 
     /** @dev The feeToken of the exchange will be the OWL Token */
     TokenOWL public feeToken;
@@ -61,6 +57,26 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev Sufficient information for current winning auction solution */
     SolutionData public latestSolution;
+
+    // Iterable set of all users, required to collect auction information
+    IterableAppendOnlySet.Data private allUsers;
+    IdToAddressBiMap.Data private registeredTokens;
+
+    struct Order {
+        uint16 buyToken;
+        uint16 sellToken;
+        uint32 validFrom; // order is valid from auction collection period: validFrom inclusive
+        uint32 validUntil; // order is valid till auction collection period: validUntil inclusive
+        uint128 priceNumerator;
+        uint128 priceDenominator;
+        uint128 usedAmount; // remainingAmount = priceDenominator - usedAmount
+    }
+
+    struct TradeData {
+        address owner;
+        uint128 volume;
+        uint16 orderId;
+    }
 
     struct SolutionData {
         uint32 batchId;
@@ -91,22 +107,6 @@ contract BatchExchange is EpochTokenLocker {
     /** @dev Event emitted when an order is removed from storage.
      */
     event OrderDeletion(address owner, uint256 id);
-
-    struct Order {
-        uint16 buyToken;
-        uint16 sellToken;
-        uint32 validFrom; // order is valid from auction collection period: validFrom inclusive
-        uint32 validUntil; // order is valid till auction collection period: validUntil inclusive
-        uint128 priceNumerator;
-        uint128 priceDenominator;
-        uint128 usedAmount; // remainingAmount = priceDenominator - usedAmount
-    }
-
-    struct TradeData {
-        address owner;
-        uint128 volume;
-        uint16 orderId;
-    }
 
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
