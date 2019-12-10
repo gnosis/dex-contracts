@@ -226,13 +226,13 @@ contract BatchExchange is EpochTokenLocker {
       * Emits {OrderCancelation} events for all cancelled orders and {OrderPlacement} events with all relevant new order details.
       */
     function replaceOrders(
-        uint256[] calldata cancellations,
-        uint16[] calldata buyTokens,
-        uint16[] calldata sellTokens,
-        uint32[] calldata validFroms,
-        uint32[] calldata validUntils,
-        uint128[] calldata buyAmounts,
-        uint128[] calldata sellAmounts
+        uint256[] memory cancellations,
+        uint16[] memory buyTokens,
+        uint16[] memory sellTokens,
+        uint32[] memory validFroms,
+        uint32[] memory validUntils,
+        uint128[] memory buyAmounts,
+        uint128[] memory sellAmounts
     ) public returns (uint256[] memory orderIds) {
         cancelOrders(cancellations);
         return placeValidFromOrders(buyTokens, sellTokens, validFroms, validUntils, buyAmounts, sellAmounts);
@@ -550,7 +550,6 @@ contract BatchExchange is EpochTokenLocker {
         }
         return true;
     }
-
     // Private view
 
     /** @dev Evaluates utility of executed trade
