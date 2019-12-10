@@ -126,48 +126,6 @@ contract BatchExchange is EpochTokenLocker {
         addToken(_feeToken); // feeToken will always have the token index 0
     }
 
-    /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
-      * @param buyToken id of token to be bought
-      * @param sellToken id of token to be sold
-      * @param validUntil batchId represnting order's expiry
-      * @param buyAmount relative minimum amount of requested buy amount
-      * @param sellAmount maximum amount of sell token to be exchanged
-      * @return orderId as index of user's current orders
-      *
-      * Emits an {OrderPlacement} event with all relevant order details.
-      */
-    function placeOrder(uint16 buyToken, uint16 sellToken, uint32 validUntil, uint128 buyAmount, uint128 sellAmount)
-        public
-        returns (uint256)
-    {
-        return placeOrderInternal(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
-    }
-
-    /** @dev A user facing wrapper to cancel and place new orders in the same transaction.
-      * @param cancellations ids of orders to be cancelled
-      * @param buyTokens ids of tokens to be bought in new orders
-      * @param sellTokens ids of tokens to be sold in new orders
-      * @param validFroms batchIds representing order's validity start time in new orders
-      * @param validUntils batchIds represnnting order's expiry in new orders
-      * @param buyAmounts relative minimum amount of requested buy amounts in new orders
-      * @param sellAmounts maximum amounts of sell token to be exchanged in new orders
-      * @return `orderIds` an array of indices in which `msg.sender`'s new orders are included
-      *
-      * Emits {OrderCancelation} events for all cancelled orders and {OrderPlacement} events with all relevant new order details.
-      */
-    function replaceOrders(
-        uint256[] calldata cancellations,
-        uint16[] calldata buyTokens,
-        uint16[] calldata sellTokens,
-        uint32[] calldata validFroms,
-        uint32[] calldata validUntils,
-        uint128[] calldata buyAmounts,
-        uint128[] calldata sellAmounts
-    ) public returns (uint256[] memory orderIds) {
-        cancelOrders(cancellations);
-        return placeValidFromOrders(buyTokens, sellTokens, validFroms, validUntils, buyAmounts, sellAmounts);
-    }
-
     /** @dev Used to list a new token on the contract: Hence, making it available for exchange in an auction.
       * @param token ERC20 token to be listed.
       *
@@ -183,6 +141,23 @@ contract BatchExchange is EpochTokenLocker {
         }
         require(IdToAddressBiMap.insert(registeredTokens, numTokens, token), "Token already registered");
         numTokens++;
+    }
+
+    /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
+      * @param buyToken id of token to be bought
+      * @param sellToken id of token to be sold
+      * @param validUntil batchId represnting order's expiry
+      * @param buyAmount relative minimum amount of requested buy amount
+      * @param sellAmount maximum amount of sell token to be exchanged
+      * @return orderId as index of user's current orders
+      *
+      * Emits an {OrderPlacement} event with all relevant order details.
+      */
+    function placeOrder(uint16 buyToken, uint16 sellToken, uint32 validUntil, uint128 buyAmount, uint128 sellAmount)
+        public
+        returns (uint256)
+    {
+        return placeOrderInternal(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
     }
 
     /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
@@ -236,6 +211,31 @@ contract BatchExchange is EpochTokenLocker {
                 emit OrderCancelation(msg.sender, ids[i]);
             }
         }
+    }
+
+    /** @dev A user facing wrapper to cancel and place new orders in the same transaction.
+      * @param cancellations ids of orders to be cancelled
+      * @param buyTokens ids of tokens to be bought in new orders
+      * @param sellTokens ids of tokens to be sold in new orders
+      * @param validFroms batchIds representing order's validity start time in new orders
+      * @param validUntils batchIds represnnting order's expiry in new orders
+      * @param buyAmounts relative minimum amount of requested buy amounts in new orders
+      * @param sellAmounts maximum amounts of sell token to be exchanged in new orders
+      * @return `orderIds` an array of indices in which `msg.sender`'s new orders are included
+      *
+      * Emits {OrderCancelation} events for all cancelled orders and {OrderPlacement} events with all relevant new order details.
+      */
+    function replaceOrders(
+        uint256[] calldata cancellations,
+        uint16[] calldata buyTokens,
+        uint16[] calldata sellTokens,
+        uint32[] calldata validFroms,
+        uint32[] calldata validUntils,
+        uint128[] calldata buyAmounts,
+        uint128[] calldata sellAmounts
+    ) public returns (uint256[] memory orderIds) {
+        cancelOrders(cancellations);
+        return placeValidFromOrders(buyTokens, sellTokens, validFroms, validUntils, buyAmounts, sellAmounts);
     }
 
     /** @dev a solver facing function called for auction settlement
