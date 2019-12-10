@@ -108,13 +108,11 @@ contract BatchExchange is EpochTokenLocker {
      */
     event OrderDeletion(address owner, uint256 id);
 
-    /** @dev Event emitted when a new settlement via submitSolution is received
-     *  This Event allows to calculate the volumes of each trade
+    /** @dev Event emitted when a new trade is settled
      */
     event Trade(address indexed owner, uint256 indexed orderIds, uint256 executedSellAmount, uint256 executedBuyAmount);
 
-    /** @dev Event emitted when a new settlement via submitSolution is received
-     *  This Event allows to calculate the volumes of each trade
+    /** @dev Event emitted when an already exectued trade gets reverted
      */
     event TradeRevertion(address indexed owner, uint256 indexed orderIds, uint256 executedSellAmount, uint256 executedBuyAmount);
 
