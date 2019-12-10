@@ -144,6 +144,23 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
+      * @param buyToken id of token to be bought
+      * @param sellToken id of token to be sold
+      * @param validUntil batchId represnting order's expiry
+      * @param buyAmount relative minimum amount of requested buy amount
+      * @param sellAmount maximum amount of sell token to be exchanged
+      * @return orderId as index of user's current orders
+      *
+      * Emits an {OrderPlacement} event with all relevant order details.
+      */
+    function placeOrder(uint16 buyToken, uint16 sellToken, uint32 validUntil, uint128 buyAmount, uint128 sellAmount)
+        public
+        returns (uint256)
+    {
+        return placeOrderInternal(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
+    }
+
+    /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
       * Note that parameters are passed as arrays and the indices correspond to each order.
       * @param buyTokens ids of tokens to be bought
       * @param sellTokens ids of tokens to be sold
@@ -174,23 +191,6 @@ contract BatchExchange is EpochTokenLocker {
                 sellAmounts[i]
             );
         }
-    }
-
-    /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
-      * @param buyToken id of token to be bought
-      * @param sellToken id of token to be sold
-      * @param validUntil batchId represnting order's expiry
-      * @param buyAmount relative minimum amount of requested buy amount
-      * @param sellAmount maximum amount of sell token to be exchanged
-      * @return orderId as index of user's current orders
-      *
-      * Emits an {OrderPlacement} event with all relevant order details.
-      */
-    function placeOrder(uint16 buyToken, uint16 sellToken, uint32 validUntil, uint128 buyAmount, uint128 sellAmount)
-        public
-        returns (uint256)
-    {
-        return placeOrderInternal(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
     }
 
     /** @dev a user facing function used to cancel orders. If the order is valid for the batch that is currently
@@ -405,7 +405,7 @@ contract BatchExchange is EpochTokenLocker {
         }
     }
     /**
-     * Internal Functions
+     * Private Functions
      */
 
     function placeOrderInternal(
@@ -415,7 +415,7 @@ contract BatchExchange is EpochTokenLocker {
         uint32 validUntil,
         uint128 buyAmount,
         uint128 sellAmount
-    ) internal returns (uint256) {
+    ) private returns (uint256) {
         require(buyToken != sellToken, "Exchange tokens not distinct");
         require(validFrom >= getCurrentBatchId(), "Orders can't be placed in the past");
         orders[msg.sender].push(
@@ -438,14 +438,14 @@ contract BatchExchange is EpochTokenLocker {
     /** @dev called at the end of submitSolution with a value of tokenConservation / 2
       * @param feeReward amount to be rewarded to the solver
       */
-    function grantRewardToSolutionSubmitter(uint256 feeReward) internal {
+    function grantRewardToSolutionSubmitter(uint256 feeReward) private {
         latestSolution.feeReward = feeReward;
         addBalanceAndBlockWithdrawForThisBatch(msg.sender, tokenIdToAddressMap(0), feeReward);
     }
 
     /** @dev called during solution submission to burn fees from previous auction
       */
-    function burnPreviousAuctionFees() internal {
+    function burnPreviousAuctionFees() private {
         if (!currentBatchHasSolution()) {
             feeToken.burnOWL(address(this), latestSolution.feeReward);
         }
@@ -455,7 +455,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param prices list of prices for touched tokens only, first price is always fee token price
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
       */
-    function updateCurrentPrices(uint128[] memory prices, uint16[] memory tokenIdsForPrice) internal {
+    function updateCurrentPrices(uint128[] memory prices, uint16[] memory tokenIdsForPrice) private {
         for (uint256 i = 0; i < latestSolution.tokenIdsForPrice.length; i++) {
             currentPrices[latestSolution.tokenIdsForPrice[i]] = 0;
         }
@@ -469,7 +469,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param orderId index of order in list of owner's orders
       * @param executedAmount proportion of order's requested sellAmount that was filled.
       */
-    function updateRemainingOrder(address owner, uint256 orderId, uint128 executedAmount) internal {
+    function updateRemainingOrder(address owner, uint256 orderId, uint128 executedAmount) private {
         orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.add(executedAmount).toUint128();
     }
 
@@ -478,7 +478,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param orderId index of order in list of owner's orders
       * @param executedAmount proportion of order's requested sellAmount that was filled.
       */
-    function revertRemainingOrder(address owner, uint256 orderId, uint128 executedAmount) internal {
+    function revertRemainingOrder(address owner, uint256 orderId, uint128 executedAmount) private {
         orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.sub(executedAmount).toUint128();
     }
 
@@ -495,7 +495,7 @@ contract BatchExchange is EpochTokenLocker {
         uint16[] memory orderIds,
         uint128[] memory volumes,
         uint16[] memory tokenIdsForPrice
-    ) internal {
+    ) private {
         latestSolution.batchId = batchIndex;
         for (uint256 i = 0; i < owners.length; i++) {
             latestSolution.trades.push(TradeData({owner: owners[i], orderId: orderIds[i], volume: volumes[i]}));
@@ -506,7 +506,7 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev reverts all relevant contract storage relating to an overwritten auction solution.
       */
-    function undoCurrentSolution() internal {
+    function undoCurrentSolution() private {
         if (currentBatchHasSolution()) {
             for (uint256 i = 0; i < latestSolution.trades.length; i++) {
                 address owner = latestSolution.trades[i].owner;
@@ -527,14 +527,37 @@ contract BatchExchange is EpochTokenLocker {
             subtractBalance(latestSolution.solutionSubmitter, tokenIdToAddressMap(0), latestSolution.feeReward);
         }
     }
-    // Internal view
+
+    /** @dev determines if value is better than currently and updates if it is.
+      * @param newObjectiveValue proposed value to be updated if a great enough improvement on the current objective value
+      */
+    function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
+        require(
+            isObjectiveValueSufficientlyImproved(newObjectiveValue),
+            "New objective doesn't sufficiently improve current solution"
+        );
+        latestSolution.objectiveValue = newObjectiveValue;
+    }
+
+    /** @dev determines if value is better than currently and updates if it is.
+      * @param amounts array of values to be verified with AMOUNT_MINIMUM
+      */
+    function verifyAmountThreshold(uint128[] memory amounts) private pure returns (bool) {
+        for (uint256 i = 0; i < amounts.length; i++) {
+            if (amounts[i] < AMOUNT_MINIMUM) {
+                return false;
+            }
+        }
+        return true;
+    }
+    // Private view
 
     /** @dev Evaluates utility of executed trade
       * @param execBuy represents proportion of order executed (in terms of buy amount)
       * @param order the sell order whose utility is being evaluated
       * @return Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
       */
-    function evaluateUtility(uint128 execBuy, Order memory order) internal view returns (uint256) {
+    function evaluateUtility(uint128 execBuy, Order memory order) private view returns (uint256) {
         // Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
         uint256 execSellTimesBuy = getExecutedSellAmount(execBuy, currentPrices[order.buyToken], currentPrices[order.sellToken])
             .mul(order.priceNumerator);
@@ -557,7 +580,7 @@ contract BatchExchange is EpochTokenLocker {
       * Balances and orders have all been updated so: sellAmount - execSellAmt == remainingAmount(order).
       * For correctness, we take the minimum of this with the user's token balance.
       */
-    function evaluateDisregardedUtility(Order memory order, address user) internal view returns (uint256) {
+    function evaluateDisregardedUtility(Order memory order, address user) private view returns (uint256) {
         uint256 leftoverSellAmount = Math.min(getRemainingAmount(order), getBalance(user, tokenIdToAddressMap(order.sellToken)));
         uint256 limitTermLeft = currentPrices[order.sellToken].mul(order.priceDenominator);
         uint256 limitTermRight = order.priceNumerator.mul(currentPrices[order.buyToken]).mul(feeDenominator).div(
@@ -586,7 +609,7 @@ contract BatchExchange is EpochTokenLocker {
       *                = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
       */
     function getExecutedSellAmount(uint128 executedBuyAmount, uint128 buyTokenPrice, uint128 sellTokenPrice)
-        internal
+        private
         view
         returns (uint128)
     {
@@ -598,9 +621,6 @@ contract BatchExchange is EpochTokenLocker {
                 .div(sellTokenPrice)
                 .toUint128();
     }
-    /**
-     * Private Functions
-     */
 
     /** @dev used to determine if solution if first provided in current batch
       * @return true if `latestSolution` is storing a solution for current batch, else false
@@ -608,31 +628,6 @@ contract BatchExchange is EpochTokenLocker {
     function currentBatchHasSolution() private view returns (bool) {
         return latestSolution.batchId == getCurrentBatchId() - 1;
     }
-
-    /** @dev determines if value is better than currently and updates if it is.
-      * @param newObjectiveValue proposed value to be updated if a great enough improvement on the current objective value
-      */
-    function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
-        require(
-            isObjectiveValueSufficientlyImproved(newObjectiveValue),
-            "New objective doesn't sufficiently improve current solution"
-        );
-        latestSolution.objectiveValue = newObjectiveValue;
-    }
-
-    /** @dev determines if value is better than currently and updates if it is.
-      * @param amounts array of values to be verified with AMOUNT_MINIMUM
-      */
-    function verifyAmountThreshold(uint128[] memory amounts) private pure returns (bool) {
-        for (uint256 i = 0; i < amounts.length; i++) {
-            if (amounts[i] < AMOUNT_MINIMUM) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Private view
 
     /** @dev Compute trade execution based on executedBuyAmount and relevant token prices
       * @param executedBuyAmount executed buy amount
