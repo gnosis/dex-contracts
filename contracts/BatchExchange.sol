@@ -137,7 +137,7 @@ contract BatchExchange is EpochTokenLocker {
       * Emits an {OrderPlacement} event with all relevant order details.
       */
     function placeOrder(uint16 buyToken, uint16 sellToken, uint32 validUntil, uint128 buyAmount, uint128 sellAmount)
-        external
+        public
         returns (uint256)
     {
         return placeOrderInternal(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
@@ -163,7 +163,7 @@ contract BatchExchange is EpochTokenLocker {
         uint32[] calldata validUntils,
         uint128[] calldata buyAmounts,
         uint128[] calldata sellAmounts
-    ) external returns (uint256[] memory orderIds) {
+    ) public returns (uint256[] memory orderIds) {
         cancelOrders(cancellations);
         return placeValidFromOrders(buyTokens, sellTokens, validFroms, validUntils, buyAmounts, sellAmounts);
     }
