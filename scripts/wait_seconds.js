@@ -7,7 +7,7 @@ module.exports = async callback => {
     if (args.length != 1) {
       callback("Error: This script requires arguments - <seconds>")
     }
-    const [seconds] = arguments
+    const [seconds] = args
     await waitForNSeconds(parseInt(seconds), web3)
     console.log("waited", seconds, "seconds")
     callback()
