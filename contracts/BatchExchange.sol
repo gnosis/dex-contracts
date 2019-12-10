@@ -116,22 +116,6 @@ contract BatchExchange is EpochTokenLocker {
      */
     event TradeRevertion(address indexed owner, uint256 indexed orderIds, uint256 executedSellAmount, uint256 executedBuyAmount);
 
-    struct Order {
-        uint16 buyToken;
-        uint16 sellToken;
-        uint32 validFrom; // order is valid from auction collection period: validFrom inclusive
-        uint32 validUntil; // order is valid till auction collection period: validUntil inclusive
-        uint128 priceNumerator;
-        uint128 priceDenominator;
-        uint128 usedAmount; // remainingAmount = priceDenominator - usedAmount
-    }
-
-    struct TradeData {
-        address owner;
-        uint128 volume;
-        uint16 orderId;
-    }
-
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
       * @param _feeDenominator fee as a proportion is (1 / feeDenominator)
