@@ -108,6 +108,14 @@ contract BatchExchange is EpochTokenLocker {
      */
     event OrderDeletion(address owner, uint256 id);
 
+    /** @dev Event emitted when a new trade is settled
+     */
+    event Trade(address indexed owner, uint256 indexed orderIds, uint256 executedSellAmount, uint256 executedBuyAmount);
+
+    /** @dev Event emitted when an already exectued trade gets reverted
+     */
+    event TradeReversion(address indexed owner, uint256 indexed orderIds, uint256 executedSellAmount, uint256 executedBuyAmount);
+
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
       * @param _feeDenominator fee as a proportion is (1 / feeDenominator)
@@ -310,6 +318,7 @@ contract BatchExchange is EpochTokenLocker {
             utility = utility.add(evaluateUtility(executedBuyAmount, order));
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
             addBalanceAndBlockWithdrawForThisBatch(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
+            emit Trade(owners[i], orderIds[i], executedSellAmount, executedBuyAmount);
         }
         // Perform all subtractions after additions to avoid negative values
         for (uint256 i = 0; i < owners.length; i++) {
@@ -522,6 +531,7 @@ contract BatchExchange is EpochTokenLocker {
                 (uint128 buyAmount, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
                 revertRemainingOrder(owner, orderId, sellAmount);
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
+                emit TradeReversion(owner, orderId, sellAmount, buyAmount);
             }
             // subtract granted fees:
             subtractBalance(latestSolution.solutionSubmitter, tokenIdToAddressMap(0), latestSolution.feeReward);
@@ -539,19 +549,7 @@ contract BatchExchange is EpochTokenLocker {
         latestSolution.objectiveValue = newObjectiveValue;
     }
 
-    /** @dev determines if value is better than currently and updates if it is.
-      * @param amounts array of values to be verified with AMOUNT_MINIMUM
-      */
-    function verifyAmountThreshold(uint128[] memory amounts) private pure returns (bool) {
-        for (uint256 i = 0; i < amounts.length; i++) {
-            if (amounts[i] < AMOUNT_MINIMUM) {
-                return false;
-            }
-        }
-        return true;
-    }
     // Private view
-
     /** @dev Evaluates utility of executed trade
       * @param execBuy represents proportion of order executed (in terms of buy amount)
       * @param order the sell order whose utility is being evaluated
@@ -629,6 +627,7 @@ contract BatchExchange is EpochTokenLocker {
         return latestSolution.batchId == getCurrentBatchId() - 1;
     }
 
+    // Private view
     /** @dev Compute trade execution based on executedBuyAmount and relevant token prices
       * @param executedBuyAmount executed buy amount
       * @param order contains relevant buy-sell token information
@@ -652,7 +651,6 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     // Private pure
-
     /** @dev used to determine if an order is valid for specific auction/batch
       * @param order object whose validity is in question
       * @param batchIndex auction index of validity
@@ -691,5 +689,17 @@ contract BatchExchange is EpochTokenLocker {
         element = element.concat(abi.encodePacked(order.priceDenominator));
         element = element.concat(abi.encodePacked(getRemainingAmount(order)));
         return element;
+    }
+
+    /** @dev determines if value is better than currently and updates if it is.
+      * @param amounts array of values to be verified with AMOUNT_MINIMUM
+      */
+    function verifyAmountThreshold(uint128[] memory amounts) private pure returns (bool) {
+        for (uint256 i = 0; i < amounts.length; i++) {
+            if (amounts[i] < AMOUNT_MINIMUM) {
+                return false;
+            }
+        }
+        return true;
     }
 }
