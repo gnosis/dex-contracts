@@ -30,7 +30,7 @@ contract BatchExchange is EpochTokenLocker {
     uint256 public constant MAX_TOUCHED_ORDERS = 25;
 
     /** @dev Fee charged for adding a token */
-    uint256 public constant TOKEN_ADDITION_FEE_IN_OWL = 10 ether;
+    uint256 public constant FEE_FOR_LISTING_TOKEN_IN_OWL = 10 ether;
 
     /** @dev minimum allowed value (in WEI) of any prices or executed trade amounts */
     uint256 public constant AMOUNT_MINIMUM = 10**4;
@@ -137,7 +137,7 @@ contract BatchExchange is EpochTokenLocker {
         require(numTokens < MAX_TOKENS, "Max tokens reached");
         if (numTokens > 0) {
             // Only charge fees for tokens other than the fee token itself
-            feeToken.burnOWL(msg.sender, TOKEN_ADDITION_FEE_IN_OWL);
+            feeToken.burnOWL(msg.sender, FEE_FOR_LISTING_TOKEN_IN_OWL);
         }
         require(IdToAddressBiMap.insert(registeredTokens, numTokens, token), "Token already registered");
         numTokens++;
