@@ -92,6 +92,19 @@ contract BatchExchange is EpochTokenLocker {
      */
     event OrderDeletion(address owner, uint256 id);
 
+    /** @dev Event emitted when a new settlement via submitSolution is received
+     *  This Event allows to calculate the volumes of each trade
+     */
+    event NewSettlement(
+        uint32 batchIndex,
+        uint256 objectiveValue,
+        address[] owners,
+        uint16[] orderIds,
+        uint128[] buyVolumes,
+        uint128[] prices,
+        uint16[] tokenIdsForPrice
+    );
+
     struct Order {
         uint16 buyToken;
         uint16 sellToken;
@@ -328,6 +341,8 @@ contract BatchExchange is EpochTokenLocker {
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, buyVolumes, tokenIdsForPrice);
+
+        emit NewSettlement(batchIndex, objectiveValue, owners, orderIds, buyVolumes, prices, tokenIdsForPrice);
         return (objectiveValue);
     }
     /**
