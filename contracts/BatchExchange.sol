@@ -337,7 +337,6 @@ contract BatchExchange is EpochTokenLocker {
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, buyVolumes, tokenIdsForPrice);
-
         return (objectiveValue);
     }
     /**
@@ -549,7 +548,7 @@ contract BatchExchange is EpochTokenLocker {
         );
         latestSolution.objectiveValue = newObjectiveValue;
     }
-    
+
     // Private view
     /** @dev Evaluates utility of executed trade
       * @param execBuy represents proportion of order executed (in terms of buy amount)
@@ -628,17 +627,6 @@ contract BatchExchange is EpochTokenLocker {
         return latestSolution.batchId == getCurrentBatchId() - 1;
     }
 
-    /** @dev determines if value is better than currently and updates if it is.
-      * @param newObjectiveValue proposed value to be updated if a great enough improvement on the current objective value
-      */
-    function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
-        require(
-            isObjectiveValueSufficientlyImproved(newObjectiveValue),
-            "New objective doesn't sufficiently improve current solution"
-        );
-        latestSolution.objectiveValue = newObjectiveValue;
-    }
-    
     // Private view
     /** @dev Compute trade execution based on executedBuyAmount and relevant token prices
       * @param executedBuyAmount executed buy amount
@@ -702,8 +690,8 @@ contract BatchExchange is EpochTokenLocker {
         element = element.concat(abi.encodePacked(getRemainingAmount(order)));
         return element;
     }
-    
-     /** @dev determines if value is better than currently and updates if it is.
+
+    /** @dev determines if value is better than currently and updates if it is.
       * @param amounts array of values to be verified with AMOUNT_MINIMUM
       */
     function verifyAmountThreshold(uint128[] memory amounts) private pure returns (bool) {
