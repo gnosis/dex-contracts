@@ -367,16 +367,16 @@ contract("BatchExchange", async accounts => {
       )
     })
     it("rejects acclaimed marginally improved solutions", async () => {
-      const stablecoinConverter = await setupGenericStableX()
+      const batchExchange = await setupGenericStableX()
 
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
-      await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
-      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(stablecoinConverter, accounts, basicTrade.orders, batchIndex + 1)
-      await closeAuction(stablecoinConverter)
+      await makeDeposits(batchExchange, accounts, basicTrade.deposits)
+      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
+      await closeAuction(batchExchange)
 
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-      await stablecoinConverter.submitSolution(
+      await batchExchange.submitSolution(
         batchIndex,
         solution.objectiveValue,
         solution.owners,
@@ -386,13 +386,13 @@ contract("BatchExchange", async accounts => {
         solution.tokenIdsForPrice,
         { from: solver }
       )
-      const objectiveValue = await stablecoinConverter.getCurrentObjectiveValue.call()
-      const improvementDenominator = await stablecoinConverter.IMPROVEMENT_DENOMINATOR.call()
+      const objectiveValue = await batchExchange.getCurrentObjectiveValue.call()
+      const improvementDenominator = await batchExchange.IMPROVEMENT_DENOMINATOR.call()
 
       const tooLowNewObjective = objectiveValue.mul(improvementDenominator.addn(1)).div(improvementDenominator)
 
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(
+        batchExchange.submitSolution(
           batchIndex,
           tooLowNewObjective,
           solution.owners,
@@ -406,17 +406,17 @@ contract("BatchExchange", async accounts => {
       )
     })
     it("rejects marginally better solutions", async () => {
-      const stablecoinConverter = await setupGenericStableX()
+      const batchExchange = await setupGenericStableX()
 
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
       const tradeCase = marginalTrade
-      await makeDeposits(stablecoinConverter, accounts, tradeCase.deposits)
-      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(stablecoinConverter, accounts, tradeCase.orders, batchIndex + 1)
-      await closeAuction(stablecoinConverter)
+      await makeDeposits(batchExchange, accounts, tradeCase.deposits)
+      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(batchExchange, accounts, tradeCase.orders, batchIndex + 1)
+      await closeAuction(batchExchange)
 
       const firstSolution = solutionSubmissionParams(tradeCase.solutions[0], accounts, orderIds)
-      await stablecoinConverter.submitSolution(
+      await batchExchange.submitSolution(
         batchIndex,
         firstSolution.objectiveValue,
         firstSolution.owners,
@@ -427,7 +427,7 @@ contract("BatchExchange", async accounts => {
         { from: solver }
       )
       const insufficientlyBetterSolution = solutionSubmissionParams(tradeCase.solutions[1], accounts, orderIds)
-      const improvementDenominator = await stablecoinConverter.IMPROVEMENT_DENOMINATOR.call()
+      const improvementDenominator = await batchExchange.IMPROVEMENT_DENOMINATOR.call()
       assert(
         insufficientlyBetterSolution.objectiveValue
           .mul(improvementDenominator)
@@ -435,7 +435,7 @@ contract("BatchExchange", async accounts => {
         `Expected ${insufficientlyBetterSolution.objectiveValue} to be less than marginally better than ${firstSolution.objectiveValue}`
       )
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(
+        batchExchange.submitSolution(
           batchIndex,
           firstSolution.objectiveValue.muln(2), // Note must claim better improvement than we have to get this case!
           insufficientlyBetterSolution.owners,
@@ -1648,7 +1648,7 @@ contract("BatchExchange", async accounts => {
   describe("getEncodedUserOrders()", async () => {
     it("returns null when there are no orders", async () => {
       const batchExchange = await setupGenericStableX()
-      const auctionElements = await batchExchange.getEncodedAuctionElements()
+      const auctionElements = await batchExchange.getEncodedOrders()
       assert.equal(auctionElements, null)
     })
     it("returns correct orders whether valid, canceled or freed", async () => {
@@ -1706,11 +1706,11 @@ contract("BatchExchange", async accounts => {
       await waitForNSeconds(BATCH_TIME)
       await batchExchange.cancelOrders([0])
 
-      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(JSON.stringify(auctionElements), JSON.stringify([canceledOrderInfo, freedOrderInfo, validOrderInfo]))
     })
   })
-  describe("getEncodedAuctionElements()", async () => {
+  describe("getEncodedOrders()", async () => {
     it("returns all orders that are have ever been submitted", async () => {
       const batchExchange = await setupGenericStableX(3)
       const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
@@ -1744,7 +1744,7 @@ contract("BatchExchange", async accounts => {
       await batchExchange.placeOrder(1, 0, batchIndex, 20, 10, { from: user_1 })
       await batchExchange.placeOrder(0, 1, batchIndex, 500, 400, { from: user_2 })
 
-      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(JSON.stringify(auctionElements), JSON.stringify(orderInfo))
     })
     it("credits balance when it's valid", async () => {
@@ -1758,12 +1758,12 @@ contract("BatchExchange", async accounts => {
       await batchExchange.deposit(erc20_2, 20, { from: user_1 })
       await batchExchange.placeOrder(1, 2, batchIndex, 20, 10, { from: user_1 })
 
-      let auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      let auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements[0].sellTokenBalance, 0)
 
       await waitForNSeconds(BATCH_TIME)
 
-      auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements[0].sellTokenBalance, 20)
     })
     it("includes freed orders with empty fields", async () => {
@@ -1772,7 +1772,7 @@ contract("BatchExchange", async accounts => {
       const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
       await batchExchange.placeOrder(1, 0, batchIndex + 10, 20, 10)
 
-      let auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      let auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, batchIndex)
 
@@ -1780,20 +1780,20 @@ contract("BatchExchange", async accounts => {
       await batchExchange.cancelOrders([0])
 
       // Cancellation is active but not yet freed
-      auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, batchIndex)
 
       await closeAuction(batchExchange)
       await batchExchange.cancelOrders([0])
 
-      auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, 0)
     })
     it("returns empty list if there are no orders", async () => {
       const batchExchange = await setupGenericStableX()
-      const auctionElements = await batchExchange.getEncodedAuctionElements()
+      const auctionElements = await batchExchange.getEncodedOrders()
       assert.equal(auctionElements, null)
     })
   })

@@ -12,7 +12,7 @@ const BN = require("bn.js")
 /**
  * Decodes a byte-encoded variable length array of orders. This can be used to
  * decode the result of `BatchExchange.getEncodedUserOrders` and
- * `BatchExchange.getEncodedAuctionElements`.
+ * `BatchExchange.getEncodedOrders`.
  * @param {string} bytes The encoded bytes in hex in the form '0x...'
  * @return {Object[]} The decoded array of orders
  */

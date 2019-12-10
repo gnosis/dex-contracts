@@ -14,13 +14,9 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract EpochTokenLocker {
     using SafeMath for uint256;
 
-    event Deposit(address user, address token, uint256 amount, uint256 batchId);
-
-    event WithdrawRequest(address user, address token, uint256 amount, uint256 batchId);
-
-    event Withdraw(address user, address token, uint256 amount);
-
+    /** @dev Number of seconds a batch is lasting*/
     uint32 public constant BATCH_TIME = 300;
+
     // User => Token => BalanceState
     mapping(address => mapping(address => BalanceState)) private balanceStates;
 
@@ -37,6 +33,12 @@ contract EpochTokenLocker {
         uint256 amount;
         uint32 batchId;
     }
+
+    event Deposit(address user, address token, uint256 amount, uint256 stateIndex);
+
+    event WithdrawRequest(address user, address token, uint256 amount, uint256 stateIndex);
+
+    event Withdraw(address user, address token, uint256 amount);
 
     /** @dev credits user with deposit amount on next epoch (given by getCurrentBatchId)
       * @param token address of token to be deposited

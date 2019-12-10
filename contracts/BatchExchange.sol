@@ -22,18 +22,19 @@ contract BatchExchange is EpochTokenLocker {
     using TokenConservation for uint16[];
     using IterableAppendOnlySet for IterableAppendOnlySet.Data;
 
-    // Iterable set of all users, required to collect auction information
-    IterableAppendOnlySet.Data private allUsers;
-    IdToAddressBiMap.Data private registeredTokens;
-
     /** @dev Maximum number of touched orders in auction (used in submitSolution) */
     uint256 public constant MAX_TOUCHED_ORDERS = 25;
 
     /** @dev Fee charged for adding a token */
-    uint256 public constant TOKEN_ADDITION_FEE_IN_OWL = 10 ether;
+    uint256 public constant FEE_FOR_LISTING_TOKEN_IN_OWL = 10 ether;
 
     /** @dev minimum allowed value (in WEI) of any prices or executed trade amounts */
     uint256 public constant AMOUNT_MINIMUM = 10**4;
+
+    /** Corresponds to percentage that competing solution must improve on current
+      * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
+      */
+    uint256 public constant IMPROVEMENT_DENOMINATOR = 100; // 1%
 
     /** @dev maximum number of tokens that can be listed for exchange */
     // solhint-disable-next-line var-name-mixedcase
@@ -44,11 +45,6 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/feeDenominator */
     uint128 public feeDenominator;
-
-    /** Corresponds to percentage that competing solution must improve on current
-      * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
-      */
-    uint256 public constant IMPROVEMENT_DENOMINATOR = 100; // 1%
 
     /** @dev The feeToken of the exchange will be the OWL Token */
     TokenOWL public feeToken;
@@ -61,6 +57,26 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev Sufficient information for current winning auction solution */
     SolutionData public latestSolution;
+
+    // Iterable set of all users, required to collect auction information
+    IterableAppendOnlySet.Data private allUsers;
+    IdToAddressBiMap.Data private registeredTokens;
+
+    struct Order {
+        uint16 buyToken;
+        uint16 sellToken;
+        uint32 validFrom; // order is valid from auction collection period: validFrom inclusive
+        uint32 validUntil; // order is valid till auction collection period: validUntil inclusive
+        uint128 priceNumerator;
+        uint128 priceDenominator;
+        uint128 usedAmount; // remainingAmount = priceDenominator - usedAmount
+    }
+
+    struct TradeData {
+        address owner;
+        uint128 volume;
+        uint16 orderId;
+    }
 
     struct SolutionData {
         uint32 batchId;
@@ -95,15 +111,12 @@ contract BatchExchange is EpochTokenLocker {
     /** @dev Event emitted when a new settlement via submitSolution is received
      *  This Event allows to calculate the volumes of each trade
      */
-    event NewSettlement(
-        uint32 batchIndex,
-        uint256 objectiveValue,
-        address[] owners,
-        uint16[] orderIds,
-        uint128[] buyVolumes,
-        uint128[] prices,
-        uint16[] tokenIdsForPrice
-    );
+    event Trade(address indexed owner, uint256 indexed orderIds, uint256 executedSellAmount, uint256 executedBuyAmount);
+
+    /** @dev Event emitted when a new settlement via submitSolution is received
+     *  This Event allows to calculate the volumes of each trade
+     */
+    event TradeRevertion(address indexed owner, uint256 indexed orderIds, uint256 executedSellAmount, uint256 executedBuyAmount);
 
     struct Order {
         uint16 buyToken;
@@ -150,7 +163,7 @@ contract BatchExchange is EpochTokenLocker {
         require(numTokens < MAX_TOKENS, "Max tokens reached");
         if (numTokens > 0) {
             // Only charge fees for tokens other than the fee token itself
-            feeToken.burnOWL(msg.sender, TOKEN_ADDITION_FEE_IN_OWL);
+            feeToken.burnOWL(msg.sender, FEE_FOR_LISTING_TOKEN_IN_OWL);
         }
         require(IdToAddressBiMap.insert(registeredTokens, numTokens, token), "Token already registered");
         numTokens++;
@@ -323,6 +336,7 @@ contract BatchExchange is EpochTokenLocker {
             utility = utility.add(evaluateUtility(executedBuyAmount, order));
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
             addBalanceAndBlockWithdrawForThisBatch(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
+            emit Trade(owners[i], orderIds[i], executedSellAmount, executedBuyAmount);
         }
         // Perform all subtractions after additions to avoid negative values
         for (uint256 i = 0; i < owners.length; i++) {
@@ -342,7 +356,6 @@ contract BatchExchange is EpochTokenLocker {
         tokenConservation.checkTokenConservation();
         documentTrades(batchIndex, owners, orderIds, buyVolumes, tokenIdsForPrice);
 
-        emit NewSettlement(batchIndex, objectiveValue, owners, orderIds, buyVolumes, prices, tokenIdsForPrice);
         return (objectiveValue);
     }
     /**
@@ -389,7 +402,7 @@ contract BatchExchange is EpochTokenLocker {
     /** @dev View returning all byte-encoded sell orders
       * @return encoded bytes representing all orders ordered by (user, index)
       */
-    function getEncodedAuctionElements() public view returns (bytes memory elements) {
+    function getEncodedOrders() public view returns (bytes memory elements) {
         if (allUsers.size() > 0) {
             address user = allUsers.first();
             bool stop = false;
@@ -444,10 +457,10 @@ contract BatchExchange is EpochTokenLocker {
                 usedAmount: 0
             })
         );
-        uint256 orderId = orders[msg.sender].length - 1;
-        emit OrderPlacement(msg.sender, orderId, buyToken, sellToken, validFrom, validUntil, buyAmount, sellAmount);
+        uint256 orderIndex = orders[msg.sender].length - 1;
+        emit OrderPlacement(msg.sender, orderIndex, buyToken, sellToken, validFrom, validUntil, buyAmount, sellAmount);
         allUsers.insert(msg.sender);
-        return orderId;
+        return orderIndex;
     }
 
     /** @dev called at the end of submitSolution with a value of tokenConservation / 2
@@ -537,6 +550,8 @@ contract BatchExchange is EpochTokenLocker {
                 (uint128 buyAmount, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
                 revertRemainingOrder(owner, orderId, sellAmount);
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
+                emit TradeRevertion(owner, orderId, sellAmount, buyAmount);
+
             }
             // subtract granted fees:
             subtractBalance(latestSolution.solutionSubmitter, tokenIdToAddressMap(0), latestSolution.feeReward);
@@ -688,7 +703,7 @@ contract BatchExchange is EpochTokenLocker {
         return order.priceDenominator - order.usedAmount;
     }
 
-    /** @dev called only by getEncodedAuctionElements and used to pack auction info into bytes
+    /** @dev called only by getEncodedOrders and used to pack auction info into bytes
       * @param user list of tokenIds
       * @param sellTokenBalance user's account balance of sell token
       * @param order a sell order

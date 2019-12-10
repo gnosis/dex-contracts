@@ -5,7 +5,7 @@ const { decodeAuctionElements } = require("../../test/utilities.js")
 module.exports = async callback => {
   try {
     const instance = await BatchExchange.deployed()
-    const auctionElementsEncoded = await instance.getEncodedAuctionElements.call()
+    const auctionElementsEncoded = await instance.getEncodedOrders.call()
     const auctionElementsDecoded = decodeAuctionElements(auctionElementsEncoded)
 
     console.log(auctionElementsDecoded)

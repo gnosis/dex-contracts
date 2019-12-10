@@ -10,7 +10,7 @@ const addTokens = async function(token_addresses, web3, artifacts) {
   const TokenOWL = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWL")
   const owl = await TokenOWL.at(await instance.feeToken.call())
 
-  const feeForAddingToken = (await instance.TOKEN_ADDITION_FEE_IN_OWL.call()).mul(new BN(token_addresses.length))
+  const feeForAddingToken = (await instance.FEE_FOR_LISTING_TOKEN_IN_OWL.call()).mul(new BN(token_addresses.length))
   const balanceOfOWL = await owl.balanceOf.call(accounts[0])
   if (feeForAddingToken.gt(balanceOfOWL)) {
     console.log("More fee tokens are required to add all tokens")
