@@ -1648,7 +1648,7 @@ contract("BatchExchange", async accounts => {
   describe("getEncodedUserOrders()", async () => {
     it("returns null when there are no orders", async () => {
       const batchExchange = await setupGenericStableX()
-      const auctionElements = await batchExchange.getEncodedAuctionElements()
+      const auctionElements = await batchExchange.getEncodedOrders()
       assert.equal(auctionElements, null)
     })
     it("returns correct orders whether valid, canceled or freed", async () => {
@@ -1706,11 +1706,11 @@ contract("BatchExchange", async accounts => {
       await waitForNSeconds(BATCH_TIME)
       await batchExchange.cancelOrders([0])
 
-      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(JSON.stringify(auctionElements), JSON.stringify([canceledOrderInfo, freedOrderInfo, validOrderInfo]))
     })
   })
-  describe("getEncodedAuctionElements()", async () => {
+  describe("getEncodedOrders()", async () => {
     it("returns all orders that are have ever been submitted", async () => {
       const batchExchange = await setupGenericStableX(3)
       const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
@@ -1744,7 +1744,7 @@ contract("BatchExchange", async accounts => {
       await batchExchange.placeOrder(1, 0, batchIndex, 20, 10, { from: user_1 })
       await batchExchange.placeOrder(0, 1, batchIndex, 500, 400, { from: user_2 })
 
-      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(JSON.stringify(auctionElements), JSON.stringify(orderInfo))
     })
     it("credits balance when it's valid", async () => {
@@ -1758,12 +1758,12 @@ contract("BatchExchange", async accounts => {
       await batchExchange.deposit(erc20_2, 20, { from: user_1 })
       await batchExchange.placeOrder(1, 2, batchIndex, 20, 10, { from: user_1 })
 
-      let auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      let auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements[0].sellTokenBalance, 0)
 
       await waitForNSeconds(BATCH_TIME)
 
-      auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements[0].sellTokenBalance, 20)
     })
     it("includes freed orders with empty fields", async () => {
@@ -1772,7 +1772,7 @@ contract("BatchExchange", async accounts => {
       const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
       await batchExchange.placeOrder(1, 0, batchIndex + 10, 20, 10)
 
-      let auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      let auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, batchIndex)
 
@@ -1780,20 +1780,20 @@ contract("BatchExchange", async accounts => {
       await batchExchange.cancelOrders([0])
 
       // Cancellation is active but not yet freed
-      auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, batchIndex)
 
       await closeAuction(batchExchange)
       await batchExchange.cancelOrders([0])
 
-      auctionElements = decodeAuctionElements(await batchExchange.getEncodedAuctionElements())
+      auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, 0)
     })
     it("returns empty list if there are no orders", async () => {
       const batchExchange = await setupGenericStableX()
-      const auctionElements = await batchExchange.getEncodedAuctionElements()
+      const auctionElements = await batchExchange.getEncodedOrders()
       assert.equal(auctionElements, null)
     })
   })
