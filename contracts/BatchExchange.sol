@@ -648,7 +648,6 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     // Private view
-
     /** @dev Compute trade execution based on executedBuyAmount and relevant token prices
       * @param executedBuyAmount executed buy amount
       * @param order contains relevant buy-sell token information
@@ -672,7 +671,6 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     // Private pure
-
     /** @dev used to determine if an order is valid for specific auction/batch
       * @param order object whose validity is in question
       * @param batchIndex auction index of validity
