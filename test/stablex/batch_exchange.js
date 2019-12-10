@@ -367,16 +367,16 @@ contract("BatchExchange", async accounts => {
       )
     })
     it("rejects acclaimed marginally improved solutions", async () => {
-      const stablecoinConverter = await setupGenericStableX()
+      const batchExchange = await setupGenericStableX()
 
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
-      await makeDeposits(stablecoinConverter, accounts, basicTrade.deposits)
-      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(stablecoinConverter, accounts, basicTrade.orders, batchIndex + 1)
-      await closeAuction(stablecoinConverter)
+      await makeDeposits(batchExchange, accounts, basicTrade.deposits)
+      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
+      await closeAuction(batchExchange)
 
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-      await stablecoinConverter.submitSolution(
+      await batchExchange.submitSolution(
         batchIndex,
         solution.objectiveValue,
         solution.owners,
@@ -386,13 +386,13 @@ contract("BatchExchange", async accounts => {
         solution.tokenIdsForPrice,
         { from: solver }
       )
-      const objectiveValue = await stablecoinConverter.getCurrentObjectiveValue.call()
-      const improvementDenominator = await stablecoinConverter.IMPROVEMENT_DENOMINATOR.call()
+      const objectiveValue = await batchExchange.getCurrentObjectiveValue.call()
+      const improvementDenominator = await batchExchange.IMPROVEMENT_DENOMINATOR.call()
 
       const tooLowNewObjective = objectiveValue.mul(improvementDenominator.addn(1)).div(improvementDenominator)
 
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(
+        batchExchange.submitSolution(
           batchIndex,
           tooLowNewObjective,
           solution.owners,
@@ -406,17 +406,17 @@ contract("BatchExchange", async accounts => {
       )
     })
     it("rejects marginally better solutions", async () => {
-      const stablecoinConverter = await setupGenericStableX()
+      const batchExchange = await setupGenericStableX()
 
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
       const tradeCase = marginalTrade
-      await makeDeposits(stablecoinConverter, accounts, tradeCase.deposits)
-      const batchIndex = (await stablecoinConverter.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(stablecoinConverter, accounts, tradeCase.orders, batchIndex + 1)
-      await closeAuction(stablecoinConverter)
+      await makeDeposits(batchExchange, accounts, tradeCase.deposits)
+      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(batchExchange, accounts, tradeCase.orders, batchIndex + 1)
+      await closeAuction(batchExchange)
 
       const firstSolution = solutionSubmissionParams(tradeCase.solutions[0], accounts, orderIds)
-      await stablecoinConverter.submitSolution(
+      await batchExchange.submitSolution(
         batchIndex,
         firstSolution.objectiveValue,
         firstSolution.owners,
@@ -427,7 +427,7 @@ contract("BatchExchange", async accounts => {
         { from: solver }
       )
       const insufficientlyBetterSolution = solutionSubmissionParams(tradeCase.solutions[1], accounts, orderIds)
-      const improvementDenominator = await stablecoinConverter.IMPROVEMENT_DENOMINATOR.call()
+      const improvementDenominator = await batchExchange.IMPROVEMENT_DENOMINATOR.call()
       assert(
         insufficientlyBetterSolution.objectiveValue
           .mul(improvementDenominator)
@@ -435,7 +435,7 @@ contract("BatchExchange", async accounts => {
         `Expected ${insufficientlyBetterSolution.objectiveValue} to be less than marginally better than ${firstSolution.objectiveValue}`
       )
       await truffleAssert.reverts(
-        stablecoinConverter.submitSolution(
+        batchExchange.submitSolution(
           batchIndex,
           firstSolution.objectiveValue.muln(2), // Note must claim better improvement than we have to get this case!
           insufficientlyBetterSolution.owners,
