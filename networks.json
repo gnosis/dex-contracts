@@ -1,5 +1,234 @@
 {
   "BatchExchange": {
+    "1": {
+      "events": {
+        "0x3386e01ca86fb9841149c6a0b1e278cfe15fa4cda05d9e167c2f672e2baaeae6": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "index",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "buyToken",
+              "type": "uint16"
+            },
+            {
+              "indexed": false,
+              "name": "sellToken",
+              "type": "uint16"
+            },
+            {
+              "indexed": false,
+              "name": "validFrom",
+              "type": "uint32"
+            },
+            {
+              "indexed": false,
+              "name": "validUntil",
+              "type": "uint32"
+            },
+            {
+              "indexed": false,
+              "name": "priceNumerator",
+              "type": "uint128"
+            },
+            {
+              "indexed": false,
+              "name": "priceDenominator",
+              "type": "uint128"
+            }
+          ],
+          "name": "OrderPlacement",
+          "type": "event",
+          "signature": "0x3386e01ca86fb9841149c6a0b1e278cfe15fa4cda05d9e167c2f672e2baaeae6"
+        },
+        "0x36adb26c9fa7b5219b043ac78b698e6e539a937ff88758ab51b04d331e7111ed": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "id",
+              "type": "uint256"
+            }
+          ],
+          "name": "OrderCancelation",
+          "type": "event",
+          "signature": "0x36adb26c9fa7b5219b043ac78b698e6e539a937ff88758ab51b04d331e7111ed"
+        },
+        "0x7579158b33149f4a8404a7568a10f7330fb3c3a7c702990d114ac6f22caba03d": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "id",
+              "type": "uint256"
+            }
+          ],
+          "name": "OrderDeletion",
+          "type": "event",
+          "signature": "0x7579158b33149f4a8404a7568a10f7330fb3c3a7c702990d114ac6f22caba03d"
+        },
+        "0x150edd20b748bc680273d4bc59d5659c3229edf2f102c013595b9b3238e15886": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "orderIds",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "executedSellAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "executedBuyAmount",
+              "type": "uint256"
+            }
+          ],
+          "name": "Trade",
+          "type": "event",
+          "signature": "0x150edd20b748bc680273d4bc59d5659c3229edf2f102c013595b9b3238e15886"
+        },
+        "0xdbf2eac37cbd1e45f9848c8d46efb5acfec38bf6f7e68434edee8e63b021d3be": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "name": "orderIds",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "executedSellAmount",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "executedBuyAmount",
+              "type": "uint256"
+            }
+          ],
+          "name": "TradeReversion",
+          "type": "event",
+          "signature": "0xdbf2eac37cbd1e45f9848c8d46efb5acfec38bf6f7e68434edee8e63b021d3be"
+        },
+        "0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a095284754544f4c709d7": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "stateIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "Deposit",
+          "type": "event",
+          "signature": "0xdcbc1c05240f31ff3ad067ef1ee35ce4997762752e3a095284754544f4c709d7"
+        },
+        "0x10067fd172dd3ef9b7819d1d8add346f7eb58f4d57b92610d15e964125443a89": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "name": "stateIndex",
+              "type": "uint256"
+            }
+          ],
+          "name": "WithdrawRequest",
+          "type": "event",
+          "signature": "0x10067fd172dd3ef9b7819d1d8add346f7eb58f4d57b92610d15e964125443a89"
+        },
+        "0x9b1bfa7fa9ee420a16e124f794c35ac9f90472acc99140eb2f6447c714cad8eb": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "Withdraw",
+          "type": "event",
+          "signature": "0x9b1bfa7fa9ee420a16e124f794c35ac9f90472acc99140eb2f6447c714cad8eb"
+        }
+      },
+      "links": {
+        "IdToAddressBiMap": "0xaEBD846a05EaDfe42db884805e6aC99F32E8af43",
+        "IterableAppendOnlySet": "0xCDDB32b6Bb2808D5B5115dAab207479cE98d2636"
+      },
+      "address": "0x46F3f2F9662F66a6dDd6A8d1DDec3cD9aE5e87B5",
+      "transactionHash": "0x5f054d123c505b688b98679da32c6a1900fd7257fa5daa88c421fbd9bb342e42"
+    },
     "4": {
       "events": {
         "0x3386e01ca86fb9841149c6a0b1e278cfe15fa4cda05d9e167c2f672e2baaeae6": {
@@ -231,6 +460,12 @@
     }
   },
   "Migrations": {
+    "1": {
+      "events": {},
+      "links": {},
+      "address": "0xE6Bc5a2dc85C96d7aF5016a0a7Ca145A5B59AA96",
+      "transactionHash": "0x75965ebb01b1d0bcd3b286a7951aa94cd574b061ff8e487d5bd2db0ae3e2709a"
+    },
     "4": {
       "events": {},
       "links": {},
