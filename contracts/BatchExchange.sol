@@ -289,6 +289,8 @@ contract BatchExchange is EpochTokenLocker {
         require(tokenIdsForPrice[0] != 0, "Fee token has fixed price!");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
         require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
+        require(owners.length == orderIds.length && owners.length == buyVolumes.length, "order fill input arrays don't match length");
+        require(prices.length == tokenIdsForPrice.length, "token price input arrays don't match");
         burnPreviousAuctionFees();
         undoCurrentSolution();
         updateCurrentPrices(prices, tokenIdsForPrice);
