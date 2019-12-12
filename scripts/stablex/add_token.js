@@ -1,4 +1,4 @@
-const { addTokens } = require("../script_utilities.js")
+const { addTokens } = require("./utilities.js")
 const argv = require("yargs")
   .option("tokenAddress", {
     describe: "Address of the token to be added",
