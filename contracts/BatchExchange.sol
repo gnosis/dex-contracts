@@ -573,7 +573,7 @@ contract BatchExchange is EpochTokenLocker {
       * @return disregardedUtility of the order (after it has been applied)
       * Note that:
       * |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
-      * where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken * (1 - phi)
+      * where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken / (1 - phi)
       * and leftoverSellAmount = order.sellAmt - execSellAmt
       * Balances and orders have all been updated so: sellAmount - execSellAmt == remainingAmount(order).
       * For correctness, we take the minimum of this with the user's token balance.
