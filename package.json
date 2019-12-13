@@ -36,7 +36,8 @@
     "build/contracts/TokenConservation.json",
     "networks.json",
     "src",
-    "contracts"
+    "contracts",
+    "scripts"
   ],
   "keywords": [
     "decentralized",
