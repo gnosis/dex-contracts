@@ -35,7 +35,8 @@
     "build/contracts/SnappBaseCore.json",
     "build/contracts/TokenConservation.json",
     "networks.json",
-    "src"
+    "src",
+    "contracts"
   ],
   "keywords": [
     "decentralized",
