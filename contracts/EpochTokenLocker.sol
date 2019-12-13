@@ -104,10 +104,10 @@ contract EpochTokenLocker {
             "withdraw was not registered previously"
         );
         require(
-            lastCreditBatchId[msg.sender][token] < getCurrentBatchId(),
+            lastCreditBatchId[user][token] < getCurrentBatchId(),
             "Withdraw not possible for token that is traded in the current auction"
         );
-        uint256 amount = Math.min(balanceStates[user][token].balance, balanceStates[msg.sender][token].pendingWithdraws.amount);
+        uint256 amount = Math.min(balanceStates[user][token].balance, balanceStates[user][token].pendingWithdraws.amount);
 
         balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
         delete balanceStates[user][token].pendingWithdraws;

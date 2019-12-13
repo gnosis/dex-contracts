@@ -1323,7 +1323,7 @@ contract("BatchExchange", async accounts => {
         "Last credited batch for touched buy token should be current batch"
       )
       await truffleAssert.reverts(
-        batchExchange.withdraw(relevantUser, buyToken, { from: relevantUser }),
+        batchExchange.withdraw(relevantUser, buyToken),
         "Withdraw not possible for token that is traded in the current auction"
       )
     })
@@ -1353,7 +1353,7 @@ contract("BatchExchange", async accounts => {
 
       assert.equal(batchIndex + 1, (await batchExchange.lastCreditBatchId.call(solver, feeToken)).toString())
       await truffleAssert.reverts(
-        batchExchange.withdraw(solver, feeToken, { from: solver }),
+        batchExchange.withdraw(solver, feeToken),
         "Withdraw not possible for token that is traded in the current auction"
       )
     })
