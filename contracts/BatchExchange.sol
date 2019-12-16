@@ -79,7 +79,7 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     struct SolutionData {
-        uint32 batchId;
+        uint32 batchIndex;
         TradeData[] trades;
         uint16[] tokenIdsForPrice;
         address solutionSubmitter;
@@ -151,10 +151,10 @@ contract BatchExchange is EpochTokenLocker {
         numTokens++;
     }
 
-    /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
+    /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchIndex
       * @param buyToken id of token to be bought
       * @param sellToken id of token to be sold
-      * @param validUntil batchId represnting order's expiry
+      * @param validUntil batchIndex represnting order's expiry
       * @param buyAmount relative minimum amount of requested buy amount
       * @param sellAmount maximum amount of sell token to be exchanged
       * @return orderId as index of user's current orders
@@ -168,12 +168,12 @@ contract BatchExchange is EpochTokenLocker {
         return placeOrderInternal(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
     }
 
-    /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
+    /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchIndex
       * Note that parameters are passed as arrays and the indices correspond to each order.
       * @param buyTokens ids of tokens to be bought
       * @param sellTokens ids of tokens to be sold
-      * @param validFroms batchIds representing order's validity start time
-      * @param validUntils batchIds represnnting order's expiry
+      * @param validFroms batchIndexs representing order's validity start time
+      * @param validUntils batchIndexs represnnting order's expiry
       * @param buyAmounts relative minimum amount of requested buy amounts
       * @param sellAmounts maximum amounts of sell token to be exchanged
       * @return `orderIds` an array of indices in which `msg.sender`'s orders are included
@@ -202,7 +202,7 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev a user facing function used to cancel orders. If the order is valid for the batch that is currently
-      * being solved, it sets order expiry to that batchId. Otherwise it removes it from storage. Can be called
+      * being solved, it sets order expiry to that batchIndex. Otherwise it removes it from storage. Can be called
       * multiple times (e.g. to eventually free storage once order is expired).
       *
       * @param ids referencing the index of user's order to be canceled
@@ -225,8 +225,8 @@ contract BatchExchange is EpochTokenLocker {
       * @param cancellations ids of orders to be cancelled
       * @param buyTokens ids of tokens to be bought in new orders
       * @param sellTokens ids of tokens to be sold in new orders
-      * @param validFroms batchIds representing order's validity start time in new orders
-      * @param validUntils batchIds represnnting order's expiry in new orders
+      * @param validFroms batchIndexs representing order's validity start time in new orders
+      * @param validUntils batchIndexs represnnting order's expiry in new orders
       * @param buyAmounts relative minimum amount of requested buy amounts in new orders
       * @param sellAmounts maximum amounts of sell token to be exchanged in new orders
       * @return `orderIds` an array of indices in which `msg.sender`'s new orders are included
@@ -407,7 +407,7 @@ contract BatchExchange is EpochTokenLocker {
       * @return objective function evaluation of the currently winning solution, or zero if no solution proposed.
       */
     function getCurrentObjectiveValue() public view returns (uint256) {
-        if (latestSolution.batchId == getCurrentBatchId() - 1) {
+        if (latestSolution.batchIndex == getCurrentBatchId() - 1) {
             return latestSolution.objectiveValue;
         } else {
             return 0;
@@ -505,7 +505,7 @@ contract BatchExchange is EpochTokenLocker {
         uint128[] memory volumes,
         uint16[] memory tokenIdsForPrice
     ) private {
-        latestSolution.batchId = batchIndex;
+        latestSolution.batchIndex = batchIndex;
         for (uint256 i = 0; i < owners.length; i++) {
             latestSolution.trades.push(TradeData({owner: owners[i], orderId: orderIds[i], volume: volumes[i]}));
         }
@@ -624,7 +624,7 @@ contract BatchExchange is EpochTokenLocker {
       * @return true if `latestSolution` is storing a solution for current batch, else false
       */
     function currentBatchHasSolution() private view returns (bool) {
-        return latestSolution.batchId == getCurrentBatchId() - 1;
+        return latestSolution.batchIndex == getCurrentBatchId() - 1;
     }
 
     // Private view
@@ -656,7 +656,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param batchIndex auction index of validity
       * @return true if order is valid in auction batchIndex else false
       */
-    function checkOrderValidity(Order memory order, uint256 batchIndex) private pure returns (bool) {
+    function checkOrderValidity(Order memory order, uint32 batchIndex) private pure returns (bool) {
         return order.validFrom <= batchIndex && order.validUntil >= batchIndex;
     }
 
