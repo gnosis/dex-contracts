@@ -136,7 +136,7 @@ contract("BatchExchange", async accounts => {
   describe("placeOrder()", () => {
     it("rejects orders between same tokens", async () => {
       const batchExchange = await setupGenericStableX()
-      const currentBatch = (await batchExchange.getCurrentBatchId()).toNumber()
+      const currentBatch = (await batchExchange.getCurrentBatchIndex()).toNumber()
       await truffleAssert.reverts(
         batchExchange.placeValidFromOrders.call([0], [0], [currentBatch - 1], [1], [1], [1]),
         "Exchange tokens not distinct"
@@ -145,7 +145,7 @@ contract("BatchExchange", async accounts => {
     it("places order and verifys contract storage is updated correctly", async () => {
       const batchExchange = await setupGenericStableX()
 
-      const currentStateIndex = await batchExchange.getCurrentBatchId()
+      const currentStateIndex = await batchExchange.getCurrentBatchIndex()
       const id = await batchExchange.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
       await batchExchange.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
       const orderResult = await batchExchange.orders.call(user_1, id)
@@ -160,7 +160,7 @@ contract("BatchExchange", async accounts => {
   describe("placeValidFromOrders()", () => {
     it("rejects orders places in the past", async () => {
       const batchExchange = await setupGenericStableX()
-      const currentBatch = (await batchExchange.getCurrentBatchId()).toNumber()
+      const currentBatch = (await batchExchange.getCurrentBatchIndex()).toNumber()
       await truffleAssert.reverts(
         batchExchange.placeValidFromOrders.call([0], [1], [currentBatch - 1], [1], [1], [1]),
         "Orders can't be placed in the past"
@@ -168,7 +168,7 @@ contract("BatchExchange", async accounts => {
     })
     it("places single order with specified validFrom", async () => {
       const batchExchange = await setupGenericStableX()
-      const currentBatch = (await batchExchange.getCurrentBatchId()).toNumber()
+      const currentBatch = (await batchExchange.getCurrentBatchIndex()).toNumber()
       const id = await batchExchange.placeValidFromOrders.call([0], [1], [currentBatch], [3], [10], [20], { from: user_1 })
 
       await batchExchange.placeValidFromOrders([0], [1], [currentBatch], [3], [10], [20], { from: user_1 })
@@ -182,7 +182,7 @@ contract("BatchExchange", async accounts => {
     })
     it("rejects orders with invalid array input", async () => {
       const batchExchange = await setupGenericStableX()
-      const currentBatch = (await batchExchange.getCurrentBatchId()).toNumber()
+      const currentBatch = (await batchExchange.getCurrentBatchIndex()).toNumber()
       await truffleAssert.fails(
         batchExchange.placeValidFromOrders([0, 1], [1], [currentBatch], [3], [10], [20]),
         "invalid opcode"
@@ -190,7 +190,7 @@ contract("BatchExchange", async accounts => {
     })
     it("places multiple orders with sepcified validFrom", async () => {
       const batchExchange = await setupGenericStableX()
-      const currentBatch = (await batchExchange.getCurrentBatchId()).toNumber()
+      const currentBatch = (await batchExchange.getCurrentBatchIndex()).toNumber()
       const id = batchExchange.placeValidFromOrders.call(
         [0, 1],
         [1, 0],
@@ -221,7 +221,7 @@ contract("BatchExchange", async accounts => {
       const batchExchange = await setupGenericStableX()
 
       const id = await batchExchange.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
-      const currentStateIndex = (await batchExchange.getCurrentBatchId()).toNumber()
+      const currentStateIndex = (await batchExchange.getCurrentBatchIndex()).toNumber()
 
       await batchExchange.placeOrder(0, 1, currentStateIndex + 3, 10, 20, { from: user_1 })
       await closeAuction(batchExchange)
@@ -236,7 +236,7 @@ contract("BatchExchange", async accounts => {
     })
     it("frees storage of orders that are not yet valid", async () => {
       const batchExchange = await setupGenericStableX()
-      const currentStateIndex = (await batchExchange.getCurrentBatchId()).toNumber()
+      const currentStateIndex = (await batchExchange.getCurrentBatchIndex()).toNumber()
 
       await batchExchange.placeValidFromOrders([0], [1], [currentStateIndex + 2], [currentStateIndex + 3], [10], [20], {
         from: user_1,
@@ -253,7 +253,7 @@ contract("BatchExchange", async accounts => {
       await batchExchange.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
       const order2 = await sendTxAndGetReturnValue(batchExchange.placeOrder, 2, 4, 5, 30, 40, { from: user_1 })
 
-      const currentStateIndex = (await batchExchange.getCurrentBatchId()).toNumber()
+      const currentStateIndex = (await batchExchange.getCurrentBatchIndex()).toNumber()
       await batchExchange.replaceOrders(
         [order2],
         [5, 6],
@@ -274,7 +274,7 @@ contract("BatchExchange", async accounts => {
     it("rejects if claimed objective is not better than current", async () => {
       const batchExchange = await setupGenericStableX()
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       await closeAuction(batchExchange)
 
       await truffleAssert.reverts(
@@ -284,7 +284,7 @@ contract("BatchExchange", async accounts => {
     })
     it("rejects trivial solution (the only solution with zero utility)", async () => {
       const batchExchange = await setupGenericStableX()
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       await closeAuction(batchExchange)
       const fakeClaimedObjective = 1
       await truffleAssert.reverts(
@@ -297,7 +297,7 @@ contract("BatchExchange", async accounts => {
 
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -337,7 +337,7 @@ contract("BatchExchange", async accounts => {
 
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
       await makeDeposits(batchExchange, accounts, deposits)
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
 
       const orderIds = await placeOrders(batchExchange, accounts, orders, batchIndex + 1)
       await closeAuction(batchExchange)
@@ -359,7 +359,7 @@ contract("BatchExchange", async accounts => {
     it("rejects solutions attempting to set fee token price", async () => {
       const batchExchange = await setupGenericStableX()
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       await closeAuction(batchExchange)
       await truffleAssert.reverts(
         batchExchange.submitSolution(batchIndex, 1, [], [], [], [10000], [0]),
@@ -371,7 +371,7 @@ contract("BatchExchange", async accounts => {
 
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -411,7 +411,7 @@ contract("BatchExchange", async accounts => {
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
       const tradeCase = marginalTrade
       await makeDeposits(batchExchange, accounts, tradeCase.deposits)
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, tradeCase.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -453,7 +453,7 @@ contract("BatchExchange", async accounts => {
 
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -489,7 +489,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -542,7 +542,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -626,7 +626,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -741,7 +741,7 @@ contract("BatchExchange", async accounts => {
       // First Auction
       const tradeExample = basicTrade
       await makeDeposits(batchExchange, accounts, tradeExample.deposits)
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -773,7 +773,7 @@ contract("BatchExchange", async accounts => {
       // Second Auction
       const secondTradeExample = advancedTrade
       await makeDeposits(batchExchange, accounts, secondTradeExample.deposits)
-      const nextBatchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const nextBatchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const secondOrderIds = await placeOrders(batchExchange, accounts, secondTradeExample.orders, nextBatchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -816,7 +816,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, advancedTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, advancedTrade.orders, batchIndex + 1)
 
       await closeAuction(batchExchange)
@@ -867,7 +867,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
 
       await closeAuction(batchExchange)
@@ -893,13 +893,13 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
 
       const time_remaining = (await batchExchange.getSecondsRemainingInBatch()).toNumber()
       await waitForNSeconds(time_remaining + 241)
 
-      const updatedBatchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const updatedBatchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
 
       // Should be exactly one second past when solutions are being accepted.
@@ -922,7 +922,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = []
       for (const order of basicTrade.orders) {
         // NOTE: This is different than usual tests!
@@ -963,7 +963,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       // NOTE: This is different than usual tests!             -------------->             v- Here -v
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex)
       await closeAuction(batchExchange)
@@ -991,7 +991,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = []
       for (const order of basicTrade.orders) {
         orderIds.push(
@@ -1028,7 +1028,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1054,7 +1054,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1081,7 +1081,7 @@ contract("BatchExchange", async accounts => {
         await batchExchange.deposit(tokenAddress, deposit.amount.sub(ERROR_EPSILON), { from: accounts[deposit.user] })
       }
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
@@ -1105,7 +1105,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1142,7 +1142,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1167,7 +1167,7 @@ contract("BatchExchange", async accounts => {
       const batchExchange = await setupGenericStableX()
       await makeDeposits(batchExchange, accounts, smallTradeData.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, smallTradeData.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1189,7 +1189,7 @@ contract("BatchExchange", async accounts => {
       const batchExchange = await setupGenericStableX()
       await makeDeposits(batchExchange, accounts, smallTradeData.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, smallTradeData.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1206,7 +1206,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
@@ -1228,7 +1228,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1256,7 +1256,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1297,7 +1297,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       const relevantUser = accounts[basicTrade.orders[0].user]
       const buyToken = await batchExchange.tokenIdToAddressMap.call(basicTrade.orders[0].buyToken)
@@ -1319,7 +1319,7 @@ contract("BatchExchange", async accounts => {
       )
       assert.equal(
         batchIndex + 1,
-        (await batchExchange.lastCreditBatchId.call(relevantUser, buyToken)).toString(),
+        (await batchExchange.lastCreditBatchIndex.call(relevantUser, buyToken)).toString(),
         "Last credited batch for touched buy token should be current batch"
       )
       await truffleAssert.reverts(
@@ -1333,7 +1333,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       // solver places withdraw request:
       await batchExchange.requestWithdraw(feeToken, 100, { from: solver })
@@ -1351,7 +1351,7 @@ contract("BatchExchange", async accounts => {
         { from: solver }
       )
 
-      assert.equal(batchIndex + 1, (await batchExchange.lastCreditBatchId.call(solver, feeToken)).toString())
+      assert.equal(batchIndex + 1, (await batchExchange.lastCreditBatchIndex.call(solver, feeToken)).toString())
       await truffleAssert.reverts(
         batchExchange.withdraw(solver, feeToken),
         "Withdraw not possible for token that is traded in the current auction"
@@ -1362,7 +1362,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1385,7 +1385,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1408,7 +1408,7 @@ contract("BatchExchange", async accounts => {
     it("reverts if max touched orders is exceeded", async () => {
       const batchExchange = await setupGenericStableX()
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const maxTouchedOrders = (await batchExchange.MAX_TOUCHED_ORDERS.call()).toNumber()
 
       const tooManyOwners = Array(maxTouchedOrders + 1).fill(user_1)
@@ -1422,7 +1422,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, basicRingTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicRingTrade.orders, batchIndex + 1)
 
       await closeAuction(batchExchange)
@@ -1471,7 +1471,7 @@ contract("BatchExchange", async accounts => {
 
       await makeDeposits(batchExchange, accounts, shortRingBetterTrade.deposits)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, shortRingBetterTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1516,7 +1516,7 @@ contract("BatchExchange", async accounts => {
       const otherToken = await batchExchange.tokenIdToAddressMap.call(1)
 
       await makeDeposits(batchExchange, accounts, smallExample.deposits)
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, smallExample.orders, batchIndex + 1)
       await closeAuction(batchExchange)
       const solution = solutionSubmissionParams(smallExample.solutions[0], accounts, orderIds)
@@ -1578,7 +1578,7 @@ contract("BatchExchange", async accounts => {
       const batchExchange = await setupGenericStableX()
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchIndex + 1)
       await closeAuction(batchExchange)
 
@@ -1657,7 +1657,7 @@ contract("BatchExchange", async accounts => {
       const tenBN = new BN(10)
       const twentyBN = new BN(20)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       const validOrderInfo = {
         user: user_1.toLowerCase(),
         sellTokenBalance: zeroBN,
@@ -1713,7 +1713,7 @@ contract("BatchExchange", async accounts => {
   describe("getEncodedOrders()", async () => {
     it("returns all orders that are have ever been submitted", async () => {
       const batchExchange = await setupGenericStableX(3)
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
 
       const zeroBN = new BN(0)
       const tenBN = new BN(10)
@@ -1752,7 +1752,7 @@ contract("BatchExchange", async accounts => {
       const erc20_1 = await batchExchange.tokenIdToAddressMap.call(1)
       const erc20_2 = await batchExchange.tokenIdToAddressMap.call(2)
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
 
       await batchExchange.deposit(erc20_1, 8, { from: user_1 })
       await batchExchange.deposit(erc20_2, 20, { from: user_1 })
@@ -1769,7 +1769,7 @@ contract("BatchExchange", async accounts => {
     it("includes freed orders with empty fields", async () => {
       const batchExchange = await setupGenericStableX()
 
-      const batchIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const batchIndex = (await batchExchange.getCurrentBatchIndex.call()).toNumber()
       await batchExchange.placeOrder(1, 0, batchIndex + 10, 20, 10)
 
       let auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())

@@ -165,7 +165,7 @@ contract BatchExchange is EpochTokenLocker {
         public
         returns (uint256)
     {
-        return placeOrderInternal(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
+        return placeOrderInternal(buyToken, sellToken, getCurrentBatchIndex(), validUntil, buyAmount, sellAmount);
     }
 
     /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchIndex
@@ -211,11 +211,11 @@ contract BatchExchange is EpochTokenLocker {
       */
     function cancelOrders(uint256[] memory ids) public {
         for (uint256 i = 0; i < ids.length; i++) {
-            if (!checkOrderValidity(orders[msg.sender][ids[i]], getCurrentBatchId() - 1)) {
+            if (!checkOrderValidity(orders[msg.sender][ids[i]], getCurrentBatchIndex() - 1)) {
                 delete orders[msg.sender][ids[i]];
                 emit OrderDeletion(msg.sender, ids[i]);
             } else {
-                orders[msg.sender][ids[i]].validUntil = getCurrentBatchId() - 1;
+                orders[msg.sender][ids[i]].validUntil = getCurrentBatchIndex() - 1;
                 emit OrderCancelation(msg.sender, ids[i]);
             }
         }
@@ -400,14 +400,14 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     function acceptingSolutions(uint32 batchIndex) public view returns (bool) {
-        return batchIndex == getCurrentBatchId() - 1 && getSecondsRemainingInBatch() >= 1 minutes;
+        return batchIndex == getCurrentBatchIndex() - 1 && getSecondsRemainingInBatch() >= 1 minutes;
     }
 
     /** @dev gets the objective value of currently winning solution.
       * @return objective function evaluation of the currently winning solution, or zero if no solution proposed.
       */
     function getCurrentObjectiveValue() public view returns (uint256) {
-        if (latestSolution.batchIndex == getCurrentBatchId() - 1) {
+        if (latestSolution.batchIndex == getCurrentBatchIndex() - 1) {
             return latestSolution.objectiveValue;
         } else {
             return 0;
@@ -426,7 +426,7 @@ contract BatchExchange is EpochTokenLocker {
         uint128 sellAmount
     ) private returns (uint256) {
         require(buyToken != sellToken, "Exchange tokens not distinct");
-        require(validFrom >= getCurrentBatchId(), "Orders can't be placed in the past");
+        require(validFrom >= getCurrentBatchIndex(), "Orders can't be placed in the past");
         orders[msg.sender].push(
             Order({
                 buyToken: buyToken,
@@ -624,7 +624,7 @@ contract BatchExchange is EpochTokenLocker {
       * @return true if `latestSolution` is storing a solution for current batch, else false
       */
     function currentBatchHasSolution() private view returns (bool) {
-        return latestSolution.batchIndex == getCurrentBatchId() - 1;
+        return latestSolution.batchIndex == getCurrentBatchIndex() - 1;
     }
 
     // Private view

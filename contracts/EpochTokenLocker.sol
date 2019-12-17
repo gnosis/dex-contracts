@@ -20,8 +20,8 @@ contract EpochTokenLocker {
     // User => Token => BalanceState
     mapping(address => mapping(address => BalanceState)) private balanceStates;
 
-    // user => token => lastCreditBatchId
-    mapping(address => mapping(address => uint256)) public lastCreditBatchId;
+    // user => token => lastCreditBatchIndex
+    mapping(address => mapping(address => uint256)) public lastCreditBatchIndex;
 
     struct BalanceState {
         uint256 balance;
@@ -40,7 +40,7 @@ contract EpochTokenLocker {
 
     event Withdraw(address user, address token, uint256 amount);
 
-    /** @dev credits user with deposit amount on next epoch (given by getCurrentBatchId)
+    /** @dev credits user with deposit amount on next epoch (given by getCurrentBatchIndex)
       * @param token address of token to be deposited
       * @param amount number of token(s) to be credited to user's account
       *
@@ -56,8 +56,8 @@ contract EpochTokenLocker {
         balanceStates[msg.sender][token].pendingDeposits.amount = balanceStates[msg.sender][token].pendingDeposits.amount.add(
             amount
         );
-        balanceStates[msg.sender][token].pendingDeposits.batchIndex = getCurrentBatchId();
-        emit Deposit(msg.sender, token, amount, getCurrentBatchId());
+        balanceStates[msg.sender][token].pendingDeposits.batchIndex = getCurrentBatchIndex();
+        emit Deposit(msg.sender, token, amount, getCurrentBatchIndex());
     }
 
     /** @dev Signals and initiates user's intent to withdraw.
@@ -67,7 +67,7 @@ contract EpochTokenLocker {
       * Emits an {WithdrawRequest} event with relevent request information.
       */
     function requestWithdraw(address token, uint256 amount) public {
-        requestFutureWithdraw(token, amount, getCurrentBatchId());
+        requestFutureWithdraw(token, amount, getCurrentBatchIndex());
     }
 
     /** @dev Signals and initiates user's intent to withdraw.
@@ -78,11 +78,11 @@ contract EpochTokenLocker {
       * Emits an {WithdrawRequest} event with relevent request information.
       */
     function requestFutureWithdraw(address token, uint256 amount, uint32 batchIndex) public {
-        // First process pendingWithdraw (if any), as otherwise balances might increase for currentBatchId - 1
+        // First process pendingWithdraw (if any), as otherwise balances might increase for currentBatchIndex - 1
         if (hasValidWithdrawRequest(msg.sender, token)) {
             withdraw(msg.sender, token);
         }
-        require(batchIndex >= getCurrentBatchId(), "Request cannot be made in the past");
+        require(batchIndex >= getCurrentBatchIndex(), "Request cannot be made in the past");
         balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({amount: amount, batchIndex: batchIndex});
         emit WithdrawRequest(msg.sender, token, amount, batchIndex);
     }
@@ -100,11 +100,11 @@ contract EpochTokenLocker {
     function withdraw(address user, address token) public {
         updateDepositsBalance(user, token); // withdrawn amount may have been deposited in previous epoch
         require(
-            balanceStates[user][token].pendingWithdraws.batchIndex < getCurrentBatchId(),
+            balanceStates[user][token].pendingWithdraws.batchIndex < getCurrentBatchIndex(),
             "withdraw was not registered previously"
         );
         require(
-            lastCreditBatchId[user][token] < getCurrentBatchId(),
+            lastCreditBatchIndex[user][token] < getCurrentBatchIndex(),
             "Withdraw not possible for token that is traded in the current auction"
         );
         uint256 amount = Math.min(balanceStates[user][token].balance, balanceStates[user][token].pendingWithdraws.amount);
@@ -142,7 +142,7 @@ contract EpochTokenLocker {
     /** @dev getter function to determine current auction id.
       * return current batchIndex
       */
-    function getCurrentBatchId() public view returns (uint32) {
+    function getCurrentBatchIndex() public view returns (uint32) {
         return uint32(now / BATCH_TIME);
     }
 
@@ -160,10 +160,10 @@ contract EpochTokenLocker {
       */
     function getBalance(address user, address token) public view returns (uint256) {
         uint256 balance = balanceStates[user][token].balance;
-        if (balanceStates[user][token].pendingDeposits.batchIndex < getCurrentBatchId()) {
+        if (balanceStates[user][token].pendingDeposits.batchIndex < getCurrentBatchIndex()) {
             balance = balance.add(balanceStates[user][token].pendingDeposits.amount);
         }
-        if (balanceStates[user][token].pendingWithdraws.batchIndex < getCurrentBatchId()) {
+        if (balanceStates[user][token].pendingWithdraws.batchIndex < getCurrentBatchIndex()) {
             balance = balance.sub(Math.min(balanceStates[user][token].pendingWithdraws.amount, balance));
         }
         return balance;
@@ -176,7 +176,7 @@ contract EpochTokenLocker {
       */
     function hasValidWithdrawRequest(address user, address token) public view returns (bool) {
         return
-            balanceStates[user][token].pendingWithdraws.batchIndex < getCurrentBatchId() &&
+            balanceStates[user][token].pendingWithdraws.batchIndex < getCurrentBatchIndex() &&
             balanceStates[user][token].pendingWithdraws.batchIndex > 0;
     }
 
@@ -188,12 +188,12 @@ contract EpochTokenLocker {
      * will not be immediately final. E.g. the BatchExchange credits new balances to
      * the buyers in an auction, but as there are might be better solutions, the updates are
      * not final. In order to prevent withdraws from non-final updates, we disallow withdraws
-     * by setting lastCreditBatchId to the current batchIndex and allow only withdraws in batches
+     * by setting lastCreditBatchIndex to the current batchIndex and allow only withdraws in batches
      * with a higher batchIndex.
      */
     function addBalanceAndBlockWithdrawForThisBatch(address user, address token, uint256 amount) internal {
         if (hasValidWithdrawRequest(user, token)) {
-            lastCreditBatchId[user][token] = getCurrentBatchId();
+            lastCreditBatchIndex[user][token] = getCurrentBatchIndex();
         }
         addBalance(user, token, amount);
     }
@@ -209,7 +209,7 @@ contract EpochTokenLocker {
     }
 
     function updateDepositsBalance(address user, address token) private {
-        if (balanceStates[user][token].pendingDeposits.batchIndex < getCurrentBatchId()) {
+        if (balanceStates[user][token].pendingDeposits.batchIndex < getCurrentBatchIndex()) {
             balanceStates[user][token].balance = balanceStates[user][token].balance.add(
                 balanceStates[user][token].pendingDeposits.amount
             );
