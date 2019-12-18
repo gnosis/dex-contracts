@@ -55,6 +55,15 @@ contract("BatchExchange", async accounts => {
 
     BATCH_TIME = (await batchExchange.BATCH_TIME.call()).toNumber()
   })
+
+  // In the following tests, it might be possible that an batchId is read from the blockchain
+  // and in the next moment this batchId is no longer the current one. In order to prevent these
+  // situations, we set the adjust the start-time of each test to the start of an new auction.
+  beforeEach(async () => {
+    const batchExchange = await BatchExchange.deployed()
+    await closeAuction(batchExchange)
+  })
+
   describe("addToken()", () => {
     it("feeToken is set by default", async () => {
       const feeToken = await MockContract.new()
