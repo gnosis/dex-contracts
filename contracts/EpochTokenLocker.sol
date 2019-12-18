@@ -21,7 +21,7 @@ contract EpochTokenLocker {
     mapping(address => mapping(address => BalanceState)) private balanceStates;
 
     // user => token => lastCreditBatchId
-    mapping(address => mapping(address => uint256)) public lastCreditBatchId;
+    mapping(address => mapping(address => uint32)) public lastCreditBatchId;
 
     struct BalanceState {
         uint256 balance;
@@ -34,9 +34,9 @@ contract EpochTokenLocker {
         uint32 batchId;
     }
 
-    event Deposit(address user, address token, uint256 amount, uint256 stateIndex);
+    event Deposit(address user, address token, uint256 amount, uint32 batchId);
 
-    event WithdrawRequest(address user, address token, uint256 amount, uint256 stateIndex);
+    event WithdrawRequest(address user, address token, uint256 amount, uint32 batchId);
 
     event Withdraw(address user, address token, uint256 amount);
 
@@ -124,7 +124,7 @@ contract EpochTokenLocker {
       * @param token address of ERC20 token
       * return amount and batchId of deposit's transfer if any (else 0)
       */
-    function getPendingDeposit(address user, address token) public view returns (uint256, uint256) {
+    function getPendingDeposit(address user, address token) public view returns (uint256, uint32) {
         PendingFlux memory pendingDeposit = balanceStates[user][token].pendingDeposits;
         return (pendingDeposit.amount, pendingDeposit.batchId);
     }
@@ -134,7 +134,7 @@ contract EpochTokenLocker {
       * @param token address of ERC20 token
       * return amount and batchId when withdraw was requested if any (else 0)
       */
-    function getPendingWithdraw(address user, address token) public view returns (uint256, uint256) {
+    function getPendingWithdraw(address user, address token) public view returns (uint256, uint32) {
         PendingFlux memory pendingWithdraw = balanceStates[user][token].pendingWithdraws;
         return (pendingWithdraw.amount, pendingWithdraw.batchId);
     }

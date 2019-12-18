@@ -247,7 +247,7 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev a solver facing function called for auction settlement
-      * @param batchIndex index of auction solution is referring to
+      * @param batchId index of auction solution is referring to
       * @param owners array of addresses corresponding to touched orders
       * @param orderIds array of order ids used in parallel with owners to identify touched order
       * @param buyVolumes executed buy amounts for each order identified by index of owner-orderId arrays
@@ -256,12 +256,12 @@ contract BatchExchange is EpochTokenLocker {
       * @return the computed objective value of the solution
       *
       * Requirements:
-      * - Solutions for this `batchIndex` are currently being accepted.
+      * - Solutions for this `batchId` are currently being accepted.
       * - Claimed objetive value is a great enough improvement on the current winning solution
       * - Fee Token price is non-zero
       * - `tokenIdsForPrice` is sorted.
       * - Number of touched orders does not exceed `MAX_TOUCHED_ORDERS`.
-      * - Each touched order is valid at current `batchIndex`.
+      * - Each touched order is valid at current `batchId`.
       * - Each touched order's `executedSellAmount` does not exceed its remaining amount.
       * - Limit Price of each touched order is respected.
       * - Solution's objective evaluation must be positive.
@@ -271,7 +271,7 @@ contract BatchExchange is EpochTokenLocker {
       * - checkTokenConservation; for all, non-fee, tokens total amount sold == total amount bought
       */
     function submitSolution(
-        uint32 batchIndex,
+        uint32 batchId,
         uint256 claimedObjectiveValue,
         address[] memory owners,
         uint16[] memory orderIds,
@@ -279,7 +279,7 @@ contract BatchExchange is EpochTokenLocker {
         uint128[] memory prices,
         uint16[] memory tokenIdsForPrice
     ) public returns (uint256) {
-        require(acceptingSolutions(batchIndex), "Solutions are no longer accepted for this batch");
+        require(acceptingSolutions(batchId), "Solutions are no longer accepted for this batch");
         require(
             isObjectiveValueSufficientlyImproved(claimedObjectiveValue),
             "Claimed objective doesn't sufficiently improve current solution"
@@ -296,7 +296,7 @@ contract BatchExchange is EpochTokenLocker {
         uint256 utility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
-            require(checkOrderValidity(order, batchIndex), "Order is invalid");
+            require(checkOrderValidity(order, batchId), "Order is invalid");
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(buyVolumes[i], order);
             require(executedBuyAmount >= AMOUNT_MINIMUM, "buy amount less than AMOUNT_MINIMUM");
             require(executedSellAmount >= AMOUNT_MINIMUM, "sell amount less than AMOUNT_MINIMUM");
@@ -336,7 +336,7 @@ contract BatchExchange is EpochTokenLocker {
         checkAndOverrideObjectiveValue(objectiveValue);
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
-        documentTrades(batchIndex, owners, orderIds, buyVolumes, tokenIdsForPrice);
+        documentTrades(batchId, owners, orderIds, buyVolumes, tokenIdsForPrice);
         return (objectiveValue);
     }
     /**
@@ -399,8 +399,8 @@ contract BatchExchange is EpochTokenLocker {
         return elements;
     }
 
-    function acceptingSolutions(uint32 batchIndex) public view returns (bool) {
-        return batchIndex == getCurrentBatchId() - 1 && getSecondsRemainingInBatch() >= 1 minutes;
+    function acceptingSolutions(uint32 batchId) public view returns (bool) {
+        return batchId == getCurrentBatchId() - 1 && getSecondsRemainingInBatch() >= 1 minutes;
     }
 
     /** @dev gets the objective value of currently winning solution.
@@ -492,20 +492,20 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev This function writes solution information into contract storage
-      * @param batchIndex index of referenced auction
+      * @param batchId index of referenced auction
       * @param owners array of addresses corresponding to touched orders
       * @param orderIds array of order ids used in parallel with owners to identify touched order
       * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
       */
     function documentTrades(
-        uint32 batchIndex,
+        uint32 batchId,
         address[] memory owners,
         uint16[] memory orderIds,
         uint128[] memory volumes,
         uint16[] memory tokenIdsForPrice
     ) private {
-        latestSolution.batchId = batchIndex;
+        latestSolution.batchId = batchId;
         for (uint256 i = 0; i < owners.length; i++) {
             latestSolution.trades.push(TradeData({owner: owners[i], orderId: orderIds[i], volume: volumes[i]}));
         }
@@ -653,11 +653,11 @@ contract BatchExchange is EpochTokenLocker {
     // Private pure
     /** @dev used to determine if an order is valid for specific auction/batch
       * @param order object whose validity is in question
-      * @param batchIndex auction index of validity
-      * @return true if order is valid in auction batchIndex else false
+      * @param batchId auction index of validity
+      * @return true if order is valid in auction batchId else false
       */
-    function checkOrderValidity(Order memory order, uint256 batchIndex) private pure returns (bool) {
-        return order.validFrom <= batchIndex && order.validUntil >= batchIndex;
+    function checkOrderValidity(Order memory order, uint32 batchId) private pure returns (bool) {
+        return order.validFrom <= batchId && order.validUntil >= batchId;
     }
 
     /** @dev computes the remaining sell amount for a given order

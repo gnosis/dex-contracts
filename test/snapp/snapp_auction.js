@@ -32,7 +32,7 @@ contract("SnappAuction", async accounts => {
       assert.equal(await instance.getOrderHash.call(0), 0x0)
     })
 
-    it("getStandingOrderHash(userId, batchIndex)", async () => {
+    it("getStandingOrderHash(userId, batchId)", async () => {
       const instance = await SnappAuction.new()
       assert.equal(await instance.getStandingOrderHash.call(0, 0), 0x0)
     })
@@ -188,7 +188,7 @@ contract("SnappAuction", async accounts => {
 
       const userId = await instance.publicKeyToAccountMap.call(user_1)
       const pointer = await instance.getStandingOrderCounter.call(userId)
-      assert.equal(pointer, 0, "currntBatchIndex is no longer 0")
+      assert.equal(pointer, 0, "currntBatchId is no longer 0")
       const validFromIndex = await instance.getStandingOrderValidFrom(userId, pointer)
       assert.equal(validFromIndex, 0, "validFromIndex was not update correctly")
     })
