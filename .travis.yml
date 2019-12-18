@@ -1,16 +1,18 @@
 language: node_js
 node_js:
   - 10
+cache:
+  yarn: true
 before_install:
   - rm -rf build
   - rm -rf node_modules
-  - npm install -g npm@6.13
-  - npm install -g ganache-cli
+  - npm install -g yarn@latest
+  - npm install -g ganache-cli@latest
 before_script:
   - ganache-cli --defaultBalanceEther 500000000 > /dev/null &
 script:
-  - npm run lint
-  - npm run solhint
-  - npm run pretty-check
+  - yarn run lint
+  - yarn run solhint
+  - yarn run pretty-check
   - solium -d contracts/
-  - npm run coverage && cat ./coverage/lcov.info | coveralls
+  - yarn run coverage && cat ./coverage/lcov.info | coveralls

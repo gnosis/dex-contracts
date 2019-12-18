@@ -24,10 +24,10 @@ For the deployment of the contracts into an official network, follow this steps:
 2. Run the following commands
 
 ```sh
-npm install                         // This installs all dependencies
-npx truffle build                   // This builds the contracts
+yarn install                        # This installs all dependencies
+npx truffle build                   # This builds the contracts
 npx truffle migrate --network $NETWORKNAME --reset
-npm run networks-extract            // extracts deployed addresses to networks.json
+yarn run networks-extract           # extracts deployed addresses to networks.json
 ```
 
 In case only the StableX or only the SnappAuction should be deployed, you can add the flags `--onlyMigrateStableX` or `--onlyMigrateSnappAuction` to the deployment command.
@@ -79,7 +79,7 @@ npx truffle compile
 2. Inject address from network.json into the builds:
 
 ```
-npm run networks-inject
+yarn run networks-inject
 ```
 
 # Deploying a simple market maker scenario to Rinkeby:
@@ -87,29 +87,29 @@ npm run networks-inject
 The following script deploys a simple market maker order and a necessary owl order, to enable trading:
 
 ```sh
-// Get token ID of DAI
+# Get token ID of DAI
 npx truffle exec scripts/stablex/invokeViewFunction.js 'tokenAddressToIdMap' '0x5592EC0cfb4dbc12D3aB100b257153436a1f0FEa' --network rinkeby
 
-// Export the resulting token ID
+# Export the resulting token ID
 export TOKEN_ID_DAI=[Result from last call]
 
-// Get token ID of TrueUSD
+# Get token ID of TrueUSD
 npx truffle exec scripts/stablex/invokeViewFunction.js 'tokenAddressToIdMap' '0x0000000000085d4780B73119b644AE5ecd22b376' --network rinkeby
 
-// Export the resulting token ID
+# Export the resulting token ID
 export TOKEN_ID_TUSD=[Result from last call]
 
-// Make sure that the users have deposited sufficient funds into the exchange
-// Please be aware that the specified amounts are multiples of 10**18
+# Make sure that the users have deposited sufficient funds into the exchange
+# Please be aware that the specified amounts are multiples of 10**18
 npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=0 --amount=30 --network rinkeby&& \
 npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=$TOKEN_ID_TUSD --amount=100 --network rinkeby
 
-// Place  market-maker order in current auction
-// This simulates a strategy expected from market makers: trading stable coins against each other
-// with a spread of 0.02 percent
+# Place  market-maker order in current auction
+# This simulates a strategy expected from market makers: trading stable coins against each other
+# with a spread of 0.02 percent
 npx truffle exec scripts/stablex/place_order.js --accountId=0 --buyToken=$TOKEN_ID_DAI --sellToken=$TOKEN_ID_TUSD --minBuy=1000 --maxSell=998 --validFor=20 --network rinkeby
 
-// Place owl token order for the fee mechanism
+# Place owl token order for the fee mechanism
 npx truffle exec scripts/stablex/place_order.js --accountId=0 --buyToken=$TOKEN_ID_DAI --sellToken=0 --minBuy=1000 --maxSell=1000 --validFor=20 --network rinkeby
 
 ```
@@ -117,17 +117,17 @@ npx truffle exec scripts/stablex/place_order.js --accountId=0 --buyToken=$TOKEN_
 Then, the market order can be place, after switching to another account. Usually, this is expected to happen via the UI. If it will be done via the console, following commands can be used:
 
 ```sh
-//Deposit funds into exchange:
+# Deposit funds into exchange:
 npx truffle exec scripts/stablex/deposit.js --accountId=0 --tokenId=$TOKEN_ID_DAI --amount=100 --network rinkeby
 
-// Place market order with 1/2 limit-price
+# Place market order with 1/2 limit-price
 npx truffle exec scripts/stablex/place_order.js --accountId=1 --buyToken=$TOKEN_ID_TUSD --sellToken=$TOKEN_ID_DAI --minBuy=500 --maxSell=1000 --validFor=5 --network rinkeby
 ```
 
 Now, the market can be inspected by:
 
 ```sh
-//view the market status:
+# view the market status:
 npx truffle exec scripts/stablex/get_auction_elements.js --network rinkeby
 
 ```
