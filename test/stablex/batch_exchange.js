@@ -221,7 +221,7 @@ contract("BatchExchange", async accounts => {
       const batchExchange = await setupGenericStableX()
 
       const id = await batchExchange.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
-      const currentStateIndex = (await batchExchange.getCurrentBatchId()).toNumber()
+      const currentStateIndex = (await batchExchange.getCurrentBatchId.call()).toNumber()
 
       await batchExchange.placeOrder(0, 1, currentStateIndex + 3, 10, 20, { from: user_1 })
       await closeAuction(batchExchange)
