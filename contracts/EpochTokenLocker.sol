@@ -20,27 +20,27 @@ contract EpochTokenLocker {
     // User => Token => BalanceState
     mapping(address => mapping(address => BalanceState)) private balanceStates;
 
-    // user => token => lastCreditBatchIndex
-    mapping(address => mapping(address => uint256)) public lastCreditBatchIndex;
+    // user => token => lastCreditBatchId
+    mapping(address => mapping(address => uint256)) public lastCreditBatchId;
 
     struct BalanceState {
         uint256 balance;
-        PendingFlux pendingDeposits; // deposits will be credited in any future epoch, i.e. currentStateIndex > batchIndex
-        PendingFlux pendingWithdraws; // withdraws are allowed in any future epoch, i.e. currentStateIndex > batchIndex
+        PendingFlux pendingDeposits; // deposits will be credited in any future epoch, i.e. currentStateIndex > batchId
+        PendingFlux pendingWithdraws; // withdraws are allowed in any future epoch, i.e. currentStateIndex > batchId
     }
 
     struct PendingFlux {
         uint256 amount;
-        uint32 batchIndex;
+        uint32 batchId;
     }
 
-    event Deposit(address user, address token, uint256 amount, uint32 batchIndex);
+    event Deposit(address user, address token, uint256 amount, uint32 batchId);
 
-    event WithdrawRequest(address user, address token, uint256 amount, uint32 batchIndex);
+    event WithdrawRequest(address user, address token, uint256 amount, uint32 batchId);
 
     event Withdraw(address user, address token, uint256 amount);
 
-    /** @dev credits user with deposit amount on next epoch (given by getCurrentBatchIndex)
+    /** @dev credits user with deposit amount on next epoch (given by getCurrentBatchId)
       * @param token address of token to be deposited
       * @param amount number of token(s) to be credited to user's account
       *
@@ -56,8 +56,8 @@ contract EpochTokenLocker {
         balanceStates[msg.sender][token].pendingDeposits.amount = balanceStates[msg.sender][token].pendingDeposits.amount.add(
             amount
         );
-        balanceStates[msg.sender][token].pendingDeposits.batchIndex = getCurrentBatchIndex();
-        emit Deposit(msg.sender, token, amount, getCurrentBatchIndex());
+        balanceStates[msg.sender][token].pendingDeposits.batchId = getCurrentBatchId();
+        emit Deposit(msg.sender, token, amount, getCurrentBatchId());
     }
 
     /** @dev Signals and initiates user's intent to withdraw.
@@ -67,24 +67,24 @@ contract EpochTokenLocker {
       * Emits an {WithdrawRequest} event with relevent request information.
       */
     function requestWithdraw(address token, uint256 amount) public {
-        requestFutureWithdraw(token, amount, getCurrentBatchIndex());
+        requestFutureWithdraw(token, amount, getCurrentBatchId());
     }
 
     /** @dev Signals and initiates user's intent to withdraw.
       * @param token address of token to be withdrawn
       * @param amount number of token(s) to be withdrawn
-      * @param batchIndex state index at which request is to be made.
+      * @param batchId state index at which request is to be made.
       *
       * Emits an {WithdrawRequest} event with relevent request information.
       */
-    function requestFutureWithdraw(address token, uint256 amount, uint32 batchIndex) public {
-        // First process pendingWithdraw (if any), as otherwise balances might increase for currentBatchIndex - 1
+    function requestFutureWithdraw(address token, uint256 amount, uint32 batchId) public {
+        // First process pendingWithdraw (if any), as otherwise balances might increase for currentBatchId - 1
         if (hasValidWithdrawRequest(msg.sender, token)) {
             withdraw(msg.sender, token);
         }
-        require(batchIndex >= getCurrentBatchIndex(), "Request cannot be made in the past");
-        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({amount: amount, batchIndex: batchIndex});
-        emit WithdrawRequest(msg.sender, token, amount, batchIndex);
+        require(batchId >= getCurrentBatchId(), "Request cannot be made in the past");
+        balanceStates[msg.sender][token].pendingWithdraws = PendingFlux({amount: amount, batchId: batchId});
+        emit WithdrawRequest(msg.sender, token, amount, batchId);
     }
 
     /** @dev Claims pending withdraw - can be called on behalf of others
@@ -100,11 +100,11 @@ contract EpochTokenLocker {
     function withdraw(address user, address token) public {
         updateDepositsBalance(user, token); // withdrawn amount may have been deposited in previous epoch
         require(
-            balanceStates[user][token].pendingWithdraws.batchIndex < getCurrentBatchIndex(),
+            balanceStates[user][token].pendingWithdraws.batchId < getCurrentBatchId(),
             "withdraw was not registered previously"
         );
         require(
-            lastCreditBatchIndex[user][token] < getCurrentBatchIndex(),
+            lastCreditBatchId[user][token] < getCurrentBatchId(),
             "Withdraw not possible for token that is traded in the current auction"
         );
         uint256 amount = Math.min(balanceStates[user][token].balance, balanceStates[user][token].pendingWithdraws.amount);
@@ -122,27 +122,27 @@ contract EpochTokenLocker {
     /** @dev getter function used to display pending deposit
       * @param user address of user
       * @param token address of ERC20 token
-      * return amount and batchIndex of deposit's transfer if any (else 0)
+      * return amount and batchId of deposit's transfer if any (else 0)
       */
     function getPendingDeposit(address user, address token) public view returns (uint256, uint32) {
         PendingFlux memory pendingDeposit = balanceStates[user][token].pendingDeposits;
-        return (pendingDeposit.amount, pendingDeposit.batchIndex);
+        return (pendingDeposit.amount, pendingDeposit.batchId);
     }
 
     /** @dev getter function used to display pending withdraw
       * @param user address of user
       * @param token address of ERC20 token
-      * return amount and batchIndex when withdraw was requested if any (else 0)
+      * return amount and batchId when withdraw was requested if any (else 0)
       */
     function getPendingWithdraw(address user, address token) public view returns (uint256, uint32) {
         PendingFlux memory pendingWithdraw = balanceStates[user][token].pendingWithdraws;
-        return (pendingWithdraw.amount, pendingWithdraw.batchIndex);
+        return (pendingWithdraw.amount, pendingWithdraw.batchId);
     }
 
     /** @dev getter function to determine current auction id.
-      * return current batchIndex
+      * return current batchId
       */
-    function getCurrentBatchIndex() public view returns (uint32) {
+    function getCurrentBatchId() public view returns (uint32) {
         return uint32(now / BATCH_TIME);
     }
 
@@ -160,10 +160,10 @@ contract EpochTokenLocker {
       */
     function getBalance(address user, address token) public view returns (uint256) {
         uint256 balance = balanceStates[user][token].balance;
-        if (balanceStates[user][token].pendingDeposits.batchIndex < getCurrentBatchIndex()) {
+        if (balanceStates[user][token].pendingDeposits.batchId < getCurrentBatchId()) {
             balance = balance.add(balanceStates[user][token].pendingDeposits.amount);
         }
-        if (balanceStates[user][token].pendingWithdraws.batchIndex < getCurrentBatchIndex()) {
+        if (balanceStates[user][token].pendingWithdraws.batchId < getCurrentBatchId()) {
             balance = balance.sub(Math.min(balanceStates[user][token].pendingWithdraws.amount, balance));
         }
         return balance;
@@ -176,8 +176,8 @@ contract EpochTokenLocker {
       */
     function hasValidWithdrawRequest(address user, address token) public view returns (bool) {
         return
-            balanceStates[user][token].pendingWithdraws.batchIndex < getCurrentBatchIndex() &&
-            balanceStates[user][token].pendingWithdraws.batchIndex > 0;
+            balanceStates[user][token].pendingWithdraws.batchId < getCurrentBatchId() &&
+            balanceStates[user][token].pendingWithdraws.batchId > 0;
     }
 
     /**
@@ -188,12 +188,12 @@ contract EpochTokenLocker {
      * will not be immediately final. E.g. the BatchExchange credits new balances to
      * the buyers in an auction, but as there are might be better solutions, the updates are
      * not final. In order to prevent withdraws from non-final updates, we disallow withdraws
-     * by setting lastCreditBatchIndex to the current batchIndex and allow only withdraws in batches
-     * with a higher batchIndex.
+     * by setting lastCreditBatchId to the current batchId and allow only withdraws in batches
+     * with a higher batchId.
      */
     function addBalanceAndBlockWithdrawForThisBatch(address user, address token, uint256 amount) internal {
         if (hasValidWithdrawRequest(user, token)) {
-            lastCreditBatchIndex[user][token] = getCurrentBatchIndex();
+            lastCreditBatchId[user][token] = getCurrentBatchId();
         }
         addBalance(user, token, amount);
     }
@@ -209,7 +209,7 @@ contract EpochTokenLocker {
     }
 
     function updateDepositsBalance(address user, address token) private {
-        if (balanceStates[user][token].pendingDeposits.batchIndex < getCurrentBatchIndex()) {
+        if (balanceStates[user][token].pendingDeposits.batchId < getCurrentBatchId()) {
             balanceStates[user][token].balance = balanceStates[user][token].balance.add(
                 balanceStates[user][token].pendingDeposits.amount
             );
