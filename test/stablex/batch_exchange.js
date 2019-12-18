@@ -318,7 +318,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         1,
         solution.owners,
-        solution.touchedOrderIds,
+        solution.touchedOrderIndices,
         solution.volumes,
         solution.prices,
         solution.tokenIdsForPrice,
@@ -389,7 +389,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         solution.objectiveValue,
         solution.owners,
-        solution.touchedOrderIds,
+        solution.touchedOrderIndices,
         solution.volumes,
         solution.prices,
         solution.tokenIdsForPrice,
@@ -405,7 +405,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           tooLowNewObjective,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           solution.prices,
           solution.tokenIdsForPrice,
@@ -429,7 +429,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         firstSolution.objectiveValue,
         firstSolution.owners,
-        firstSolution.touchedOrderIds,
+        firstSolution.touchedOrderIndices,
         firstSolution.volumes,
         firstSolution.prices,
         firstSolution.tokenIdsForPrice,
@@ -448,7 +448,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           firstSolution.objectiveValue.muln(2), // Note must claim better improvement than we have to get this case!
           insufficientlyBetterSolution.owners,
-          insufficientlyBetterSolution.touchedOrderIds,
+          insufficientlyBetterSolution.touchedOrderIndices,
           insufficientlyBetterSolution.volumes,
           insufficientlyBetterSolution.prices,
           insufficientlyBetterSolution.tokenIdsForPrice,
@@ -471,7 +471,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         solution.objectiveValue,
         solution.owners,
-        solution.touchedOrderIds,
+        solution.touchedOrderIndices,
         solution.volumes,
         solution.prices,
         solution.tokenIdsForPrice,
@@ -482,7 +482,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue.addn(1),
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           solution.prices,
           solution.tokenIdsForPrice,
@@ -511,7 +511,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         solution.objectiveValue,
         solution.owners,
-        solution.touchedOrderIds,
+        solution.touchedOrderIndices,
         volume,
         prices,
         tokenIdsForPrice,
@@ -564,7 +564,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         partialSolution.objectiveValue,
         partialSolution.owners,
-        partialSolution.touchedOrderIds,
+        partialSolution.touchedOrderIndices,
         volume,
         prices,
         tokenIdsForPrice,
@@ -642,7 +642,7 @@ contract("BatchExchange", async accounts => {
       const partialSolution = solutionSubmissionParams(basicTrade.solutions[1], accounts, orderIndices)
       // Solution shared values
       const owners = partialSolution.owners
-      const touchedOrderIds = partialSolution.touchedOrderIds
+      const touchedOrderIndices = partialSolution.touchedOrderIndices
       const prices = partialSolution.prices
       const tokenIdsForPrice = partialSolution.tokenIdsForPrice
 
@@ -652,7 +652,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         partialSolution.objectiveValue,
         owners,
-        touchedOrderIds,
+        touchedOrderIndices,
         partialBuyVolumes,
         prices,
         tokenIdsForPrice,
@@ -691,7 +691,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         fullSolution.objectiveValue,
         owners,
-        touchedOrderIds,
+        touchedOrderIndices,
         fullBuyVolumes,
         prices,
         tokenIdsForPrice,
@@ -759,7 +759,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         partialSolution.objectiveValue,
         partialSolution.owners,
-        partialSolution.touchedOrderIds,
+        partialSolution.touchedOrderIndices,
         partialSolution.volumes,
         partialSolution.prices,
         partialSolution.tokenIdsForPrice,
@@ -771,7 +771,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         fullSolution.objectiveValue,
         fullSolution.owners,
-        fullSolution.touchedOrderIds,
+        fullSolution.touchedOrderIndices,
         fullSolution.volumes,
         fullSolution.prices,
         fullSolution.tokenIdsForPrice,
@@ -783,17 +783,17 @@ contract("BatchExchange", async accounts => {
       const secondTradeExample = advancedTrade
       await makeDeposits(batchExchange, accounts, secondTradeExample.deposits)
       const nextBatchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      const secondOrderIds = await placeOrders(batchExchange, accounts, secondTradeExample.orders, nextBatchId + 1)
+      const secondOrderIndices = await placeOrders(batchExchange, accounts, secondTradeExample.orders, nextBatchId + 1)
       await closeAuction(batchExchange)
 
       const initialFeeTokenBalance = await owlProxy.balanceOf(batchExchange.address)
-      const secondSolution = solutionSubmissionParams(secondTradeExample.solutions[0], accounts, secondOrderIds)
+      const secondSolution = solutionSubmissionParams(secondTradeExample.solutions[0], accounts, secondOrderIndices)
       // This is where the first auction's fees should be burned!
       await batchExchange.submitSolution(
         nextBatchId,
         secondSolution.objectiveValue,
         secondSolution.owners,
-        secondSolution.touchedOrderIds,
+        secondSolution.touchedOrderIndices,
         secondSolution.volumes,
         secondSolution.prices,
         secondSolution.tokenIdsForPrice,
@@ -803,13 +803,13 @@ contract("BatchExchange", async accounts => {
       assert(initialFeeTokenBalance.sub(basicTrade.solutions[0].burntFees).eq(afterAuctionFeeTokenBalance))
 
       // Better second solution
-      const betterSolution = solutionSubmissionParams(secondTradeExample.solutions[1], accounts, secondOrderIds)
+      const betterSolution = solutionSubmissionParams(secondTradeExample.solutions[1], accounts, secondOrderIndices)
       // This is where the first auction's fees should be burned!
       await batchExchange.submitSolution(
         nextBatchId,
         betterSolution.objectiveValue,
         betterSolution.owners,
-        betterSolution.touchedOrderIds,
+        betterSolution.touchedOrderIndices,
         betterSolution.volumes,
         betterSolution.prices,
         betterSolution.tokenIdsForPrice,
@@ -832,7 +832,7 @@ contract("BatchExchange", async accounts => {
 
       assert(advancedTrade.solutions.length >= 3, "This test must always run on a sequence of at least three solutions.")
       for (const solution of advancedTrade.solutions) {
-        const { owners, touchedOrderIds, volumes, prices, tokenIdsForPrice } = solutionSubmissionParams(
+        const { owners, touchedOrderIndices, volumes, prices, tokenIdsForPrice } = solutionSubmissionParams(
           solution,
           accounts,
           orderIndices
@@ -842,7 +842,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue,
           owners,
-          touchedOrderIds,
+          touchedOrderIndices,
           volumes,
           prices,
           tokenIdsForPrice,
@@ -888,7 +888,7 @@ contract("BatchExchange", async accounts => {
           batchId - 1,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           solution.prices,
           solution.tokenIdsForPrice,
@@ -917,7 +917,7 @@ contract("BatchExchange", async accounts => {
           updatedBatchId,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           solution.prices,
           solution.tokenIdsForPrice,
@@ -958,7 +958,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           solution.prices,
           solution.tokenIdsForPrice,
@@ -986,7 +986,7 @@ contract("BatchExchange", async accounts => {
           batchId + 1,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           solution.prices,
           solution.tokenIdsForPrice,
@@ -1023,7 +1023,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           solution.prices,
           solution.tokenIdsForPrice,
@@ -1049,7 +1049,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           badVolumes,
           solution.prices,
           solution.tokenIdsForPrice,
@@ -1073,7 +1073,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           basicTrade.orders.map(x => x.buyAmount), // <----- THIS IS THE DIFFERENCE!
           solution.prices,
           solution.tokenIdsForPrice,
@@ -1100,7 +1100,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           solution.prices,
           solution.tokenIdsForPrice,
@@ -1124,7 +1124,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           solution.prices,
           [1, 1],
@@ -1137,7 +1137,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           solution.prices,
           [2, 1],
@@ -1163,7 +1163,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           zeroPrices,
           solution.tokenIdsForPrice,
@@ -1226,7 +1226,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         solution.objectiveValue,
         solution.owners,
-        solution.touchedOrderIds,
+        solution.touchedOrderIndices,
         solution.volumes,
         [2, 3, 4].map(toETH),
         [1, 2, 3],
@@ -1248,7 +1248,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         solution.objectiveValue,
         solution.owners,
-        solution.touchedOrderIds,
+        solution.touchedOrderIndices,
         solution.volumes,
         solution.prices,
         solution.tokenIdsForPrice,
@@ -1276,7 +1276,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         partialSolution.objectiveValue,
         partialSolution.owners,
-        partialSolution.touchedOrderIds,
+        partialSolution.touchedOrderIndices,
         partialSolution.volumes,
         partialSolution.prices,
         partialSolution.tokenIdsForPrice,
@@ -1294,7 +1294,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         fullSolution.objectiveValue,
         fullSolution.owners,
-        fullSolution.touchedOrderIds,
+        fullSolution.touchedOrderIndices,
         fullSolution.volumes,
         fullSolution.prices,
         fullSolution.tokenIdsForPrice,
@@ -1322,7 +1322,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         solution.objectiveValue,
         solution.owners,
-        solution.touchedOrderIds,
+        solution.touchedOrderIndices,
         solution.volumes,
         solution.prices,
         solution.tokenIdsForPrice,
@@ -1355,7 +1355,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         solution.objectiveValue,
         solution.owners,
-        solution.touchedOrderIds,
+        solution.touchedOrderIndices,
         solution.volumes,
         solution.prices,
         solution.tokenIdsForPrice,
@@ -1382,7 +1382,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         solution.objectiveValue,
         solution.owners,
-        solution.touchedOrderIds,
+        solution.touchedOrderIndices,
         solution.volumes,
         solution.prices,
         solution.tokenIdsForPrice,
@@ -1407,7 +1407,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           wayTooBigPrices,
           solution.tokenIdsForPrice,
@@ -1444,7 +1444,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         solution.objectiveValue,
         solution.owners,
-        solution.touchedOrderIds,
+        solution.touchedOrderIndices,
         volumes,
         prices,
         solution.tokenIdsForPrice,
@@ -1491,7 +1491,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         ringSolution.objectiveValue,
         ringSolution.owners,
-        ringSolution.touchedOrderIds,
+        ringSolution.touchedOrderIndices,
         ringSolution.volumes,
         ringSolution.prices,
         ringSolution.tokenIdsForPrice,
@@ -1509,7 +1509,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         directSolution.objectiveValue,
         directSolution.owners,
-        directSolution.touchedOrderIds,
+        directSolution.touchedOrderIndices,
         directSolution.volumes,
         directSolution.prices,
         directSolution.tokenIdsForPrice,
@@ -1535,7 +1535,7 @@ contract("BatchExchange", async accounts => {
         batchId,
         solution.objectiveValue,
         solution.owners,
-        solution.touchedOrderIds,
+        solution.touchedOrderIndices,
         solution.volumes,
         solution.prices,
         solution.tokenIdsForPrice,
@@ -1576,7 +1576,7 @@ contract("BatchExchange", async accounts => {
           batchId,
           solution.objectiveValue + 1,
           solution.owners,
-          solution.touchedOrderIds,
+          solution.touchedOrderIndices,
           solution.volumes,
           solution.prices,
           solution.tokenIdsForPrice,
@@ -1596,14 +1596,14 @@ contract("BatchExchange", async accounts => {
       const partialSolution = solutionSubmissionParams(basicTrade.solutions[1], accounts, orderIndices)
       const prices = partialSolution.prices
       const owners = partialSolution.owners
-      const touchedOrderIds = partialSolution.touchedOrderIds
+      const touchedOrderIndices = partialSolution.touchedOrderIndices
       const tokenIdsForPrice = partialSolution.tokenIdsForPrice
       // Fill 90% of these orders in first auction.
       await batchExchange.submitSolution(
         batchId,
         partialSolution.objectiveValue,
         owners,
-        touchedOrderIds,
+        touchedOrderIndices,
         partialSolution.volumes,
         prices,
         tokenIdsForPrice,
@@ -1618,7 +1618,7 @@ contract("BatchExchange", async accounts => {
         batchId + 1,
         1,
         owners,
-        touchedOrderIds,
+        touchedOrderIndices,
         remainingBuyVolumes,
         prices,
         tokenIdsForPrice,

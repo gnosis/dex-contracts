@@ -183,7 +183,7 @@ function debugTestCase(testCase, orderIndices, accounts) {
  * @type {object}
  * @property {BN} objectiveValue The computed objective value for the solution
  * @property {string[]} owners The account addresses for thr order orners
- * @property {string[]} touchedOrderIds The ids of touched orders
+ * @property {string[]} touchedOrderIndices The ids of touched orders
  * @property {BN[]} volumes The buy volumes
  * @property {BN[]} prices The prices of touched tokens
  * @property {number[]} tokenIdsForPrice The ids of the touched tokens
@@ -212,7 +212,7 @@ function solutionSubmissionParams(solution, accounts, orderIndices) {
   return {
     objectiveValue: solution.objectiveValue,
     owners: solution.orders.map(o => accounts[o.user]),
-    touchedOrderIds: solution.orders.map(o => orderIndices[o.idx]),
+    touchedOrderIndices: solution.orders.map(o => orderIndices[o.idx]),
     volumes: solution.orders.map(o => o.buy),
     prices: solution.tokens.slice(1).map(t => t.price),
     tokenIdsForPrice: solution.tokens.slice(1).map(t => t.id),
