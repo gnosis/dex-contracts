@@ -1181,18 +1181,9 @@ contract("BatchExchange", async accounts => {
       await closeAuction(batchExchange)
 
       await truffleAssert.reverts(
-        batchExchange.submitSolution(
-          batchId,
-          1,
-          accounts.slice(0, 2),
-          orderIds,
-          [tenThousand, tenThousand],
-          [toETH(0.9)],
-          [1],
-          {
-            from: solver,
-          }
-        ),
+        batchExchange.submitSolution(batchId, 1, accounts.slice(0, 2), orderIds, [tenThousand, tenThousand], [toETH(0.9)], [1], {
+          from: solver,
+        }),
         "sell amount less than AMOUNT_MINIMUM"
       )
     })
