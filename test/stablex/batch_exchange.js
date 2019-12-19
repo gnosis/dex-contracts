@@ -947,7 +947,7 @@ contract("BatchExchange", async accounts => {
               [order.sellAmount],
               { from: accounts[order.user] }
             )
-          )[0] // Because placeValidFromOrders returns a list of ids
+          )[0] // Because placeValidFromOrders returns a list of indices
         )
       }
       await closeAuction(batchExchange)

@@ -210,24 +210,24 @@ contract BatchExchange is EpochTokenLocker {
       * being solved, it sets order expiry to that batchId. Otherwise it removes it from storage. Can be called
       * multiple times (e.g. to eventually free storage once order is expired).
       *
-      * @param ids referencing the index of user's order to be canceled
+      * @param indices referencing the index of user's order to be canceled
       *
       * Emits an {OrderCancelation} or {OrderDeletion} with sender's address and orderIndex
       */
-    function cancelOrders(uint256[] memory ids) public {
-        for (uint256 i = 0; i < ids.length; i++) {
-            if (!checkOrderValidity(orders[msg.sender][ids[i]], getCurrentBatchId() - 1)) {
-                delete orders[msg.sender][ids[i]];
-                emit OrderDeletion(msg.sender, ids[i]);
+    function cancelOrders(uint256[] memory indices) public {
+        for (uint256 i = 0; i < indices.length; i++) {
+            if (!checkOrderValidity(orders[msg.sender][indices[i]], getCurrentBatchId() - 1)) {
+                delete orders[msg.sender][indices[i]];
+                emit OrderDeletion(msg.sender, indices[i]);
             } else {
-                orders[msg.sender][ids[i]].validUntil = getCurrentBatchId() - 1;
-                emit OrderCancelation(msg.sender, ids[i]);
+                orders[msg.sender][indices[i]].validUntil = getCurrentBatchId() - 1;
+                emit OrderCancelation(msg.sender, indices[i]);
             }
         }
     }
 
     /** @dev A user facing wrapper to cancel and place new orders in the same transaction.
-      * @param cancellations ids of orders to be cancelled
+      * @param cancellations indices of orders to be cancelled
       * @param buyTokens ids of tokens to be bought in new orders
       * @param sellTokens ids of tokens to be sold in new orders
       * @param validFroms batchIds representing order's validity start time in new orders
@@ -254,7 +254,7 @@ contract BatchExchange is EpochTokenLocker {
     /** @dev a solver facing function called for auction settlement
       * @param batchId index of auction solution is referring to
       * @param owners array of addresses corresponding to touched orders
-      * @param orderIndices array of order ids used in parallel with owners to identify touched order
+      * @param orderIndices array of order indices used in parallel with owners to identify touched order
       * @param buyVolumes executed buy amounts for each order identified by index of owner-orderIndex arrays
       * @param prices list of prices for touched tokens indexed by next parameter
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
@@ -501,7 +501,7 @@ contract BatchExchange is EpochTokenLocker {
     /** @dev This function writes solution information into contract storage
       * @param batchId index of referenced auction
       * @param owners array of addresses corresponding to touched orders
-      * @param orderIndices array of order ids used in parallel with owners to identify touched order
+      * @param orderIndices array of order indices used in parallel with owners to identify touched order
       * @param volumes executed buy amounts for each order identified by index of owner-orderIndex arrays
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
       */

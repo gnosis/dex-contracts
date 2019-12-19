@@ -126,7 +126,7 @@ function generateTestCase(input, strict = true, debug = false) {
 /**
  * Prints debug information for a test case.
  * @param {TestCase} testCase The test case
- * @param {BN[]|number[]} [orderIndices] The optional order ids for display, defaults to [0...]
+ * @param {BN[]|number[]} [orderIndices] The optional order indices for display, defaults to [0...]
  * @param {string[]} [accounts] The optional accounts for display, defaults to [1...]
  */
 function debugTestCase(testCase, orderIndices, accounts) {
@@ -183,7 +183,7 @@ function debugTestCase(testCase, orderIndices, accounts) {
  * @type {object}
  * @property {BN} objectiveValue The computed objective value for the solution
  * @property {string[]} owners The account addresses for thr order orners
- * @property {string[]} touchedOrderIndices The ids of touched orders
+ * @property {string[]} touchedOrderIndices The indices of touched orders
  * @property {BN[]} volumes The buy volumes
  * @property {BN[]} prices The prices of touched tokens
  * @property {number[]} tokenIdsForPrice The ids of the touched tokens
@@ -191,10 +191,10 @@ function debugTestCase(testCase, orderIndices, accounts) {
 
 /**
  * Generates `submitSolution` parameters for a given computed solution. Note
- * that this requires order ids as they are not known until runtime.
+ * that this requires order indices as they are not known until runtime.
  * @param {ComputedSolution} solution The computed solution
- * @param {string[]} accounts The order ids as they are on the contract
- * @param {BN[]|number[]} orderIndices The order ids as they are on the contract
+ * @param {string[]} accounts The order indices as they are on the contract
+ * @param {BN[]|number[]} orderIndices The order indices as they are on the contract
  * @return {SolutionParams} The parameters to submit the solution
  */
 function solutionSubmissionParams(solution, accounts, orderIndices) {
