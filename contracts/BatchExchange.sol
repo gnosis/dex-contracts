@@ -300,7 +300,7 @@ contract BatchExchange is EpochTokenLocker {
         undoCurrentSolution();
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete latestSolution.trades;
-        int256[] memory tokenConservation = TokenConservation.init(tokenIdsForPrice);
+        int256[] memory tokenConservation = TokenConservation.init(tokenIdsForPrice.length + 1);
         uint256 utility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIndices[i]];
