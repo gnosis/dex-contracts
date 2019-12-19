@@ -83,7 +83,7 @@ library TokenConservation {
         uint256 leftValue = 0;
         uint256 rightValue = tokenIdsForPrice.length - 1;
         while (rightValue >= leftValue) {
-            uint256 middleValue = leftValue + (rightValue - leftValue) / 2;
+            uint256 middleValue = (leftValue + rightValue) / 2;
             if (tokenIdsForPrice[middleValue] == tokenId) {
                 // shifted one to the right to account for fee token at index 0
                 return middleValue + 1;
