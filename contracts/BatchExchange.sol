@@ -114,12 +114,7 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev Event emitted when an already exectued trade gets reverted
      */
-    event TradeReversion(
-        address indexed owner,
-        uint16 indexed orderId,
-        uint256 executedSellAmount,
-        uint256 executedBuyAmount
-    );
+    event TradeReversion(address indexed owner, uint16 indexed orderId, uint256 executedSellAmount, uint256 executedBuyAmount);
 
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
@@ -333,9 +328,7 @@ contract BatchExchange is EpochTokenLocker {
         }
         uint256 disregardedUtility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
-            disregardedUtility = disregardedUtility.add(
-                evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
-            );
+            disregardedUtility = disregardedUtility.add(evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i]));
         }
         uint256 burntFees = uint256(tokenConservation.feeTokenImbalance()) / 2;
         // burntFees ensures direct trades (when available) yield better solutions than longer rings
