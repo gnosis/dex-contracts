@@ -7,9 +7,9 @@
     "max-states-count": ["error", 18],
     "compiler-fixed": true,
     "no-simple-event-func-name": true,
-    "not-rely-on-time": false,
+    "not-rely-on-time": "off",
     "no-empty-blocks": "off",
-    "two-lines-top-level-separator": "warn",
+    "two-lines-top-level-separator": "off",
     "separate-by-one-line-in-contract": "warn",
     "bracket-align": "warn"
   }
