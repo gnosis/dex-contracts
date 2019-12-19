@@ -34,11 +34,11 @@ contract EpochTokenLocker {
         uint32 batchId;
     }
 
-    event Deposit(address user, address token, uint256 amount, uint32 batchId);
+    event Deposit(address indexed user, address indexed token, uint256 amount, uint32 batchId);
 
-    event WithdrawRequest(address user, address token, uint256 amount, uint32 batchId);
+    event WithdrawRequest(address indexed user, address indexed token, uint256 amount, uint32 batchId);
 
-    event Withdraw(address user, address token, uint256 amount);
+    event Withdraw(address indexed user, address indexed token, uint256 amount);
 
     /** @dev credits user with deposit amount on next epoch (given by getCurrentBatchId)
       * @param token address of token to be deposited
