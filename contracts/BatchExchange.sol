@@ -215,13 +215,13 @@ contract BatchExchange is EpochTokenLocker {
       * Emits an {OrderCancelation} or {OrderDeletion} with sender's address and orderIndex
       */
     function cancelOrders(uint256[] memory indices) public {
-        uint32 solvingBatchId = getCurrentBatchId() - 1;
+        uint32 batchIdBeingSolved = getCurrentBatchId() - 1;
         for (uint256 i = 0; i < indices.length; i++) {
-            if (!checkOrderValidity(orders[msg.sender][indices[i]], solvingBatchId)) {
+            if (!checkOrderValidity(orders[msg.sender][indices[i]], batchIdBeingSolved)) {
                 delete orders[msg.sender][indices[i]];
                 emit OrderDeletion(msg.sender, indices[i]);
             } else {
-                orders[msg.sender][indices[i]].validUntil = solvingBatchId;
+                orders[msg.sender][indices[i]].validUntil = batchIdBeingSolved;
                 emit OrderCancelation(msg.sender, indices[i]);
             }
         }
