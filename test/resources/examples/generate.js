@@ -126,15 +126,15 @@ function generateTestCase(input, strict = true, debug = false) {
 /**
  * Prints debug information for a test case.
  * @param {TestCase} testCase The test case
- * @param {BN[]|number[]} [orderIds] The optional order ids for display, defaults to [0...]
+ * @param {BN[]|number[]} [orderIndices] The optional order indices for display, defaults to [0...]
  * @param {string[]} [accounts] The optional accounts for display, defaults to [1...]
  */
-function debugTestCase(testCase, orderIds, accounts) {
-  assert(orderIds === undefined || Array.isArray(orderIds), "orderIds is not an array")
+function debugTestCase(testCase, orderIndices, accounts) {
+  assert(orderIndices === undefined || Array.isArray(orderIndices), "orderIndices is not an array")
   assert(accounts === undefined || Array.isArray(accounts), "accounts is not an array")
 
   const userCount = Math.max(...testCase.orders.map(o => o.user)) + 1
-  orderIds = orderIds || testCase.orders.map((_, i) => i)
+  orderIndices = orderIndices || testCase.orders.map((_, i) => i)
   accounts =
     accounts ||
     (() => {
@@ -145,10 +145,10 @@ function debugTestCase(testCase, orderIds, accounts) {
       return accounts
     })()
 
-  assert(testCase.orders.length === orderIds.length, "missing orders in orderIds")
+  assert(testCase.orders.length === orderIndices.length, "missing orders in orderIndices")
   assert(userCount <= accounts.length, "missing users in accounts")
 
-  orderIds.forEach((o, i) => assert(BN.isBN(o) || Number.isInteger(o), `invalid order id at index ${i}`))
+  orderIndices.forEach((o, i) => assert(BN.isBN(o) || Number.isInteger(o), `invalid order id at index ${i}`))
   accounts.forEach((a, i) => assert(typeof a === "string", `invalid account at index ${i}`))
 
   const usernames = accounts.map(a => (a.length > 8 ? `${a.substr(0, 5)}…${a.substr(a.length - 3)}` : a))
@@ -156,7 +156,7 @@ function debugTestCase(testCase, orderIds, accounts) {
   formatHeader("Orders")
   formatTable([
     ["Id", "User", "Buy Token", "Buy Amount", "Sell Token", "Sell Amount"],
-    ...testCase.orders.map((o, i) => [orderIds[i], usernames[o.user], o.buyToken, o.buyAmount, o.sellToken, o.sellAmount]),
+    ...testCase.orders.map((o, i) => [orderIndices[i], usernames[o.user], o.buyToken, o.buyAmount, o.sellToken, o.sellAmount]),
   ])
   formatHeader("Solutions")
   for (const solution of testCase.solutions) {
@@ -167,7 +167,7 @@ function debugTestCase(testCase, orderIds, accounts) {
     ])
     formatTable([
       ["   Executed Orders:          ", "Id", "User", "Buy Amount", "Sell Amount", "Utility", "Disregarded Utility"],
-      ...solution.orders.map(o => ["", orderIds[o.idx], usernames[o.user], o.buy, o.sell, o.utility, o.disregardedUtility]),
+      ...solution.orders.map(o => ["", orderIndices[o.idx], usernames[o.user], o.buy, o.sell, o.utility, o.disregardedUtility]),
     ])
     formatTable([
       ["   Total Utility:", solution.totalUtility],
@@ -183,7 +183,7 @@ function debugTestCase(testCase, orderIds, accounts) {
  * @type {object}
  * @property {BN} objectiveValue The computed objective value for the solution
  * @property {string[]} owners The account addresses for thr order orners
- * @property {string[]} touchedOrderIds The ids of touched orders
+ * @property {string[]} touchedOrderIndices The indices of touched orders
  * @property {BN[]} volumes The buy volumes
  * @property {BN[]} prices The prices of touched tokens
  * @property {number[]} tokenIdsForPrice The ids of the touched tokens
@@ -191,28 +191,28 @@ function debugTestCase(testCase, orderIds, accounts) {
 
 /**
  * Generates `submitSolution` parameters for a given computed solution. Note
- * that this requires order ids as they are not known until runtime.
+ * that this requires order indices as they are not known until runtime.
  * @param {ComputedSolution} solution The computed solution
- * @param {string[]} accounts The order ids as they are on the contract
- * @param {BN[]|number[]} orderIds The order ids as they are on the contract
+ * @param {string[]} accounts The order indices as they are on the contract
+ * @param {BN[]|number[]} orderIndices The order indices as they are on the contract
  * @return {SolutionParams} The parameters to submit the solution
  */
-function solutionSubmissionParams(solution, accounts, orderIds) {
-  assert(Array.isArray(orderIds), "orderIds is not an array")
+function solutionSubmissionParams(solution, accounts, orderIndices) {
+  assert(Array.isArray(orderIndices), "orderIndices is not an array")
   assert(Array.isArray(accounts), "accounts is not an array")
-  orderIds.forEach((o, i) => assert(BN.isBN(o) || Number.isInteger(o), `invalid order id at index ${i}`))
+  orderIndices.forEach((o, i) => assert(BN.isBN(o) || Number.isInteger(o), `invalid order id at index ${i}`))
   accounts.forEach((a, i) => assert(typeof a === "string", `invalid account at index ${i}`))
 
   const orderCount = Math.max(...solution.orders.map(o => o.idx)) + 1
   const userCount = Math.max(...solution.orders.map(o => o.user)) + 1
 
-  assert(orderCount <= orderIds.length, "missing orders in orderIds")
+  assert(orderCount <= orderIndices.length, "missing orders in orderIndices")
   assert(userCount <= accounts.length, "missing users in accounts")
 
   return {
     objectiveValue: solution.objectiveValue,
     owners: solution.orders.map(o => accounts[o.user]),
-    touchedOrderIds: solution.orders.map(o => orderIds[o.idx]),
+    touchedOrderIndices: solution.orders.map(o => orderIndices[o.idx]),
     volumes: solution.orders.map(o => o.buy),
     prices: solution.tokens.slice(1).map(t => t.price),
     tokenIdsForPrice: solution.tokens.slice(1).map(t => t.id),

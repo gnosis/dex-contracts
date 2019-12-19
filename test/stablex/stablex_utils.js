@@ -54,9 +54,9 @@ const makeDeposits = async function(contract, accounts, depositList) {
  * @returns {BN[]}
  */
 const placeOrders = async function(contract, accounts, orderList, auctionIndex) {
-  const orderIds = []
+  const orderIndices = []
   for (const order of orderList) {
-    orderIds.push(
+    orderIndices.push(
       await sendTxAndGetReturnValue(
         contract.placeOrder,
         order.buyToken,
@@ -68,7 +68,7 @@ const placeOrders = async function(contract, accounts, orderList, auctionIndex) 
       )
     )
   }
-  return orderIds
+  return orderIndices
 }
 
 module.exports = {
