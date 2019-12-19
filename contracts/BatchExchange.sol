@@ -36,15 +36,15 @@ contract BatchExchange is EpochTokenLocker {
       */
     uint256 public constant IMPROVEMENT_DENOMINATOR = 100; // 1%
 
+    /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/FEE_DENOMINATOR */
+    uint128 public constant FEE_DENOMINATOR = 1000;
+
     /** @dev maximum number of tokens that can be listed for exchange */
     // solhint-disable-next-line var-name-mixedcase
     uint256 public MAX_TOKENS;
 
     /** @dev Current number of tokens listed/available for exchange */
     uint16 public numTokens;
-
-    /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/feeDenominator */
-    uint128 public feeDenominator;
 
     /** @dev The feeToken of the exchange will be the OWL Token */
     TokenOWL public feeToken;
@@ -123,10 +123,9 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
-      * @param _feeDenominator fee as a proportion is (1 / feeDenominator)
       * @param _feeToken Address of ERC20 fee token.
       */
-    constructor(uint256 maxTokens, uint128 _feeDenominator, address _feeToken) public {
+    constructor(uint256 maxTokens, address _feeToken) public {
         // All solutions for the batches must have normalized prices. The following line sets the
         // price of OWL to 10**18 for all solutions and hence enforces a normalization.
         currentPrices[0] = 1 ether;
@@ -135,7 +134,6 @@ contract BatchExchange is EpochTokenLocker {
         // The burn functionallity of OWL requires an approval.
         // In the following line the approval is set for all future burn calls.
         feeToken.approve(address(this), uint256(-1));
-        feeDenominator = _feeDenominator;
         addToken(_feeToken); // feeToken will always have the token index 0
     }
 
@@ -593,8 +591,8 @@ contract BatchExchange is EpochTokenLocker {
     function evaluateDisregardedUtility(Order memory order, address user) private view returns (uint256) {
         uint256 leftoverSellAmount = Math.min(getRemainingAmount(order), getBalance(user, tokenIdToAddressMap(order.sellToken)));
         uint256 limitTermLeft = currentPrices[order.sellToken].mul(order.priceDenominator);
-        uint256 limitTermRight = order.priceNumerator.mul(currentPrices[order.buyToken]).mul(feeDenominator).div(
-            feeDenominator - 1
+        uint256 limitTermRight = order.priceNumerator.mul(currentPrices[order.buyToken]).mul(FEE_DENOMINATOR).div(
+            FEE_DENOMINATOR - 1
         );
         uint256 limitTerm = 0;
         if (limitTermLeft > limitTermRight) {
@@ -610,24 +608,24 @@ contract BatchExchange is EpochTokenLocker {
       * @return executedSellAmount as expressed in Equation (2)
       * https://github.com/gnosis/dex-contracts/issues/173#issuecomment-526163117
       * execSellAmount * p[sellToken] * (1 - phi) == execBuyAmount * p[buyToken]
-      * where phi = 1/feeDenominator
-      * Note that: 1 - phi = (feeDenominator - 1) / feeDenominator
-      * And so, 1/(1-phi) = feeDenominator / (feeDenominator - 1)
+      * where phi = 1/FEE_DENOMINATOR
+      * Note that: 1 - phi = (FEE_DENOMINATOR - 1) / FEE_DENOMINATOR
+      * And so, 1/(1-phi) = FEE_DENOMINATOR / (FEE_DENOMINATOR - 1)
       * execSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
-      *                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * feeDenominator / (feeDenominator - 1)
+      *                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * FEE_DENOMINATOR / (FEE_DENOMINATOR - 1)
       * in order to minimize rounding errors, the order of operations is switched
-      *                = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
+      *                = ((executedBuyAmount * buyTokenPrice) / (FEE_DENOMINATOR - 1)) * FEE_DENOMINATOR) / sellTokenPrice
       */
     function getExecutedSellAmount(uint128 executedBuyAmount, uint128 buyTokenPrice, uint128 sellTokenPrice)
         private
-        view
+        pure
         returns (uint128)
     {
         return
             uint256(executedBuyAmount)
                 .mul(buyTokenPrice)
-                .div(feeDenominator - 1)
-                .mul(feeDenominator)
+                .div(FEE_DENOMINATOR - 1)
+                .mul(FEE_DENOMINATOR)
                 .div(sellTokenPrice)
                 .toUint128();
     }
