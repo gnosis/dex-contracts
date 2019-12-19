@@ -288,6 +288,10 @@ contract BatchExchange is EpochTokenLocker {
         require(tokenIdsForPrice[0] != 0, "Fee token has fixed price!");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
         require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
+        // Further assumptions are: owners.length == orderIds.length && owners.length == buyVolumes.length
+        // && prices.length == tokenIdsForPrice.length
+        // These assumptions are not checked explicitly, as violations of these constraints can not be used
+        // to create a beneficial situation
         burnPreviousAuctionFees();
         undoCurrentSolution();
         updateCurrentPrices(prices, tokenIdsForPrice);

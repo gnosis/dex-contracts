@@ -4,7 +4,7 @@
     "indent": ["error", 4],
     "quotes": ["error", "double"],
     "max-line-length": ["error", 129],
-    "function-max-lines": ["error", 60],
+    "function-max-lines": ["error", 65],
     "max-states-count": ["error", 18],
     "compiler-fixed": true,
     "no-simple-event-func-name": true,
