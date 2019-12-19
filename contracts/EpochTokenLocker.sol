@@ -143,6 +143,7 @@ contract EpochTokenLocker {
       * return current batchId
       */
     function getCurrentBatchId() public view returns (uint32) {
+        // solhint-disable-next-line not-rely-on-time
         return uint32(now / BATCH_TIME);
     }
 
@@ -150,6 +151,7 @@ contract EpochTokenLocker {
       * return seconds remaining in current batch
       */
     function getSecondsRemainingInBatch() public view returns (uint256) {
+        // solhint-disable-next-line not-rely-on-time
         return BATCH_TIME - (now % BATCH_TIME);
     }
 

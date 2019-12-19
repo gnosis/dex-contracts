@@ -621,6 +621,7 @@ contract BatchExchange is EpochTokenLocker {
         pure
         returns (uint128)
     {
+        /* solium-disable indentation */
         return
             uint256(executedBuyAmount)
                 .mul(buyTokenPrice)
@@ -628,6 +629,7 @@ contract BatchExchange is EpochTokenLocker {
                 .mul(FEE_DENOMINATOR)
                 .div(sellTokenPrice)
                 .toUint128();
+        /* solium-enable indentation */
     }
 
     /** @dev used to determine if solution if first provided in current batch
