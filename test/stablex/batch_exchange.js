@@ -23,8 +23,6 @@ const {
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
-const feeDenominator = 1000 // fee is (1 / feeDenominator)
-
 const fiveThousand = new BN("5000")
 const tenThousand = new BN("10000")
 const smallTradeData = {
@@ -51,7 +49,7 @@ contract("BatchExchange", async accounts => {
     const lib2 = await IterableAppendOnlySet.new()
     await BatchExchange.link(IdToAddressBiMap, lib1.address)
     await BatchExchange.link(IterableAppendOnlySet, lib2.address)
-    const batchExchange = await BatchExchange.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+    const batchExchange = await BatchExchange.new(2 ** 16 - 1, feeToken.address)
 
     BATCH_TIME = (await batchExchange.BATCH_TIME.call()).toNumber()
   })
@@ -68,7 +66,7 @@ contract("BatchExchange", async accounts => {
     it("feeToken is set by default", async () => {
       const feeToken = await MockContract.new()
       await feeToken.givenAnyReturnBool(true)
-      const batchExchange = await BatchExchange.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const batchExchange = await BatchExchange.new(2 ** 16 - 1, feeToken.address)
 
       assert.equal((await batchExchange.tokenAddressToIdMap.call(feeToken.address)).toNumber(), 0)
       assert.equal(await batchExchange.tokenIdToAddressMap.call(0), feeToken.address)
@@ -76,7 +74,7 @@ contract("BatchExchange", async accounts => {
     it("Anyone can add tokens", async () => {
       const feeToken = await MockContract.new()
       await feeToken.givenAnyReturnBool(true)
-      const batchExchange = await BatchExchange.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const batchExchange = await BatchExchange.new(2 ** 16 - 1, feeToken.address)
 
       const token_1 = await ERC20.new()
       await batchExchange.addToken(token_1.address, { from: user_1 })
@@ -92,7 +90,7 @@ contract("BatchExchange", async accounts => {
     it("Rejects same token added twice", async () => {
       const feeToken = await MockContract.new()
       await feeToken.givenAnyReturnBool(true)
-      const batchExchange = await BatchExchange.new(2 ** 16 - 1, feeDenominator, feeToken.address)
+      const batchExchange = await BatchExchange.new(2 ** 16 - 1, feeToken.address)
       const token = await ERC20.new()
       await batchExchange.addToken(token.address)
       await truffleAssert.reverts(batchExchange.addToken(token.address), "Token already registered")
@@ -100,7 +98,7 @@ contract("BatchExchange", async accounts => {
     it("No exceed max tokens", async () => {
       const feeToken = await MockContract.new()
       await feeToken.givenAnyReturnBool(true)
-      const batchExchange = await BatchExchange.new(3, feeDenominator, feeToken.address)
+      const batchExchange = await BatchExchange.new(3, feeToken.address)
       await batchExchange.addToken((await ERC20.new()).address)
       await batchExchange.addToken((await ERC20.new()).address)
 
@@ -116,7 +114,7 @@ contract("BatchExchange", async accounts => {
 
       await owlProxy.mintOWL(user_1, owlAmount)
 
-      const batchExchange = await BatchExchange.new(2, feeDenominator, owlProxy.address)
+      const batchExchange = await BatchExchange.new(2, owlProxy.address)
       const token = await ERC20.new()
       await owlProxy.approve(batchExchange.address, owlAmount)
       assert(owlAmount.eq(await owlProxy.balanceOf(user_1)))
@@ -133,7 +131,7 @@ contract("BatchExchange", async accounts => {
       await owlProxy.setMinter(user_1)
       const owlAmount = toETH(10)
 
-      const batchExchange = await BatchExchange.new(2, feeDenominator, owlProxy.address)
+      const batchExchange = await BatchExchange.new(2, owlProxy.address)
       const token = await ERC20.new()
       await owlProxy.approve(batchExchange.address, owlAmount)
       assert(owlAmount.eq(await owlProxy.allowance.call(user_1, batchExchange.address)))
@@ -734,7 +732,7 @@ contract("BatchExchange", async accounts => {
 
       await owlProxy.mintOWL(user_1, owlAmount)
 
-      const batchExchange = await BatchExchange.new(2, feeDenominator, owlProxy.address)
+      const batchExchange = await BatchExchange.new(2, owlProxy.address)
       await owlProxy.approve(batchExchange.address, owlAmount)
 
       const token = await MockContract.new()

@@ -15,14 +15,13 @@ const { sendTxAndGetReturnValue } = require("../utilities")
  * Makes deposit transactions from a list of Deposit Objects
  * @param {number} numTokens - number of tokens to be registered on this exchange.
  * @param {number} maxTokens - Maximum number of tokens (a contract contructor parameter)
- * @param {number} feeDenominator - Fee for order execution (a contract contructor parameter)
  * @returns {}
  */
-const setupGenericStableX = async function(numTokens = 2, maxTokens = 2 ** 16 - 1, feeDenominator = 1000) {
+const setupGenericStableX = async function(numTokens = 2, maxTokens = 2 ** 16 - 1) {
   const feeToken = await MockContract.new()
   await feeToken.givenAnyReturnBool(true)
 
-  const instance = await BatchExchange.new(maxTokens, feeDenominator, feeToken.address)
+  const instance = await BatchExchange.new(maxTokens, feeToken.address)
   const tokens = [feeToken]
   for (let i = 0; i < numTokens - 1; i++) {
     const token = await MockContract.new()
