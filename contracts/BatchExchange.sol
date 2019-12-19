@@ -90,8 +90,8 @@ contract BatchExchange is EpochTokenLocker {
     event OrderPlacement(
         address indexed owner,
         uint16 index,
-        uint16 buyToken,
-        uint16 sellToken,
+        uint16 indexed buyToken,
+        uint16 indexed sellToken,
         uint32 validFrom,
         uint32 validUntil,
         uint128 priceNumerator,
