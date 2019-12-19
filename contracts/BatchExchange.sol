@@ -75,7 +75,7 @@ contract BatchExchange is EpochTokenLocker {
     struct TradeData {
         address owner;
         uint128 volume;
-        uint16 orderIndex;
+        uint16 orderId;
     }
 
     struct SolutionData {
@@ -110,13 +110,13 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev Event emitted when a new trade is settled
      */
-    event Trade(address indexed owner, uint16 indexed orderIndex, uint256 executedSellAmount, uint256 executedBuyAmount);
+    event Trade(address indexed owner, uint16 indexed orderId, uint256 executedSellAmount, uint256 executedBuyAmount);
 
     /** @dev Event emitted when an already exectued trade gets reverted
      */
     event TradeReversion(
         address indexed owner,
-        uint16 indexed orderIndex,
+        uint16 indexed orderId,
         uint256 executedSellAmount,
         uint256 executedBuyAmount
     );
@@ -162,7 +162,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param validUntil batchId representing order's expiry
       * @param buyAmount relative minimum amount of requested buy amount
       * @param sellAmount maximum amount of sell token to be exchanged
-      * @return orderIndex as index of user's current orders
+      * @return orderId as index of user's current orders
       *
       * Emits an {OrderPlacement} event with all relevant order details.
       */
@@ -181,7 +181,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param validUntils batchIds represnnting order's expiry
       * @param buyAmounts relative minimum amount of requested buy amounts
       * @param sellAmounts maximum amounts of sell token to be exchanged
-      * @return `orderIndices` an array of indices in which `msg.sender`'s orders are included
+      * @return `orderIds` an array of indices in which `msg.sender`'s orders are included
       *
       * Emits an {OrderPlacement} event with all relevant order details.
       */
@@ -192,10 +192,10 @@ contract BatchExchange is EpochTokenLocker {
         uint32[] memory validUntils,
         uint128[] memory buyAmounts,
         uint128[] memory sellAmounts
-    ) public returns (uint16[] memory orderIndices) {
-        orderIndices = new uint16[](buyTokens.length);
+    ) public returns (uint16[] memory orderIds) {
+        orderIds = new uint16[](buyTokens.length);
         for (uint256 i = 0; i < buyTokens.length; i++) {
-            orderIndices[i] = placeOrderInternal(
+            orderIds[i] = placeOrderInternal(
                 buyTokens[i],
                 sellTokens[i],
                 validFroms[i],
@@ -212,7 +212,7 @@ contract BatchExchange is EpochTokenLocker {
       *
       * @param indices referencing the index of user's order to be canceled
       *
-      * Emits an {OrderCancelation} or {OrderDeletion} with sender's address and orderIndex
+      * Emits an {OrderCancelation} or {OrderDeletion} with sender's address and orderId
       */
     function cancelOrders(uint256[] memory indices) public {
         for (uint256 i = 0; i < indices.length; i++) {
@@ -254,8 +254,8 @@ contract BatchExchange is EpochTokenLocker {
     /** @dev a solver facing function called for auction settlement
       * @param batchId index of auction solution is referring to
       * @param owners array of addresses corresponding to touched orders
-      * @param orderIndices array of order indices used in parallel with owners to identify touched order
-      * @param buyVolumes executed buy amounts for each order identified by index of owner-orderIndex arrays
+      * @param orderIds array of order indices used in parallel with owners to identify touched order
+      * @param buyVolumes executed buy amounts for each order identified by index of owner-orderId arrays
       * @param prices list of prices for touched tokens indexed by next parameter
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
       * @return the computed objective value of the solution
@@ -279,7 +279,7 @@ contract BatchExchange is EpochTokenLocker {
         uint32 batchId,
         uint256 claimedObjectiveValue,
         address[] memory owners,
-        uint16[] memory orderIndices,
+        uint16[] memory orderIds,
         uint128[] memory buyVolumes,
         uint128[] memory prices,
         uint16[] memory tokenIdsForPrice
@@ -300,7 +300,7 @@ contract BatchExchange is EpochTokenLocker {
         int256[] memory tokenConservation = TokenConservation.init(tokenIdsForPrice);
         uint256 utility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
-            Order memory order = orders[owners[i]][orderIndices[i]];
+            Order memory order = orders[owners[i]][orderIds[i]];
             require(checkOrderValidity(order, batchId), "Order is invalid");
             (uint128 executedBuyAmount, uint128 executedSellAmount) = getTradedAmounts(buyVolumes[i], order);
             require(executedBuyAmount >= AMOUNT_MINIMUM, "buy amount less than AMOUNT_MINIMUM");
@@ -321,20 +321,20 @@ contract BatchExchange is EpochTokenLocker {
             );
             // accumulate utility before updateRemainingOrder, but after limitPrice verified!
             utility = utility.add(evaluateUtility(executedBuyAmount, order));
-            updateRemainingOrder(owners[i], orderIndices[i], executedSellAmount);
+            updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
             addBalanceAndBlockWithdrawForThisBatch(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
-            emit Trade(owners[i], orderIndices[i], executedSellAmount, executedBuyAmount);
+            emit Trade(owners[i], orderIds[i], executedSellAmount, executedBuyAmount);
         }
         // Perform all subtractions after additions to avoid negative values
         for (uint256 i = 0; i < owners.length; i++) {
-            Order memory order = orders[owners[i]][orderIndices[i]];
+            Order memory order = orders[owners[i]][orderIds[i]];
             (, uint128 executedSellAmount) = getTradedAmounts(buyVolumes[i], order);
             subtractBalance(owners[i], tokenIdToAddressMap(order.sellToken), executedSellAmount);
         }
         uint256 disregardedUtility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
             disregardedUtility = disregardedUtility.add(
-                evaluateDisregardedUtility(orders[owners[i]][orderIndices[i]], owners[i])
+                evaluateDisregardedUtility(orders[owners[i]][orderIds[i]], owners[i])
             );
         }
         uint256 burntFees = uint256(tokenConservation.feeTokenImbalance()) / 2;
@@ -343,7 +343,7 @@ contract BatchExchange is EpochTokenLocker {
         checkAndOverrideObjectiveValue(objectiveValue);
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
-        documentTrades(batchId, owners, orderIndices, buyVolumes, tokenIdsForPrice);
+        documentTrades(batchId, owners, orderIds, buyVolumes, tokenIdsForPrice);
         return (objectiveValue);
     }
     /**
@@ -445,10 +445,10 @@ contract BatchExchange is EpochTokenLocker {
                 usedAmount: 0
             })
         );
-        uint16 orderIndex = (orders[msg.sender].length - 1).toUint16();
-        emit OrderPlacement(msg.sender, orderIndex, buyToken, sellToken, validFrom, validUntil, buyAmount, sellAmount);
+        uint16 orderId = (orders[msg.sender].length - 1).toUint16();
+        emit OrderPlacement(msg.sender, orderId, buyToken, sellToken, validFrom, validUntil, buyAmount, sellAmount);
         allUsers.insert(msg.sender);
-        return orderIndex;
+        return orderId;
     }
 
     /** @dev called at the end of submitSolution with a value of tokenConservation / 2
@@ -482,39 +482,39 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev Updates an order's remaing requested sell amount upon (partial) execution of a standing order
       * @param owner order's corresponding user address
-      * @param orderIndex index of order in list of owner's orders
+      * @param orderId index of order in list of owner's orders
       * @param executedAmount proportion of order's requested sellAmount that was filled.
       */
-    function updateRemainingOrder(address owner, uint16 orderIndex, uint128 executedAmount) private {
-        orders[owner][orderIndex].usedAmount = orders[owner][orderIndex].usedAmount.add(executedAmount).toUint128();
+    function updateRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
+        orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.add(executedAmount).toUint128();
     }
 
     /** @dev The inverse of updateRemainingOrder, called when reverting a solution in favour of a better one.
       * @param owner order's corresponding user address
-      * @param orderIndex index of order in list of owner's orders
+      * @param orderId index of order in list of owner's orders
       * @param executedAmount proportion of order's requested sellAmount that was filled.
       */
-    function revertRemainingOrder(address owner, uint16 orderIndex, uint128 executedAmount) private {
-        orders[owner][orderIndex].usedAmount = orders[owner][orderIndex].usedAmount.sub(executedAmount).toUint128();
+    function revertRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
+        orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.sub(executedAmount).toUint128();
     }
 
     /** @dev This function writes solution information into contract storage
       * @param batchId index of referenced auction
       * @param owners array of addresses corresponding to touched orders
-      * @param orderIndices array of order indices used in parallel with owners to identify touched order
-      * @param volumes executed buy amounts for each order identified by index of owner-orderIndex arrays
+      * @param orderIds array of order indices used in parallel with owners to identify touched order
+      * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
       * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
       */
     function documentTrades(
         uint32 batchId,
         address[] memory owners,
-        uint16[] memory orderIndices,
+        uint16[] memory orderIds,
         uint128[] memory volumes,
         uint16[] memory tokenIdsForPrice
     ) private {
         latestSolution.batchId = batchId;
         for (uint256 i = 0; i < owners.length; i++) {
-            latestSolution.trades.push(TradeData({owner: owners[i], orderIndex: orderIndices[i], volume: volumes[i]}));
+            latestSolution.trades.push(TradeData({owner: owners[i], orderId: orderIds[i], volume: volumes[i]}));
         }
         latestSolution.tokenIdsForPrice = tokenIdsForPrice;
         latestSolution.solutionSubmitter = msg.sender;
@@ -526,19 +526,19 @@ contract BatchExchange is EpochTokenLocker {
         if (currentBatchHasSolution()) {
             for (uint256 i = 0; i < latestSolution.trades.length; i++) {
                 address owner = latestSolution.trades[i].owner;
-                uint16 orderIndex = latestSolution.trades[i].orderIndex;
-                Order memory order = orders[owner][orderIndex];
+                uint16 orderId = latestSolution.trades[i].orderId;
+                Order memory order = orders[owner][orderId];
                 (, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
                 addBalance(owner, tokenIdToAddressMap(order.sellToken), sellAmount);
             }
             for (uint256 i = 0; i < latestSolution.trades.length; i++) {
                 address owner = latestSolution.trades[i].owner;
-                uint16 orderIndex = latestSolution.trades[i].orderIndex;
-                Order memory order = orders[owner][orderIndex];
+                uint16 orderId = latestSolution.trades[i].orderId;
+                Order memory order = orders[owner][orderId];
                 (uint128 buyAmount, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
-                revertRemainingOrder(owner, orderIndex, sellAmount);
+                revertRemainingOrder(owner, orderId, sellAmount);
                 subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
-                emit TradeReversion(owner, orderIndex, sellAmount, buyAmount);
+                emit TradeReversion(owner, orderId, sellAmount, buyAmount);
             }
             // subtract granted fees:
             subtractBalance(latestSolution.solutionSubmitter, tokenIdToAddressMap(0), latestSolution.feeReward);
