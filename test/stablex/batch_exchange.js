@@ -1515,6 +1515,106 @@ contract("BatchExchange", async accounts => {
       )
       assert.equal(0, (await batchExchange.currentPrices.call(2)).toString(), "CurrentPrice were not adjusted correctly")
     })
+    it("checks that withdraw blockers between solutions are reset", async () => {
+      const batchExchange = await setupGenericStableX(3)
+
+      await makeDeposits(batchExchange, accounts, shortRingBetterTrade.deposits)
+
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIndices = await placeOrders(batchExchange, accounts, shortRingBetterTrade.orders, batchId + 1)
+      await batchExchange.requestWithdraw(await batchExchange.tokenIdToAddressMap(shortRingBetterTrade.orders[1].buyToken), 10, {
+        from: accounts[shortRingBetterTrade.orders[1].user],
+      })
+      await closeAuction(batchExchange)
+
+      const ringSolution = solutionSubmissionParams(shortRingBetterTrade.solutions[0], accounts, orderIndices)
+      await batchExchange.submitSolution(
+        batchId,
+        ringSolution.objectiveValue,
+        ringSolution.owners,
+        ringSolution.touchedOrderIndices,
+        ringSolution.volumes,
+        ringSolution.prices,
+        ringSolution.tokenIdsForPrice,
+        { from: solver }
+      )
+
+      assert.equal(
+        await batchExchange.lastCreditBatchId(
+          accounts[shortRingBetterTrade.orders[1].user],
+          await batchExchange.tokenIdToAddressMap(shortRingBetterTrade.orders[1].buyToken)
+        ),
+        batchId + 1,
+        "Withdraw block was not set correctly"
+      )
+
+      const directSolution = solutionSubmissionParams(shortRingBetterTrade.solutions[1], accounts, orderIndices)
+      await batchExchange.submitSolution(
+        batchId,
+        directSolution.objectiveValue,
+        directSolution.owners,
+        directSolution.touchedOrderIndices,
+        directSolution.volumes,
+        directSolution.prices,
+        directSolution.tokenIdsForPrice,
+        { from: solver }
+      )
+      assert.equal(
+        await batchExchange.lastCreditBatchId.call(
+          accounts[shortRingBetterTrade.orders[1].user],
+          await batchExchange.tokenIdToAddressMap(shortRingBetterTrade.orders[1].buyToken)
+        ),
+        0,
+        "Withdraw block was not unset"
+      )
+    })
+    it("checks that withdraw blockers between solutions is unset for solver", async () => {
+      const batchExchange = await setupGenericStableX(3)
+
+      await makeDeposits(batchExchange, accounts, shortRingBetterTrade.deposits)
+
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIndices = await placeOrders(batchExchange, accounts, shortRingBetterTrade.orders, batchId + 1)
+      await batchExchange.requestWithdraw(await batchExchange.tokenIdToAddressMap(0), 10, {
+        from: solver,
+      })
+      await closeAuction(batchExchange)
+
+      const ringSolution = solutionSubmissionParams(shortRingBetterTrade.solutions[0], accounts, orderIndices)
+      await batchExchange.submitSolution(
+        batchId,
+        ringSolution.objectiveValue,
+        ringSolution.owners,
+        ringSolution.touchedOrderIndices,
+        ringSolution.volumes,
+        ringSolution.prices,
+        ringSolution.tokenIdsForPrice,
+        { from: solver }
+      )
+
+      assert.equal(
+        await batchExchange.lastCreditBatchId.call(solver, await batchExchange.tokenIdToAddressMap(0)),
+        batchId + 1,
+        "Withdraw block was not set correctly"
+      )
+
+      const directSolution = solutionSubmissionParams(shortRingBetterTrade.solutions[1], accounts, orderIndices)
+      await batchExchange.submitSolution(
+        batchId,
+        directSolution.objectiveValue,
+        directSolution.owners,
+        directSolution.touchedOrderIndices,
+        directSolution.volumes,
+        directSolution.prices,
+        directSolution.tokenIdsForPrice,
+        { from: accounts[4] }
+      )
+      assert.equal(
+        await batchExchange.lastCreditBatchId.call(solver, await batchExchange.tokenIdToAddressMap(0)),
+        0,
+        "Withdraw block was not unset"
+      )
+    })
     it("checks that solution trades are deleted even if balances are temporarily negative while reverting ", async () => {
       // The following test, a user_2 will receive some tokens and sell these received tokens in one batch.
       // If this batch-trade gets executed and later reverted by another trade, users_2's balance would be temporarily negative, unless
