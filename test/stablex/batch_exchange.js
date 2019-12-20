@@ -1654,6 +1654,21 @@ contract("BatchExchange", async accounts => {
       }
     })
   })
+  describe("getEncodedUserOrdersPaginated()", async () => {
+    it("returns correct orders considering offset and pageSize", async () => {
+      const batchExchange = await setupGenericStableX()
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+
+      // Place 3 orders
+      for (let i = 0; i < 3; i++) {
+        await batchExchange.placeOrder(new BN(1), new BN(0), batchId + 10, new BN(i), new BN(i))
+      }
+
+      // get 2nd order with getEncodedUserOrdersPaginated(user_1, 1, 1)
+      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedUserOrdersPaginated(user_1, 1, 1))
+      assert.equal(auctionElements[0].priceNumerator, 1)
+    })
+  })
   describe("getEncodedUserOrders()", async () => {
     it("returns null when there are no orders", async () => {
       const batchExchange = await setupGenericStableX()

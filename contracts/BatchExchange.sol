@@ -379,15 +379,29 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev View returning all byte-encoded sell orders for specified user
       * @param user address of user whose orders are being queried
+      * @param offset uint determining the starting orderIndex
+      * @param pageSize uint determining the count of elements to be viewed
       * @return encoded bytes representing all orders
       */
-    function getEncodedUserOrders(address user) public view returns (bytes memory elements) {
-        for (uint256 i = 0; i < orders[user].length; i++) {
+    function getEncodedUserOrdersPaginated(address user, uint16 offset, uint16 pageSize)
+        public
+        view
+        returns (bytes memory elements)
+    {
+        for (uint16 i = offset; i < Math.min(orders[user].length, offset + pageSize); i++) {
             elements = elements.concat(
                 encodeAuctionElement(user, getBalance(user, tokenIdToAddressMap(orders[user][i].sellToken)), orders[user][i])
             );
         }
         return elements;
+    }
+
+    /** @dev View returning all byte-encoded sell orders for specified user
+      * @param user address of user whose orders are being queried
+      * @return encoded bytes representing all orders
+      */
+    function getEncodedUserOrders(address user) public view returns (bytes memory elements) {
+        return getEncodedUserOrdersPaginated(user, 0, uint16(-1));
     }
 
     /** @dev View returning all byte-encoded sell orders
