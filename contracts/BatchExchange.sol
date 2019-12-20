@@ -205,18 +205,18 @@ contract BatchExchange is EpochTokenLocker {
       * being solved, it sets order expiry to that batchId. Otherwise it removes it from storage. Can be called
       * multiple times (e.g. to eventually free storage once order is expired).
       *
-      * @param indices referencing the index of user's order to be canceled
+      * @param orderIds referencing the indices of user's order's to be canceled
       *
       * Emits an {OrderCancelation} or {OrderDeletion} with sender's address and orderId
       */
-    function cancelOrders(uint256[] memory indices) public {
-        for (uint256 i = 0; i < indices.length; i++) {
-            if (!checkOrderValidity(orders[msg.sender][indices[i]], getCurrentBatchId() - 1)) {
-                delete orders[msg.sender][indices[i]];
-                emit OrderDeletion(msg.sender, indices[i]);
+    function cancelOrders(uint16[] memory orderIds) public {
+        for (uint16 i = 0; i < orderIds.length; i++) {
+            if (!checkOrderValidity(orders[msg.sender][orderIds[i]], getCurrentBatchId() - 1)) {
+                delete orders[msg.sender][orderIds[i]];
+                emit OrderDeletion(msg.sender, orderIds[i]);
             } else {
-                orders[msg.sender][indices[i]].validUntil = getCurrentBatchId() - 1;
-                emit OrderCancelation(msg.sender, indices[i]);
+                orders[msg.sender][orderIds[i]].validUntil = getCurrentBatchId() - 1;
+                emit OrderCancelation(msg.sender, orderIds[i]);
             }
         }
     }
