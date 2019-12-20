@@ -233,7 +233,7 @@ contract BatchExchange is EpochTokenLocker {
       * Emits {OrderCancelation} events for all cancelled orders and {OrderPlacement} events with all relevant new order details.
       */
     function replaceOrders(
-        uint256[] memory cancellations,
+        uint16[] memory cancellations,
         uint16[] memory buyTokens,
         uint16[] memory sellTokens,
         uint32[] memory validFroms,
