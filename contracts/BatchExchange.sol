@@ -614,7 +614,8 @@ contract BatchExchange is EpochTokenLocker {
       * execSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
       *                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * FEE_DENOMINATOR / (FEE_DENOMINATOR - 1)
       * in order to minimize rounding errors, the order of operations is switched
-      *                = ((executedBuyAmount * buyTokenPrice) / (FEE_DENOMINATOR - 1)) * FEE_DENOMINATOR) / sellTokenPrice
+      *                = (executedBuyAmount * buyTokenPrice * FEE_DENOMINATOR) /
+      *                  ((FEE_DENOMINATOR - 1) * sellTokenPrice)
       */
     function getExecutedSellAmount(uint128 executedBuyAmount, uint128 buyTokenPrice, uint128 sellTokenPrice)
         private
@@ -625,8 +626,8 @@ contract BatchExchange is EpochTokenLocker {
         return
             uint256(executedBuyAmount)
                 .mul(buyTokenPrice)
-                .div(FEE_DENOMINATOR - 1)
                 .mul(FEE_DENOMINATOR)
+                .div(FEE_DENOMINATOR - 1)
                 .div(sellTokenPrice)
                 .toUint128();
         /* solium-enable indentation */

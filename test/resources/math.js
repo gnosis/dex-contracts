@@ -71,8 +71,8 @@ function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice)
 
   return executedBuyAmount
     .mul(buyTokenPrice)
-    .div(FEE_DENOMINATOR_MINUS_ONE)
     .mul(FEE_DENOMINATOR)
+    .div(FEE_DENOMINATOR_MINUS_ONE)
     .div(sellTokenPrice)
 }
 
