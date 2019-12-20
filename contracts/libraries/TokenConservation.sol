@@ -10,10 +10,10 @@ library TokenConservation {
     using SignedSafeMath for int256;
 
     /** @dev initialize the token conservation data structure
-      * @param tokenIdsForPrice sorted list of tokenIds for which token conservation should be checked
+      * @param tokenNumber is the number of tokens the conservation should be checked for
       */
-    function init(uint256 size) internal pure returns (int256[] memory) {
-        return new int256[](size);
+    function init(uint256 tokenNumber) internal pure returns (int256[] memory) {
+        return new int256[](tokenNumber);
     }
 
     /** @dev returns the token imbalance of the fee token
