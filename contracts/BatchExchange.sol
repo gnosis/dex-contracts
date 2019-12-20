@@ -540,11 +540,15 @@ contract BatchExchange is EpochTokenLocker {
                 Order memory order = orders[owner][orderIndex];
                 (uint128 buyAmount, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
                 revertRemainingOrder(owner, orderIndex, sellAmount);
-                subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
+                address buyToken = tokenIdToAddressMap(order.buyToken);
+                subtractBalance(owner, buyToken, buyAmount);
+                undoWithdrawBlock(owner, buyToken);
                 emit TradeReversion(owner, orderIndex, sellAmount, buyAmount);
             }
             // subtract granted fees:
-            subtractBalance(latestSolution.solutionSubmitter, tokenIdToAddressMap(0), latestSolution.feeReward);
+            address solutionSubmitter = latestSolution.solutionSubmitter;
+            subtractBalance(solutionSubmitter, address(feeToken), latestSolution.feeReward);
+            undoWithdrawBlock(solutionSubmitter, address(feeToken));
         }
     }
 

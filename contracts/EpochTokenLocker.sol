@@ -218,4 +218,13 @@ contract EpochTokenLocker {
             delete balanceStates[user][token].pendingDeposits;
         }
     }
+
+    /** @dev undoWithdrawBlock allows to undo withdraw blocks, which might have been
+     * set in addBalanceAndBlockWithdrawForThisBatch
+     */
+    function undoWithdrawBlock(address user, address token) internal {
+        if (hasValidWithdrawRequest(user, token)) {
+            lastCreditBatchId[user][token] = 0;
+        }
+    }
 }
