@@ -1657,39 +1657,16 @@ contract("BatchExchange", async accounts => {
   describe("getEncodedUserOrdersPaginated()", async () => {
     it("returns correct orders considering offset and pageSize", async () => {
       const batchExchange = await setupGenericStableX()
-      const zeroBN = new BN(0)
-      const tenBN = new BN(10)
-      const twentyBN = new BN(20)
-
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      const OrderInfo = {
-        user: user_1.toLowerCase(),
-        sellTokenBalance: zeroBN,
-        buyToken: 1,
-        sellToken: 0,
-        validFrom: batchId,
-        validUntil: batchId + 10,
-        priceNumerator: twentyBN,
-        priceDenominator: tenBN,
-        remainingAmount: tenBN,
-      }
 
       // Place 3 orders
       for (let i = 0; i < 3; i++) {
-        await batchExchange.placeOrder(
-          OrderInfo.buyToken,
-          OrderInfo.sellToken,
-          OrderInfo.validUntil,
-          OrderInfo.priceNumerator.addn(i),
-          OrderInfo.priceDenominator
-        )
+        await batchExchange.placeOrder(new BN(1), new BN(0), batchId + 10, new BN(i), new BN(i))
       }
 
       // get 2nd order with getEncodedUserOrdersPaginated(user_1, 1, 1)
-      const expectedOrder = OrderInfo
-      expectedOrder.priceNumerator = expectedOrder.priceNumerator.addn(1)
       const auctionElements = decodeAuctionElements(await batchExchange.getEncodedUserOrdersPaginated(user_1, 1, 1))
-      assert.equal(JSON.stringify(auctionElements), JSON.stringify([expectedOrder]))
+      assert.equal(auctionElements[0].priceNumerator, 1)
     })
   })
   describe("getEncodedUserOrders()", async () => {

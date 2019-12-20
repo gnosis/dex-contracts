@@ -401,12 +401,7 @@ contract BatchExchange is EpochTokenLocker {
       * @return encoded bytes representing all orders
       */
     function getEncodedUserOrders(address user) public view returns (bytes memory elements) {
-        for (uint256 i = 0; i < orders[user].length; i++) {
-            elements = elements.concat(
-                encodeAuctionElement(user, getBalance(user, tokenIdToAddressMap(orders[user][i].sellToken)), orders[user][i])
-            );
-        }
-        return elements;
+        return getEncodedUserOrdersPaginated(user, 0, uint16(-1));
     }
 
     /** @dev View returning all byte-encoded sell orders
