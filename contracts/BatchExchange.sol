@@ -88,10 +88,10 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     event OrderPlacement(
-        address owner,
+        address indexed owner,
         uint16 index,
-        uint16 buyToken,
-        uint16 sellToken,
+        uint16 indexed buyToken,
+        uint16 indexed sellToken,
         uint32 validFrom,
         uint32 validUntil,
         uint128 priceNumerator,
@@ -102,11 +102,11 @@ contract BatchExchange is EpochTokenLocker {
      * currently being solved. It remains in storage but will not be tradable in any future
      * batch to be solved.
      */
-    event OrderCancelation(address owner, uint256 id);
+    event OrderCancelation(address indexed owner, uint256 id);
 
     /** @dev Event emitted when an order is removed from storage.
      */
-    event OrderDeletion(address owner, uint256 id);
+    event OrderDeletion(address indexed owner, uint256 id);
 
     /** @dev Event emitted when a new trade is settled
      */
