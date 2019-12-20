@@ -5,8 +5,8 @@
         "IdToAddressBiMap": "0xaEBD846a05EaDfe42db884805e6aC99F32E8af43",
         "IterableAppendOnlySet": "0xCDDB32b6Bb2808D5B5115dAab207479cE98d2636"
       },
-      "address": "0x46F3f2F9662F66a6dDd6A8d1DDec3cD9aE5e87B5",
-      "transactionHash": "0x5f054d123c505b688b98679da32c6a1900fd7257fa5daa88c421fbd9bb342e42"
+      "address": "0x6D210B2089c0B698994D9985Ca2abce314059015",
+      "transactionHash": "0xe45b9b673541890b3a3f8225847d5f31c133e3a103a267a4b6a5acff47b34e91"
     },
     "4": {
       "links": {
@@ -20,8 +20,8 @@
   "Migrations": {
     "1": {
       "links": {},
-      "address": "0xE6Bc5a2dc85C96d7aF5016a0a7Ca145A5B59AA96",
-      "transactionHash": "0x75965ebb01b1d0bcd3b286a7951aa94cd574b061ff8e487d5bd2db0ae3e2709a"
+      "address": "0x45337816A540427C33EbcF80A82Ec7A84DBEe787",
+      "transactionHash": "0x9edca50ecef39338ac5a288add7a22dbba063c3428f1a1e5ba3fc4c426f4191e"
     },
     "4": {
       "links": {},
