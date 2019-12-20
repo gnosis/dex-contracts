@@ -1,7 +1,7 @@
 const { isDevelopmentNetwork, getDependency } = require("./utilities.js")
 const deployOwl = require("@gnosis.pm/owl-token/src/migrations-truffle-5/3_deploy_OWL")
 
-async function migrate({ artifacts, deployer, network, accounts, web3, feeDenominator = 1000, maxTokens = 2 ** 16 - 1 }) {
+async function migrate({ artifacts, deployer, network, accounts, web3, maxTokens = 2 ** 16 - 1 }) {
   let fee_token
   if (isDevelopmentNetwork(network)) {
     await deployOwl({
@@ -37,7 +37,7 @@ async function migrate({ artifacts, deployer, network, accounts, web3, feeDenomi
 
   // eslint-disable-next-line no-console
   console.log("Deploy BatchExchange contract")
-  await deployer.deploy(BatchExchange, maxTokens, feeDenominator, fee_token.address)
+  await deployer.deploy(BatchExchange, maxTokens, fee_token.address)
 }
 
 module.exports = migrate

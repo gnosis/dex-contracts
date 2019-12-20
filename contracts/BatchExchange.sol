@@ -36,15 +36,15 @@ contract BatchExchange is EpochTokenLocker {
       */
     uint256 public constant IMPROVEMENT_DENOMINATOR = 100; // 1%
 
+    /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/FEE_DENOMINATOR */
+    uint128 public constant FEE_DENOMINATOR = 1000;
+
     /** @dev maximum number of tokens that can be listed for exchange */
     // solhint-disable-next-line var-name-mixedcase
     uint256 public MAX_TOKENS;
 
     /** @dev Current number of tokens listed/available for exchange */
     uint16 public numTokens;
-
-    /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/feeDenominator */
-    uint128 public feeDenominator;
 
     /** @dev The feeToken of the exchange will be the OWL Token */
     TokenOWL public feeToken;
@@ -88,10 +88,10 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     event OrderPlacement(
-        address owner,
+        address indexed owner,
         uint16 index,
-        uint16 buyToken,
-        uint16 sellToken,
+        uint16 indexed buyToken,
+        uint16 indexed sellToken,
         uint32 validFrom,
         uint32 validUntil,
         uint128 priceNumerator,
@@ -102,11 +102,11 @@ contract BatchExchange is EpochTokenLocker {
      * currently being solved. It remains in storage but will not be tradable in any future
      * batch to be solved.
      */
-    event OrderCancelation(address owner, uint256 id);
+    event OrderCancelation(address indexed owner, uint256 id);
 
     /** @dev Event emitted when an order is removed from storage.
      */
-    event OrderDeletion(address owner, uint256 id);
+    event OrderDeletion(address indexed owner, uint256 id);
 
     /** @dev Event emitted when a new trade is settled
      */
@@ -118,10 +118,9 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
-      * @param _feeDenominator fee as a proportion is (1 / feeDenominator)
       * @param _feeToken Address of ERC20 fee token.
       */
-    constructor(uint256 maxTokens, uint128 _feeDenominator, address _feeToken) public {
+    constructor(uint256 maxTokens, address _feeToken) public {
         // All solutions for the batches must have normalized prices. The following line sets the
         // price of OWL to 10**18 for all solutions and hence enforces a normalization.
         currentPrices[0] = 1 ether;
@@ -130,7 +129,6 @@ contract BatchExchange is EpochTokenLocker {
         // The burn functionallity of OWL requires an approval.
         // In the following line the approval is set for all future burn calls.
         feeToken.approve(address(this), uint256(-1));
-        feeDenominator = _feeDenominator;
         addToken(_feeToken); // feeToken will always have the token index 0
     }
 
@@ -205,17 +203,18 @@ contract BatchExchange is EpochTokenLocker {
       * being solved, it sets order expiry to that batchId. Otherwise it removes it from storage. Can be called
       * multiple times (e.g. to eventually free storage once order is expired).
       *
-      * @param orderIds referencing the indices of user's order's to be canceled
+      * @param orderIds referencing the indices of user's orders to be canceled
       *
       * Emits an {OrderCancelation} or {OrderDeletion} with sender's address and orderId
       */
     function cancelOrders(uint16[] memory orderIds) public {
+        uint32 batchIdBeingSolved = getCurrentBatchId() - 1;
         for (uint16 i = 0; i < orderIds.length; i++) {
-            if (!checkOrderValidity(orders[msg.sender][orderIds[i]], getCurrentBatchId() - 1)) {
+            if (!checkOrderValidity(orders[msg.sender][orderIds[i]], batchIdBeingSolved)) {
                 delete orders[msg.sender][orderIds[i]];
                 emit OrderDeletion(msg.sender, orderIds[i]);
             } else {
-                orders[msg.sender][orderIds[i]].validUntil = getCurrentBatchId() - 1;
+                orders[msg.sender][orderIds[i]].validUntil = batchIdBeingSolved;
                 emit OrderCancelation(msg.sender, orderIds[i]);
             }
         }
@@ -288,6 +287,10 @@ contract BatchExchange is EpochTokenLocker {
         require(tokenIdsForPrice[0] != 0, "Fee token has fixed price!");
         require(tokenIdsForPrice.checkPriceOrdering(), "prices are not ordered by tokenId");
         require(owners.length <= MAX_TOUCHED_ORDERS, "Solution exceeds MAX_TOUCHED_ORDERS");
+        // Further assumptions are: owners.length == orderIds.length && owners.length == buyVolumes.length
+        // && prices.length == tokenIdsForPrice.length
+        // These assumptions are not checked explicitly, as violations of these constraints can not be used
+        // to create a beneficial situation
         burnPreviousAuctionFees();
         undoCurrentSolution();
         updateCurrentPrices(prices, tokenIdsForPrice);
@@ -581,8 +584,8 @@ contract BatchExchange is EpochTokenLocker {
     function evaluateDisregardedUtility(Order memory order, address user) private view returns (uint256) {
         uint256 leftoverSellAmount = Math.min(getRemainingAmount(order), getBalance(user, tokenIdToAddressMap(order.sellToken)));
         uint256 limitTermLeft = currentPrices[order.sellToken].mul(order.priceDenominator);
-        uint256 limitTermRight = order.priceNumerator.mul(currentPrices[order.buyToken]).mul(feeDenominator).div(
-            feeDenominator - 1
+        uint256 limitTermRight = order.priceNumerator.mul(currentPrices[order.buyToken]).mul(FEE_DENOMINATOR).div(
+            FEE_DENOMINATOR - 1
         );
         uint256 limitTerm = 0;
         if (limitTermLeft > limitTermRight) {
@@ -598,26 +601,28 @@ contract BatchExchange is EpochTokenLocker {
       * @return executedSellAmount as expressed in Equation (2)
       * https://github.com/gnosis/dex-contracts/issues/173#issuecomment-526163117
       * execSellAmount * p[sellToken] * (1 - phi) == execBuyAmount * p[buyToken]
-      * where phi = 1/feeDenominator
-      * Note that: 1 - phi = (feeDenominator - 1) / feeDenominator
-      * And so, 1/(1-phi) = feeDenominator / (feeDenominator - 1)
+      * where phi = 1/FEE_DENOMINATOR
+      * Note that: 1 - phi = (FEE_DENOMINATOR - 1) / FEE_DENOMINATOR
+      * And so, 1/(1-phi) = FEE_DENOMINATOR / (FEE_DENOMINATOR - 1)
       * execSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
-      *                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * feeDenominator / (feeDenominator - 1)
+      *                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * FEE_DENOMINATOR / (FEE_DENOMINATOR - 1)
       * in order to minimize rounding errors, the order of operations is switched
-      *                = ((executedBuyAmount * buyTokenPrice) / (feeDenominator - 1)) * feeDenominator) / sellTokenPrice
+      *                = ((executedBuyAmount * buyTokenPrice) / (FEE_DENOMINATOR - 1)) * FEE_DENOMINATOR) / sellTokenPrice
       */
     function getExecutedSellAmount(uint128 executedBuyAmount, uint128 buyTokenPrice, uint128 sellTokenPrice)
         private
-        view
+        pure
         returns (uint128)
     {
+        /* solium-disable indentation */
         return
             uint256(executedBuyAmount)
                 .mul(buyTokenPrice)
-                .div(feeDenominator - 1)
-                .mul(feeDenominator)
+                .div(FEE_DENOMINATOR - 1)
+                .mul(FEE_DENOMINATOR)
                 .div(sellTokenPrice)
                 .toUint128();
+        /* solium-enable indentation */
     }
 
     /** @dev used to determine if solution if first provided in current batch

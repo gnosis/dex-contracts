@@ -4,13 +4,12 @@
     "indent": ["error", 4],
     "quotes": ["error", "double"],
     "max-line-length": ["error", 129],
-    "function-max-lines": ["error", 61],
     "max-states-count": ["error", 18],
+    "not-rely-on-time": "error",
     "compiler-fixed": true,
     "no-simple-event-func-name": true,
-    "not-rely-on-time": false,
     "no-empty-blocks": "off",
-    "two-lines-top-level-separator": "warn",
+    "two-lines-top-level-separator": "off",
     "separate-by-one-line-in-contract": "warn",
     "bracket-align": "warn"
   }

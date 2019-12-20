@@ -34,11 +34,11 @@ contract EpochTokenLocker {
         uint32 batchId;
     }
 
-    event Deposit(address user, address token, uint256 amount, uint32 batchId);
+    event Deposit(address indexed user, address indexed token, uint256 amount, uint32 batchId);
 
-    event WithdrawRequest(address user, address token, uint256 amount, uint32 batchId);
+    event WithdrawRequest(address indexed user, address indexed token, uint256 amount, uint32 batchId);
 
-    event Withdraw(address user, address token, uint256 amount);
+    event Withdraw(address indexed user, address indexed token, uint256 amount);
 
     /** @dev credits user with deposit amount on next epoch (given by getCurrentBatchId)
       * @param token address of token to be deposited
@@ -143,6 +143,7 @@ contract EpochTokenLocker {
       * return current batchId
       */
     function getCurrentBatchId() public view returns (uint32) {
+        // solhint-disable-next-line not-rely-on-time
         return uint32(now / BATCH_TIME);
     }
 
@@ -150,6 +151,7 @@ contract EpochTokenLocker {
       * return seconds remaining in current batch
       */
     function getSecondsRemainingInBatch() public view returns (uint256) {
+        // solhint-disable-next-line not-rely-on-time
         return BATCH_TIME - (now % BATCH_TIME);
     }
 

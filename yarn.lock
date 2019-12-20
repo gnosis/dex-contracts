@@ -165,7 +165,7 @@
   resolved "https://registry.yarnpkg.com/@gnosis.pm/util-contracts/-/util-contracts-2.0.4.tgz#fe16753f13f1a7382d9005b7ce18f4dd8b6a0177"
   integrity sha512-v+gpWDW0hZ9nZ2FgDI5cfkpXZIsVXP51SXzVLdres6GrERcYx+WJsz2RqIQ1nyehKTyS+el1TTkhIKdbBAFtDg==
 
-"@gnosis.pm/util-contracts@^2.0.5":
+"@gnosis.pm/util-contracts@^2.0.6":
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/@gnosis.pm/util-contracts/-/util-contracts-2.0.6.tgz#6bc5107068df6643548a9a0ff11b2eed725aa161"
   integrity sha512-d53LDUiIUgZ9RNvHWZmTBYjETAEWe56srZF4cF12qEn6KCRJMFnB/+0uc05Tthj9fN2fNAMNNsPGNF2lI1aHCQ==
@@ -8443,19 +8443,10 @@ truffle-plugin-verify@^0.3.6:
     querystring "^0.2.0"
     sol-merger "^1.1.0"
 
-truffle@^5.0.25:
-  version "5.0.25"
-  resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.0.25.tgz#79e06eb004af481e6b43625557f68de97d5d1dd1"
-  integrity sha512-QGP6m/FPl761Vo01bp/kIvLse5ZiJP1sOs3CIDEXOskP4YilE4NmYuG0GwFSeVyxgjjXFzycJ16QHpndMK8KPQ==
-  dependencies:
-    app-module-path "^2.2.0"
-    mocha "5.2.0"
-    original-require "1.0.1"
-
-truffle@^5.0.34, truffle@^5.1.4:
-  version "5.1.4"
-  resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.1.4.tgz#1cf22d46e8ef3eae9ba39f13f4fc1b11fc36d3ba"
-  integrity sha512-HlefSmFCK/vd5jrGNpsJvsAhFdR3XPJH63ERQ1BHmVs8u1kt8OomExEov5HsWKqYCZIyERS/XNL2p/PYFJlmiQ==
+truffle@^5.0.25, truffle@^5.0.34, truffle@^5.1.5:
+  version "5.1.5"
+  resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.1.5.tgz#87730b484103bb77e7371a14d69628e1ec20a094"
+  integrity sha512-9zloOGyY/+kj+lqX6S9eCARrBvCLPlT1y+q41SPP2dfieRLsfXYDmBqgzCh5dSpccABlqkCUvE4nedhqi6Qggg==
   dependencies:
     app-module-path "^2.2.0"
     mocha "5.2.0"
@@ -9121,9 +9112,9 @@ web3-provider-engine@^8.4.0:
     xhr "^2.2.0"
     xtend "^4.0.1"
 
-"web3-provider-engine@git+https://github.com/trufflesuite/provider-engine.git#web3-one":
+"web3-provider-engine@https://github.com/trufflesuite/provider-engine#web3-one":
   version "14.0.6"
-  resolved "git+https://github.com/trufflesuite/provider-engine.git#3538c60bc4836b73ccae1ac3f64c8fed8ef19c1a"
+  resolved "https://github.com/trufflesuite/provider-engine#3538c60bc4836b73ccae1ac3f64c8fed8ef19c1a"
   dependencies:
     async "^2.5.0"
     backoff "^2.5.0"
