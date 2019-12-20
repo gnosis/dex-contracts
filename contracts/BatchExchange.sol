@@ -388,7 +388,7 @@ contract BatchExchange is EpochTokenLocker {
         view
         returns (bytes memory elements)
     {
-        for (uint256 i = offset; i < Math.min(orders[user].length, offset + pageSize); i++) {
+        for (uint16 i = offset; i < Math.min(orders[user].length, offset + pageSize); i++) {
             elements = elements.concat(
                 encodeAuctionElement(user, getBalance(user, tokenIdToAddressMap(orders[user][i].sellToken)), orders[user][i])
             );
