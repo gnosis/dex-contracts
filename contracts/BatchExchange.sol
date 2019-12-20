@@ -382,7 +382,7 @@ contract BatchExchange is EpochTokenLocker {
       * @return encoded bytes representing all orders
       */
     function getEncodedUserOrders(address user, uint256 offset, uint16 pageSize) public view returns (bytes memory elements) {
-        for (uint256 i = offset; i < Math.min(orders[user].length, offset + pageSize + 1); i++) {
+        for (uint256 i = offset; i < Math.min(orders[user].length, offset + pageSize); i++) {
             elements = elements.concat(
                 encodeAuctionElement(user, getBalance(user, tokenIdToAddressMap(orders[user][i].sellToken)), orders[user][i])
             );
@@ -398,7 +398,7 @@ contract BatchExchange is EpochTokenLocker {
             address user = allUsers.first();
             bool stop = false;
             while (!stop) {
-                elements = elements.concat(getEncodedUserOrders(user, 0, uint16(-2)));
+                elements = elements.concat(getEncodedUserOrders(user, 0, uint16(-1)));
                 if (user == allUsers.last) {
                     stop = true;
                 } else {
