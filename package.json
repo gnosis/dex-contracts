@@ -34,6 +34,7 @@
     "build/contracts/SnappBase.json",
     "build/contracts/SnappBaseCore.json",
     "build/contracts/TokenConservation.json",
+    "build/contracts/ERC20.json",
     "networks.json",
     "src"
   ],
