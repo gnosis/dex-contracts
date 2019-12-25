@@ -79,7 +79,7 @@
     "node-fetch": "^2.6.0",
     "openzeppelin-solidity": "OpenZeppelin/openzeppelin-contracts#2c11ed59",
     "prettier": "^1.19.1",
-    "prettier-plugin-solidity": "^1.0.0-alpha.34",
+    "prettier-plugin-solidity": "^1.0.0-alpha.35",
     "solhint": "^2.3.0",
     "solhint-plugin-prettier": "0.0.3",
     "solidity-bytes-utils": "0.0.8",
