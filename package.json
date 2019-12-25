@@ -55,7 +55,7 @@
   },
   "homepage": "https://github.com/gnosis/dex-contracts#readme",
   "dependencies": {
-    "bn.js": "^5.0.0"
+    "bn.js": "^5.1.1"
   },
   "devDependencies": {
     "@gnosis.pm/mock-contract": "^3.0.8",
