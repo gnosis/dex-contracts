@@ -55,6 +55,7 @@ const colorForValidUntil = function(order, currentBatchId) {
 
 const colorForRemainingAmount = function(order) {
   if (
+    order.priceDenominator > 0 &&
     order.remainingAmount
       .mul(new BN(100))
       .div(order.priceDenominator)
