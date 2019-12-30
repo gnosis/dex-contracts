@@ -1,9 +1,9 @@
 const BatchExchange = artifacts.require("BatchExchange")
 const BN = require("bn.js")
 const argv = require("yargs")
-  .option("valid", {
+  .option("expired", {
     type: "boolean",
-    describe: "Only show valid and future orders",
+    describe: "Also show expired orders",
   })
   .option("covered", {
     type: "boolean",
@@ -12,7 +12,6 @@ const argv = require("yargs")
   .option("tokens", {
     describe: "Filter only orders between the given tokens",
   })
-  .help(false)
   .version(false).argv
 
 const { decodeAuctionElements } = require("../../test/utilities.js")
@@ -89,7 +88,7 @@ module.exports = async callback => {
     let auctionElementsDecoded = decodeAuctionElements(auctionElementsEncoded)
 
     const batchId = (await instance.getCurrentBatchId()).toNumber()
-    if (argv.valid) {
+    if (!argv.expired) {
       auctionElementsDecoded = auctionElementsDecoded.filter(order => order.validUntil >= batchId)
     }
 
@@ -102,7 +101,7 @@ module.exports = async callback => {
       auctionElementsDecoded = auctionElementsDecoded.filter(order => tokens.has(order.buyToken) && tokens.has(order.sellToken))
     }
 
-    auctionElementsDecoded.map(o => printOrder(o, batchId))
+    auctionElementsDecoded.forEach(order => printOrder(order, batchId))
     console.log(`Found ${auctionElementsDecoded.length} orders`)
 
     callback()
