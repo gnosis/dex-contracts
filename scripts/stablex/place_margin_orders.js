@@ -22,12 +22,11 @@ const argv = require("yargs")
   .option("expiry", {
     type: "int",
     describe: "Maximum auction batch for which these orders are valid",
-    default: 2**32 - 1
+    default: 2 ** 32 - 1,
   })
   .demand(["tokens", "accountId"])
   .help(false)
   .version(false).argv
-
 
 // TODO - automate this with tokenIdToAddress dot decimals
 const TOKEN_DECMIALS = {
@@ -36,7 +35,7 @@ const TOKEN_DECMIALS = {
   4: 6,
   5: 18,
   6: 2,
-  7: 18
+  7: 18,
 }
 
 module.exports = async callback => {
@@ -44,13 +43,13 @@ module.exports = async callback => {
     const instance = await BatchExchange.deployed()
     const accounts = await web3.eth.getAccounts()
     const account = accounts[argv.accountId]
-    console.log(account)
+
     const batch_index = (await instance.getCurrentBatchId.call()).toNumber()
 
     const trusted_tokens = argv.tokens.split(",").map(t => parseInt(t))
-    const expectedReturnFactor = new BN(1 + argv.margin / 100)
-    const sellAmount = new BN(argv.sellAmount)
-    const buyAmount = expectedReturnFactor.mul(sellAmount)
+    const expectedReturnFactor = 1 + argv.margin / 100
+    const sellAmount = argv.sellAmount
+    const buyAmount = sellAmount * expectedReturnFactor
 
     let buyTokens = []
     let sellTokens = []
@@ -64,14 +63,8 @@ module.exports = async callback => {
         const tokenScaleB = new BN(10).pow(new BN(TOKEN_DECMIALS[tokenB]))
         buyTokens = buyTokens.concat([tokenA, tokenB])
         sellTokens = sellTokens.concat([tokenB, tokenA])
-        buyAmounts = buyAmounts.concat(
-          buyAmount.mul(tokenScaleA),
-          buyAmount.mul(tokenScaleB)
-        )
-        sellAmounts = sellAmounts.concat(
-          sellAmount.mul(tokenScaleA),
-          sellAmount.mul(tokenScaleB)
-        )
+        buyAmounts = buyAmounts.concat(tokenScaleA.muln(buyAmount), tokenScaleB.muln(buyAmount))
+        sellAmounts = sellAmounts.concat(tokenScaleA.muln(sellAmount), tokenScaleB.muln(sellAmount))
       }
     }
 
@@ -79,9 +72,18 @@ module.exports = async callback => {
     const validFroms = Array(buyTokens.length).fill(batch_index + 2)
     const validTos = Array(buyTokens.length).fill(argv.expiry)
 
-    const id = await sendTxAndGetReturnValue(instance.placeValidFromOrders, buyTokens, sellTokens, validFroms, validTos, buyAmounts, sellAmounts, {
-      from: account,
-    })
+    const id = await sendTxAndGetReturnValue(
+      instance.placeValidFromOrders,
+      buyTokens,
+      sellTokens,
+      validFroms,
+      validTos,
+      buyAmounts,
+      sellAmounts,
+      {
+        from: account,
+      }
+    )
     console.log(`Successfully placed margin orders with IDs ${id}`)
 
     callback()
