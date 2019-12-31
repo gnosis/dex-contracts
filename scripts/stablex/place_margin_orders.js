@@ -1,4 +1,5 @@
 const BatchExchange = artifacts.require("BatchExchange")
+const ERC20 = artifacts.require("ERC20")
 const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
 const BN = require("bn.js")
 
@@ -12,7 +13,7 @@ const argv = require("yargs")
   .option("margin", {
     type: "float",
     describe: "Percentage increase required for trade (fees not accounted)",
-    default: 0.2,
+    default: 0.25,
   })
   .option("sellAmount", {
     type: "float",
@@ -25,7 +26,7 @@ const argv = require("yargs")
     default: 2 ** 32 - 1,
   })
   .demand(["tokens", "accountId"])
-  .help(false)
+  .help("Make sure that you have an RPC connection to the network in consideration")
   .version(false).argv
 
 // TODO - automate this with tokenIdToAddress dot decimals
@@ -47,6 +48,15 @@ module.exports = async callback => {
     const batch_index = (await instance.getCurrentBatchId.call()).toNumber()
 
     const trusted_tokens = argv.tokens.split(",").map(t => parseInt(t))
+    // console.log("Recovering token data...")
+    // const tokenObjects = []
+    // for (const id of trusted_tokens) {
+    //   const tokenAddress = await instance.tokenIdToAddressMap(id)
+    //   const tokenInstance = await ERC20.at(tokenAddress)
+    //   console.log(await tokenInstance.decimals)
+    //   tokenObjects.push(await ERC20.at(tokenAddress))
+    // }
+
     const expectedReturnFactor = 1 + argv.margin / 100
     const sellAmount = argv.sellAmount
     const buyAmount = sellAmount * expectedReturnFactor
@@ -64,12 +74,14 @@ module.exports = async callback => {
         buyTokens = buyTokens.concat(tokenA, tokenB)
         sellTokens = sellTokens.concat(tokenB, tokenA)
         buyAmounts = buyAmounts.concat(tokenScaleA.muln(buyAmount), tokenScaleB.muln(buyAmount))
-        sellAmounts = sellAmounts.concat(tokenScaleA.muln(sellAmount), tokenScaleB.muln(sellAmount))
+        sellAmounts = sellAmounts.concat(tokenScaleB.muln(sellAmount), tokenScaleA.muln(sellAmount))
+        console.log(`Selling ${sellAmounts[sellAmounts.length - 2]} of token ${tokenA} for ${buyAmounts[buyAmounts.length - 2]} of token ${tokenB}`)
+        console.log(`Selling ${sellAmounts[sellAmounts.length - 1]} of token ${tokenB} for ${buyAmounts[buyAmounts.length - 1]} of token ${tokenA}`)
       }
     }
 
-    // Allowing user 2 batches (10 minutes) to cancel if it is incorrectly placed
-    const validFroms = Array(buyTokens.length).fill(batch_index + 2)
+    // Allowing user 3 batches (15 minutes) to cancel if it is incorrectly placed
+    const validFroms = Array(buyTokens.length).fill(batch_index + 3)
     const validTos = Array(buyTokens.length).fill(argv.expiry)
 
     const id = await sendTxAndGetReturnValue(
