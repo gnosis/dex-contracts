@@ -61,8 +61,8 @@ module.exports = async callback => {
       for (let j = i + 1; j < trusted_tokens.length; j++) {
         const tokenB = trusted_tokens[j]
         const tokenScaleB = new BN(10).pow(new BN(TOKEN_DECMIALS[tokenB]))
-        buyTokens = buyTokens.concat([tokenA, tokenB])
-        sellTokens = sellTokens.concat([tokenB, tokenA])
+        buyTokens = buyTokens.concat(tokenA, tokenB)
+        sellTokens = sellTokens.concat(tokenB, tokenA)
         buyAmounts = buyAmounts.concat(tokenScaleA.muln(buyAmount), tokenScaleB.muln(buyAmount))
         sellAmounts = sellAmounts.concat(tokenScaleA.muln(sellAmount), tokenScaleB.muln(sellAmount))
       }
