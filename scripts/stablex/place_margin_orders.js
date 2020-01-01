@@ -6,7 +6,6 @@ const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
 
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
-
 const fetchTokenInfo = function(tokenIds) {
   // console.log(`Recovering token data from URL ${token_list_url}`)
   // const token_list = await (await fetch(token_list_url)).json()
@@ -28,20 +27,20 @@ const fetchTokenInfo = function(tokenIds) {
 
   console.log("Using hardcoded token data")
   return {
-    2: { 
+    2: {
       decimals: 6,
       name: "USDT",
       address: 0xdac17f958d2ee523a2206206994597c13d831ec7,
     },
-    3: { 
+    3: {
       decimals: 18,
       name: "TUSD",
-      address: 0x0000000000085d4780B73119b644AE5ecd22b376,
+      address: 0x0000000000085d4780b73119b644ae5ecd22b376,
     },
     4: {
       decimals: 6,
       name: "USDC",
-      address: 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
+      address: 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48,
     },
     5: {
       decimals: 18,
@@ -56,7 +55,7 @@ const fetchTokenInfo = function(tokenIds) {
     7: {
       decimals: 18,
       name: "DAI",
-      address: 0x6b175474e89094c44da98b954eedeac495271d0f
+      address: 0x6b175474e89094c44da98b954eedeac495271d0f,
     },
   }
 }
@@ -116,8 +115,14 @@ module.exports = async callback => {
         sellTokens = sellTokens.concat(tokenB, tokenA)
         buyAmounts = buyAmounts.concat(tokenScaleA.muln(buyAmount), tokenScaleB.muln(buyAmount))
         sellAmounts = sellAmounts.concat(tokenScaleB.muln(sellAmount), tokenScaleA.muln(sellAmount))
-        console.log(`Selling ${sellAmounts[sellAmounts.length - 2]} ${token_data[tokenB].name} for ${buyAmounts[buyAmounts.length - 2]} ${token_data[tokenA].name}`)
-        console.log(`Selling ${sellAmounts[sellAmounts.length - 1]} ${token_data[tokenA].name} for ${buyAmounts[buyAmounts.length - 1]} ${token_data[tokenB].name}`)
+        console.log(
+          `Selling ${sellAmounts[sellAmounts.length - 2]} ${token_data[tokenB].name}
+            for ${buyAmounts[buyAmounts.length - 2]} ${token_data[tokenA].name}`
+        )
+        console.log(
+          `Selling ${sellAmounts[sellAmounts.length - 1]} ${token_data[tokenA].name}
+            for ${buyAmounts[buyAmounts.length - 1]} ${token_data[tokenB].name}`
+        )
       }
     }
 
