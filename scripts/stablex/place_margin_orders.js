@@ -6,58 +6,23 @@ const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
 
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
-const fetchTokenInfo = function(tokenIds) {
-  // console.log(`Recovering token data from URL ${token_list_url}`)
-  // const token_list = await (await fetch(token_list_url)).json()
-  // // TODO - automate this with tokenIdToAddress dot decimals
-  // const token_data = {}
-  // for (const token of token_list) {
-  //   token_data[token.id] = token.decimals
-  // }
-  // console.log(TOKEN_DECMIALS)
+const fetchTokenInfo = async function(contract, tokenIds) {
+  console.log(`Recovering token data from URL ${token_list_url}`)
+  const token_list = await (await fetch(token_list_url)).json()
+  const token_data = {}
+  for (const token of token_list) {
+    token_data[token.id] = token
+  }
 
   // console.log("Recovering token data from EVM")
   // const tokenObjects = []
-  // for (const id of trusted_tokens) {
-  //   const tokenAddress = await instance.tokenIdToAddressMap(id)
+  // for (const id of tokenIds) {
+  //   const tokenAddress = await contract.tokenIdToAddressMap(id)
   //   const tokenInstance = await ERC20.at(tokenAddress)
   //   console.log(await tokenInstance.decimals)
   //   tokenObjects.push(await ERC20.at(tokenAddress))
   // }
-
-  console.log("Using hardcoded token data")
-  return {
-    2: {
-      decimals: 6,
-      name: "USDT",
-      address: 0xdac17f958d2ee523a2206206994597c13d831ec7,
-    },
-    3: {
-      decimals: 18,
-      name: "TUSD",
-      address: 0x0000000000085d4780b73119b644ae5ecd22b376,
-    },
-    4: {
-      decimals: 6,
-      name: "USDC",
-      address: 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48,
-    },
-    5: {
-      decimals: 18,
-      name: "PAX",
-      address: 0x8e870d67f660d95d5be530380d0ec0bd388289e1,
-    },
-    6: {
-      decimals: 2,
-      name: "GUSD",
-      address: 0x056fd409e1d7a124bd7017459dfea2f387b6d5cd,
-    },
-    7: {
-      decimals: 18,
-      name: "DAI",
-      address: 0x6b175474e89094c44da98b954eedeac495271d0f,
-    },
-  }
+  return token_data
 }
 
 const argv = require("yargs")
@@ -95,7 +60,7 @@ module.exports = async callback => {
     const batch_index = (await instance.getCurrentBatchId.call()).toNumber()
 
     const trusted_tokens = argv.tokens.split(",").map(t => parseInt(t))
-    const token_data = fetchTokenInfo(trusted_tokens)
+    const token_data = await fetchTokenInfo(instance, trusted_tokens)
 
     const expectedReturnFactor = 1 + argv.margin / 100
     const sellAmount = argv.sellAmount
@@ -116,12 +81,14 @@ module.exports = async callback => {
         buyAmounts = buyAmounts.concat(tokenScaleA.muln(buyAmount), tokenScaleB.muln(buyAmount))
         sellAmounts = sellAmounts.concat(tokenScaleB.muln(sellAmount), tokenScaleA.muln(sellAmount))
         console.log(
-          `Selling ${sellAmounts[sellAmounts.length - 2]} ${token_data[tokenB].name}
-            for ${buyAmounts[buyAmounts.length - 2]} ${token_data[tokenA].name}`
+          `Selling ${sellAmounts[sellAmounts.length - 2]} ${token_data[tokenB].name} for ${buyAmounts[buyAmounts.length - 2]} ${
+            token_data[tokenA].name
+          }`
         )
         console.log(
-          `Selling ${sellAmounts[sellAmounts.length - 1]} ${token_data[tokenA].name}
-            for ${buyAmounts[buyAmounts.length - 1]} ${token_data[tokenB].name}`
+          `Selling ${sellAmounts[sellAmounts.length - 1]} ${token_data[tokenA].name} for ${buyAmounts[buyAmounts.length - 1]} ${
+            token_data[tokenB].name
+          }`
         )
       }
     }
