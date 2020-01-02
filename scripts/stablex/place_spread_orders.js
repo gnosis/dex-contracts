@@ -22,7 +22,7 @@ const argv = require("yargs")
   .option("accountId", {
     describe: "Account index of the order placer",
   })
-  .option("margin", {
+  .option("spread", {
     type: "float",
     describe: "Percentage increase required for trade (fees not accounted)",
     default: 0.25,
@@ -52,7 +52,7 @@ module.exports = async callback => {
     const trusted_tokens = argv.tokens.split(",").map(t => parseInt(t))
     const token_data = await fetchTokenInfo()
 
-    const expectedReturnFactor = 1 + argv.margin / 100
+    const expectedReturnFactor = 1 + argv.spread / 100
     const sellAmount = argv.sellAmount
     const buyAmount = sellAmount * expectedReturnFactor
 
@@ -99,7 +99,7 @@ module.exports = async callback => {
         from: account,
       }
     )
-    console.log(`Successfully placed margin orders with IDs ${id}`)
+    console.log(`Successfully placed spread orders with IDs ${id}`)
 
     callback()
   } catch (error) {
