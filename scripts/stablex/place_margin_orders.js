@@ -1,27 +1,17 @@
 const BatchExchange = artifacts.require("BatchExchange")
-const ERC20 = artifacts.require("ERC20")
 const fetch = require("node-fetch")
 const BN = require("bn.js")
 const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
 
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
-const fetchTokenInfo = async function(contract, tokenIds) {
+const fetchTokenInfo = async function() {
   console.log(`Recovering token data from URL ${token_list_url}`)
   const token_list = await (await fetch(token_list_url)).json()
   const token_data = {}
   for (const token of token_list) {
     token_data[token.id] = token
   }
-
-  // console.log("Recovering token data from EVM")
-  // const tokenObjects = []
-  // for (const id of tokenIds) {
-  //   const tokenAddress = await contract.tokenIdToAddressMap(id)
-  //   const tokenInstance = await ERC20.at(tokenAddress)
-  //   console.log(await tokenInstance.decimals)
-  //   tokenObjects.push(await ERC20.at(tokenAddress))
-  // }
   return token_data
 }
 
@@ -60,7 +50,7 @@ module.exports = async callback => {
     const batch_index = (await instance.getCurrentBatchId.call()).toNumber()
 
     const trusted_tokens = argv.tokens.split(",").map(t => parseInt(t))
-    const token_data = await fetchTokenInfo(instance, trusted_tokens)
+    const token_data = await fetchTokenInfo()
 
     const expectedReturnFactor = 1 + argv.margin / 100
     const sellAmount = argv.sellAmount
