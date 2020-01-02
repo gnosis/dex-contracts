@@ -1,10 +1,21 @@
 const BatchExchange = artifacts.require("BatchExchange")
 const fetch = require("node-fetch")
 const BN = require("bn.js")
+const readline = require("readline")
 
 const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
 
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+})
+
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
+
+const promptUser = function(message) {
+  return new Promise((resolve) => rl.question(message, (answer) => resolve(answer)))
+}
 
 const fetchTokenInfo = async function() {
   console.log(`Recovering token data from URL ${token_list_url}`)
@@ -84,7 +95,6 @@ module.exports = async callback => {
         sellTokens = sellTokens.concat(tokenB.id, tokenA.id)
         buyAmounts = buyAmounts.concat(formatAmount(buyAmount, tokenA), formatAmount(buyAmount, tokenB))
         sellAmounts = sellAmounts.concat(formatAmount(sellAmount, tokenB), formatAmount(sellAmount, tokenA))
-
         console.log(`Sell ${sellAmounts.slice(-2)[0]} ${tokenB.symbol} for ${buyAmounts.slice(-2)[0]} ${tokenA.symbol}`)
         console.log(`Sell ${sellAmounts.slice(-2)[1]} ${tokenA.symbol} for ${buyAmounts.slice(-2)[1]} ${tokenB.symbol}`)
       }
@@ -93,21 +103,24 @@ module.exports = async callback => {
     const validFroms = Array(buyTokens.length).fill(batch_index + argv.validFrom)
     const validTos = Array(buyTokens.length).fill(argv.expiry)
 
-    const ids = await sendTxAndGetReturnValue(
-      instance.placeValidFromOrders,
-      buyTokens,
-      sellTokens,
-      validFroms,
-      validTos,
-      buyAmounts,
-      sellAmounts,
-      {
-        from: account,
-      }
-    )
-    console.log(`Successfully placed spread orders with IDs ${ids}`)
-    console.log(`If this was undesired, these can be canceled as follows:\n
-      npx truffle exec scripts/stablex/cancel_order.js --accountId ${argv.accountId} --orderIds ${ids}`)
+    const answer = await promptUser("Are you sure you want to send this transaction to the EVM? [yN] ")
+    if (answer == "y" || answer.toLowerCase() == "yes") {
+      const ids = await sendTxAndGetReturnValue(
+        instance.placeValidFromOrders,
+        buyTokens,
+        sellTokens,
+        validFroms,
+        validTos,
+        buyAmounts,
+        sellAmounts,
+        {
+          from: account,
+        }
+      )
+      console.log(`Successfully placed spread orders with IDs ${ids}`)
+      console.log(`If this was undesired, these can be canceled as follows:\n
+        npx truffle exec scripts/stablex/cancel_order.js --accountId ${argv.accountId} --orderIds ${ids}`)
+    }
 
     callback()
   } catch (error) {
