@@ -1,6 +1,7 @@
 const BatchExchange = artifacts.require("BatchExchange")
 const fetch = require("node-fetch")
 const BN = require("bn.js")
+
 const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
 
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
@@ -15,9 +16,18 @@ const fetchTokenInfo = async function() {
   return token_data
 }
 
+const formatAmount = function(amount, token) {
+  return new BN(10).pow(new BN(token.decimals)).muln(amount)
+}
+
 const argv = require("yargs")
   .option("tokens", {
-    describe: "Collection of trusted tokens",
+    alias: "t",
+    type: "array",
+    describe: "Collection of trusted tokenIds",
+    coerce: array => {
+      return array.flatMap(v => v.split(",").map(t => parseInt(t)))
+    },
   })
   .option("accountId", {
     describe: "Account index of the order placer",
@@ -28,9 +38,14 @@ const argv = require("yargs")
     default: 0.25,
   })
   .option("sellAmount", {
-    type: "float",
-    describe: "Maximum sell amount (considered infinite if empty)",
-    default: 100,
+    type: "int",
+    describe: "Maximum sell amount (in full token units)",
+    default: 1000,
+  })
+  .option("validFrom", {
+    type: "int",
+    describe: "Number of batches (from current) until order become valid",
+    default: 3,
   })
   .option("expiry", {
     type: "int",
@@ -38,7 +53,9 @@ const argv = require("yargs")
     default: 2 ** 32 - 1,
   })
   .demand(["tokens", "accountId"])
-  .help("Make sure that you have an RPC connection to the network in consideration")
+  .help(
+    "Make sure that you have an RPC connection to the network in consideration. Example usage \n   npx truffle exec scripts/stablex/place_spread_orders.js --tokens=2,3,4 --accountId 0 --spread 0.3 --validFrom 5"
+  )
   .version(false).argv
 
 module.exports = async callback => {
@@ -48,8 +65,6 @@ module.exports = async callback => {
     const account = accounts[argv.accountId]
 
     const batch_index = (await instance.getCurrentBatchId.call()).toNumber()
-
-    const trusted_tokens = argv.tokens.split(",").map(t => parseInt(t))
     const token_data = await fetchTokenInfo()
 
     const expectedReturnFactor = 1 + argv.spread / 100
@@ -60,34 +75,25 @@ module.exports = async callback => {
     let sellTokens = []
     let buyAmounts = []
     let sellAmounts = []
-    for (let i = 0; i < trusted_tokens.length - 1; i++) {
-      const tokenA = trusted_tokens[i]
-      const tokenScaleA = new BN(10).pow(new BN(token_data[tokenA].decimals))
-      for (let j = i + 1; j < trusted_tokens.length; j++) {
-        const tokenB = trusted_tokens[j]
-        const tokenScaleB = new BN(10).pow(new BN(token_data[tokenB].decimals))
-        buyTokens = buyTokens.concat(tokenA, tokenB)
-        sellTokens = sellTokens.concat(tokenB, tokenA)
-        buyAmounts = buyAmounts.concat(tokenScaleA.muln(buyAmount), tokenScaleB.muln(buyAmount))
-        sellAmounts = sellAmounts.concat(tokenScaleB.muln(sellAmount), tokenScaleA.muln(sellAmount))
-        console.log(
-          `Selling ${sellAmounts[sellAmounts.length - 2]} ${token_data[tokenB].name} for ${buyAmounts[buyAmounts.length - 2]} ${
-            token_data[tokenA].name
-          }`
-        )
-        console.log(
-          `Selling ${sellAmounts[sellAmounts.length - 1]} ${token_data[tokenA].name} for ${buyAmounts[buyAmounts.length - 1]} ${
-            token_data[tokenB].name
-          }`
-        )
+    for (let i = 0; i < argv.tokens.length - 1; i++) {
+      const tokenA = token_data[argv.tokens[i]]
+      for (let j = i + 1; j < argv.tokens.length; j++) {
+        const tokenB = token_data[argv.tokens[j]]
+
+        buyTokens = buyTokens.concat(tokenA.id, tokenB.id)
+        sellTokens = sellTokens.concat(tokenB.id, tokenA.id)
+        buyAmounts = buyAmounts.concat(formatAmount(buyAmount, tokenA), formatAmount(buyAmount, tokenB))
+        sellAmounts = sellAmounts.concat(formatAmount(sellAmount, tokenB), formatAmount(sellAmount, tokenA))
+
+        console.log(`Sell ${sellAmounts.slice(-2)[0]} ${tokenB.symbol} for ${buyAmounts.slice(-2)[0]} ${tokenA.symbol}`)
+        console.log(`Sell ${sellAmounts.slice(-2)[1]} ${tokenA.symbol} for ${buyAmounts.slice(-2)[1]} ${tokenB.symbol}`)
       }
     }
 
-    // Allowing user 3 batches (15 minutes) to cancel if it is incorrectly placed
-    const validFroms = Array(buyTokens.length).fill(batch_index + 3)
+    const validFroms = Array(buyTokens.length).fill(batch_index + argv.validFrom)
     const validTos = Array(buyTokens.length).fill(argv.expiry)
 
-    const id = await sendTxAndGetReturnValue(
+    const ids = await sendTxAndGetReturnValue(
       instance.placeValidFromOrders,
       buyTokens,
       sellTokens,
@@ -99,7 +105,9 @@ module.exports = async callback => {
         from: account,
       }
     )
-    console.log(`Successfully placed spread orders with IDs ${id}`)
+    console.log(`Successfully placed spread orders with IDs ${ids}`)
+    console.log(`If this was undesired, these can be canceled as follows:\n
+      npx truffle exec scripts/stablex/cancel_order.js --accountId ${argv.accountId} --orderIds ${ids}`)
 
     callback()
   } catch (error) {
