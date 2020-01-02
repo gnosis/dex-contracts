@@ -5,16 +5,15 @@ const readline = require("readline")
 
 const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
 
-
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 })
 
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
 const promptUser = function(message) {
-  return new Promise((resolve) => rl.question(message, (answer) => resolve(answer)))
+  return new Promise(resolve => rl.question(message, answer => resolve(answer)))
 }
 
 const fetchTokenInfo = async function() {
