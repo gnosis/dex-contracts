@@ -98,6 +98,8 @@ contract BatchExchange is EpochTokenLocker {
         uint128 priceDenominator
     );
 
+    event TokenListing(address token, uint256 id);
+
     /** @dev Event emitted when an order is cancelled but still valid in the batch that is
      * currently being solved. It remains in storage but will not be tradable in any future
      * batch to be solved.
@@ -146,6 +148,7 @@ contract BatchExchange is EpochTokenLocker {
             feeToken.burnOWL(msg.sender, FEE_FOR_LISTING_TOKEN_IN_OWL);
         }
         require(IdToAddressBiMap.insert(registeredTokens, numTokens, token), "Token already registered");
+        emit TokenListing(token, numTokens);
         numTokens++;
     }
 
