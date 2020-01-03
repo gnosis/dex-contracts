@@ -7,6 +7,10 @@ async function migrate({ artifacts, network, deployer }) {
     deployer,
     "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap"
   )
+
+  // Hack to populate truffle artifact values correctly for linked libraries.
+  await BiMap.deployed()
+
   const SnappBaseCore = artifacts.require("SnappBaseCore")
   const SnappAuction = artifacts.require("SnappAuction")
 
