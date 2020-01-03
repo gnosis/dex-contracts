@@ -91,6 +91,6 @@
     "truffle-contract": "^4.0.31",
     "truffle-flattener": "^1.4.2",
     "truffle-plugin-verify": "^0.3.6",
-    "yargs": "^15.0.2"
+    "yargs": "^15.1.0"
   }
 }
