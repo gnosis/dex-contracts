@@ -10,7 +10,7 @@
     "test": "truffle test",
     "test-stablex": "truffle test test/stablex/*",
     "test-snapp": "truffle test test/snapp/*",
-    "coverage": "truffle run coverage --network development --temp build",
+    "coverage": "truffle run coverage --network development",
     "networks-extract": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/extract_network_info.js",
     "networks-inject": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/inject_network_info.js",
     "networks-reset": "mkdir -p build/contracts && truffle networks --clean && yarn run networks-inject",
