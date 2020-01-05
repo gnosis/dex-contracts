@@ -608,7 +608,7 @@ contract BatchExchange is EpochTokenLocker {
         if (limitTermLeft > limitTermRight) {
             limitTerm = limitTermLeft.sub(limitTermRight);
         }
-        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator).toUint128();
+        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator);
     }
 
     /** @dev Evaluates executedBuy amount based on prices and executedBuyAmout (fees included)
