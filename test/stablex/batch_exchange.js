@@ -1645,6 +1645,42 @@ contract("BatchExchange", async accounts => {
       }
     })
   })
+  describe("getUsersPaginated()", async () => {
+    const zero_address = "0x0000000000000000000000000000000000000000"
+    const account_one_and_two = (accounts[0] + accounts[1].slice(2, 42)).toString().toLowerCase()
+    it("returns null when no users", async () => {
+      const batchExchange = await setupGenericStableX()
+      const users = await batchExchange.getUsersPaginated(zero_address, 2)
+      assert.equal(null, users)
+    })
+    it("returns users when less than page size", async () => {
+      const batchExchange = await setupGenericStableX()
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100)
+      assert.equal(accounts[0].toString().toLowerCase(), (await batchExchange.getUsersPaginated(zero_address, 2)).toString())
+    })
+    it("returns first page and empty second page when equal to page size", async () => {
+      const batchExchange = await setupGenericStableX()
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[0] })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[1] })
+
+      assert.equal(account_one_and_two, (await batchExchange.getUsersPaginated(zero_address, 2)).toString())
+      assert.equal(null, await batchExchange.getUsersPaginated(accounts[1], 2))
+    })
+    it("returns first page and second page when larger than page size", async () => {
+      const batchExchange = await setupGenericStableX()
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[0] })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[1] })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[2] })
+
+      assert.equal(account_one_and_two, (await batchExchange.getUsersPaginated(zero_address, 2)).toString())
+      assert.equal(accounts[2].toString().toLowerCase(), (await batchExchange.getUsersPaginated(accounts[1], 2)).toString())
+    })
+  })
   describe("getEncodedUserOrdersPaginated()", async () => {
     it("returns correct orders considering offset and pageSize", async () => {
       const batchExchange = await setupGenericStableX()
