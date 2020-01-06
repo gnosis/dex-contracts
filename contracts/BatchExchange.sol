@@ -104,11 +104,11 @@ contract BatchExchange is EpochTokenLocker {
      * currently being solved. It remains in storage but will not be tradable in any future
      * batch to be solved.
      */
-    event OrderCancelation(address indexed owner, uint256 id);
+    event OrderCancelation(address indexed owner, uint16 id);
 
     /** @dev Event emitted when an order is removed from storage.
      */
-    event OrderDeletion(address indexed owner, uint256 id);
+    event OrderDeletion(address indexed owner, uint16 id);
 
     /** @dev Event emitted when a new trade is settled
      */
