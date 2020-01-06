@@ -1823,7 +1823,7 @@ contract("BatchExchange", async accounts => {
       assert.equal(await batchExchange.hasToken.call(erc20_1.address), true)
     })
   })
-  describe("Special Examples", async () => {
+  describe("Regression Tests", async () => {
     it("Accepts large (> 2^128) utility evaluation", async () => {
       const batchExchange = await setupGenericStableX(3)
 
