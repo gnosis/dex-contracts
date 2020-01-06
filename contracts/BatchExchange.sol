@@ -104,7 +104,7 @@ contract BatchExchange is EpochTokenLocker {
      * currently being solved. It remains in storage but will not be tradable in any future
      * batch to be solved.
      */
-    event OrderCancelation(address indexed owner, uint256 id);
+    event OrderCancellation(address indexed owner, uint256 id);
 
     /** @dev Event emitted when an order is removed from storage.
      */
@@ -206,9 +206,9 @@ contract BatchExchange is EpochTokenLocker {
       * being solved, it sets order expiry to that batchId. Otherwise it removes it from storage. Can be called
       * multiple times (e.g. to eventually free storage once order is expired).
       *
-      * @param orderIds referencing the indices of user's orders to be canceled
+      * @param orderIds referencing the indices of user's orders to be cancelled
       *
-      * Emits an {OrderCancelation} or {OrderDeletion} with sender's address and orderId
+      * Emits an {OrderCancellation} or {OrderDeletion} with sender's address and orderId
       */
     function cancelOrders(uint16[] memory orderIds) public {
         uint32 batchIdBeingSolved = getCurrentBatchId() - 1;
@@ -218,7 +218,7 @@ contract BatchExchange is EpochTokenLocker {
                 emit OrderDeletion(msg.sender, orderIds[i]);
             } else {
                 orders[msg.sender][orderIds[i]].validUntil = batchIdBeingSolved;
-                emit OrderCancelation(msg.sender, orderIds[i]);
+                emit OrderCancellation(msg.sender, orderIds[i]);
             }
         }
     }
@@ -233,7 +233,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param sellAmounts maximum amounts of sell token to be exchanged in new orders
       * @return an array of indices in which `msg.sender`'s new orders are included
       *
-      * Emits {OrderCancelation} events for all cancelled orders and {OrderPlacement} events with all relevant new order details.
+      * Emits {OrderCancellation} events for all cancelled orders and {OrderPlacement} events with relevant new order details.
       */
     function replaceOrders(
         uint16[] memory cancellations,

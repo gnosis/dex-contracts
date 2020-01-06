@@ -1666,7 +1666,7 @@ contract("BatchExchange", async accounts => {
       const auctionElements = await batchExchange.getEncodedOrders()
       assert.equal(auctionElements, null)
     })
-    it("returns correct orders whether valid, canceled or freed", async () => {
+    it("returns correct orders whether valid, cancelled or freed", async () => {
       const batchExchange = await setupGenericStableX()
       const zeroBN = new BN(0)
       const tenBN = new BN(10)
@@ -1684,7 +1684,7 @@ contract("BatchExchange", async accounts => {
         priceDenominator: tenBN,
         remainingAmount: tenBN,
       }
-      const canceledOrderInfo = {
+      const cancelledOrderInfo = {
         user: user_1.toLowerCase(),
         sellTokenBalance: zeroBN,
         buyToken: 1,
@@ -1722,7 +1722,7 @@ contract("BatchExchange", async accounts => {
       await batchExchange.cancelOrders([0])
 
       const auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
-      assert.equal(JSON.stringify(auctionElements), JSON.stringify([canceledOrderInfo, freedOrderInfo, validOrderInfo]))
+      assert.equal(JSON.stringify(auctionElements), JSON.stringify([cancelledOrderInfo, freedOrderInfo, validOrderInfo]))
     })
   })
   describe("getEncodedOrders()", async () => {
