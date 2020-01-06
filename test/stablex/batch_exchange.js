@@ -1824,7 +1824,7 @@ contract("BatchExchange", async accounts => {
     })
   })
   describe("Special Examples", async () => {
-    it("Overflows u128 on utility evaluation", async () => {
+    it("Accepts large (> 2^128) utility evaluation", async () => {
       const batchExchange = await setupGenericStableX(3)
 
       await makeDeposits(batchExchange, accounts, utilityOverflow.deposits)
@@ -1832,7 +1832,8 @@ contract("BatchExchange", async accounts => {
       const orderIds = await placeOrders(batchExchange, accounts, utilityOverflow.orders, batchId + 1)
       await closeAuction(batchExchange)
       const solution = solutionSubmissionParams(utilityOverflow.solutions[0], accounts, orderIds)
-      await batchExchange.submitSolution(
+
+      const objectiveValue = await batchExchange.submitSolution.call(
         batchId,
         solution.objectiveValue,
         solution.owners,
@@ -1842,6 +1843,7 @@ contract("BatchExchange", async accounts => {
         solution.tokenIdsForPrice,
         { from: solver }
       )
+      assert(objectiveValue > new BN(2).pow(new BN(128)))
     })
   })
 })
