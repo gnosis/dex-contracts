@@ -1824,7 +1824,7 @@ contract("BatchExchange", async accounts => {
     })
   })
   describe("Special Examples", async () => {
-    it.only("Overflows u128 on utility evaluation", async () => {
+    it("Overflows u128 on utility evaluation", async () => {
       const batchExchange = await setupGenericStableX(3)
       const feeToken = await batchExchange.tokenIdToAddressMap.call(0)
       const wethToken = await batchExchange.tokenIdToAddressMap.call(1)
