@@ -98,7 +98,7 @@ contract BatchExchange is EpochTokenLocker {
         uint128 priceDenominator
     );
 
-    event TokenListing(address token, uint256 id);
+    event TokenListing(address token, uint16 id);
 
     /** @dev Event emitted when an order is cancelled but still valid in the batch that is
      * currently being solved. It remains in storage but will not be tradable in any future
@@ -112,11 +112,11 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev Event emitted when a new trade is settled
      */
-    event Trade(address indexed owner, uint16 indexed orderId, uint256 executedSellAmount, uint256 executedBuyAmount);
+    event Trade(address indexed owner, uint16 indexed orderId, uint128 executedSellAmount, uint128 executedBuyAmount);
 
     /** @dev Event emitted when an already exectued trade gets reverted
      */
-    event TradeReversion(address indexed owner, uint16 indexed orderId, uint256 executedSellAmount, uint256 executedBuyAmount);
+    event TradeReversion(address indexed owner, uint16 indexed orderId, uint128 executedSellAmount, uint128 executedBuyAmount);
 
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
