@@ -231,7 +231,6 @@ const marginalTrade = generateTestCase({
   ],
 })
 
-
 const utilityOverflow = generateTestCase({
   deposits: [
     { amount: toETH(10), token: 0, user: 0 },
@@ -247,7 +246,7 @@ const utilityOverflow = generateTestCase({
     {
       name: "Utility Overflow",
       prices: ["1000000000000000000", "998999900119977150048", "10000000000198528574"].map(val => new BN(val)),
-      buyVolumes: ["1998999800099984", "99800080039994614733", "998000900199892164",].map(val => new BN(val)),
+      buyVolumes: ["1998999800099984", "99800080039994614733", "998000900199892164"].map(val => new BN(val)),
     },
   ],
 })
