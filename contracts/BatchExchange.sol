@@ -29,7 +29,7 @@ contract BatchExchange is EpochTokenLocker {
     uint256 public constant FEE_FOR_LISTING_TOKEN_IN_OWL = 10 ether;
 
     /** @dev minimum allowed value (in WEI) of any prices or executed trade amounts */
-    uint256 public constant AMOUNT_MINIMUM = 10**4;
+    uint128 public constant AMOUNT_MINIMUM = 10**4;
 
     /** Corresponds to percentage that competing solution must improve on current
       * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
@@ -98,25 +98,25 @@ contract BatchExchange is EpochTokenLocker {
         uint128 priceDenominator
     );
 
-    event TokenListing(address token, uint256 id);
+    event TokenListing(address token, uint16 id);
 
     /** @dev Event emitted when an order is cancelled but still valid in the batch that is
      * currently being solved. It remains in storage but will not be tradable in any future
      * batch to be solved.
      */
-    event OrderCancellation(address indexed owner, uint256 id);
+    event OrderCancellation(address indexed owner, uint16 id);
 
     /** @dev Event emitted when an order is removed from storage.
      */
-    event OrderDeletion(address indexed owner, uint256 id);
+    event OrderDeletion(address indexed owner, uint16 id);
 
     /** @dev Event emitted when a new trade is settled
      */
-    event Trade(address indexed owner, uint16 indexed orderId, uint256 executedSellAmount, uint256 executedBuyAmount);
+    event Trade(address indexed owner, uint16 indexed orderId, uint128 executedSellAmount, uint128 executedBuyAmount);
 
     /** @dev Event emitted when an already exectued trade gets reverted
      */
-    event TradeReversion(address indexed owner, uint16 indexed orderId, uint256 executedSellAmount, uint256 executedBuyAmount);
+    event TradeReversion(address indexed owner, uint16 indexed orderId, uint128 executedSellAmount, uint128 executedBuyAmount);
 
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
