@@ -29,7 +29,7 @@ contract BatchExchange is EpochTokenLocker {
     uint256 public constant FEE_FOR_LISTING_TOKEN_IN_OWL = 10 ether;
 
     /** @dev minimum allowed value (in WEI) of any prices or executed trade amounts */
-    uint256 public constant AMOUNT_MINIMUM = 10**4;
+    uint128 public constant AMOUNT_MINIMUM = 10**4;
 
     /** Corresponds to percentage that competing solution must improve on current
       * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
