@@ -584,7 +584,7 @@ contract BatchExchange is EpochTokenLocker {
         uint256 utilityError = execSellTimesBuy.mod(order.priceDenominator).mul(currentPrices[order.buyToken]).div(
             order.priceDenominator
         );
-        return roundedUtility.sub(utilityError).toUint128();
+        return roundedUtility.sub(utilityError);
     }
 
     /** @dev computes a measure of how much of an order was disregarded (only valid when limit price is respected)
@@ -608,7 +608,7 @@ contract BatchExchange is EpochTokenLocker {
         if (limitTermLeft > limitTermRight) {
             limitTerm = limitTermLeft.sub(limitTermRight);
         }
-        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator).toUint128();
+        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator);
     }
 
     /** @dev Evaluates executedBuy amount based on prices and executedBuyAmout (fees included)
