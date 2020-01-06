@@ -231,6 +231,27 @@ const marginalTrade = generateTestCase({
   ],
 })
 
+
+const utilityOverflow = generateTestCase({
+  deposits: [
+    { amount: toETH(10), token: 0, user: 0 },
+    { amount: toETH(1), token: 1, user: 1 },
+    { amount: toETH(100), token: 2, user: 2 },
+  ],
+  orders: [
+    { sellToken: 0, buyToken: 1, sellAmount: toETH(10), buyAmount: new BN("10000000000000000"), user: 0 },
+    { sellToken: 1, buyToken: 2, sellAmount: toETH(1), buyAmount: new BN("1000"), user: 1 },
+    { sellToken: 2, buyToken: 1, sellAmount: toETH(100), buyAmount: toETH(1), user: 2 },
+  ],
+  solutions: [
+    {
+      name: "Utility Overflow",
+      prices: ["1000000000000000000", "998999900119977150048", "10000000000198528574"].map(val => new BN(val)),
+      buyVolumes: ["1998999800099984", "99800080039994614733", "998000900199892164",].map(val => new BN(val)),
+    },
+  ],
+})
+
 module.exports = Object.assign(
   {
     basicTrade,
@@ -243,6 +264,7 @@ module.exports = Object.assign(
     smallExample,
     stableXExample,
     marginalTrade,
+    utilityOverflow,
   },
   require("./generate")
 )
