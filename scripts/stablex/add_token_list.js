@@ -3,7 +3,7 @@ const fetch = require("node-fetch")
 const argv = require("yargs")
   .option("token_list_url", {
     describe: "A url which can be fetched with node-fetch",
-    default: token_list_url
+    default: token_list_url,
   })
   .help(false)
   .version(false).argv
