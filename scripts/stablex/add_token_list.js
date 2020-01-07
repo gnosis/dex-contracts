@@ -1,9 +1,9 @@
-const { addTokens } = require("./utilities.js")
+const { addTokens, token_list_url } = require("./utilities.js")
 const fetch = require("node-fetch")
 const argv = require("yargs")
   .option("token_list_url", {
     describe: "A url which can be fetched with node-fetch",
-    default: "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json",
+    default: token_list_url,
   })
   .help(false)
   .version(false).argv
