@@ -4,13 +4,12 @@ const BN = require("bn.js")
 const readline = require("readline")
 
 const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
+const token_list_url = require("./utilities.js")
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
 })
-
-const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
 const promptUser = function(message) {
   return new Promise(resolve => rl.question(message, answer => resolve(answer)))
@@ -64,7 +63,7 @@ const argv = require("yargs")
   })
   .demand(["tokens", "accountId"])
   .help(
-    "Make sure that you have an RPC connection to the network in consideration. Example usage \n   npx truffle exec scripts/stablex/place_spread_orders.js --tokens=2,3,4 --accountId 0 --spread 0.3 --validFrom 5"
+    "Make sure that you have an RPC connection to the network in consideration. For network configurations, please see truffle-config.js Example usage \n   npx truffle exec scripts/stablex/place_spread_orders.js --tokens=2,3,4 --accountId 0 --spread 0.3 --validFrom 5"
   )
   .version(false).argv
 
