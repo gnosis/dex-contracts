@@ -63,7 +63,7 @@
     "@gnosis.pm/owl-token": "^3.1.0",
     "@gnosis.pm/solidity-data-structures": "^1.2.1",
     "@gnosis.pm/util-contracts": "^2.0.6",
-    "axios": "^0.19.0",
+    "axios": "^0.19.1",
     "coveralls": "^3.0.9",
     "dotenv": "^8.0.0",
     "es6-promise": "^4.2.8",
