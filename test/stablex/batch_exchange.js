@@ -20,7 +20,6 @@ const {
   shortRingBetterTrade,
   smallExample,
   marginalTrade,
-  utilityOverflow,
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
@@ -1857,29 +1856,6 @@ contract("BatchExchange", async accounts => {
       await batchExchange.addToken(erc20_1.address)
 
       assert.equal(await batchExchange.hasToken.call(erc20_1.address), true)
-    })
-  })
-  describe("Regression Tests", async () => {
-    it("Accepts large (> 2^128) utility evaluation", async () => {
-      const batchExchange = await setupGenericStableX(3)
-
-      await makeDeposits(batchExchange, accounts, utilityOverflow.deposits)
-      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(batchExchange, accounts, utilityOverflow.orders, batchId + 1)
-      await closeAuction(batchExchange)
-      const solution = solutionSubmissionParams(utilityOverflow.solutions[0], accounts, orderIds)
-
-      const objectiveValue = await batchExchange.submitSolution.call(
-        batchId,
-        solution.objectiveValue,
-        solution.owners,
-        solution.touchedorderIds,
-        solution.volumes,
-        solution.prices,
-        solution.tokenIdsForPrice,
-        { from: solver }
-      )
-      assert(objectiveValue > new BN(2).pow(new BN(128)))
     })
   })
 })
