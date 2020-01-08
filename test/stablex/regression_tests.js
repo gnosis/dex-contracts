@@ -53,7 +53,7 @@ contract("BatchExchange", async accounts => {
       )
       assert(objectiveValue > new BN(2).pow(new BN(128)))
     })
-    it("Consume claimable withdraw balance", async () => {
+    it("Should not allow to use claimable withdraws in solution", async () => {
       const batchExchange = await setupGenericStableX()
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
@@ -64,7 +64,8 @@ contract("BatchExchange", async accounts => {
       await batchExchange.requestWithdraw(tokenAddress, firstOrder.sellAmount, { from: attackerAddress })
       await closeAuction(batchExchange)
       // Ensure withdraw is claimable.
-      assert(batchExchange.hasValidWithdrawRequest.call(attackerAddress, tokenAddress), true)
+      assert(await batchExchange.hasValidWithdrawRequest.call(attackerAddress, tokenAddress), true)
+      assert(await batchExchange.getBalance.call(attackerAddress, tokenAddress), 0)
 
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchId + 1)
