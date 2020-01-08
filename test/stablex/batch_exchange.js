@@ -1080,7 +1080,7 @@ contract("BatchExchange", async accounts => {
         "Token conservation does not hold"
       )
     })
-    it("throws, if sell volume is bigger than balance available", async () => {
+    it("throws if sell volume is bigger than available balance", async () => {
       const batchExchange = await setupGenericStableX()
 
       for (const deposit of basicTrade.deposits) {
@@ -1104,7 +1104,7 @@ contract("BatchExchange", async accounts => {
           solution.tokenIdsForPrice,
           { from: solver }
         ),
-        "SafeMath: subtraction overflow"
+        "Amount exceeds user's balance"
       )
     })
     it("reverts, if tokenIds for prices are not sorted", async () => {
