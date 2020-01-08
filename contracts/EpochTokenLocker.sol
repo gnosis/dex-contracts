@@ -206,6 +206,7 @@ contract EpochTokenLocker {
     }
 
     function subtractBalance(address user, address token, uint256 amount) internal {
+        require(amount <= getBalance(user, token), "Amount exceeds user's balance.");
         updateDepositsBalance(user, token);
         balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
     }
