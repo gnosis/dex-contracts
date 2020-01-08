@@ -4977,26 +4977,6 @@ isstream@~0.1.2:
   resolved "https://registry.yarnpkg.com/isstream/-/isstream-0.1.2.tgz#47e63f7af55afa6f92e1500e690eb8b8529c099a"
   integrity sha1-R+Y/evVa+m+S4VAOaQ64uFKcCZo=
 
-istanbul@^0.4.5:
-  version "0.4.5"
-  resolved "https://registry.yarnpkg.com/istanbul/-/istanbul-0.4.5.tgz#65c7d73d4c4da84d4f3ac310b918fb0b8033733b"
-  integrity sha1-ZcfXPUxNqE1POsMQuRj7C4Azczs=
-  dependencies:
-    abbrev "1.0.x"
-    async "1.x"
-    escodegen "1.8.x"
-    esprima "2.7.x"
-    glob "^5.0.15"
-    handlebars "^4.0.1"
-    js-yaml "3.x"
-    mkdirp "0.5.x"
-    nopt "3.x"
-    once "1.x"
-    resolve "1.1.x"
-    supports-color "^3.1.0"
-    which "^1.1.1"
-    wordwrap "^1.0.0"
-
 isurl@^1.0.0-alpha5:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/isurl/-/isurl-1.0.0.tgz#b27f4f49f3cdaa3ea44a0a5b7f3462e6edc39d67"
@@ -7491,6 +7471,26 @@ sax@^1.2.4:
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.4.tgz#2816234e2378bddc4e5354fab5caa895df7100d9"
   integrity sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==
 
+sc-istanbul@^0.4.5:
+  version "0.4.5"
+  resolved "https://registry.yarnpkg.com/sc-istanbul/-/sc-istanbul-0.4.5.tgz#1896066484d55336cf2cdbcc7884dc79da50dc76"
+  integrity sha512-7wR5EZFLsC4w0wSm9BUuCgW+OGKAU7PNlW5L0qwVPbh+Q1sfVn2fyzfMXYCm6rkNA5ipaCOt94nApcguQwF5Gg==
+  dependencies:
+    abbrev "1.0.x"
+    async "1.x"
+    escodegen "1.8.x"
+    esprima "2.7.x"
+    glob "^5.0.15"
+    handlebars "^4.0.1"
+    js-yaml "3.x"
+    mkdirp "0.5.x"
+    nopt "3.x"
+    once "1.x"
+    resolve "1.1.x"
+    supports-color "^3.1.0"
+    which "^1.1.1"
+    wordwrap "^1.0.0"
+
 scrypt-js@2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/scrypt-js/-/scrypt-js-2.0.3.tgz#bb0040be03043da9a012a2cea9fc9f852cfc87d4"
@@ -7879,10 +7879,10 @@ solidity-bytes-utils@0.0.8:
   dependencies:
     truffle-hdwallet-provider "0.0.3"
 
-solidity-coverage@^0.7.0:
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/solidity-coverage/-/solidity-coverage-0.7.0.tgz#639c9c5b7566c2270798a4cdbf3d61dbebb89677"
-  integrity sha512-zZSIYUkQ3sydc9QOfnWODvXz2NSVZlJDqNpJXONdN+YssN0BA2q7FXObaVi56LqyBjyKJaEXfrZrr39oUhHZoQ==
+solidity-coverage@^0.7.1:
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/solidity-coverage/-/solidity-coverage-0.7.1.tgz#65e69483dbd67b8a292d820b14b69ee9a2858fb4"
+  integrity sha512-8IxnxE6DRiF0UomFxjVWqmv8fgY1W5m1wCvshHE1JfR+yVDNyYTJnpfPsBzHGQRJ3+OlwLZv6BzamrAV9H9bmg==
   dependencies:
     "@truffle/provider" "^0.1.17"
     chalk "^2.4.2"
@@ -7893,12 +7893,12 @@ solidity-coverage@^0.7.0:
     ghost-testrpc "^0.0.2"
     global-modules "^2.0.0"
     globby "^10.0.1"
-    istanbul "^0.4.5"
     jsonschema "^1.2.4"
     lodash "^4.17.15"
     node-emoji "^1.10.0"
     pify "^4.0.1"
     recursive-readdir "^2.2.2"
+    sc-istanbul "^0.4.5"
     shelljs "^0.8.3"
     solidity-parser-antlr "0.4.7"
     web3 "1.2.1"
