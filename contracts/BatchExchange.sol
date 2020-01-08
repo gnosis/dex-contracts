@@ -392,6 +392,30 @@ contract BatchExchange is EpochTokenLocker {
         return elements;
     }
 
+    /** @dev View returning all byte-encoded users in paginated form
+      * @param previousUser address of last user received in last pages (address(0) for first page)
+      * @param pageSize uint determining the count of users to be returned per page
+      * @return encoded packed bytes of user addresses
+      */
+    function getUsersPaginated(address previousUser, uint16 pageSize) public view returns (bytes memory users) {
+        if (allUsers.size() == 0) {
+            return users;
+        }
+        uint16 count = 0;
+        address current = previousUser;
+        if (current == address(0)) {
+            current = allUsers.first();
+            users = users.concat(abi.encodePacked(current));
+            count++;
+        }
+        while (count < pageSize && current != allUsers.last) {
+            current = allUsers.next(current);
+            users = users.concat(abi.encodePacked(current));
+            count++;
+        }
+        return users;
+    }
+
     /** @dev View returning all byte-encoded sell orders for specified user
       * @param user address of user whose orders are being queried
       * @return encoded bytes representing all orders
