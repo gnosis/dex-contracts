@@ -64,7 +64,7 @@ contract("BatchExchange", async accounts => {
       await closeAuction(batchExchange)
       // Ensure withdraw is claimable.
       assert(batchExchange.hasValidWithdrawRequest.call(attackerAddress, tokenAddress), true)
-      
+
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchId + 1)
 
