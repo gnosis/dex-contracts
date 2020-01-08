@@ -4,6 +4,7 @@ const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
 const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
 
 const BN = require("bn.js")
+const truffleAssert = require("truffle-assertions")
 
 const { closeAuction } = require("../../scripts/stablex/utilities.js")
 
@@ -71,19 +72,19 @@ contract("BatchExchange", async accounts => {
       await closeAuction(batchExchange)
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
 
-      await batchExchange.submitSolution.call(
-        batchId,
-        solution.objectiveValue,
-        solution.owners,
-        solution.touchedorderIds,
-        solution.volumes,
-        solution.prices,
-        solution.tokenIdsForPrice,
-        { from: solver }
+      await truffleAssert.reverts(
+        batchExchange.submitSolution.call(
+          batchId,
+          solution.objectiveValue,
+          solution.owners,
+          solution.touchedorderIds,
+          solution.volumes,
+          solution.prices,
+          solution.tokenIdsForPrice,
+          { from: solver }
+        ),
+        "Amount exceeds user's balance"
       )
-
-      // Claim back initial deposit that has already been traded.
-      await batchExchange.withdraw(attackerAddress, tokenAddress)
     })
   })
 })
