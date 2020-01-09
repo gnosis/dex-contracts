@@ -29,7 +29,7 @@ contract BatchExchange is EpochTokenLocker {
     uint256 public constant FEE_FOR_LISTING_TOKEN_IN_OWL = 10 ether;
 
     /** @dev minimum allowed value (in WEI) of any prices or executed trade amounts */
-    uint256 public constant AMOUNT_MINIMUM = 10**4;
+    uint128 public constant AMOUNT_MINIMUM = 10**4;
 
     /** Corresponds to percentage that competing solution must improve on current
       * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
@@ -98,25 +98,25 @@ contract BatchExchange is EpochTokenLocker {
         uint128 priceDenominator
     );
 
-    event TokenListing(address token, uint256 id);
+    event TokenListing(address token, uint16 id);
 
     /** @dev Event emitted when an order is cancelled but still valid in the batch that is
      * currently being solved. It remains in storage but will not be tradable in any future
      * batch to be solved.
      */
-    event OrderCancelation(address indexed owner, uint256 id);
+    event OrderCancellation(address indexed owner, uint16 id);
 
     /** @dev Event emitted when an order is removed from storage.
      */
-    event OrderDeletion(address indexed owner, uint256 id);
+    event OrderDeletion(address indexed owner, uint16 id);
 
     /** @dev Event emitted when a new trade is settled
      */
-    event Trade(address indexed owner, uint16 indexed orderId, uint256 executedSellAmount, uint256 executedBuyAmount);
+    event Trade(address indexed owner, uint16 indexed orderId, uint128 executedSellAmount, uint128 executedBuyAmount);
 
     /** @dev Event emitted when an already exectued trade gets reverted
      */
-    event TradeReversion(address indexed owner, uint16 indexed orderId, uint256 executedSellAmount, uint256 executedBuyAmount);
+    event TradeReversion(address indexed owner, uint16 indexed orderId, uint128 executedSellAmount, uint128 executedBuyAmount);
 
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
@@ -206,9 +206,9 @@ contract BatchExchange is EpochTokenLocker {
       * being solved, it sets order expiry to that batchId. Otherwise it removes it from storage. Can be called
       * multiple times (e.g. to eventually free storage once order is expired).
       *
-      * @param orderIds referencing the indices of user's orders to be canceled
+      * @param orderIds referencing the indices of user's orders to be cancelled
       *
-      * Emits an {OrderCancelation} or {OrderDeletion} with sender's address and orderId
+      * Emits an {OrderCancellation} or {OrderDeletion} with sender's address and orderId
       */
     function cancelOrders(uint16[] memory orderIds) public {
         uint32 batchIdBeingSolved = getCurrentBatchId() - 1;
@@ -218,7 +218,7 @@ contract BatchExchange is EpochTokenLocker {
                 emit OrderDeletion(msg.sender, orderIds[i]);
             } else {
                 orders[msg.sender][orderIds[i]].validUntil = batchIdBeingSolved;
-                emit OrderCancelation(msg.sender, orderIds[i]);
+                emit OrderCancellation(msg.sender, orderIds[i]);
             }
         }
     }
@@ -233,7 +233,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param sellAmounts maximum amounts of sell token to be exchanged in new orders
       * @return an array of indices in which `msg.sender`'s new orders are included
       *
-      * Emits {OrderCancelation} events for all cancelled orders and {OrderPlacement} events with all relevant new order details.
+      * Emits {OrderCancellation} events for all cancelled orders and {OrderPlacement} events with relevant new order details.
       */
     function replaceOrders(
         uint16[] memory cancellations,
@@ -390,6 +390,30 @@ contract BatchExchange is EpochTokenLocker {
             );
         }
         return elements;
+    }
+
+    /** @dev View returning all byte-encoded users in paginated form
+      * @param previousUser address of last user received in last pages (address(0) for first page)
+      * @param pageSize uint determining the count of users to be returned per page
+      * @return encoded packed bytes of user addresses
+      */
+    function getUsersPaginated(address previousUser, uint16 pageSize) public view returns (bytes memory users) {
+        if (allUsers.size() == 0) {
+            return users;
+        }
+        uint16 count = 0;
+        address current = previousUser;
+        if (current == address(0)) {
+            current = allUsers.first();
+            users = users.concat(abi.encodePacked(current));
+            count++;
+        }
+        while (count < pageSize && current != allUsers.last) {
+            current = allUsers.next(current);
+            users = users.concat(abi.encodePacked(current));
+            count++;
+        }
+        return users;
     }
 
     /** @dev View returning all byte-encoded sell orders for specified user
@@ -584,7 +608,7 @@ contract BatchExchange is EpochTokenLocker {
         uint256 utilityError = execSellTimesBuy.mod(order.priceDenominator).mul(currentPrices[order.buyToken]).div(
             order.priceDenominator
         );
-        return roundedUtility.sub(utilityError).toUint128();
+        return roundedUtility.sub(utilityError);
     }
 
     /** @dev computes a measure of how much of an order was disregarded (only valid when limit price is respected)
@@ -608,7 +632,7 @@ contract BatchExchange is EpochTokenLocker {
         if (limitTermLeft > limitTermRight) {
             limitTerm = limitTermLeft.sub(limitTermRight);
         }
-        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator).toUint128();
+        return leftoverSellAmount.mul(limitTerm).div(order.priceDenominator);
     }
 
     /** @dev Evaluates executedBuy amount based on prices and executedBuyAmout (fees included)

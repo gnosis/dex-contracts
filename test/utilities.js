@@ -3,7 +3,7 @@ const memoize = require("fast-memoize")
 const { MerkleTree } = require("merkletreejs")
 const BN = require("bn.js")
 
-const { decodeOrders } = require("../src/index")
+const { decodeOrders } = require("../src/encoding")
 
 /**
  * funds accounts with specified value for Mintable Token

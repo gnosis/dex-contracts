@@ -31,6 +31,10 @@ async function migrate({ artifacts, deployer, network, accounts, web3, maxTokens
     "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet"
   )
 
+  // Hack to populate truffle artifact data correctly for linked libraries.
+  await BiMap.deployed()
+  await IterableAppendOnlySet.deployed()
+
   //linking libraries
   await deployer.link(BiMap, BatchExchange)
   await deployer.link(IterableAppendOnlySet, BatchExchange)

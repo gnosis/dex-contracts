@@ -1,5 +1,6 @@
 const BN = require("bn.js")
 const { waitForNSeconds } = require("../../test/utilities.js")
+const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
 const addTokens = async function(token_addresses, web3, artifacts) {
   const accounts = await web3.eth.getAccounts()
@@ -39,4 +40,5 @@ const closeAuction = async (instance, web3Provider = web3) => {
 module.exports = {
   addTokens,
   closeAuction,
+  token_list_url,
 }

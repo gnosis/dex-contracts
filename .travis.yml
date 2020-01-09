@@ -8,8 +8,6 @@ before_install:
   - yarn --version
   - npm install -g ganache-cli@latest
   - ganache-cli --version
-before_script:
-  - ganache-cli --defaultBalanceEther 500000000 > /dev/null &
 script:
   - yarn run lint
   - yarn run solhint

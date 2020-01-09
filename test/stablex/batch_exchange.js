@@ -1080,7 +1080,7 @@ contract("BatchExchange", async accounts => {
         "Token conservation does not hold"
       )
     })
-    it("throws, if sell volume is bigger than balance available", async () => {
+    it("throws if sell volume is bigger than available balance", async () => {
       const batchExchange = await setupGenericStableX()
 
       for (const deposit of basicTrade.deposits) {
@@ -1104,7 +1104,7 @@ contract("BatchExchange", async accounts => {
           solution.tokenIdsForPrice,
           { from: solver }
         ),
-        "SafeMath: subtraction overflow"
+        "Amount exceeds user's balance"
       )
     })
     it("reverts, if tokenIds for prices are not sorted", async () => {
@@ -1645,6 +1645,42 @@ contract("BatchExchange", async accounts => {
       }
     })
   })
+  describe("getUsersPaginated()", async () => {
+    const zero_address = "0x0000000000000000000000000000000000000000"
+    const account_one_and_two = (accounts[0] + accounts[1].slice(2, 42)).toString().toLowerCase()
+    it("returns null when no users", async () => {
+      const batchExchange = await setupGenericStableX()
+      const users = await batchExchange.getUsersPaginated(zero_address, 2)
+      assert.equal(null, users)
+    })
+    it("returns users when less than page size", async () => {
+      const batchExchange = await setupGenericStableX()
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100)
+      assert.equal(accounts[0].toString().toLowerCase(), (await batchExchange.getUsersPaginated(zero_address, 2)).toString())
+    })
+    it("returns first page and empty second page when equal to page size", async () => {
+      const batchExchange = await setupGenericStableX()
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[0] })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[1] })
+
+      assert.equal(account_one_and_two, (await batchExchange.getUsersPaginated(zero_address, 2)).toString())
+      assert.equal(null, await batchExchange.getUsersPaginated(accounts[1], 2))
+    })
+    it("returns first page and second page when larger than page size", async () => {
+      const batchExchange = await setupGenericStableX()
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[0] })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[1] })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[2] })
+
+      assert.equal(account_one_and_two, (await batchExchange.getUsersPaginated(zero_address, 2)).toString())
+      assert.equal(accounts[2].toString().toLowerCase(), (await batchExchange.getUsersPaginated(accounts[1], 2)).toString())
+    })
+  })
   describe("getEncodedUserOrdersPaginated()", async () => {
     it("returns correct orders considering offset and pageSize", async () => {
       const batchExchange = await setupGenericStableX()
@@ -1666,7 +1702,7 @@ contract("BatchExchange", async accounts => {
       const auctionElements = await batchExchange.getEncodedOrders()
       assert.equal(auctionElements, null)
     })
-    it("returns correct orders whether valid, canceled or freed", async () => {
+    it("returns correct orders whether valid, cancelled or freed", async () => {
       const batchExchange = await setupGenericStableX()
       const zeroBN = new BN(0)
       const tenBN = new BN(10)
@@ -1684,7 +1720,7 @@ contract("BatchExchange", async accounts => {
         priceDenominator: tenBN,
         remainingAmount: tenBN,
       }
-      const canceledOrderInfo = {
+      const cancelledOrderInfo = {
         user: user_1.toLowerCase(),
         sellTokenBalance: zeroBN,
         buyToken: 1,
@@ -1722,7 +1758,7 @@ contract("BatchExchange", async accounts => {
       await batchExchange.cancelOrders([0])
 
       const auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
-      assert.equal(JSON.stringify(auctionElements), JSON.stringify([canceledOrderInfo, freedOrderInfo, validOrderInfo]))
+      assert.equal(JSON.stringify(auctionElements), JSON.stringify([cancelledOrderInfo, freedOrderInfo, validOrderInfo]))
     })
   })
   describe("getEncodedOrders()", async () => {
