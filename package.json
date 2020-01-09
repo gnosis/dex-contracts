@@ -18,7 +18,7 @@
     "verify-stablex": "truffle run verify BatchExchange",
     "lint": "eslint .",
     "solhint": "solhint \"contracts/**/*.sol\"",
-    "prepack": "yarn run build",
+    "prepack": "yarn run build && mkdir -p build/deploy",
     "prettier:solidity": "prettier --write 'contracts/**/*.sol'",
     "prettier:js": "prettier --write './**/*.js'",
     "pretty-check": "prettier --check 'contracts/**/*.sol' && prettier --check './**/*.js'",
