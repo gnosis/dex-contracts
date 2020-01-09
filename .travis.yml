@@ -15,13 +15,13 @@ script:
   - solium -d contracts/
   - yarn run coverage && cat ./coverage/lcov.info | coveralls
 before_deploy:
-  - yarn pack --filename build/dex-contracts-$TRAVIS_TAG.tgz
+  - yarn pack --filename build/deploy/dex-contracts-$TRAVIS_TAG.tgz
 deploy:
   provider: s3
   access_key_id: ""
   secret_access_key: ""
   bucket: ""
-  script: bash ci/deploy.sh
+  local_dir: build/deploy
   on:
     tags: true
 after_deploy:
