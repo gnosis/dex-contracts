@@ -145,27 +145,21 @@
     "@gnosis.pm/util-contracts" "^2.0.0"
     verify-on-etherscan "^1.1.1"
 
-"@gnosis.pm/solidity-data-structures@^1.2.1":
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@gnosis.pm/solidity-data-structures/-/solidity-data-structures-1.2.1.tgz#880d173971228eaab14f2b7f383150d81115f670"
-  integrity sha512-OHkxzy8Pwn+bCmLCPzEKzbU5djHmQGttZ3kSv9Hbjy2BX06oAY8xFB2H/Ic6pCy5RcJmeHezNr9CKhXYXROOBQ==
+"@gnosis.pm/solidity-data-structures@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@gnosis.pm/solidity-data-structures/-/solidity-data-structures-1.2.2.tgz#fb5b92eace6a3b15cb315e3591952d99245fd519"
+  integrity sha512-S2dSTVnP0p6dvNqMpDK12mgXxqOHUgNJuA4voDSRkTLVM26xJYhQnr0xFlBBMzAGdRMs/QOwGhrHxRolLKXx2A==
   dependencies:
     "@gnosis.pm/util-contracts" "^2.0.4"
     ethereumjs-util "^6.1.0"
     merkletreejs "0.0.22"
-    truffle "^5.0.34"
 
 "@gnosis.pm/util-contracts@2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@gnosis.pm/util-contracts/-/util-contracts-2.0.0.tgz#562b14a2d6cb4a59189476dd0f6aaeba5f65abe2"
   integrity sha512-vRgTV36d4ZFdcetKcNbnAtSDrP3OSWEj8YmG3RHK4DBMulPX2asRh8VnopTrZnZQ8enZIDbT1pT7buW+UJqd4g==
 
-"@gnosis.pm/util-contracts@^2.0.0", "@gnosis.pm/util-contracts@^2.0.4":
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/@gnosis.pm/util-contracts/-/util-contracts-2.0.4.tgz#fe16753f13f1a7382d9005b7ce18f4dd8b6a0177"
-  integrity sha512-v+gpWDW0hZ9nZ2FgDI5cfkpXZIsVXP51SXzVLdres6GrERcYx+WJsz2RqIQ1nyehKTyS+el1TTkhIKdbBAFtDg==
-
-"@gnosis.pm/util-contracts@^2.0.6":
+"@gnosis.pm/util-contracts@^2.0.0", "@gnosis.pm/util-contracts@^2.0.4", "@gnosis.pm/util-contracts@^2.0.6":
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/@gnosis.pm/util-contracts/-/util-contracts-2.0.6.tgz#6bc5107068df6643548a9a0ff11b2eed725aa161"
   integrity sha512-d53LDUiIUgZ9RNvHWZmTBYjETAEWe56srZF4cF12qEn6KCRJMFnB/+0uc05Tthj9fN2fNAMNNsPGNF2lI1aHCQ==
@@ -8703,7 +8697,7 @@ truffle-plugin-verify@^0.3.6:
     querystring "^0.2.0"
     sol-merger "^1.1.0"
 
-truffle@^5.0.25, truffle@^5.0.34, truffle@^5.1.7:
+truffle@^5.0.25, truffle@^5.1.7:
   version "5.1.7"
   resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.1.7.tgz#d1e4645e2da889920e4bc63fd1139192ec6ccc2d"
   integrity sha512-caVeXdNLO/3ve5Iua0cGIb0YKcXMdKdWOuqHBkFVMMWz66jABNBgtspQRtIvmXxTcU9APTUrbPOz7VM+Tht3yw==
