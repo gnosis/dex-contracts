@@ -267,16 +267,16 @@ contract("BatchExchange", async accounts => {
   })
   describe("replaceOrders()", () => {
     it("cancels and creates new orders", async () => {
-      const batchExchange = await setupGenericStableX()
+      const batchExchange = await setupGenericStableX(8)
 
       await batchExchange.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
-      const order2 = await sendTxAndGetReturnValue(batchExchange.placeOrder, 2, 4, 5, 30, 40, { from: user_1 })
+      const order2 = await sendTxAndGetReturnValue(batchExchange.placeOrder, 2, 3, 5, 30, 40, { from: user_1 })
 
       const currentStateIndex = (await batchExchange.getCurrentBatchId()).toNumber()
       await batchExchange.replaceOrders(
         [order2],
-        [5, 6],
-        [7, 8],
+        [4, 5],
+        [6, 7],
         [currentStateIndex, currentStateIndex],
         [11, 12],
         [13, 14],
@@ -285,8 +285,8 @@ contract("BatchExchange", async accounts => {
 
       assert.equal((await batchExchange.orders(user_1, 0)).sellToken, 1, "First order should be present")
       assert.equal((await batchExchange.orders(user_1, 1)).sellToken, 0, "Second order should be removed")
-      assert.equal((await batchExchange.orders(user_1, 2)).sellToken, 7, "Third order should be present")
-      assert.equal((await batchExchange.orders(user_1, 3)).sellToken, 8, "Fourth order should be present")
+      assert.equal((await batchExchange.orders(user_1, 2)).sellToken, 6, "Third order should be present")
+      assert.equal((await batchExchange.orders(user_1, 3)).sellToken, 7, "Fourth order should be present")
     })
   })
   describe("submitSolution()", () => {
