@@ -469,6 +469,8 @@ contract BatchExchange is EpochTokenLocker {
         uint128 buyAmount,
         uint128 sellAmount
     ) private returns (uint16) {
+        require(IdToAddressBiMap.hasId(registeredTokens, buyToken), "Buy token must be listed");
+        require(IdToAddressBiMap.hasId(registeredTokens, sellToken), "Sell token must be listed");
         require(buyToken != sellToken, "Exchange tokens not distinct");
         require(validFrom >= getCurrentBatchId(), "Orders can't be placed in the past");
         orders[msg.sender].push(

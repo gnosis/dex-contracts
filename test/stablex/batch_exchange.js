@@ -149,6 +149,18 @@ contract("BatchExchange", async accounts => {
         "Exchange tokens not distinct"
       )
     })
+    it("rejects orders for unlisted tokens", async () => {
+      const batchExchange = await setupGenericStableX()
+      const currentBatch = (await batchExchange.getCurrentBatchId()).toNumber()
+      await truffleAssert.reverts(
+        batchExchange.placeOrder(2, 0, currentBatch + 1, 1, 1),
+        "Buy token must be listed"
+      )
+      await truffleAssert.reverts(
+        batchExchange.placeOrder(0, 2, currentBatch + 1, 1, 1),
+        "Sell token must be listed"
+      )
+    })
     it("places order and verifys contract storage is updated correctly", async () => {
       const batchExchange = await setupGenericStableX()
 
