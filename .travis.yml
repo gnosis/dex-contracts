@@ -17,13 +17,13 @@ script:
 before_deploy:
   - mkdir -p deploy
   - yarn pack --filename deploy/dex-contracts-$TRAVIS_TAG.tgz
-  - ls $PWD/deploy/dex-contracts-*.tgz
 deploy:
   provider: s3
   bucket: $BUCKET_NAME
   access_key_id: $AWS_ACCESS_KEY_ID
   secret_access_key: $AWS_SECRET_ACCESS_KEY
   local_dir: deploy
+  skip_cleanup: true
   on:
     tags: true
 after_deploy:
