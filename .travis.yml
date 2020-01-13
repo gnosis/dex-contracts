@@ -19,9 +19,9 @@ before_deploy:
   - yarn pack --filename deploy/dex-contracts-$TRAVIS_TAG.tgz
 deploy:
   provider: s3
-  access_key_id: ""
-  secret_access_key: ""
-  bucket: ""
+  bucket: $BUCKET_NAME
+  access_key_id: $AWS_ACCESS_KEY_ID
+  secret_access_key: $AWS_SECRET_ACCESS_KEY
   local_dir: deploy
   on:
     tags: true
