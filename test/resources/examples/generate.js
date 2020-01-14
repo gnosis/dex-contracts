@@ -105,7 +105,7 @@ function generateTestCase(input, strict = true, debug = false) {
       return {
         name: solution.name,
         tokens: dedupe(flat(touchedOrders.map(o => orders[o.idx]).map(o => [o.buyToken, o.sellToken])))
-          .sort()
+          .sort((a, b) => a - b)
           .map(i => ({
             id: i,
             price: solution.prices[i],
