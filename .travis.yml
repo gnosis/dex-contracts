@@ -16,7 +16,8 @@ script:
   - yarn run coverage && cat ./coverage/lcov.info | coveralls
 before_deploy:
   - mkdir -p deploy
-  - yarn pack --filename deploy/dex-contracts-$TRAVIS_TAG.tgz
+  - export PACKAGE_VERSION=$(jq -r '.version' package.json)
+  - yarn pack --filename deploy/dex-contracts-$PACKAGE_VERSION.tgz
 deploy:
   provider: s3
   bucket: $BUCKET_NAME
@@ -31,5 +32,5 @@ after_deploy:
     curl -X POST
     -F "token=$GITLAB_TOKEN"
     -F "ref=master"
-    -F "variables[TAG]=$TRAVIS_TAG"
+    -F "variables[PACKAGE_VERSION]=$PACKAGE_VERSION"
     https://gitlab.gnosisdev.com/api/v4/projects/$GITLAB_PROJECT/trigger/pipeline
