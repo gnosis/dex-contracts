@@ -15,8 +15,9 @@ script:
   - solium -d contracts/
   - yarn run coverage && cat ./coverage/lcov.info | coveralls
 before_deploy:
-  - mkdir -p deploy
   - export PACKAGE_VERSION=$(jq -r '.version' package.json)
+  - test "v$PACKAGE_VERSION" = "$TRAVIS_TAG"
+  - mkdir -p deploy
   - yarn pack --filename deploy/dex-contracts-$PACKAGE_VERSION.tgz
 deploy:
   provider: s3
