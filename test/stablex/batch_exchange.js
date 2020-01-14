@@ -1865,10 +1865,10 @@ contract("BatchExchange", async accounts => {
       assert.equal(await batchExchange.hasToken.call(erc20_1.address), true)
     })
   })
-  describe("Large Ring Trade", () => {
-    it("invalidates valid order as of next batch", async () => {
+  describe("Large Examples", () => {
+    it("ensures hard gas limit on largest possible ring trade ", async () => {
       const batchExchange = await setupGenericStableX(25)
-
+      const sixMillion = 6000000
       await makeDeposits(batchExchange, accounts, longRingTrade.deposits)
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, longRingTrade.orders, batchId + 1)
@@ -1885,8 +1885,7 @@ contract("BatchExchange", async accounts => {
         solution.tokenIdsForPrice,
         { from: solver }
       )
-
-      console.log(firstSubmissionTX)
+      assert(firstSubmissionTX.receipt.gasUsed < sixMillion, "Solution submission exceeded 6 million gas")
 
       const solution2 = solutionSubmissionParams(longRingTrade.solutions[1], accounts, orderIds)
       const secondSubmissionTX = await batchExchange.submitSolution(
@@ -1899,6 +1898,7 @@ contract("BatchExchange", async accounts => {
         solution2.tokenIdsForPrice,
         { from: competingSolver }
       )
+      assert(secondSubmissionTX.receipt.gasUsed < sixMillion, "Competing solution submission exceeded 6 million gas")
     })
   })
 })
