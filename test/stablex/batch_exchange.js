@@ -20,6 +20,7 @@ const {
   shortRingBetterTrade,
   smallExample,
   marginalTrade,
+  longRingTrade,
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
@@ -822,7 +823,7 @@ contract("BatchExchange", async accounts => {
       const afterBetterSolutionFeeBalance = await owlProxy.balanceOf(batchExchange.address)
       assert(initialFeeTokenBalance.sub(basicTrade.solutions[0].burntFees).eq(afterBetterSolutionFeeBalance))
     })
-    it("[Advanced Trade] verifies the 2nd solution is correctly documented and can be reverted by a 3rd", async () => {
+    it("verifies the 2nd solution is correctly documented and can be reverted by a 3rd", async () => {
       const batchExchange = await setupGenericStableX()
       const feeToken = await batchExchange.tokenIdToAddressMap.call(0)
       const erc20_2 = await batchExchange.tokenIdToAddressMap.call(1)
@@ -1862,6 +1863,42 @@ contract("BatchExchange", async accounts => {
       await batchExchange.addToken(erc20_1.address)
 
       assert.equal(await batchExchange.hasToken.call(erc20_1.address), true)
+    })
+  })
+  describe("Large Ring Trade", () => {
+    it("invalidates valid order as of next batch", async () => {
+      const batchExchange = await setupGenericStableX(25)
+
+      await makeDeposits(batchExchange, accounts, longRingTrade.deposits)
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(batchExchange, accounts, longRingTrade.orders, batchId + 1)
+      await closeAuction(batchExchange)
+
+      const solution = solutionSubmissionParams(longRingTrade.solutions[0], accounts, orderIds)
+      const firstSubmissionTX = await batchExchange.submitSolution(
+        batchId,
+        solution.objectiveValue,
+        solution.owners,
+        solution.touchedorderIds,
+        solution.volumes,
+        solution.prices,
+        solution.tokenIdsForPrice,
+        { from: solver }
+      )
+
+      console.log(firstSubmissionTX)
+
+      const solution2 = solutionSubmissionParams(longRingTrade.solutions[1], accounts, orderIds)
+      const secondSubmissionTX = await batchExchange.submitSolution(
+        batchId,
+        solution2.objectiveValue,
+        solution2.owners,
+        solution2.touchedorderIds,
+        solution2.volumes,
+        solution2.prices,
+        solution2.tokenIdsForPrice,
+        { from: competingSolver }
+      )
     })
   })
 })
