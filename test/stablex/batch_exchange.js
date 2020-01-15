@@ -1868,7 +1868,7 @@ contract("BatchExchange", async accounts => {
   describe("Large Examples", () => {
     it("ensures hard gas limit on largest possible ring trade ", async () => {
       const batchExchange = await setupGenericStableX(25)
-      const sixMillion = 6000000
+      const sixPointFiveMillion = 6500000
       await makeDeposits(batchExchange, accounts, longRingTrade.deposits)
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, longRingTrade.orders, batchId + 1)
@@ -1886,8 +1886,8 @@ contract("BatchExchange", async accounts => {
         { from: solver }
       )
       assert(
-        firstSubmissionTX.receipt.gasUsed < sixMillion,
-        `Solution submission exceeded 6 million gas at ${firstSubmissionTX.receipt.gasUsed}`
+        firstSubmissionTX.receipt.gasUsed < sixPointFiveMillion,
+        `Solution submission exceeded 6.5 million gas at ${firstSubmissionTX.receipt.gasUsed}`
       )
 
       const solution2 = solutionSubmissionParams(longRingTrade.solutions[1], accounts, orderIds)
@@ -1902,8 +1902,8 @@ contract("BatchExchange", async accounts => {
         { from: competingSolver }
       )
       assert(
-        secondSubmissionTX.receipt.gasUsed < sixMillion,
-        `Competing solution submission exceeded 6 million gas at ${secondSubmissionTX.receipt.gasUsed}`
+        secondSubmissionTX.receipt.gasUsed < sixPointFiveMillion,
+        `Competing solution submission exceeded 6.5 million gas at ${secondSubmissionTX.receipt.gasUsed}`
       )
     })
   })
