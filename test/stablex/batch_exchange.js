@@ -20,7 +20,7 @@ const {
   shortRingBetterTrade,
   smallExample,
   marginalTrade,
-  exampleNoUsedAmountTracking,
+  exampleOrderWithUnlimitedAmount,
   longRingTrade,
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
@@ -1586,13 +1586,13 @@ contract("BatchExchange", async accounts => {
     it("ensures order's usedAmount is not updated, if tracking is unintended", async () => {
       const batchExchange = await setupGenericStableX()
 
-      await makeDeposits(batchExchange, accounts, exampleNoUsedAmountTracking.deposits)
+      await makeDeposits(batchExchange, accounts, exampleOrderWithUnlimitedAmount.deposits)
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(batchExchange, accounts, exampleNoUsedAmountTracking.orders, batchId + 10)
+      const orderIds = await placeOrders(batchExchange, accounts, exampleOrderWithUnlimitedAmount.orders, batchId + 10)
       await closeAuction(batchExchange)
 
-      const firstSolution = solutionSubmissionParams(exampleNoUsedAmountTracking.solutions[0], accounts, orderIds)
-      const claimedObjective = new BN(2).pow(new BN(120))
+      const firstSolution = solutionSubmissionParams(exampleOrderWithUnlimitedAmount.solutions[0], accounts, orderIds)
+      const claimedObjective = new BN(2).pow(new BN(100))
       await batchExchange.submitSolution(
         batchId,
         claimedObjective,
@@ -1603,11 +1603,11 @@ contract("BatchExchange", async accounts => {
         firstSolution.tokenIdsForPrice,
         { from: solver }
       )
-      const orderResult1 = await batchExchange.orders.call(firstSolution.owners[0], firstSolution.touchedorderIds[0])
+      const orderResult1 = await batchExchange.orders.call(firstSolution.owners[1], firstSolution.touchedorderIds[1])
       assert.equal(orderResult1.usedAmount.toString(), 0, "usedAmount was modified, although it should not have been modified")
 
-      //Tests that a reversion is also not changing the usedAmount of the order
-      const secondSolution = solutionSubmissionParams(exampleNoUsedAmountTracking.solutions[1], accounts, orderIds)
+      //Tests that a reversion is also not changing the usedAmount of the order and that maxUint128 can also be used in priceDenominator
+      const secondSolution = solutionSubmissionParams(exampleOrderWithUnlimitedAmount.solutions[1], accounts, orderIds)
       await batchExchange.submitSolution(
         batchId,
         claimedObjective,
@@ -1618,8 +1618,10 @@ contract("BatchExchange", async accounts => {
         secondSolution.tokenIdsForPrice,
         { from: solver }
       )
-      const orderResult2 = await batchExchange.orders.call(firstSolution.owners[0], firstSolution.touchedorderIds[0])
+      const orderResult2 = await batchExchange.orders.call(firstSolution.owners[1], firstSolution.touchedorderIds[1])
       assert.equal(orderResult2.usedAmount.toString(), 0, "usedAmount was modified, although it should not have been modified")
+      const orderResult3 = await batchExchange.orders.call(secondSolution.owners[0], secondSolution.touchedorderIds[0])
+      assert.equal(orderResult3.usedAmount.toString(), 0, "usedAmount was modified, although it should not have been modified")
     })
     it("partially fills orders in one auction and then fills them some more in the next.", async () => {
       const batchExchange = await setupGenericStableX()

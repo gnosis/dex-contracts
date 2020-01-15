@@ -263,11 +263,11 @@ const shortRingBetterTrade = generateTestCase({
 })
 
 const maxUint128 = new BN(2).pow(new BN(128)).sub(new BN(1))
-const exampleNoUsedAmountTracking = generateTestCase(
+const exampleOrderWithUnlimitedAmount = generateTestCase(
   {
     deposits: [
-      { amount: feeAdded(toETH(5)), token: 0, user: 0 },
-      { amount: feeAdded(toETH(5)), token: 1, user: 1 },
+      { amount: feeAdded(toETH(10)), token: 0, user: 0 },
+      { amount: feeAdded(toETH(10)), token: 1, user: 1 },
     ],
     orders: [
       {
@@ -281,25 +281,25 @@ const exampleNoUsedAmountTracking = generateTestCase(
         sellToken: 1,
         buyToken: 0,
         sellAmount: toETH(10),
-        buyAmount: feeSubtracted(toETH(10), 2),
+        buyAmount: feeSubtracted(toETH(5)),
         user: 1,
       },
       {
         sellToken: 0,
         buyToken: 1,
-        sellAmount: maxUint128,
-        buyAmount: feeSubtracted(maxUint128.div(new BN(4))),
+        sellAmount: feeAdded(maxUint128.div(new BN(2))),
+        buyAmount: maxUint128,
         user: 0,
       },
     ],
     solutions: [
       {
-        prices: [1, 1].map(toETH),
-        buyVolumes: [toETH(3), feeSubtracted(toETH(3)), ZERO],
+        prices: [1, 0.5].map(toETH),
+        buyVolumes: [ZERO, feeSubtracted(toETH(5)), toETH(10)],
       },
       {
         prices: [1, 1].map(toETH),
-        buyVolumes: [ZERO, feeSubtracted(toETH(5)), toETH(5)],
+        buyVolumes: [toETH(10), feeSubtracted(toETH(10)), ZERO],
       },
     ],
   },
@@ -456,7 +456,7 @@ module.exports = Object.assign(
     stableXExample,
     marginalTrade,
     utilityOverflow,
-    exampleNoUsedAmountTracking,
+    exampleOrderWithUnlimitedAmount,
     longRingTrade,
   },
   require("./generate")

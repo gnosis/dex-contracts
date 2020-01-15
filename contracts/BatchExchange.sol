@@ -32,7 +32,7 @@ contract BatchExchange is EpochTokenLocker {
     uint128 public constant AMOUNT_MINIMUM = 10**4;
 
     /** @dev Numerator or denominator used in orders, which do not track its usedAmount*/
-    uint128 public constant PRICE_NUMERATOR_OR_DENOMINATOR_FOR_ORDERS_NOT_TRACKING_USED_AMOUNTS = uint128(-1);
+    uint128 public constant UNLIMITED_ORDER_AMOUNT = uint128(-1);
 
     /** Corresponds to percentage that competing solution must improve on current
       * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
@@ -566,7 +566,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param executedAmount proportion of order's requested sellAmount that was filled.
       */
     function updateRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
-        if (isOrderTrackingItsUsedAmount(orders[owner][orderId])) {
+        if (isOrderWithUnlimitedAmount(orders[owner][orderId])) {
             orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.add(executedAmount).toUint128();
         }
     }
@@ -577,7 +577,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param executedAmount proportion of order's requested sellAmount that was filled.
       */
     function revertRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
-        if (isOrderTrackingItsUsedAmount(orders[owner][orderId])) {
+        if (isOrderWithUnlimitedAmount(orders[owner][orderId])) {
             orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.sub(executedAmount).toUint128();
         }
     }
@@ -586,10 +586,8 @@ contract BatchExchange is EpochTokenLocker {
       * @param order order under inspection
       * @return true if the given order does track its usedAmount
       */
-    function isOrderTrackingItsUsedAmount(Order memory order) private pure returns (bool) {
-        return
-            order.priceNumerator != PRICE_NUMERATOR_OR_DENOMINATOR_FOR_ORDERS_NOT_TRACKING_USED_AMOUNTS &&
-            order.priceDenominator != PRICE_NUMERATOR_OR_DENOMINATOR_FOR_ORDERS_NOT_TRACKING_USED_AMOUNTS;
+    function isOrderWithUnlimitedAmount(Order memory order) private pure returns (bool) {
+        return order.priceNumerator != UNLIMITED_ORDER_AMOUNT && order.priceDenominator != UNLIMITED_ORDER_AMOUNT;
     }
 
     /** @dev This function writes solution information into contract storage
