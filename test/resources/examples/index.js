@@ -92,7 +92,7 @@ const basicRingTrade = generateTestCase({
 })
 
 const longRingTrade = generateTestCase({
-  name: "Long Ring",
+  name: "Longest Ring Trade",
   orders: [
     { sellToken: 0, buyToken: 1, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 0 },
     { sellToken: 1, buyToken: 2, sellAmount: toETH(1), buyAmount: toETH(0.99), user: 1 },
@@ -122,7 +122,7 @@ const longRingTrade = generateTestCase({
   ],
   solutions: [
     {
-      name: "Long Ring Around the Rosie",
+      name: "Solution filling ~90% of the available volume",
       prices: [
         new BN("1000000000000000000"),
         new BN("1009090808282730321"),
@@ -179,7 +179,7 @@ const longRingTrade = generateTestCase({
       ],
     },
     {
-      name: "Better Long Ring Around the Rosie",
+      name: "Full solution to large ring trade",
       prices: [
         new BN("1000000000000000000"),
         new BN("999000000080931820"),
