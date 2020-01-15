@@ -42,6 +42,9 @@ contract BatchExchange is EpochTokenLocker {
     /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/FEE_DENOMINATOR */
     uint128 public constant FEE_DENOMINATOR = 1000;
 
+    /** @dev The number of bytes a single auction element is serialized into */
+    uint128 public constant ENCODED_AUCTION_ELEMENT_WIDTH = 112;
+
     /** @dev maximum number of tokens that can be listed for exchange */
     // solhint-disable-next-line var-name-mixedcase
     uint256 public MAX_TOKENS;
@@ -396,16 +399,16 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev View returning all byte-encoded users in paginated form
-      * @param previousUser address of last user received in last pages (address(0) for first page)
+      * @param previousPageUser address of last user received in last pages (address(0) for first page)
       * @param pageSize uint determining the count of users to be returned per page
       * @return encoded packed bytes of user addresses
       */
-    function getUsersPaginated(address previousUser, uint16 pageSize) public view returns (bytes memory users) {
+    function getUsersPaginated(address previousPageUser, uint16 pageSize) public view returns (bytes memory users) {
         if (allUsers.size() == 0) {
             return users;
         }
         uint16 count = 0;
-        address current = previousUser;
+        address current = previousPageUser;
         if (current == address(0)) {
             current = allUsers.first();
             users = users.concat(abi.encodePacked(current));
@@ -425,6 +428,41 @@ contract BatchExchange is EpochTokenLocker {
       */
     function getEncodedUserOrders(address user) public view returns (bytes memory elements) {
         return getEncodedUserOrdersPaginated(user, 0, uint16(-1));
+    }
+
+    /** @dev View returning byte-encoded sell orders in paginated form
+      * @param previousPageUser address of last user received in the previous page (address(0) for first page)
+      * @param previousPageUserOffset the number of orders received for the last user on the previous page (0 for first page).
+      * @param pageSize uint determining the count of orders to be returned per page
+      * @return encoded bytes representing a page of orders ordered by (user, index)
+      */
+    function getEncodedUsersPaginated(address previousPageUser, uint16 previousPageUserOffset, uint16 pageSize)
+        public
+        view
+        returns (bytes memory elements)
+    {
+        if (allUsers.size() == 0) {
+            return elements;
+        }
+        uint16 currentOffset = previousPageUserOffset;
+        address currentUser = previousPageUser;
+        if (currentUser == address(0x0)) {
+            currentUser = allUsers.first();
+        }
+        while (elements.length / ENCODED_AUCTION_ELEMENT_WIDTH < pageSize) {
+            elements = elements.concat(
+                getEncodedUserOrdersPaginated(
+                    currentUser,
+                    currentOffset,
+                    pageSize - uint16(elements.length / ENCODED_AUCTION_ELEMENT_WIDTH)
+                )
+            );
+            if (currentUser == allUsers.last) {
+                return elements;
+            }
+            currentOffset = 0;
+            currentUser = allUsers.next(currentUser);
+        }
     }
 
     /** @dev View returning all byte-encoded sell orders
