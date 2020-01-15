@@ -1,6 +1,7 @@
 build/*
 coverage/*
 coverage.json
+deploy/*
 node_modules/*
 package-lock.json
 

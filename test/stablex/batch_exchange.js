@@ -21,6 +21,7 @@ const {
   smallExample,
   marginalTrade,
   exampleNoUsedAmountTracking,
+  longRingTrade,
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
@@ -40,7 +41,8 @@ const smallTradeData = {
 contract("BatchExchange", async accounts => {
   const solver = accounts.pop()
   const competingSolver = accounts.pop()
-  const [user_1, user_2] = accounts
+  const [user_1, user_2, user_3] = accounts
+  const zero_address = "0x0000000000000000000000000000000000000000"
 
   let BATCH_TIME
   before(async () => {
@@ -823,7 +825,7 @@ contract("BatchExchange", async accounts => {
       const afterBetterSolutionFeeBalance = await owlProxy.balanceOf(batchExchange.address)
       assert(initialFeeTokenBalance.sub(basicTrade.solutions[0].burntFees).eq(afterBetterSolutionFeeBalance))
     })
-    it("[Advanced Trade] verifies the 2nd solution is correctly documented and can be reverted by a 3rd", async () => {
+    it("verifies the 2nd solution is correctly documented and can be reverted by a 3rd", async () => {
       const batchExchange = await setupGenericStableX()
       const feeToken = await batchExchange.tokenIdToAddressMap.call(0)
       const erc20_2 = await batchExchange.tokenIdToAddressMap.call(1)
@@ -1691,7 +1693,6 @@ contract("BatchExchange", async accounts => {
     })
   })
   describe("getUsersPaginated()", async () => {
-    const zero_address = "0x0000000000000000000000000000000000000000"
     const account_one_and_two = (accounts[0] + accounts[1].slice(2, 42)).toString().toLowerCase()
     it("returns null when no users", async () => {
       const batchExchange = await setupGenericStableX()
@@ -1893,6 +1894,101 @@ contract("BatchExchange", async accounts => {
       assert.equal(auctionElements, null)
     })
   })
+  describe("getEncodedUsersPaginated", async () => {
+    it("returns empty bytes when no users", async () => {
+      const batchExchange = await setupGenericStableX()
+      const auctionElements = await batchExchange.getEncodedUsersPaginated(zero_address, 0, 10)
+      assert.equal(auctionElements, null)
+    })
+    it("returns three orders one per page", async () => {
+      const batchExchange = await setupGenericStableX(3)
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_2 })
+
+      const firstPage = decodeAuctionElements(await batchExchange.getEncodedUsersPaginated(zero_address, 0, 1))
+      assert.equal(
+        JSON.stringify(firstPage),
+        JSON.stringify([
+          {
+            user: user_1.toLowerCase(),
+            sellTokenBalance: new BN(0),
+            buyToken: 0,
+            sellToken: 1,
+            validFrom: batchId,
+            validUntil: batchId + 10,
+            priceNumerator: new BN(100),
+            priceDenominator: new BN(100),
+            remainingAmount: new BN(100),
+          },
+        ])
+      )
+
+      const secondPage = decodeAuctionElements(await batchExchange.getEncodedUsersPaginated(user_1, 1, 1))
+      assert.equal(
+        JSON.stringify(secondPage),
+        JSON.stringify([
+          {
+            user: user_1.toLowerCase(),
+            sellTokenBalance: new BN(0),
+            buyToken: 1,
+            sellToken: 2,
+            validFrom: batchId,
+            validUntil: batchId + 10,
+            priceNumerator: new BN(100),
+            priceDenominator: new BN(100),
+            remainingAmount: new BN(100),
+          },
+        ])
+      )
+
+      const thirdPage = decodeAuctionElements(await batchExchange.getEncodedUsersPaginated(user_1, 2, 1))
+      assert.equal(
+        JSON.stringify(thirdPage),
+        JSON.stringify([
+          {
+            user: user_2.toLowerCase(),
+            sellTokenBalance: new BN(0),
+            buyToken: 0,
+            sellToken: 1,
+            validFrom: batchId,
+            validUntil: batchId + 10,
+            priceNumerator: new BN(100),
+            priceDenominator: new BN(100),
+            remainingAmount: new BN(100),
+          },
+        ])
+      )
+
+      // 4th page is empty
+      assert.equal(await batchExchange.getEncodedUsersPaginated(user_2, 1, 1), null)
+    })
+    it("returns three orders when page size is overlapping users", async () => {
+      const batchExchange = await setupGenericStableX(3)
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_2 })
+
+      const page = decodeAuctionElements(await batchExchange.getEncodedUsersPaginated(user_1, 1, 2))
+      assert.equal(page[0].user, user_1.toLowerCase())
+      assert.equal(page[1].user, user_2.toLowerCase())
+    })
+    it("returns three orders from three users with larger page size", async () => {
+      const batchExchange = await setupGenericStableX(3)
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_2 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_3 })
+
+      const page = decodeAuctionElements(await batchExchange.getEncodedUsersPaginated(zero_address, 0, 5))
+      assert.equal(page.length, 3)
+      assert.equal(page[0].user, user_1.toLowerCase())
+      assert.equal(page[1].user, user_2.toLowerCase())
+      assert.equal(page[2].user, user_3.toLowerCase())
+    })
+  })
   describe("hasToken()", async () => {
     it("returns whether token was already added", async () => {
       const batchExchange = await setupGenericStableX()
@@ -1901,6 +1997,48 @@ contract("BatchExchange", async accounts => {
       await batchExchange.addToken(erc20_1.address)
 
       assert.equal(await batchExchange.hasToken.call(erc20_1.address), true)
+    })
+  })
+  describe("Large Examples", () => {
+    it("ensures hard gas limit on largest possible ring trade ", async () => {
+      const batchExchange = await setupGenericStableX(25)
+      const sixPointFiveMillion = 6500000
+      await makeDeposits(batchExchange, accounts, longRingTrade.deposits)
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(batchExchange, accounts, longRingTrade.orders, batchId + 1)
+      await closeAuction(batchExchange)
+
+      const solution = solutionSubmissionParams(longRingTrade.solutions[0], accounts, orderIds)
+      const firstSubmissionTX = await batchExchange.submitSolution(
+        batchId,
+        solution.objectiveValue,
+        solution.owners,
+        solution.touchedorderIds,
+        solution.volumes,
+        solution.prices,
+        solution.tokenIdsForPrice,
+        { from: solver }
+      )
+      assert(
+        firstSubmissionTX.receipt.gasUsed < sixPointFiveMillion,
+        `Solution submission exceeded 6.5 million gas at ${firstSubmissionTX.receipt.gasUsed}`
+      )
+
+      const solution2 = solutionSubmissionParams(longRingTrade.solutions[1], accounts, orderIds)
+      const secondSubmissionTX = await batchExchange.submitSolution(
+        batchId,
+        solution2.objectiveValue,
+        solution2.owners,
+        solution2.touchedorderIds,
+        solution2.volumes,
+        solution2.prices,
+        solution2.tokenIdsForPrice,
+        { from: competingSolver }
+      )
+      assert(
+        secondSubmissionTX.receipt.gasUsed < sixPointFiveMillion,
+        `Competing solution submission exceeded 6.5 million gas at ${secondSubmissionTX.receipt.gasUsed}`
+      )
     })
   })
 })
