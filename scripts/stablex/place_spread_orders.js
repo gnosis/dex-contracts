@@ -4,7 +4,7 @@ const BN = require("bn.js")
 const readline = require("readline")
 
 const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
-const token_list_url = require("./utilities.js")
+const { token_list_url } = require("./utilities.js")
 
 const rl = readline.createInterface({
   input: process.stdin,
