@@ -121,6 +121,18 @@ contract BatchExchange is EpochTokenLocker {
      */
     event TradeReversion(address indexed owner, uint16 indexed orderId, uint128 executedSellAmount, uint128 executedBuyAmount);
 
+    /** @dev Event emitted for each solution that is submitted
+     */
+    event SolutionSubmission(
+        address indexed submitter,
+        uint256 utility,
+        uint256 disregardedUtility,
+        uint256 burntFees,
+        uint256 lastAuctionBurntFees,
+        uint128[] prices,
+        uint16[] tokenIdsForPrice
+    );
+
     /** @dev Constructor determines exchange parameters
       * @param maxTokens The maximum number of tokens that can be listed.
       * @param _feeToken Address of ERC20 fee token.
@@ -297,7 +309,7 @@ contract BatchExchange is EpochTokenLocker {
         // && prices.length == tokenIdsForPrice.length
         // These assumptions are not checked explicitly, as violations of these constraints can not be used
         // to create a beneficial situation
-        burnPreviousAuctionFees();
+        uint256 lastAuctionBurntFees = burnPreviousAuctionFees();
         undoCurrentSolution();
         updateCurrentPrices(prices, tokenIdsForPrice);
         delete latestSolution.trades;
@@ -346,6 +358,16 @@ contract BatchExchange is EpochTokenLocker {
         grantRewardToSolutionSubmitter(burntFees);
         tokenConservation.checkTokenConservation();
         documentTrades(batchId, owners, orderIds, buyVolumes, tokenIdsForPrice);
+
+        emit SolutionSubmission(
+            msg.sender,
+            utility,
+            disregardedUtility,
+            burntFees,
+            lastAuctionBurntFees,
+            prices,
+            tokenIdsForPrice
+        );
         return (objectiveValue);
     }
     /**
@@ -537,11 +559,14 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev called during solution submission to burn fees from previous auction
+      * @return amount of OWL burnt
       */
-    function burnPreviousAuctionFees() private {
+    function burnPreviousAuctionFees() private returns (uint256) {
         if (!currentBatchHasSolution()) {
             feeToken.burnOWL(address(this), latestSolution.feeReward);
+            return latestSolution.feeReward;
         }
+        return 0;
     }
 
     /** @dev Called from within submitSolution to update the token prices.
