@@ -157,7 +157,7 @@ const exampleNoUsedAmountTracking = generateTestCase(
     ],
   },
   false,
-  true
+  false
 )
 
 const fiveThousand = new BN("5000")

@@ -550,8 +550,8 @@ contract BatchExchange is EpochTokenLocker {
       */
     function isOrderTrackingItsUsedAmount(Order memory order) private pure returns (bool) {
         return
-            order.priceNumerator < PRICE_NUMERATOR_OR_DENOMINATOR_FOR_ORDERS_NOT_TRACKING_USED_AMOUNTS &&
-            order.priceDenominator < PRICE_NUMERATOR_OR_DENOMINATOR_FOR_ORDERS_NOT_TRACKING_USED_AMOUNTS;
+            order.priceNumerator != PRICE_NUMERATOR_OR_DENOMINATOR_FOR_ORDERS_NOT_TRACKING_USED_AMOUNTS &&
+            order.priceDenominator != PRICE_NUMERATOR_OR_DENOMINATOR_FOR_ORDERS_NOT_TRACKING_USED_AMOUNTS;
     }
 
     /** @dev This function writes solution information into contract storage

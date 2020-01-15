@@ -1581,7 +1581,7 @@ contract("BatchExchange", async accounts => {
         "New objective doesn't sufficiently improve current solution"
       )
     })
-    it("checks that the order's usedAmount is not updated, if the order is not intended to track it", async () => {
+    it("ensures order's usedAmount is not updated, if tracking is unintended", async () => {
       const batchExchange = await setupGenericStableX()
 
       await makeDeposits(batchExchange, accounts, exampleNoUsedAmountTracking.deposits)
