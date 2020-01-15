@@ -1885,7 +1885,10 @@ contract("BatchExchange", async accounts => {
         solution.tokenIdsForPrice,
         { from: solver }
       )
-      assert(firstSubmissionTX.receipt.gasUsed < sixMillion, "Solution submission exceeded 6 million gas")
+      assert(
+        firstSubmissionTX.receipt.gasUsed < sixMillion,
+        `Solution submission exceeded 6 million gas at ${firstSubmissionTX.receipt.gasUsed}`
+      )
 
       const solution2 = solutionSubmissionParams(longRingTrade.solutions[1], accounts, orderIds)
       const secondSubmissionTX = await batchExchange.submitSolution(
@@ -1898,7 +1901,10 @@ contract("BatchExchange", async accounts => {
         solution2.tokenIdsForPrice,
         { from: competingSolver }
       )
-      assert(secondSubmissionTX.receipt.gasUsed < sixMillion, "Competing solution submission exceeded 6 million gas")
+      assert(
+        secondSubmissionTX.receipt.gasUsed < sixMillion,
+        `Competing solution submission exceeded 6 million gas at ${secondSubmissionTX.receipt.gasUsed}`
+      )
     })
   })
 })
