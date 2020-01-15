@@ -20,6 +20,7 @@ const {
   shortRingBetterTrade,
   smallExample,
   marginalTrade,
+  exampleNoUsedAmountTracking,
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
@@ -1579,6 +1580,44 @@ contract("BatchExchange", async accounts => {
         ),
         "New objective doesn't sufficiently improve current solution"
       )
+    })
+    it("checks that the order's usedAmount is not updated, if the order is not intended to track it", async () => {
+      const batchExchange = await setupGenericStableX()
+
+      await makeDeposits(batchExchange, accounts, exampleNoUsedAmountTracking.deposits)
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(batchExchange, accounts, exampleNoUsedAmountTracking.orders, batchId + 10)
+      await closeAuction(batchExchange)
+
+      const firstSolution = solutionSubmissionParams(exampleNoUsedAmountTracking.solutions[0], accounts, orderIds)
+      const claimedObjective = new BN(2).pow(new BN(120))
+      await batchExchange.submitSolution(
+        batchId,
+        claimedObjective,
+        firstSolution.owners,
+        firstSolution.touchedorderIds,
+        firstSolution.volumes,
+        firstSolution.prices,
+        firstSolution.tokenIdsForPrice,
+        { from: solver }
+      )
+      const orderResult1 = await batchExchange.orders.call(firstSolution.owners[0], firstSolution.touchedorderIds[0])
+      assert.equal(orderResult1.usedAmount.toString(), 0, "usedAmount was modified, although it should not have been modified")
+
+      //Tests that a reversion is also not changing the usedAmount of the order
+      const secondSolution = solutionSubmissionParams(exampleNoUsedAmountTracking.solutions[1], accounts, orderIds)
+      await batchExchange.submitSolution(
+        batchId,
+        claimedObjective,
+        secondSolution.owners,
+        secondSolution.touchedorderIds,
+        secondSolution.volumes,
+        secondSolution.prices,
+        secondSolution.tokenIdsForPrice,
+        { from: solver }
+      )
+      const orderResult2 = await batchExchange.orders.call(firstSolution.owners[0], firstSolution.touchedorderIds[0])
+      assert.equal(orderResult2.usedAmount.toString(), 0, "usedAmount was modified, although it should not have been modified")
     })
     it("partially fills orders in one auction and then fills them some more in the next.", async () => {
       const batchExchange = await setupGenericStableX()
