@@ -1303,7 +1303,6 @@ contract("BatchExchange", async accounts => {
     })
     it("ensures that a solution reversion can not be prevented by additional withdrawRequests", async () => {
       const batchExchange = await setupGenericStableX()
-      const feeToken = await batchExchange.tokenIdToAddressMap.call(0)
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits)
 
@@ -1331,12 +1330,6 @@ contract("BatchExchange", async accounts => {
         { from: solver }
       )
 
-      assert.equal(
-        basicTrade.solutions[1].burntFees.toString(),
-        await batchExchange.getBalance.call(solver, feeToken),
-        "fees weren't allocated as expected correctly"
-      )
-
       const fullSolution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
       await batchExchange.submitSolution(
         batchId,
@@ -1348,8 +1341,6 @@ contract("BatchExchange", async accounts => {
         fullSolution.tokenIdsForPrice,
         { from: competingSolver }
       )
-
-      assert.equal(0, await batchExchange.getBalance.call(solver, feeToken), "First submitter's reward was not reverted")
     })
     it("ensures credited tokens can't be withdrawn in same batch as solution submission", async () => {
       const batchExchange = await setupGenericStableX()
