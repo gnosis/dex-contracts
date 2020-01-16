@@ -206,7 +206,7 @@ contract EpochTokenLocker {
     }
 
     /**
-     * The following function should be used to substract amounts from the current balances state.
+     * The following function should be used to subtract amounts from the current balances state.
      * For the substraction the current withdrawRequests are considered and they are effectively reducing
      * the available balance.
      */
@@ -221,10 +221,10 @@ contract EpochTokenLocker {
      * the available balance.
      * For example, the reversion of trades from a previous batch-solution do not
      * need to consider withdrawRequests. This is the case as withdraws are blocked for one
-     * batch for accounts, which got funds credited in a previous submission.
-     * PendingWithdraws even must not be considered, as otherwise, a solution reversion could
-     * be blocked: A bigger withdrawRequest could set the return value of
-     * getBalance(user, token) to zero, although the user just got tokens credited in
+     * batch for accounts having credited funds in a previous submission.
+     * PendingWithdraws must also be ignored since otherwise for the reversion of trades,
+     * a solution reversion could be blocked: A bigger withdrawRequest could set the return value of
+     * getBalance(user, token) to zero, although the user was just credited tokens in
      * the last submission. In this situation, during the unwinding of the previous orders,
      * the check `amount <= getBalance(user, token)` would fail and the reversion would be blocked.
      */
