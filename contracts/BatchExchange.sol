@@ -348,7 +348,7 @@ contract BatchExchange is EpochTokenLocker {
         for (uint256 i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             (, uint128 executedSellAmount) = getTradedAmounts(buyVolumes[i], order);
-            subtractBalance(owners[i], tokenIdToAddressMap(order.sellToken), executedSellAmount);
+            subtractBalanceWithPendingWithdrawCheck(owners[i], tokenIdToAddressMap(order.sellToken), executedSellAmount);
         }
         uint256 disregardedUtility = 0;
         for (uint256 i = 0; i < owners.length; i++) {

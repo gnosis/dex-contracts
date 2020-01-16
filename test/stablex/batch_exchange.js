@@ -1301,6 +1301,56 @@ contract("BatchExchange", async accounts => {
 
       assert.equal(0, await batchExchange.getBalance.call(solver, feeToken), "First submitter's reward was not reverted")
     })
+    it("ensures that a solution reversion can not be prevented by additional withdrawRequests", async () => {
+      const batchExchange = await setupGenericStableX()
+      const feeToken = await batchExchange.tokenIdToAddressMap.call(0)
+
+      await makeDeposits(batchExchange, accounts, basicTrade.deposits)
+
+      // relevant user places withdraw request:
+      await batchExchange.requestWithdraw(await batchExchange.tokenIdToAddressMap.call(basicTrade.orders[1].buyToken), 1, {
+        from: accounts[basicTrade.orders[1].user],
+      })
+      await batchExchange.requestWithdraw(await batchExchange.tokenIdToAddressMap.call(basicTrade.orders[0].buyToken), 1, {
+        from: accounts[basicTrade.orders[0].user],
+      })
+
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchId + 1)
+      await closeAuction(batchExchange)
+
+      const partialSolution = solutionSubmissionParams(basicTrade.solutions[1], accounts, orderIds)
+      await batchExchange.submitSolution(
+        batchId,
+        partialSolution.objectiveValue,
+        partialSolution.owners,
+        partialSolution.touchedorderIds,
+        partialSolution.volumes,
+        partialSolution.prices,
+        partialSolution.tokenIdsForPrice,
+        { from: solver }
+      )
+
+      assert.equal(
+        basicTrade.solutions[1].burntFees.toString(),
+        await batchExchange.getBalance.call(solver, feeToken),
+        "fees weren't allocated as expected correctly"
+      )
+
+      const fullSolution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
+      await batchExchange.submitSolution(
+        batchId,
+        fullSolution.objectiveValue,
+        fullSolution.owners,
+        fullSolution.touchedorderIds,
+        fullSolution.volumes,
+        fullSolution.prices,
+        fullSolution.tokenIdsForPrice,
+        { from: competingSolver }
+      )
+
+      assert.equal(0, await batchExchange.getBalance.call(solver, feeToken), "First submitter's reward was not reverted")
+    })
     it("ensures credited tokens can't be withdrawn in same batch as solution submission", async () => {
       const batchExchange = await setupGenericStableX()
 
