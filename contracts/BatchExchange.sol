@@ -348,7 +348,7 @@ contract BatchExchange is EpochTokenLocker {
         for (uint256 i = 0; i < owners.length; i++) {
             Order memory order = orders[owners[i]][orderIds[i]];
             (, uint128 executedSellAmount) = getTradedAmounts(buyVolumes[i], order);
-            subtractBalanceWithPendingWithdrawCheck(owners[i], tokenIdToAddressMap(order.sellToken), executedSellAmount);
+            subtractBalance(owners[i], tokenIdToAddressMap(order.sellToken), executedSellAmount);
         }
         uint256 disregardedUtility = 0;
         for (uint256 i = 0; i < owners.length; i++) {
@@ -654,11 +654,11 @@ contract BatchExchange is EpochTokenLocker {
                 Order memory order = orders[owner][orderId];
                 (uint128 buyAmount, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
                 revertRemainingOrder(owner, orderId, sellAmount);
-                subtractBalance(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
+                subtractBalanceUnchecked(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
                 emit TradeReversion(owner, orderId, sellAmount, buyAmount);
             }
             // subtract granted fees:
-            subtractBalance(latestSolution.solutionSubmitter, tokenIdToAddressMap(0), latestSolution.feeReward);
+            subtractBalanceUnchecked(latestSolution.solutionSubmitter, tokenIdToAddressMap(0), latestSolution.feeReward);
         }
     }
 

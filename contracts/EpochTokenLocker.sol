@@ -205,12 +205,30 @@ contract EpochTokenLocker {
         balanceStates[user][token].balance = balanceStates[user][token].balance.add(amount);
     }
 
-    function subtractBalanceWithPendingWithdrawCheck(address user, address token, uint256 amount) internal {
+    /**
+     * The following function should be used to substract amounts from the current balances state.
+     * For the substraction, the current withdrawRequests are considered and effectively they are reducing
+     * the available balance.
+     */
+    function subtractBalance(address user, address token, uint256 amount) internal {
         require(amount <= getBalance(user, token), "Amount exceeds user's balance.");
-        subtractBalance(user, token, amount);
+        subtractBalanceUnchecked(user, token, amount);
     }
 
-    function subtractBalance(address user, address token, uint256 amount) internal {
+    /**
+     * The following function should be used to substract amounts from the current balance
+     * state, if the pending withdrawRequests are not considered and do not effectively reduce
+     * the available balance.
+     * For example, the reversion of trades from a previous batch-solution do not
+     * need to consider pendingWithdraws. This is the case, as withdraws are blocked for accounts
+     * which got funds credited from a previous submission in the same batch.
+     * PendingWithdraws even must not be considered as otherwise, a solution reversion could be blocked:
+     * A bigger withdrawRequest could set the return value of
+     * getBalance(user, token) to zero, although the user just got tokens credited in
+     * the last submission. Hence, the check `amount <= getBalance(user, token)` would fail and the reversion
+     * would be blocked.
+     */
+    function subtractBalanceUnchecked(address user, address token, uint256 amount) internal {
         updateDepositsBalance(user, token);
         balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
     }
