@@ -212,7 +212,9 @@ contract EpochTokenLocker {
     }
 
     function updateDepositsBalance(address user, address token) private {
-        if (balanceStates[user][token].pendingDeposits.batchId < getCurrentBatchId()) {
+        uint256 batchId = balanceStates[user][token].pendingDeposits.batchId;
+        if (batchId > 0 && batchId < getCurrentBatchId()) {
+            // batchId > 0 is checked in order save an SSTORE in case there is no pending deposit
             balanceStates[user][token].balance = balanceStates[user][token].balance.add(
                 balanceStates[user][token].pendingDeposits.amount
             );
