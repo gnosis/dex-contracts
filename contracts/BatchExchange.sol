@@ -31,6 +31,9 @@ contract BatchExchange is EpochTokenLocker {
     /** @dev minimum allowed value (in WEI) of any prices or executed trade amounts */
     uint128 public constant AMOUNT_MINIMUM = 10**4;
 
+    /** @dev Numerator or denominator used in orders, which do not track its usedAmount*/
+    uint128 public constant UNLIMITED_ORDER_AMOUNT = uint128(-1);
+
     /** Corresponds to percentage that competing solution must improve on current
       * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
       */
@@ -588,7 +591,9 @@ contract BatchExchange is EpochTokenLocker {
       * @param executedAmount proportion of order's requested sellAmount that was filled.
       */
     function updateRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
-        orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.add(executedAmount).toUint128();
+        if (isOrderWithUnlimitedAmount(orders[owner][orderId])) {
+            orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.add(executedAmount).toUint128();
+        }
     }
 
     /** @dev The inverse of updateRemainingOrder, called when reverting a solution in favour of a better one.
@@ -597,7 +602,17 @@ contract BatchExchange is EpochTokenLocker {
       * @param executedAmount proportion of order's requested sellAmount that was filled.
       */
     function revertRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
-        orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.sub(executedAmount).toUint128();
+        if (isOrderWithUnlimitedAmount(orders[owner][orderId])) {
+            orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.sub(executedAmount).toUint128();
+        }
+    }
+
+    /** @dev Checks whether an order is intended to track its usedAmount
+      * @param order order under inspection
+      * @return true if the given order does track its usedAmount
+      */
+    function isOrderWithUnlimitedAmount(Order memory order) private pure returns (bool) {
+        return order.priceNumerator != UNLIMITED_ORDER_AMOUNT && order.priceDenominator != UNLIMITED_ORDER_AMOUNT;
     }
 
     /** @dev This function writes solution information into contract storage
