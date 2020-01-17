@@ -591,7 +591,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param executedAmount proportion of order's requested sellAmount that was filled.
       */
     function updateRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
-        if (isOrderWithUnlimitedAmount(orders[owner][orderId])) {
+        if (isOrderWithLimitedAmount(orders[owner][orderId])) {
             orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.add(executedAmount).toUint128();
         }
     }
@@ -602,7 +602,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param executedAmount proportion of order's requested sellAmount that was filled.
       */
     function revertRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
-        if (isOrderWithUnlimitedAmount(orders[owner][orderId])) {
+        if (isOrderWithLimitedAmount(orders[owner][orderId])) {
             orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.sub(executedAmount).toUint128();
         }
     }
@@ -611,7 +611,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param order order under inspection
       * @return true if the given order does track its usedAmount
       */
-    function isOrderWithUnlimitedAmount(Order memory order) private pure returns (bool) {
+    function isOrderWithLimitedAmount(Order memory order) private pure returns (bool) {
         return order.priceNumerator != UNLIMITED_ORDER_AMOUNT && order.priceDenominator != UNLIMITED_ORDER_AMOUNT;
     }
 
