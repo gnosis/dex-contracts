@@ -21,7 +21,7 @@ const {
   smallExample,
   marginalTrade,
   exampleOrderWithUnlimitedAmount,
-  longRingTrade,
+  largeRing30,
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
@@ -2044,14 +2044,16 @@ contract("BatchExchange", async accounts => {
   })
   describe("Large Examples", () => {
     it("ensures hard gas limit on largest possible ring trade ", async () => {
-      const batchExchange = await setupGenericStableX(25)
+      const batchExchange = await setupGenericStableX(30)
       const sixPointFiveMillion = 6500000
-      await makeDeposits(batchExchange, accounts, longRingTrade.deposits)
+
+      const tradeExample = largeRing30
+      await makeDeposits(batchExchange, accounts, tradeExample.deposits)
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(batchExchange, accounts, longRingTrade.orders, batchId + 1)
+      const orderIds = await placeOrders(batchExchange, accounts, tradeExample.orders, batchId + 1)
       await closeAuction(batchExchange)
 
-      const solution = solutionSubmissionParams(longRingTrade.solutions[0], accounts, orderIds)
+      const solution = solutionSubmissionParams(tradeExample.solutions[0], accounts, orderIds)
       const firstSubmissionTX = await batchExchange.submitSolution(
         batchId,
         solution.objectiveValue,
@@ -2067,7 +2069,7 @@ contract("BatchExchange", async accounts => {
         `Solution submission exceeded 6.5 million gas at ${firstSubmissionTX.receipt.gasUsed}`
       )
 
-      const solution2 = solutionSubmissionParams(longRingTrade.solutions[1], accounts, orderIds)
+      const solution2 = solutionSubmissionParams(tradeExample.solutions[1], accounts, orderIds)
       const secondSubmissionTX = await batchExchange.submitSolution(
         batchId,
         solution2.objectiveValue,
