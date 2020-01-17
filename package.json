@@ -99,7 +99,7 @@
     "truffle-plugin-verify": "^0.3.6",
     "typechain": "^1.0.3",
     "typechain-target-web3-v1": "^1.0.4",
-    "typescript": "^3.7.4",
+    "typescript": "^3.7.5",
     "yargs": "^15.1.0"
   }
 }
