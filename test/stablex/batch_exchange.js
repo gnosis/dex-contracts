@@ -2048,11 +2048,30 @@ contract("BatchExchange", async accounts => {
       const sixPointFiveMillion = 6500000
 
       const tradeExample = largeRing30
-      await makeDeposits(batchExchange, accounts, tradeExample.deposits)
+      console.log("First 30 orders", tradeExample.deposits.slice(0, 30))
+      console.log("Second 30 orders", tradeExample.deposits.slice(30))
+
+      // Deposit double sufficient amount and immediately request withdraw for half
+      await makeDeposits(batchExchange, accounts, tradeExample.deposits, 2)
+      for (const deposit of tradeExample.deposits) {
+        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(deposit.token)
+        await batchExchange.requestWithdraw(tokenAddress, deposit.amount, { from: accounts[deposit.user] })
+      }
+      await closeAuction(batchExchange)
+
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
       const orderIds = await placeOrders(batchExchange, accounts, tradeExample.orders, batchId + 1)
       await closeAuction(batchExchange)
 
+      // Ensure that first 30 orders have valid withdraw requests.
+      for (const deposit of tradeExample.deposits.slice(0, 30)) {
+        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(deposit.token)
+        assert(
+          await batchExchange.hasValidWithdrawRequest.call(accounts[deposit.user], tokenAddress), 
+          true,
+          "Expected valid withdraw requests before first solution submission.")
+      }
+      
       const solution = solutionSubmissionParams(tradeExample.solutions[0], accounts, orderIds)
       const firstSubmissionTX = await batchExchange.submitSolution(
         batchId,
@@ -2068,6 +2087,12 @@ contract("BatchExchange", async accounts => {
         firstSubmissionTX.receipt.gasUsed < sixPointFiveMillion,
         `Solution submission exceeded 6.5 million gas at ${firstSubmissionTX.receipt.gasUsed}`
       )
+
+      // Ensure second 30 order's users valid withdraw requests.
+      for (const deposit of tradeExample.deposits.slice(30)) {
+        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(deposit.token)
+        assert(await batchExchange.hasValidWithdrawRequest.call(accounts[deposit.user], tokenAddress), true)
+      }
 
       const solution2 = solutionSubmissionParams(tradeExample.solutions[1], accounts, orderIds)
       const secondSubmissionTX = await batchExchange.submitSolution(
