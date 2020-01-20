@@ -2048,8 +2048,6 @@ contract("BatchExchange", async accounts => {
       const sixPointFiveMillion = 6500000
 
       const tradeExample = largeRing30
-      console.log("First 30 orders", tradeExample.deposits.slice(0, 30))
-      console.log("Second 30 orders", tradeExample.deposits.slice(30))
 
       // Deposit double sufficient amount and immediately request withdraw for half
       await makeDeposits(batchExchange, accounts, tradeExample.deposits, 2)
