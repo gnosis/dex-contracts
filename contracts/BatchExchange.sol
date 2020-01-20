@@ -23,7 +23,7 @@ contract BatchExchange is EpochTokenLocker {
     using IterableAppendOnlySet for IterableAppendOnlySet.Data;
 
     /** @dev Maximum number of touched orders in auction (used in submitSolution) */
-    uint256 public constant MAX_TOUCHED_ORDERS = 30;
+    uint256 public constant MAX_TOUCHED_ORDERS = 25;
 
     /** @dev Fee charged for adding a token */
     uint256 public constant FEE_FOR_LISTING_TOKEN_IN_OWL = 10 ether;
