@@ -2065,11 +2065,12 @@ contract("BatchExchange", async accounts => {
       for (const deposit of tradeExample.deposits.slice(0, 30)) {
         const tokenAddress = await batchExchange.tokenIdToAddressMap.call(deposit.token)
         assert(
-          await batchExchange.hasValidWithdrawRequest.call(accounts[deposit.user], tokenAddress), 
+          await batchExchange.hasValidWithdrawRequest.call(accounts[deposit.user], tokenAddress),
           true,
-          "Expected valid withdraw requests before first solution submission.")
+          "Expected valid withdraw requests before first solution submission."
+        )
       }
-      
+
       const solution = solutionSubmissionParams(tradeExample.solutions[0], accounts, orderIds)
       const firstSubmissionTX = await batchExchange.submitSolution(
         batchId,
