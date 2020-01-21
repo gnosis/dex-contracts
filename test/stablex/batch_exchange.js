@@ -2045,15 +2045,14 @@ contract("BatchExchange", async accounts => {
   describe("Large Examples", () => {
     it("ensures hard gas limit on largest possible ring trade ", async () => {
       const batchExchange = await setupGenericStableX(30)
-      const fivePointFiveMillion = 5500000
+      const sixPointFiveMillion = 6500000
 
       const tradeExample = largeRing30
-
       // Deposit double sufficient amount and immediately request withdraw for half
-      await makeDeposits(batchExchange, accounts, tradeExample.deposits, 2)
-      for (const deposit of tradeExample.deposits) {
-        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(deposit.token)
-        await batchExchange.requestWithdraw(tokenAddress, deposit.amount, { from: accounts[deposit.user] })
+      await makeDeposits(batchExchange, accounts, tradeExample.deposits)
+      for (const order of tradeExample.orders) {
+        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(order.buyToken)
+        await batchExchange.requestWithdraw(tokenAddress, order.buyAmount, { from: accounts[order.user] })
       }
       await closeAuction(batchExchange)
 
@@ -2062,10 +2061,10 @@ contract("BatchExchange", async accounts => {
       await closeAuction(batchExchange)
 
       // Ensure that first 30 orders have valid withdraw requests.
-      for (const deposit of tradeExample.deposits.slice(0, 30)) {
-        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(deposit.token)
+      for (const order of tradeExample.orders.slice(0, 30)) {
+        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(order.buyToken)
         assert(
-          await batchExchange.hasValidWithdrawRequest.call(accounts[deposit.user], tokenAddress),
+          await batchExchange.hasValidWithdrawRequest.call(accounts[order.user], tokenAddress),
           true,
           "Expected valid withdraw requests before first solution submission."
         )
@@ -2083,14 +2082,14 @@ contract("BatchExchange", async accounts => {
         { from: solver }
       )
       assert(
-        firstSubmissionTX.receipt.gasUsed < fivePointFiveMillion,
-        `Solution submission exceeded 5.5 million gas at ${firstSubmissionTX.receipt.gasUsed}`
+        firstSubmissionTX.receipt.gasUsed < sixPointFiveMillion,
+        `Solution submission exceeded 6.5 million gas at ${firstSubmissionTX.receipt.gasUsed}`
       )
 
       // Ensure second 30 order's users valid withdraw requests.
-      for (const deposit of tradeExample.deposits.slice(30)) {
-        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(deposit.token)
-        assert(await batchExchange.hasValidWithdrawRequest.call(accounts[deposit.user], tokenAddress), true)
+      for (const order of tradeExample.orders.slice(30)) {
+        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(order.buyToken)
+        assert(await batchExchange.hasValidWithdrawRequest.call(accounts[order.user], tokenAddress), true)
       }
 
       const solution2 = solutionSubmissionParams(tradeExample.solutions[1], accounts, orderIds)
@@ -2105,8 +2104,8 @@ contract("BatchExchange", async accounts => {
         { from: competingSolver }
       )
       assert(
-        secondSubmissionTX.receipt.gasUsed < fivePointFiveMillion,
-        `Competing solution submission exceeded 5.5 million gas at ${secondSubmissionTX.receipt.gasUsed}`
+        secondSubmissionTX.receipt.gasUsed < sixPointFiveMillion,
+        `Competing solution submission exceeded 6.5 million gas at ${secondSubmissionTX.receipt.gasUsed}`
       )
     })
   })
