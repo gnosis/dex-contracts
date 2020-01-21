@@ -118,11 +118,27 @@ contract BatchExchange is EpochTokenLocker {
 
     /** @dev Event emitted when a new trade is settled
      */
-    event Trade(address indexed owner, uint16 indexed orderId, uint128 executedSellAmount, uint128 executedBuyAmount);
+    event Trade(
+        address indexed owner,
+        uint16 indexed orderId,
+        uint16 indexed sellToken,
+        // Solidity only supports three indexed arguments
+        uint16 buyToken,
+        uint128 executedSellAmount,
+        uint128 executedBuyAmount
+    );
 
     /** @dev Event emitted when an already exectued trade gets reverted
      */
-    event TradeReversion(address indexed owner, uint16 indexed orderId, uint128 executedSellAmount, uint128 executedBuyAmount);
+    event TradeReversion(
+        address indexed owner,
+        uint16 indexed orderId,
+        uint16 indexed sellToken,
+        // Solidity only supports three indexed arguments
+        uint16 buyToken,
+        uint128 executedSellAmount,
+        uint128 executedBuyAmount
+    );
 
     /** @dev Event emitted for each solution that is submitted
      */
@@ -342,7 +358,7 @@ contract BatchExchange is EpochTokenLocker {
             utility = utility.add(evaluateUtility(executedBuyAmount, order));
             updateRemainingOrder(owners[i], orderIds[i], executedSellAmount);
             addBalanceAndBlockWithdrawForThisBatch(owners[i], tokenIdToAddressMap(order.buyToken), executedBuyAmount);
-            emit Trade(owners[i], orderIds[i], executedSellAmount, executedBuyAmount);
+            emit Trade(owners[i], orderIds[i], order.sellToken, order.buyToken, executedSellAmount, executedBuyAmount);
         }
         // Perform all subtractions after additions to avoid negative values
         for (uint256 i = 0; i < owners.length; i++) {
@@ -655,7 +671,7 @@ contract BatchExchange is EpochTokenLocker {
                 (uint128 buyAmount, uint128 sellAmount) = getTradedAmounts(latestSolution.trades[i].volume, order);
                 revertRemainingOrder(owner, orderId, sellAmount);
                 subtractBalanceUnchecked(owner, tokenIdToAddressMap(order.buyToken), buyAmount);
-                emit TradeReversion(owner, orderId, sellAmount, buyAmount);
+                emit TradeReversion(owner, orderId, order.sellToken, order.buyToken, sellAmount, buyAmount);
             }
             // subtract granted fees:
             subtractBalanceUnchecked(latestSolution.solutionSubmitter, tokenIdToAddressMap(0), latestSolution.feeReward);
