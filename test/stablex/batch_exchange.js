@@ -39,9 +39,7 @@ const smallTradeData = {
 }
 
 contract("BatchExchange", async accounts => {
-  const solver = accounts.pop()
-  const competingSolver = accounts.pop()
-  const [user_1, user_2, user_3] = accounts
+  const [user_1, user_2, user_3, solver, competingSolver] = accounts
   const zero_address = "0x0000000000000000000000000000000000000000"
 
   let BATCH_TIME
