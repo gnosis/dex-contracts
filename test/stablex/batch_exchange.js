@@ -2042,7 +2042,7 @@ contract("BatchExchange", async accounts => {
       assert.equal(await batchExchange.hasToken.call(erc20_1.address), true)
     })
   })
-  describe("Large Examples", () => {
+  describe("Large Examples [ @skip-on-coverage ]", () => {
     it("ensures hard gas limit on largest possible ring trade ", async () => {
       const batchExchange = await setupGenericStableX(30)
       const sixPointFiveMillion = 6500000
