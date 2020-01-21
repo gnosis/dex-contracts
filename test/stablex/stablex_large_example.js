@@ -74,4 +74,3 @@ contract("BatchExchange", async accounts => {
     })
   })
 })
-
