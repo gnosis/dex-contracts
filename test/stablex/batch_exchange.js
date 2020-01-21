@@ -21,7 +21,7 @@ const {
   smallExample,
   marginalTrade,
   exampleOrderWithUnlimitedAmount,
-  longRingTrade,
+  largeRing30,
 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
@@ -2044,14 +2044,33 @@ contract("BatchExchange", async accounts => {
   })
   describe("Large Examples", () => {
     it("ensures hard gas limit on largest possible ring trade ", async () => {
-      const batchExchange = await setupGenericStableX(25)
+      const batchExchange = await setupGenericStableX(30)
       const sixPointFiveMillion = 6500000
-      await makeDeposits(batchExchange, accounts, longRingTrade.deposits)
-      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      const orderIds = await placeOrders(batchExchange, accounts, longRingTrade.orders, batchId + 1)
+
+      const tradeExample = largeRing30
+      // Deposit double sufficient amount and immediately request withdraw for half
+      await makeDeposits(batchExchange, accounts, tradeExample.deposits)
+      for (const order of tradeExample.orders) {
+        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(order.buyToken)
+        await batchExchange.requestWithdraw(tokenAddress, order.buyAmount, { from: accounts[order.user] })
+      }
       await closeAuction(batchExchange)
 
-      const solution = solutionSubmissionParams(longRingTrade.solutions[0], accounts, orderIds)
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(batchExchange, accounts, tradeExample.orders, batchId + 1)
+      await closeAuction(batchExchange)
+
+      // Ensure that first 30 orders have valid withdraw requests.
+      for (const order of tradeExample.orders.slice(0, 30)) {
+        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(order.buyToken)
+        assert(
+          await batchExchange.hasValidWithdrawRequest.call(accounts[order.user], tokenAddress),
+          true,
+          "Expected valid withdraw requests before first solution submission."
+        )
+      }
+
+      const solution = solutionSubmissionParams(tradeExample.solutions[0], accounts, orderIds)
       const firstSubmissionTX = await batchExchange.submitSolution(
         batchId,
         solution.objectiveValue,
@@ -2067,7 +2086,13 @@ contract("BatchExchange", async accounts => {
         `Solution submission exceeded 6.5 million gas at ${firstSubmissionTX.receipt.gasUsed}`
       )
 
-      const solution2 = solutionSubmissionParams(longRingTrade.solutions[1], accounts, orderIds)
+      // Ensure second 30 order's users valid withdraw requests.
+      for (const order of tradeExample.orders.slice(30)) {
+        const tokenAddress = await batchExchange.tokenIdToAddressMap.call(order.buyToken)
+        assert(await batchExchange.hasValidWithdrawRequest.call(accounts[order.user], tokenAddress), true)
+      }
+
+      const solution2 = solutionSubmissionParams(tradeExample.solutions[1], accounts, orderIds)
       const secondSubmissionTX = await batchExchange.submitSolution(
         batchId,
         solution2.objectiveValue,
