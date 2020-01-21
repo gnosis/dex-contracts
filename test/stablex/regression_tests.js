@@ -12,7 +12,7 @@ const { solutionSubmissionParams, basicTrade, utilityOverflow } = require("../re
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
 contract("BatchExchange", async accounts => {
-  const solver = accounts.pop()
+  const solver = accounts[0]
 
   before(async () => {
     const feeToken = await MockContract.new()
