@@ -122,6 +122,7 @@ contract BatchExchange is EpochTokenLocker {
         address indexed owner,
         uint16 indexed orderId,
         uint16 indexed sellToken,
+        // Solidity only supports three indexed arguments
         uint16 buyToken,
         uint128 executedSellAmount,
         uint128 executedBuyAmount
@@ -133,6 +134,7 @@ contract BatchExchange is EpochTokenLocker {
         address indexed owner,
         uint16 indexed orderId,
         uint16 indexed sellToken,
+        // Solidity only supports three indexed arguments
         uint16 buyToken,
         uint128 executedSellAmount,
         uint128 executedBuyAmount
