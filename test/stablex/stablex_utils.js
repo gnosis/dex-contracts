@@ -42,8 +42,7 @@ const setupGenericStableX = async function(numTokens = 2, maxTokens = 2 ** 16 - 
 const makeDeposits = async function(contract, accounts, depositList, sufficiencyFactor = 1) {
   for (const deposit of depositList) {
     const tokenAddress = await contract.tokenIdToAddressMap.call(deposit.token)
-    const userAddress = accounts[deposit.user]
-    await contract.deposit(tokenAddress, deposit.amount.muln(sufficiencyFactor), { from: userAddress })
+    await contract.deposit(tokenAddress, deposit.amount.muln(sufficiencyFactor), { from: accounts[deposit.user] })
   }
 }
 
