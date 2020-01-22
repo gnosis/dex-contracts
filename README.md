@@ -164,6 +164,11 @@ And the output should look like this:
     remainingAmount: 1e+21 } ]
 ```
 
+# Building on top of dFusion
+
+An exemplary minimal project, which is integrating with the dFusion project can be found here:
+https://github.com/gnosis/dex-contracts-integration-example
+
 # Contributions
 
 The continuous integration is running several linters which must pass in order to make a contribution to this repo. For your convenience there is a `pre-commit` hook file contained in the project's root directory. You can make your life easier by executing the following command after cloning this project (it will ensure your changes pass linting before allowing commits).
