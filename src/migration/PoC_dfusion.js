@@ -1,33 +1,44 @@
 const { isDevelopmentNetwork, getDependency } = require("./utilities.js")
 const deployOwl = require("@gnosis.pm/owl-token/src/migrations-truffle-5/3_deploy_OWL")
 
-async function migrate({ artifacts, deployer, network, accounts, web3, maxTokens = 2 ** 16 - 1 }) {
-  let fee_token
+async function migrate({ artifacts, deployer, network, account, web3, maxTokens = 2 ** 16 - 1 }) {
   if (isDevelopmentNetwork(network)) {
     await deployOwl({
       artifacts,
       deployer,
       network,
-      accounts,
+      account,
       web3,
     })
-    const TokenOWLProxy = artifacts.require("TokenOWLProxy")
-    fee_token = await TokenOWLProxy.deployed()
-  } else {
-    const TokenOWLProxy = getDependency(artifacts, network, deployer, "@gnosis.pm/owl-token/build/contracts/TokenOWLProxy")
-    fee_token = await TokenOWLProxy.deployed()
   }
-  const BatchExchange = artifacts.require("BatchExchange")
+  const TokenOWLProxy = getDependency(
+    artifacts,
+    network,
+    deployer,
+    account,
+    "@gnosis.pm/owl-token/build/contracts/TokenOWLProxy"
+  )
+  const fee_token = await TokenOWLProxy.deployed()
+
+  const BatchExchange = getDependency(
+    artifacts,
+    network,
+    deployer,
+    account,
+    "@gnosis.pm/dex-contracts/build/contracts/BatchExchange"
+  )
   const BiMap = getDependency(
     artifacts,
     network,
     deployer,
+    account,
     "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap"
   )
   const IterableAppendOnlySet = getDependency(
     artifacts,
     network,
     deployer,
+    account,
     "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet"
   )
 

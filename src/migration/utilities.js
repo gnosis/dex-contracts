@@ -1,16 +1,34 @@
-function getDependency(artifacts, network, deployer, path) {
-  let Contract
+function initializeContract(path, deployer, accounts) {
+  const Contract = require("truffle-contract")
+
+  const contract = Contract(require(path))
+  contract.setProvider(deployer.provider)
+  contract.setNetwork(deployer.network_id)
+  // For some reason the automatic value calculation is not working, hence we do:
+  contract.defaults({
+    from: accounts[0],
+    gas: 6.5e6,
+  })
+  return contract
+}
+
+function getDependency(artifacts, network, deployer, account, path) {
+  let contract
 
   if (isDevelopmentNetwork(network)) {
-    Contract = artifacts.require(path)
+    // If this migration script is used from the repository dex-contracts, the contract
+    // data is received via the artificats.require.
+    // If this migration script is used from an external project, the first try statement
+    // will fail and it will get the contracts from the function initializeContract.
+    try {
+      contract = artifacts.require(path.split("/").pop())
+    } catch (error) {
+      contract = initializeContract(path, deployer, account)
+    }
   } else {
-    const contract = require("truffle-contract")
-
-    Contract = contract(require(path))
-    Contract.setProvider(deployer.provider)
-    Contract.setNetwork(deployer.network_id)
+    contract = initializeContract(path, deployer, account)
   }
-  return Contract
+  return contract
 }
 
 function isDevelopmentNetwork(network) {
