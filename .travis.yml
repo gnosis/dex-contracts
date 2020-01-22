@@ -8,12 +8,15 @@ before_install:
   - yarn --version
   - npm install -g ganache-cli@latest
   - ganache-cli --version
+before_script:
+  - ganache-cli -l 8e6 > /dev/null &
 script:
   - yarn run lint
   - yarn run solhint
   - yarn run pretty-check
   - solium -d contracts/
   - yarn run coverage && cat ./coverage/lcov.info | coveralls
+  - yarn run test ./test/stablex/stablex_large_example.js
 before_deploy:
   - export PACKAGE_VERSION=$(jq -r '.version' package.json)
   - test "v$PACKAGE_VERSION" = "$TRAVIS_TAG"
