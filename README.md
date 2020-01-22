@@ -164,10 +164,14 @@ And the output should look like this:
     remainingAmount: 1e+21 } ]
 ```
 
-# Building on top of dFusion
 
-An exemplary minimal project, which is integrating with the dFusion project can be found here:
-https://github.com/gnosis/dex-contracts-integration-example
+# Building on top of BatchExchange
+
+The integration of the dFusion contracts into your own truffle project are demonstrated here:
+https://github.com/gnosis/dex-contracts-integration-example. This repository contains a minimal
+truffle project allowing to build on top of contracts.
+Please consult its readme for further information.
+
 
 # Contributions
 
