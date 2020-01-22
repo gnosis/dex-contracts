@@ -1,11 +1,11 @@
 const { getDependency } = require("./utilities")
 
-async function migrate({ artifacts, network, deployer, accounts }) {
+async function migrate({ artifacts, network, deployer, account }) {
   const BiMap = getDependency(
     artifacts,
     network,
     deployer,
-    accounts,
+    account,
     "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap"
   )
 

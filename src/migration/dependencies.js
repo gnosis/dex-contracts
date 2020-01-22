@@ -1,13 +1,13 @@
 const { isDevelopmentNetwork, getDependency } = require("./utilities.js")
 
-async function migrate({ artifacts, deployer, network, accounts }) {
+async function migrate({ artifacts, deployer, network, account }) {
   if (isDevelopmentNetwork(network)) {
     // deploy libraries
     const BiMap = getDependency(
       artifacts,
       network,
       deployer,
-      accounts,
+      account,
       "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap"
     )
     await deployer.deploy(BiMap)
@@ -16,7 +16,7 @@ async function migrate({ artifacts, deployer, network, accounts }) {
       artifacts,
       network,
       deployer,
-      accounts,
+      account,
       "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet"
     )
     await deployer.deploy(IterableAppendOnlySet)

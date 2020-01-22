@@ -5,6 +5,6 @@ module.exports = function(deployer, network, accounts) {
     artifacts,
     deployer,
     network,
-    accounts,
+    account: accounts[0],
   })
 }

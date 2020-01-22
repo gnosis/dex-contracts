@@ -12,7 +12,7 @@ module.exports = async function(deployer, network, accounts) {
       artifacts,
       network,
       deployer,
-      accounts,
+      account: accounts[0],
     })
   } else {
     return
