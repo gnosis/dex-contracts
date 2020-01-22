@@ -16,6 +16,10 @@ function getDependency(artifacts, network, deployer, accounts, path) {
   let Contract
 
   if (isDevelopmentNetwork(network)) {
+    // If this migration script is used from the repository dex-contracts, the contract
+    // data is received via the artificats.require.
+    // If this migration script is used from an external project, the first try statement
+    // will fail and it will get the contracts from the function initializeContract.
     try {
       Contract = artifacts.require(path.split("/").pop())
     } catch (error) {
