@@ -1,7 +1,6 @@
 const truffleConfig = require("@gnosis.pm/util-contracts/src/util/truffleConfig")
 
 const DEFAULT_GAS_PRICE_GWEI = 25
-const DEFAULT_GAS_LIMIT = 8e6
 const DEFAULT_MNEMONIC = "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat"
 
 // Load env vars
@@ -22,7 +21,7 @@ let solcVersion = "<0.5.7"
 const gasPriceGWei = process.env.GAS_PRICE_GWEI || DEFAULT_GAS_PRICE_GWEI
 
 // Gas limit
-const gas = process.env.GAS_LIMIT || DEFAULT_GAS_LIMIT
+const gas = process.env.GAS_LIMIT
 
 // Allow to add an additional network (useful for docker-compose setups)
 //  i.e. NETWORK='{ "name": "docker", "networkId": "99999", "url": "http://rpc:8545", "gas": "6700000", "gasPrice": "25000000000"  }'
