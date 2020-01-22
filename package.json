@@ -97,7 +97,7 @@
     "truffle-contract": "^4.0.31",
     "truffle-flattener": "^1.4.2",
     "truffle-plugin-verify": "^0.3.8",
-    "typechain": "^1.0.3",
+    "typechain": "^1.0.4",
     "typechain-target-web3-v1": "^1.0.4",
     "typescript": "^3.7.5",
     "yargs": "^15.1.0"
