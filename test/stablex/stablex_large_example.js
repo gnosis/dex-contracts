@@ -47,7 +47,7 @@ contract("BatchExchange", async accounts => {
       )
       assert(
         firstSubmissionTX.receipt.gasUsed < fivePointFiveMillion,
-        `Solution submission exceeded 6.5 million gas at ${firstSubmissionTX.receipt.gasUsed}`
+        `Solution submission exceeded 5.5 million gas at ${firstSubmissionTX.receipt.gasUsed}`
       )
 
       // Ensure second 30 order's users valid withdraw requests.
@@ -69,7 +69,7 @@ contract("BatchExchange", async accounts => {
       )
       assert(
         secondSubmissionTX.receipt.gasUsed < fivePointFiveMillion,
-        `Competing solution submission exceeded 6.5 million gas at ${secondSubmissionTX.receipt.gasUsed}`
+        `Competing solution submission exceeded 5.5 million gas at ${secondSubmissionTX.receipt.gasUsed}`
       )
     })
   })
