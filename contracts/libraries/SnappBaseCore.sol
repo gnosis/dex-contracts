@@ -5,6 +5,7 @@ import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/Merkle.sol";
 import "../SnappBase.sol";
 
+
 library SnappBaseCore {
     using Merkle for bytes32;
 

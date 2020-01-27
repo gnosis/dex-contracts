@@ -3,6 +3,7 @@ pragma solidity ^0.5.0;
 import "./SnappBase.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 
+
 contract SnappAuction is SnappBase {
     using BytesLib for bytes;
 

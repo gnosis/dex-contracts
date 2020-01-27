@@ -4,6 +4,7 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./libraries/SnappBaseCore.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 
+
 contract SnappBase is Ownable {
     using SnappBaseCore for SnappBaseCore.Data;
     SnappBaseCore.Data internal coreData;
