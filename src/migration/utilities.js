@@ -23,9 +23,6 @@ async function getDependency(artifacts, network, deployer, account, path, contra
     }
   } catch (error) {
     contract = initializeContract(path, deployer, account)
-    if (contractNeedsToBeDeployed) {
-      await contract.deployed()
-    }
   }
   return contract
 }
