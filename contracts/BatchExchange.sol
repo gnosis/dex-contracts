@@ -8,6 +8,7 @@ import "openzeppelin-solidity/contracts/utils/SafeCast.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
 
+
 /** @title BatchExchange - A decentralized exchange for any ERC20 token as a multi-token batch
  *  auction with uniform clearing prices.
  *  For more information visit: <https://github.com/gnosis/dex-contracts>
@@ -389,6 +390,7 @@ contract BatchExchange is EpochTokenLocker {
         );
         return (objectiveValue);
     }
+
     /**
      * Public View Methods
      */
@@ -536,6 +538,7 @@ contract BatchExchange is EpochTokenLocker {
             return 0;
         }
     }
+
     /**
      * Private Functions
      */

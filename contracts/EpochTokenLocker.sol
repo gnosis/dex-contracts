@@ -5,6 +5,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/Math.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
 /** @title Epoch Token Locker
  *  EpochTokenLocker saveguards tokens for applications with constant-balances during discrete epochs
  *  It allows to deposit a token which become credited in the next epoch and allows to request a token-withdraw
@@ -115,6 +116,7 @@ contract EpochTokenLocker {
         SafeERC20.safeTransfer(IERC20(token), user, amount);
         emit Withdraw(user, token, amount);
     }
+
     /**
      * Public view functions
      */

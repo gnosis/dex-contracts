@@ -2,6 +2,7 @@ pragma solidity ^0.5.0;
 
 import "../libraries/TokenConservation.sol";
 
+
 contract TokenConservationWrapper {
     using TokenConservation for int256[];
     using TokenConservation for uint16[];
