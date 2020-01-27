@@ -1,7 +1,7 @@
 const { getDependency } = require("./utilities")
 
 async function migrate({ artifacts, network, deployer, account }) {
-  const BiMap = getDependency(
+  const BiMap = await getDependency(
     artifacts,
     network,
     deployer,
@@ -13,6 +13,7 @@ async function migrate({ artifacts, network, deployer, account }) {
   await BiMap.deployed()
 
   const SnappBaseCore = artifacts.require("SnappBaseCore")
+  const SnappBase = artifacts.require("SnappBase")
   const SnappAuction = artifacts.require("SnappAuction")
 
   await deployer.link(BiMap, SnappBaseCore)
@@ -20,6 +21,8 @@ async function migrate({ artifacts, network, deployer, account }) {
 
   await deployer.link(BiMap, SnappAuction)
   await deployer.link(SnappBaseCore, SnappAuction)
+  await deployer.link(SnappBaseCore, SnappBase)
+
   await deployer.deploy(SnappAuction)
 }
 

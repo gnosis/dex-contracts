@@ -3,7 +3,7 @@ const { isDevelopmentNetwork, getDependency } = require("./utilities.js")
 async function migrate({ artifacts, deployer, network, account }) {
   if (isDevelopmentNetwork(network)) {
     // deploy libraries
-    const BiMap = getDependency(
+    const BiMap = await getDependency(
       artifacts,
       network,
       deployer,
@@ -12,7 +12,7 @@ async function migrate({ artifacts, deployer, network, account }) {
     )
     await deployer.deploy(BiMap)
 
-    const IterableAppendOnlySet = getDependency(
+    const IterableAppendOnlySet = await getDependency(
       artifacts,
       network,
       deployer,

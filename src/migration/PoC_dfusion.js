@@ -11,7 +11,7 @@ async function migrate({ artifacts, deployer, network, account, web3, maxTokens 
       web3,
     })
   }
-  const TokenOWLProxy = getDependency(
+  const TokenOWLProxy = await getDependency(
     artifacts,
     network,
     deployer,
@@ -20,21 +20,22 @@ async function migrate({ artifacts, deployer, network, account, web3, maxTokens 
   )
   const fee_token = await TokenOWLProxy.deployed()
 
-  const BatchExchange = getDependency(
+  const BatchExchange = await getDependency(
     artifacts,
     network,
     deployer,
     account,
-    "@gnosis.pm/dex-contracts/build/contracts/BatchExchange"
+    "@gnosis.pm/dex-contracts/build/contracts/BatchExchange",
+    false
   )
-  const BiMap = getDependency(
+  const BiMap = await getDependency(
     artifacts,
     network,
     deployer,
     account,
     "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap"
   )
-  const IterableAppendOnlySet = getDependency(
+  const IterableAppendOnlySet = await getDependency(
     artifacts,
     network,
     deployer,
