@@ -12,20 +12,16 @@ function initializeContract(path, deployer, account) {
   return contract
 }
 
-async function getDeployedDependency(artifacts, deployer, account, path, contractNeedsToBeDeployed = true) {
+async function getDeployedDependency(artifacts, deployer, account, path) {
   let contract
   // The following logic ensures the right artifacts are used, no matter whether the migration scripts are run from an
   // external project or this dex-contracts project.
   try {
     contract = artifacts.require(path.split("/").pop())
-    if (contractNeedsToBeDeployed) {
-      await contract.deployed()
-    }
+    await contract.deployed()
   } catch (error) {
     contract = initializeContract(path, deployer, account)
-    if (contractNeedsToBeDeployed) {
-      await contract.deployed()
-    }
+    await contract.deployed()
   }
   return contract
 }
