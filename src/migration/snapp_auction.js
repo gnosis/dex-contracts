@@ -9,14 +9,12 @@ async function migrate({ artifacts, deployer, account }) {
   )
 
   const SnappBaseCore = artifacts.require("SnappBaseCore")
-  const SnappBase = artifacts.require("SnappBase")
   const SnappAuction = artifacts.require("SnappAuction")
 
   await deployer.link(biMap, SnappBaseCore)
   await deployer.deploy(SnappBaseCore)
   await deployer.link(biMap, SnappAuction)
   await deployer.link(SnappBaseCore, SnappAuction)
-  await deployer.link(SnappBaseCore, SnappBase)
 
   await deployer.deploy(SnappAuction)
 }
