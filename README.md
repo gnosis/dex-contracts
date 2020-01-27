@@ -11,6 +11,10 @@ It uses a batch auction for arbitrage-free exchanges while maximizing trader sur
 
 Checkout the [Formal Specification](https://github.com/gnosis/dex-research/blob/master/dFusion/dFusion.rst).
 
+# Audit report
+
+The audit report can be found [here](https://github.com/gnosis/dex-contracts/blob/master/Exchange_audit_report.pdf).
+
 # CLI Examples
 
 Checkout [wiki](https://github.com/gnosis/dex-contracts/wiki/Script-Usage-Examples)
@@ -164,14 +168,12 @@ And the output should look like this:
     remainingAmount: 1e+21 } ]
 ```
 
-
 # Building on top of BatchExchange
 
 The integration of the dFusion contracts into your own truffle project are demonstrated here:
 https://github.com/gnosis/dex-contracts-integration-example. This repository contains a minimal
 truffle project allowing to build on top of contracts.
 Please consult its readme for further information.
-
 
 # Contributions
 
