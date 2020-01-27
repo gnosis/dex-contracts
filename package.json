@@ -92,7 +92,7 @@
     "solidity-coverage": "^0.7.1",
     "solidity-multicall": "^1.0.0",
     "solium": "^1.2.4",
-    "truffle": "^5.1.9",
+    "truffle": "^5.1.10",
     "truffle-assertions": "^0.9.2",
     "truffle-contract": "^4.0.31",
     "truffle-flattener": "^1.4.2",
