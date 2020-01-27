@@ -1,25 +1,20 @@
-const { getDependency } = require("./utilities")
+const { getDeployedDependency } = require("./utilities")
 
-async function migrate({ artifacts, network, deployer, account }) {
-  const BiMap = await getDependency(
+async function migrate({ artifacts, deployer, account }) {
+  const biMap = await getDeployedDependency(
     artifacts,
-    network,
     deployer,
     account,
     "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap"
   )
 
-  // Hack to populate truffle artifact values correctly for linked libraries.
-  await BiMap.deployed()
-
   const SnappBaseCore = artifacts.require("SnappBaseCore")
   const SnappBase = artifacts.require("SnappBase")
   const SnappAuction = artifacts.require("SnappAuction")
 
-  await deployer.link(BiMap, SnappBaseCore)
+  await deployer.link(biMap, SnappBaseCore)
   await deployer.deploy(SnappBaseCore)
-
-  await deployer.link(BiMap, SnappAuction)
+  await deployer.link(biMap, SnappAuction)
   await deployer.link(SnappBaseCore, SnappAuction)
   await deployer.link(SnappBaseCore, SnappBase)
 

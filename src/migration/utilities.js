@@ -12,7 +12,7 @@ function initializeContract(path, deployer, account) {
   return contract
 }
 
-async function getDependency(artifacts, network, deployer, account, path, contractNeedsToBeDeployed = true) {
+async function getDeployedDependency(artifacts, deployer, account, path, contractNeedsToBeDeployed = true) {
   let contract
   // The following logic ensures the right artifacts are used, no matter whether the migration scripts are run from an
   // external project or this dex-contracts project.
@@ -21,6 +21,21 @@ async function getDependency(artifacts, network, deployer, account, path, contra
     if (contractNeedsToBeDeployed) {
       await contract.deployed()
     }
+  } catch (error) {
+    contract = initializeContract(path, deployer, account)
+    if (contractNeedsToBeDeployed) {
+      await contract.deployed()
+    }
+  }
+  return contract
+}
+
+function getArtifact(artifacts, deployer, account, path) {
+  let contract
+  // The following logic ensures the right artifacts are used, no matter whether the migration scripts are run from an
+  // external project or this dex-contracts project.
+  try {
+    contract = artifacts.require(path.split("/").pop())
   } catch (error) {
     contract = initializeContract(path, deployer, account)
   }
@@ -32,6 +47,7 @@ function isDevelopmentNetwork(network) {
 }
 
 module.exports = {
-  getDependency,
+  getDeployedDependency,
+  getArtifact,
   isDevelopmentNetwork,
 }

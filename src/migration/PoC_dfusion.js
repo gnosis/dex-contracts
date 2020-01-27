@@ -1,4 +1,4 @@
-const { isDevelopmentNetwork, getDependency } = require("./utilities.js")
+const { isDevelopmentNetwork, getDeployedDependency, getArtifact } = require("./utilities.js")
 const deployOwl = require("@gnosis.pm/owl-token/src/migrations-truffle-5/3_deploy_OWL")
 
 async function migrate({ artifacts, deployer, network, account, web3, maxTokens = 2 ** 16 - 1 }) {
@@ -11,49 +11,34 @@ async function migrate({ artifacts, deployer, network, account, web3, maxTokens 
       web3,
     })
   }
-  const TokenOWLProxy = await getDependency(
+  const feeToken = await getDeployedDependency(
     artifacts,
-    network,
     deployer,
     account,
     "@gnosis.pm/owl-token/build/contracts/TokenOWLProxy"
   )
-  const fee_token = await TokenOWLProxy.deployed()
 
-  const BatchExchange = await getDependency(
+  const BatchExchange = getArtifact(artifacts, deployer, account, "@gnosis.pm/dex-contracts/build/contracts/BatchExchange")
+  const biMap = await getDeployedDependency(
     artifacts,
-    network,
-    deployer,
-    account,
-    "@gnosis.pm/dex-contracts/build/contracts/BatchExchange",
-    false
-  )
-  const BiMap = await getDependency(
-    artifacts,
-    network,
     deployer,
     account,
     "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap"
   )
-  const IterableAppendOnlySet = await getDependency(
+  const iterableAppendOnlySet = await getDeployedDependency(
     artifacts,
-    network,
     deployer,
     account,
     "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet"
   )
 
-  // Hack to populate truffle artifact data correctly for linked libraries.
-  await BiMap.deployed()
-  await IterableAppendOnlySet.deployed()
-
   //linking libraries
-  await deployer.link(BiMap, BatchExchange)
-  await deployer.link(IterableAppendOnlySet, BatchExchange)
+  await deployer.link(biMap, BatchExchange)
+  await deployer.link(iterableAppendOnlySet, BatchExchange)
 
   // eslint-disable-next-line no-console
   console.log("Deploy BatchExchange contract")
-  await deployer.deploy(BatchExchange, maxTokens, fee_token.address)
+  await deployer.deploy(BatchExchange, maxTokens, feeToken.address)
 }
 
 module.exports = migrate

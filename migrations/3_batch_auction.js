@@ -10,7 +10,6 @@ module.exports = async function(deployer, network, accounts) {
   if (!argv.onlyMigrateStableX) {
     return migrateSnappAuction({
       artifacts,
-      network,
       deployer,
       account: accounts[0],
     })
