@@ -16,8 +16,9 @@ async function migrate({ artifacts, deployer, account }) {
   await deployer.deploy(SnappBaseCore)
   await deployer.link(biMap, SnappAuction)
   await deployer.link(SnappBaseCore, SnappAuction)
+  //ToDo: track down why the following linking process is necessary
+  //for testing tests/snapp/snapp_base
   await deployer.link(SnappBaseCore, SnappBase)
-
   await deployer.deploy(SnappAuction)
 }
 
