@@ -1,24 +1,18 @@
-const { isDevelopmentNetwork, getDependency } = require("./utilities.js")
+const { isDevelopmentNetwork, artifactFromNpmImport } = require("./utilities.js")
 
-async function migrate({ artifacts, deployer, network, account }) {
+async function migrate({ deployer, network, account }) {
   if (isDevelopmentNetwork(network)) {
-    // deploy libraries
-    const BiMap = getDependency(
-      artifacts,
-      network,
+    const BiMap = artifactFromNpmImport(
+      "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap",
       deployer,
-      account,
-      "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap"
+      account
+    )
+    const IterableAppendOnlySet = artifactFromNpmImport(
+      "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet",
+      deployer,
+      account
     )
     await deployer.deploy(BiMap)
-
-    const IterableAppendOnlySet = getDependency(
-      artifacts,
-      network,
-      deployer,
-      account,
-      "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet"
-    )
     await deployer.deploy(IterableAppendOnlySet)
   } else {
     // eslint-disable-next-line no-console

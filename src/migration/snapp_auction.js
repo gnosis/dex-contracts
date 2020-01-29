@@ -1,13 +1,7 @@
-const { getDependency } = require("./utilities")
+const { artifactFromNpmImport } = require("./utilities")
 
 async function migrate({ artifacts, network, deployer, account }) {
-  const BiMap = getDependency(
-    artifacts,
-    network,
-    deployer,
-    account,
-    "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap"
-  )
+  const BiMap = artifactFromNpmImport("@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap", deployer, account)
 
   // Hack to populate truffle artifact values correctly for linked libraries.
   await BiMap.deployed()

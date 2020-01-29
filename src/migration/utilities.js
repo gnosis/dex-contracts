@@ -1,6 +1,17 @@
-function initializeContract(path, deployer, accounts) {
-  const Contract = require("truffle-contract")
+const Contract = require("@truffle/contract")
 
+function artifactFromNpmImport(path, deployer, account) {
+  const contract = Contract(require(path))
+  contract.setNetwork(deployer.network_id)
+  contract.defaults({
+    from: account,
+    gas: 6.5e6,
+  })
+  contract.setProvider(deployer.provider)
+  return contract
+}
+
+function initializeContract(path, deployer, accounts) {
   const contract = Contract(require(path))
   contract.setProvider(deployer.provider)
   contract.setNetwork(deployer.network_id)
@@ -33,4 +44,5 @@ function isDevelopmentNetwork(network) {
 module.exports = {
   getDependency,
   isDevelopmentNetwork,
+  artifactFromNpmImport,
 }
