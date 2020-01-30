@@ -1,14 +1,12 @@
 const { getArtifactFromNpmImport, isDevelopmentNetwork } = require("./utilities")
 
 async function migrate({ artifacts, network, deployer, account }) {
-  const BiMap = getArtifactFromNpmImport(
-    "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap",
-    deployer,
-    account
-  )
+  let BiMap
   if (isDevelopmentNetwork(network)) {
+    BiMap = artifacts.require("IdToAddressBiMap")
     await deployer.deploy(BiMap)
   } else {
+    BiMap = getArtifactFromNpmImport("@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap", deployer, account)
     await BiMap.deployed()
   }
 
