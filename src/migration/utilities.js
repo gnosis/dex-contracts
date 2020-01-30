@@ -1,5 +1,5 @@
 function initializeContract(path, deployer, accounts) {
-  const Contract = require("truffle-contract")
+  const Contract = require("@truffle/contract")
 
   const contract = Contract(require(path))
   contract.setProvider(deployer.provider)
