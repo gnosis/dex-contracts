@@ -1,6 +1,5 @@
 const SnappBase = artifacts.require("SnappBase")
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
-const BiMap = artifacts.require("@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap")
 const SnappBaseCore = artifacts.require("SnappBaseCore")
 const ERC20 = artifacts.require("ERC20")
 const MintableERC20 = artifacts.require("ERC20Mintable")
@@ -29,8 +28,8 @@ contract("SnappBase", async accounts => {
   const [owner, token_owner, user_1, user_2] = accounts
 
   beforeEach(async () => {
-    const lib1 = await BiMap.new()
-    await SnappBaseCore.link(BiMap, lib1.address)
+    const lib1 = await IdToAddressBiMap.new()
+    await SnappBaseCore.link(IdToAddressBiMap, lib1.address)
     const lib2 = await SnappBaseCore.new()
 
     await SnappBase.link(IdToAddressBiMap, lib1.address)
