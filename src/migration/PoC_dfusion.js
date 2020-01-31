@@ -1,7 +1,19 @@
-const { isDevelopmentNetwork, getDependency } = require("./utilities.js")
+const { isDevelopmentNetwork, getArtifactFromNpmImport, getArtifactFromBuildFolderOrImport } = require("./utilities.js")
 const deployOwl = require("@gnosis.pm/owl-token/src/migrations-truffle-5/3_deploy_OWL")
 
 async function migrate({ artifacts, deployer, network, account, web3, maxTokens = 2 ** 16 - 1 }) {
+  let feeToken
+
+  const BiMap = getArtifactFromNpmImport(
+    "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap",
+    deployer,
+    account
+  )
+  const IterableAppendOnlySet = getArtifactFromNpmImport(
+    "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet",
+    deployer,
+    account
+  )
   if (isDevelopmentNetwork(network)) {
     await deployOwl({
       artifacts,
@@ -10,49 +22,32 @@ async function migrate({ artifacts, deployer, network, account, web3, maxTokens 
       account,
       web3,
     })
-  }
-  const TokenOWLProxy = getDependency(
-    artifacts,
-    network,
-    deployer,
-    account,
-    "@gnosis.pm/owl-token/build/contracts/TokenOWLProxy"
-  )
-  const fee_token = await TokenOWLProxy.deployed()
 
-  const BatchExchange = getDependency(
+    const TokenOWLProxy = artifacts.require("TokenOWLProxy")
+    feeToken = await TokenOWLProxy.deployed()
+    await deployer.deploy(BiMap)
+    await deployer.deploy(IterableAppendOnlySet)
+  } else {
+    const TokenOWLProxy = getArtifactFromNpmImport("@gnosis.pm/owl-token/build/contracts/TokenOWLProxy", deployer, account)
+    feeToken = await TokenOWLProxy.deployed()
+    await BiMap.deployed()
+    await IterableAppendOnlySet.deployed()
+  }
+
+  const BatchExchange = getArtifactFromBuildFolderOrImport(
     artifacts,
     network,
     deployer,
     account,
     "@gnosis.pm/dex-contracts/build/contracts/BatchExchange"
   )
-  const BiMap = getDependency(
-    artifacts,
-    network,
-    deployer,
-    account,
-    "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap"
-  )
-  const IterableAppendOnlySet = getDependency(
-    artifacts,
-    network,
-    deployer,
-    account,
-    "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet"
-  )
-
-  // Hack to populate truffle artifact data correctly for linked libraries.
-  await BiMap.deployed()
-  await IterableAppendOnlySet.deployed()
-
   //linking libraries
   await deployer.link(BiMap, BatchExchange)
   await deployer.link(IterableAppendOnlySet, BatchExchange)
 
   // eslint-disable-next-line no-console
   console.log("Deploy BatchExchange contract")
-  await deployer.deploy(BatchExchange, maxTokens, fee_token.address)
+  await deployer.deploy(BatchExchange, maxTokens, feeToken.address)
 }
 
 module.exports = migrate
