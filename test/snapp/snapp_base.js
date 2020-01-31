@@ -29,10 +29,10 @@ contract("SnappBase", async accounts => {
 
   beforeEach(async () => {
     const lib1 = await IdToAddressBiMap.new()
-    await SnappBaseCore.link(IdToAddressBiMap, lib1.address)
+    await SnappBaseCore.link("IdToAddressBiMap", lib1.address)
     const lib2 = await SnappBaseCore.new()
 
-    await SnappBase.link(IdToAddressBiMap, lib1.address)
+    await SnappBase.link("IdToAddressBiMap", lib1.address)
     await SnappBase.link(SnappBaseCore, lib2.address)
   })
 
