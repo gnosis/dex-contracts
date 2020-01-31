@@ -34,7 +34,7 @@ contract("SnappBase", async accounts => {
     const lib2 = await SnappBaseCore.new()
 
     await SnappBase.link("IdToAddressBiMap", lib1.address)
-    await SnappBase.link("SnappBaseCore", lib2.address)
+    await SnappBase.link(SnappBaseCore, lib2.address)
   })
 
   describe("public view functions", () => {
