@@ -19,8 +19,8 @@ contract("BatchExchange", async accounts => {
     await feeToken.givenAnyReturnBool(true)
     const lib1 = await IdToAddressBiMap.new()
     const lib2 = await IterableAppendOnlySet.new()
-    await BatchExchange.link(IdToAddressBiMap, lib1.address)
-    await BatchExchange.link(IterableAppendOnlySet, lib2.address)
+    await BatchExchange.link("IdToAddressBiMap", lib1.address)
+    await BatchExchange.link("IterableAppendOnlySet", lib2.address)
   })
 
   // In the following tests, it might be possible that an batchId is read from the blockchain

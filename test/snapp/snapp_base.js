@@ -34,6 +34,8 @@ contract("SnappBase", async accounts => {
     const lib2 = await SnappBaseCore.new()
 
     await SnappBase.link("IdToAddressBiMap", lib1.address)
+    // In the following line, using "SnappBaseCore" for the linker would fail, as
+    // events would then not properly be linked.
     await SnappBase.link(SnappBaseCore, lib2.address)
   })
 
