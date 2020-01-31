@@ -2,7 +2,19 @@ const { isDevelopmentNetwork, getArtifactFromNpmImport, getArtifactFromBuildFold
 const deployOwl = require("@gnosis.pm/owl-token/src/migrations-truffle-5/3_deploy_OWL")
 
 async function migrate({ artifacts, deployer, network, account, web3, maxTokens = 2 ** 16 - 1 }) {
-  let feeToken, IterableAppendOnlySet, BiMap
+  let feeToken
+
+  const BiMap = getArtifactFromNpmImport(
+    "@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap",
+    deployer,
+    account
+  )
+  const IterableAppendOnlySet = getArtifactFromNpmImport(
+    "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet",
+    deployer,
+    account
+  )
+  const TokenOWLProxy = getArtifactFromNpmImport("@gnosis.pm/owl-token/build/contracts/TokenOWLProxy", deployer, account)
 
   if (isDevelopmentNetwork(network)) {
     await deployOwl({
@@ -12,20 +24,11 @@ async function migrate({ artifacts, deployer, network, account, web3, maxTokens 
       account,
       web3,
     })
-    BiMap = artifacts.require("IdToAddressBiMap")
-    IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
     const TokenOWLProxy = artifacts.require("TokenOWLProxy")
     feeToken = await TokenOWLProxy.deployed()
     await deployer.deploy(BiMap)
     await deployer.deploy(IterableAppendOnlySet)
   } else {
-    BiMap = getArtifactFromNpmImport("@gnosis.pm/solidity-data-structures/build/contracts/IdToAddressBiMap", deployer, account)
-    IterableAppendOnlySet = getArtifactFromNpmImport(
-      "@gnosis.pm/solidity-data-structures/build/contracts/IterableAppendOnlySet",
-      deployer,
-      account
-    )
-    const TokenOWLProxy = getArtifactFromNpmImport("@gnosis.pm/owl-token/build/contracts/TokenOWLProxy", deployer, account)
     feeToken = await TokenOWLProxy.deployed()
     await BiMap.deployed()
     await IterableAppendOnlySet.deployed()

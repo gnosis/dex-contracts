@@ -47,8 +47,8 @@ contract("BatchExchange", async accounts => {
     await feeToken.givenAnyReturnBool(true)
     const lib1 = await IdToAddressBiMap.new()
     const lib2 = await IterableAppendOnlySet.new()
-    await BatchExchange.link(IdToAddressBiMap, lib1.address)
-    await BatchExchange.link(IterableAppendOnlySet, lib2.address)
+    await BatchExchange.link("IdToAddressBiMap", lib1.address)
+    await BatchExchange.link("IterableAppendOnlySet", lib2.address)
     const batchExchange = await BatchExchange.new(2 ** 16 - 1, feeToken.address)
 
     BATCH_TIME = (await batchExchange.BATCH_TIME.call()).toNumber()
