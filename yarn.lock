@@ -7985,10 +7985,10 @@ solc@^0.4.2:
     semver "^5.3.0"
     yargs "^4.7.1"
 
-solhint-plugin-prettier@0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/solhint-plugin-prettier/-/solhint-plugin-prettier-0.0.3.tgz#d0070ef77d75fa8ede12574a81eca34f89c4a721"
-  integrity sha512-kdg1c7d5/X/RKTBS9AskwAKOZLpFhwUBelwjrUq43EQXOLd2HR81WvENZWcVNmzewiPTEOoZo3CqqE/Hy/84WQ==
+solhint-plugin-prettier@0.0.4:
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/solhint-plugin-prettier/-/solhint-plugin-prettier-0.0.4.tgz#ab55ff776d64ff665c52bed41a3b4795c391c9d8"
+  integrity sha512-JVxh8ZkD4ydb0EndbNcstpFU+vWzUvX3jr9z6u72+Srg/zjD8JQ1tIMjMn0H1PnsNLItZqPZ6RYIPJB6HOsVMg==
   dependencies:
     prettier-linter-helpers "^1.0.0"
 
