@@ -31,6 +31,10 @@ contract("SnappBase", async accounts => {
     const lib1 = await IdToAddressBiMap.new()
     await SnappBaseCore.link("IdToAddressBiMap", lib1.address)
     await SnappBase.link("IdToAddressBiMap", lib1.address)
+    // We do not deploy a new instance of SnappBaseCore and link it to Snappbase,
+    // as in this case the events of the library would not be merged with the events of the contract
+    // on an artifact level.
+    // https://github.com/trufflesuite/truffle/blob/develop/packages/contract/lib/contract/constructorMethods.js#L180-L183
     await SnappBase.link(SnappBaseCore)
   })
 
