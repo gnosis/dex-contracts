@@ -74,7 +74,7 @@
     "es6-promise": "^4.2.8",
     "eslint": "^6.8.0",
     "eslint-plugin-no-only-tests": "^2.4.0",
-    "eslint-plugin-react": "^7.18.2",
+    "eslint-plugin-react": "^7.18.3",
     "eth-gas-reporter": "^0.2.14",
     "ethereumjs-abi": "^0.6.8",
     "ethereumjs-util": "^6.2.0",
