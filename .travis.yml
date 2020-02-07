@@ -35,6 +35,6 @@ after_deploy:
   - >
     curl -X POST
     -F "token=$GITLAB_TOKEN"
-    -F "ref=v0.1.0"
+    -F "ref=v0.1.1"
     -F "variables[PACKAGE_VERSION]=$PACKAGE_VERSION"
     https://gitlab.gnosisdev.com/api/v4/projects/$GITLAB_PROJECT/trigger/pipeline
