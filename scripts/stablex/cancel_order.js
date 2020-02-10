@@ -8,7 +8,7 @@ const argv = require("yargs")
     describe: "Order IDs to be canceled",
     coerce: array => {
       try {
-        return array.flatMap(v => v.split(",").map(o => parseInt(o)))
+        return array[0].split(",").map(o => parseInt(o))
       } catch (TypeError) {
         console.log(`Detected individual order cancelation ${array[0]}`)
         return array

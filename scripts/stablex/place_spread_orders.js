@@ -35,7 +35,7 @@ const argv = require("yargs")
     type: "array",
     describe: "Collection of trusted tokenIds",
     coerce: array => {
-      return array.flatMap(v => v.split(",").map(t => parseInt(t)))
+      return array[0].split(",").map(t => parseInt(t))
     },
   })
   .option("accountId", {
