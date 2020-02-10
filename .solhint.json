@@ -8,7 +8,6 @@
     "not-rely-on-time": "error",
     "compiler-fixed": true,
     "no-simple-event-func-name": true,
-    "no-empty-blocks": "off",
     "two-lines-top-level-separator": "off",
     "separate-by-one-line-in-contract": "warn",
     "bracket-align": "warn"
