@@ -32,10 +32,10 @@ const formatAmount = function(amount, token) {
 const argv = require("yargs")
   .option("tokens", {
     alias: "t",
-    type: "array",
+    type: "string",
     describe: "Collection of trusted tokenIds",
-    coerce: array => {
-      return array[0].split(",").map(t => parseInt(t))
+    coerce: str => {
+      return str.split(",").map(t => parseInt(t))
     },
   })
   .option("accountId", {

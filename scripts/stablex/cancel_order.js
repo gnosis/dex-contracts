@@ -4,15 +4,10 @@ const argv = require("yargs")
     describe: "Account index of the order placer",
   })
   .option("orderIds", {
-    type: "array",
+    type: "string",
     describe: "Order IDs to be canceled",
-    coerce: array => {
-      try {
-        return array[0].split(",").map(o => parseInt(o))
-      } catch (TypeError) {
-        console.log(`Detected individual order cancelation ${array[0]}`)
-        return array
-      }
+    coerce: str => {
+      return str.split(",").map(o => parseInt(o))
     },
   })
   .demand(["accountId", "orderIds"])
