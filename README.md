@@ -1,15 +1,15 @@
 [![Build Status](https://travis-ci.org/gnosis/dex-contracts.svg?branch=master)](https://travis-ci.org/gnosis/dex-contracts?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/gnosis/dex-contracts/badge.svg?branch=master)](https://coveralls.io/github/gnosis/dex-contracts?branch=master)
 
-# dFusion - Smart Contracts
+# Gnosis Protocol - Smart Contracts
 
-The **dFusion Exchange** is a fully decentralized trading protocol which facilitates ring trades via discrete auction between several [ERC20](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md) token pairs.
+The **Gnosis Protocol Exchange** is a fully decentralized trading protocol which facilitates ring trades via discrete auction between several [ERC20](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md) token pairs.
 
 It uses a batch auction for arbitrage-free exchanges while maximizing trader surplus to facilitate the development of a fairer Web3 ecosystem for everyone.
 
 # Documentation
 
-Checkout the [Formal Specification](https://github.com/gnosis/dex-research/blob/master/dFusion/dFusion.rst).
+Checkout the [Smart Contract Documentation](https://docs.google.com/document/d/1OfT83TcmwGeAPoQcg1aAt7_CiSskGpftBZgYmk0xIag).
 
 # Audit report
 
@@ -170,7 +170,7 @@ And the output should look like this:
 
 # Building on top of BatchExchange
 
-The integration of the dFusion contracts into your own truffle project are demonstrated here:
+The integration of the Gnosis Protocol contracts into your own truffle project are demonstrated here:
 https://github.com/gnosis/dex-contracts-integration-example. This repository contains a minimal
 truffle project allowing to build on top of contracts.
 Please consult its readme for further information.
