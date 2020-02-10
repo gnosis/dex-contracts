@@ -9,6 +9,3 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Mintable.sol";
 import "solidity-multicall/contracts/MultiCaller.sol";
 import "@gnosis.pm/owl-token/contracts/TokenOWLProxy.sol";
-
-
-contract DevDependencies {}
