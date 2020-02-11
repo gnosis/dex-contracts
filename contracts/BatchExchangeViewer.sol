@@ -24,6 +24,9 @@ contract BatchExchangeViewer {
     }
 
     /** @dev Queries a page of the orderbook for the auction that is still accepting orders
+     *  @param previousPageUser address taken from nextPageUser return value from last page (address(0) for first page)
+     *  @param previousPageUserOffset offset taken nextPageUserOffset return value from last page (0 for first page)
+     *  @param pageSize count of elements to be returned per page (same value is used for subqueries on the exchange)
      *  @return encoded bytes representing orders and page information for next page
      */
     function getOpenOrderBookPaginated(address previousPageUser, uint16 previousPageUserOffset, uint16 pageSize)
@@ -44,6 +47,9 @@ contract BatchExchangeViewer {
     }
 
     /** @dev Queries a page of the orderbook for the auction that is currently being solved
+     *  @param previousPageUser address taken from nextPageUser return value from last page (address(0) for first page)
+     *  @param previousPageUserOffset offset taken nextPageUserOffset return value from last page (0 for first page)
+     *  @param pageSize count of elements to be returned per page (same value is used for subqueries on the exchange)
      *  @return encoded bytes representing orders and page information for next page
      */
     function getFinalizedOrderBookPaginated(address previousPageUser, uint16 previousPageUserOffset, uint16 pageSize)
@@ -55,6 +61,14 @@ contract BatchExchangeViewer {
         return getEncodedOrdersPaginated(batch - 1, batch - 1, previousPageUser, previousPageUserOffset, pageSize);
     }
 
+    /** @dev Queries a page in the list of all orders
+     *  @param maxValidFrom all returned orders will have a validFrom <= this value (they were placed at or before that batch)
+     *  @param minValidUntil all returned orders will have a validUntil >= this value (validity ends at or after that batch)
+     *  @param previousPageUser address taken from nextPageUser return value from last page (address(0) for first page)
+     *  @param previousPageUserOffset offset taken nextPageUserOffset return value from last page (0 for first page)
+     *  @param pageSize count of elements to be returned per page (same value is used for subqueries on the exchange)
+     *  @return encoded bytes representing orders and page information for next page
+     */
     function getEncodedOrdersPaginated(
         uint32 maxValidFrom,
         uint32 minValidUntil,
