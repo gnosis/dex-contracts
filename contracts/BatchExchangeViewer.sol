@@ -101,6 +101,7 @@ contract BatchExchangeViewer {
                 }
             }
         }
+        return (elements, nextPageUser, nextPageUserOffset);
     }
 
     function getUser(bytes memory element) public pure returns (address) {
