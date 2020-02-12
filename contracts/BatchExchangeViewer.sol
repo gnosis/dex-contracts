@@ -1,6 +1,8 @@
 pragma solidity ^0.5.0;
+pragma experimental ABIEncoderV2;
 
 import "solidity-bytes-utils/contracts/BytesLib.sol";
+import "openzeppelin-solidity/contracts/math/Math.sol";
 import "./BatchExchange.sol";
 
 
@@ -14,6 +16,41 @@ contract BatchExchangeViewer {
 
     constructor(BatchExchange exchange) public {
         batchExchange = exchange;
+    }
+
+    struct Balance {
+        address token; // The token for which this balance is reported
+        uint256 availableSellAmount; // Amount available to trade in the auction for which it was requested
+        uint256 pendingDeposit; // Amount that was deposited in the requested auction. Will be tradeable in the next auction
+        uint256 withdrawableBalance; // Amount that can be withdrawn in the requested auction
+    }
+
+    /** @dev Returns the user's token balances for the auction that is currently being settled
+     */
+    function getBalances(address user) public view returns (Balance[] memory) {
+        uint32 currentBatch = batchExchange.getCurrentBatchId();
+        Balance[] memory result = new Balance[](batchExchange.numTokens());
+        for (uint16 index = 0; index < result.length; index++) {
+            address token = batchExchange.tokenIdToAddressMap(index);
+
+            (uint256 depositBalance, uint32 depositedInBatch) = batchExchange.getPendingDeposit(user, token);
+            if (depositedInBatch < currentBatch) {
+                depositBalance = 0;
+            }
+
+            (uint256 withdrawableBalance, uint32 withdrawRequestedInBatch) = batchExchange.getPendingWithdraw(user, token);
+            if (withdrawRequestedInBatch >= currentBatch) {
+                withdrawableBalance = 0;
+            }
+
+            result[index] = Balance({
+                token: token,
+                availableSellAmount: batchExchange.getBalance(user, token),
+                pendingDeposit: depositBalance,
+                withdrawableBalance: withdrawableBalance
+            });
+        }
+        return result;
     }
 
     /** @dev Queries the orderbook for the auction that is still accepting orders

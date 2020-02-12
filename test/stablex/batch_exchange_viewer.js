@@ -20,6 +20,64 @@ contract("BatchExchangeViewer", accounts => {
     await batchExchange.addToken(token_2.address)
   })
 
+  describe("getBalances", () => {
+    it("returns all listed tokens", async () => {
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      const result = await viewer.getBalances(accounts[0])
+      assert.equal(result.filter(balance => balance.availableSellAmount == 0).length, 3)
+    })
+
+    it("returns pending deposits", async () => {
+      await token_1.givenAnyReturnBool(true)
+      await batchExchange.deposit(token_1.address, 100)
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      const result = await viewer.getBalances(accounts[0])
+      assert.equal(result[1].pendingDeposit, 100)
+    })
+
+    it("returns available balance once deposit is processed", async () => {
+      await token_1.givenAnyReturnBool(true)
+      await batchExchange.deposit(token_1.address, 100)
+      await closeAuction(batchExchange)
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      const result = await viewer.getBalances(accounts[0])
+      assert.equal(result[1].pendingDeposit, 0)
+      assert.equal(result[1].availableSellAmount, 100)
+    })
+
+    it("returns withdrawable balance once it is claimable", async () => {
+      await token_1.givenAnyReturnBool(true)
+      await batchExchange.deposit(token_1.address, 100)
+      await closeAuction(batchExchange)
+      await batchExchange.requestWithdraw(token_1.address, 100)
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      const before_valid = await viewer.getBalances(accounts[0])
+      assert.equal(before_valid[1].availableSellAmount, 100)
+      assert.equal(before_valid[1].withdrawableBalance, 0)
+
+      await closeAuction(batchExchange)
+
+      const after_valid = await viewer.getBalances(accounts[0])
+      assert.equal(after_valid[1].availableSellAmount, 0)
+      assert.equal(after_valid[1].withdrawableBalance, 100)
+    })
+
+    it("reports withdrawable balance higher than available balance", async () => {
+      // Due to https://github.com/gnosis/dex-contracts/issues/539
+      await token_1.givenAnyReturnBool(true)
+      await batchExchange.deposit(token_1.address, 100)
+      await batchExchange.requestWithdraw(token_1.address, 200)
+      await closeAuction(batchExchange)
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      const result = await viewer.getBalances(accounts[0])
+      assert.equal(result[1].withdrawableBalance, 200)
+    })
+  })
+
   describe("getOpenOrderBook", () => {
     it("can be queried without pagination", async () => {
       const batchId = await batchExchange.getCurrentBatchId()
