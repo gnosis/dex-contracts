@@ -209,7 +209,7 @@ contract BatchExchange is EpochTokenLocker {
       * @param buyTokens ids of tokens to be bought
       * @param sellTokens ids of tokens to be sold
       * @param validFroms batchIds representing order's validity start time
-      * @param validUntils batchIds represnnting order's expiry
+      * @param validUntils batchIds representing order's expiry
       * @param buyAmounts relative minimum amount of requested buy amounts
       * @param sellAmounts maximum amounts of sell token to be exchanged
       * @return `orderIds` an array of indices in which `msg.sender`'s orders are included
