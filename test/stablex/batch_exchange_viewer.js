@@ -41,7 +41,7 @@ contract("BatchExchangeViewer", accounts => {
       )
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeAuctionElements(await viewer.getOpenOrderBook())
+      const result = decodeAuctionElements(await viewer.getOpenOrderBook([]))
       assert.equal(result.filter(e => e.validFrom == batchId).length, 10)
     })
     it("can be queried with pagination", async () => {
@@ -64,10 +64,32 @@ contract("BatchExchangeViewer", accounts => {
       )
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = await viewer.getOpenOrderBookPaginated(zero_address, 0, 5)
+      const result = await viewer.getOpenOrderBookPaginated([], zero_address, 0, 5)
       assert.equal(decodeAuctionElements(result.elements).filter(e => e.validFrom == batchId).length, 5)
       assert.equal(result.nextPageUser, accounts[0])
       assert.equal(result.nextPageUserOffset, 15)
+    })
+    it("can filter a token pair", async () => {
+      const batchId = await batchExchange.getCurrentBatchId()
+      await batchExchange.placeValidFromOrders(
+        Array(3).fill(0), //buyToken
+        Array(3).fill(1), //sellToken
+        Array(3).fill(batchId), //validFrom
+        Array(3).fill(batchId), //validTo
+        Array(3).fill(0), //buyAmounts
+        Array(3).fill(0) //sellAmounts
+      )
+      await batchExchange.placeValidFromOrders(
+        Array(5).fill(1), //buyToken
+        Array(5).fill(2), //sellToken
+        Array(5).fill(batchId), //validFrom
+        Array(5).fill(batchId), //validTo
+        Array(5).fill(0), //buyAmounts
+        Array(5).fill(0) //sellAmounts
+      )
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      const result = decodeAuctionElements(await viewer.getOpenOrderBook([token_1.address, token_2.address]))
+      assert.equal(result.filter(e => e.validFrom == batchId).length, 5)
     })
   })
 
@@ -95,7 +117,7 @@ contract("BatchExchangeViewer", accounts => {
       await closeAuction(batchExchange)
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeAuctionElements(await viewer.getFinalizedOrderBook())
+      const result = decodeAuctionElements(await viewer.getFinalizedOrderBook([]))
       assert.equal(result.filter(e => e.validFrom == batchId).length, 10)
     })
     it("can be queried with pagination", async () => {
@@ -121,10 +143,36 @@ contract("BatchExchangeViewer", accounts => {
       await closeAuction(batchExchange)
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = await viewer.getFinalizedOrderBookPaginated(zero_address, 0, 5)
+      const result = await viewer.getFinalizedOrderBookPaginated([], zero_address, 0, 5)
       assert.equal(decodeAuctionElements(result.elements).filter(e => e.validFrom == batchId).length, 5)
       assert.equal(result.nextPageUser, accounts[0])
       assert.equal(result.nextPageUserOffset, 15)
+    })
+    it("can filter a token pair", async () => {
+      const batchId = await batchExchange.getCurrentBatchId()
+      await batchExchange.placeValidFromOrders(
+        Array(3).fill(0), //buyToken
+        Array(3).fill(1), //sellToken
+        Array(3).fill(batchId), //validFrom
+        Array(3).fill(batchId), //validTo
+        Array(3).fill(0), //buyAmounts
+        Array(3).fill(0) //sellAmounts
+      )
+      await batchExchange.placeValidFromOrders(
+        Array(5).fill(1), //buyToken
+        Array(5).fill(2), //sellToken
+        Array(5).fill(batchId), //validFrom
+        Array(5).fill(batchId), //validTo
+        Array(5).fill(0), //buyAmounts
+        Array(5).fill(0) //sellAmounts
+      )
+
+      // finalize order book
+      await closeAuction(batchExchange)
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      const result = decodeAuctionElements(await viewer.getFinalizedOrderBook([token_1.address, token_2.address]))
+      assert.equal(result.filter(e => e.validFrom == batchId).length, 5)
     })
   })
 })
