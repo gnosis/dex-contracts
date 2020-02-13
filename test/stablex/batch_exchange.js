@@ -7,9 +7,10 @@ const ERC20 = artifacts.require("ERC20")
 
 const BN = require("bn.js")
 const truffleAssert = require("truffle-assertions")
-const { waitForNSeconds, sendTxAndGetReturnValue, decodeAuctionElements } = require("../utilities")
+const { waitForNSeconds, sendTxAndGetReturnValue } = require("../utilities")
 
 const { closeAuction } = require("../../scripts/stablex/utilities.js")
+const { decodeOrdersBN } = require("../../src/encoding")
 
 const { toETH, getExecutedSellAmount, ERROR_EPSILON, feeAdded, feeSubtracted } = require("../resources/math")
 const {
@@ -1778,7 +1779,7 @@ contract("BatchExchange", async accounts => {
       }
 
       // get 2nd order with getEncodedUserOrdersPaginated(user_1, 1, 1)
-      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedUserOrdersPaginated(user_1, 1, 1))
+      const auctionElements = decodeOrdersBN(await batchExchange.getEncodedUserOrdersPaginated(user_1, 1, 1))
       assert.equal(auctionElements[0].priceNumerator, 1)
     })
   })
@@ -1843,7 +1844,7 @@ contract("BatchExchange", async accounts => {
       await waitForNSeconds(BATCH_TIME)
       await batchExchange.cancelOrders([0])
 
-      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
+      const auctionElements = decodeOrdersBN(await batchExchange.getEncodedOrders())
       assert.equal(JSON.stringify(auctionElements), JSON.stringify([cancelledOrderInfo, freedOrderInfo, validOrderInfo]))
     })
   })
@@ -1881,7 +1882,7 @@ contract("BatchExchange", async accounts => {
       await batchExchange.placeOrder(1, 0, batchId, 20, 10, { from: user_1 })
       await batchExchange.placeOrder(0, 1, batchId, 500, 400, { from: user_2 })
 
-      const auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
+      const auctionElements = decodeOrdersBN(await batchExchange.getEncodedOrders())
       assert.equal(JSON.stringify(auctionElements), JSON.stringify(orderInfo))
     })
     it("credits balance when it's valid", async () => {
@@ -1895,12 +1896,12 @@ contract("BatchExchange", async accounts => {
       await batchExchange.deposit(erc20_2, 20, { from: user_1 })
       await batchExchange.placeOrder(1, 2, batchId, 20, 10, { from: user_1 })
 
-      let auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
+      let auctionElements = decodeOrdersBN(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements[0].sellTokenBalance, 0)
 
       await waitForNSeconds(BATCH_TIME)
 
-      auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
+      auctionElements = decodeOrdersBN(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements[0].sellTokenBalance, 20)
     })
     it("includes freed orders with empty fields", async () => {
@@ -1909,7 +1910,7 @@ contract("BatchExchange", async accounts => {
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
       await batchExchange.placeOrder(1, 0, batchId + 10, 20, 10)
 
-      let auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
+      let auctionElements = decodeOrdersBN(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, batchId)
 
@@ -1917,14 +1918,14 @@ contract("BatchExchange", async accounts => {
       await batchExchange.cancelOrders([0])
 
       // Cancellation is active but not yet freed
-      auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
+      auctionElements = decodeOrdersBN(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, batchId)
 
       await closeAuction(batchExchange)
       await batchExchange.cancelOrders([0])
 
-      auctionElements = decodeAuctionElements(await batchExchange.getEncodedOrders())
+      auctionElements = decodeOrdersBN(await batchExchange.getEncodedOrders())
       assert.equal(auctionElements.length, 1)
       assert.equal(auctionElements[0].validFrom, 0)
     })
@@ -1947,7 +1948,7 @@ contract("BatchExchange", async accounts => {
       await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_1 })
       await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_2 })
 
-      const firstPage = decodeAuctionElements(await batchExchange.getEncodedUsersPaginated(zero_address, 0, 1))
+      const firstPage = decodeOrdersBN(await batchExchange.getEncodedUsersPaginated(zero_address, 0, 1))
       assert.equal(
         JSON.stringify(firstPage),
         JSON.stringify([
@@ -1965,7 +1966,7 @@ contract("BatchExchange", async accounts => {
         ])
       )
 
-      const secondPage = decodeAuctionElements(await batchExchange.getEncodedUsersPaginated(user_1, 1, 1))
+      const secondPage = decodeOrdersBN(await batchExchange.getEncodedUsersPaginated(user_1, 1, 1))
       assert.equal(
         JSON.stringify(secondPage),
         JSON.stringify([
@@ -1983,7 +1984,7 @@ contract("BatchExchange", async accounts => {
         ])
       )
 
-      const thirdPage = decodeAuctionElements(await batchExchange.getEncodedUsersPaginated(user_1, 2, 1))
+      const thirdPage = decodeOrdersBN(await batchExchange.getEncodedUsersPaginated(user_1, 2, 1))
       assert.equal(
         JSON.stringify(thirdPage),
         JSON.stringify([
@@ -2011,7 +2012,7 @@ contract("BatchExchange", async accounts => {
       await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_1 })
       await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_2 })
 
-      const page = decodeAuctionElements(await batchExchange.getEncodedUsersPaginated(user_1, 1, 2))
+      const page = decodeOrdersBN(await batchExchange.getEncodedUsersPaginated(user_1, 1, 2))
       assert.equal(page[0].user, user_1.toLowerCase())
       assert.equal(page[1].user, user_2.toLowerCase())
     })
@@ -2022,7 +2023,7 @@ contract("BatchExchange", async accounts => {
       await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_2 })
       await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_3 })
 
-      const page = decodeAuctionElements(await batchExchange.getEncodedUsersPaginated(zero_address, 0, 5))
+      const page = decodeOrdersBN(await batchExchange.getEncodedUsersPaginated(zero_address, 0, 5))
       assert.equal(page.length, 3)
       assert.equal(page[0].user, user_1.toLowerCase())
       assert.equal(page[1].user, user_2.toLowerCase())
