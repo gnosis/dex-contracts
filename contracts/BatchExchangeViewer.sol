@@ -8,6 +8,8 @@ contract BatchExchangeViewer {
     using BytesLib for bytes;
 
     uint8 public constant AUCTION_ELEMENT_WIDTH = 112;
+    // Can be used by external contracts to indicate no filter as it doesn't seem possible
+    // to create an empty memory array in solidity.
     uint16[] public ALL_TOKEN_FILTER;
 
     BatchExchange batchExchange;
