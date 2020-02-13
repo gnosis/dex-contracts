@@ -25,7 +25,7 @@ contract BatchExchangeViewer {
         uint256 withdrawableBalance; // Amount that can be withdrawn in the requested auction
     }
 
-    /** @dev Returns the user's token balances for the auction that is currently being settled
+    /** @dev Returns the user's token balances for the auction that is currently being solved
      */
     function getBalances(address user) public view returns (Balance[] memory) {
         uint32 currentBatch = batchExchange.getCurrentBatchId();
