@@ -1786,7 +1786,7 @@ contract("BatchExchange", async accounts => {
   describe("getEncodedUserOrders()", async () => {
     it("returns null when there are no orders", async () => {
       const batchExchange = await setupGenericStableX()
-      const auctionElements = await batchExchange.getEncodedOrders()
+      const auctionElements = await batchExchange.getEncodedUserOrders(accounts[0])
       assert.equal(auctionElements, null)
     })
     it("returns correct orders whether valid, cancelled or freed", async () => {
@@ -1844,7 +1844,7 @@ contract("BatchExchange", async accounts => {
       await waitForNSeconds(BATCH_TIME)
       await batchExchange.cancelOrders([0])
 
-      const auctionElements = decodeOrdersBN(await batchExchange.getEncodedOrders())
+      const auctionElements = decodeOrdersBN(await batchExchange.getEncodedOrders(user_1))
       assert.equal(JSON.stringify(auctionElements), JSON.stringify([cancelledOrderInfo, freedOrderInfo, validOrderInfo]))
     })
   })
