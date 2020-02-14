@@ -1844,7 +1844,7 @@ contract("BatchExchange", async accounts => {
       await waitForNSeconds(BATCH_TIME)
       await batchExchange.cancelOrders([0])
 
-      const auctionElements = decodeOrdersBN(await batchExchange.getEncodedOrders(user_1))
+      const auctionElements = decodeOrdersBN(await batchExchange.getEncodedUserOrders(user_1))
       assert.equal(JSON.stringify(auctionElements), JSON.stringify([cancelledOrderInfo, freedOrderInfo, validOrderInfo]))
     })
   })
