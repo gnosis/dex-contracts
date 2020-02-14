@@ -394,7 +394,6 @@ contract BatchExchange is EpochTokenLocker {
     /**
      * Public View Methods
      */
-
     /** @dev View returning ID of listed tokens
       * @param addr address of listed token.
       * @return tokenId as stored within the contract.
@@ -542,7 +541,6 @@ contract BatchExchange is EpochTokenLocker {
     /**
      * Private Functions
      */
-
     function placeOrderInternal(
         uint16 buyToken,
         uint16 sellToken,
