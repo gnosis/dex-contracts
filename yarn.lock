@@ -5769,10 +5769,10 @@ merkletreejs@0.0.22:
     is-buffer "^2.0.3"
     treeify "^1.1.0"
 
-merkletreejs@0.1.7:
-  version "0.1.7"
-  resolved "https://registry.yarnpkg.com/merkletreejs/-/merkletreejs-0.1.7.tgz#85c145291ff82b93042c8be04895d280d2ba769e"
-  integrity sha512-PIuNeX2YN84VKzfAVVkhmoC/KGOIk5BiN+sJ9WG2S17kw9TuSoIifK85xzujff0mbtfbTjtaT/9fKvMVq9A1aw==
+merkletreejs@0.1.11:
+  version "0.1.11"
+  resolved "https://registry.yarnpkg.com/merkletreejs/-/merkletreejs-0.1.11.tgz#52f52522fa90ff3002633084fb6a87d539c5b724"
+  integrity sha512-nJN3VIHeIAyB/PjO5Dj/Y0SEK7CGCCLD2IbV4el2kUIwlOtX3GOr5MwVO4EU+0AXvoDnJ0nmaLe5O86uIjWz/Q==
   dependencies:
     buffer-reverse "^1.0.1"
     crypto-js "^3.1.9-1"

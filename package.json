@@ -80,7 +80,7 @@
     "ethereumjs-util": "^6.2.0",
     "fast-memoize": "^2.5.1",
     "husky": "^4.2.3",
-    "merkletreejs": "0.1.7",
+    "merkletreejs": "0.1.11",
     "minimist": "^1.2.0",
     "node-fetch": "^2.6.0",
     "openzeppelin-solidity": "^2.5.0",
