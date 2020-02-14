@@ -1,9 +1,6 @@
 const { sha256 } = require("ethereumjs-util")
 const memoize = require("fast-memoize")
 const { MerkleTree } = require("merkletreejs")
-const BN = require("bn.js")
-
-const { decodeOrders } = require("../src/encoding")
 
 /**
  * funds accounts with specified value for Mintable Token
@@ -174,20 +171,6 @@ function partitionArray(input, spacing) {
   return output
 }
 
-function decodeAuctionElements(bytes) {
-  return decodeOrders(bytes).map(e => ({
-    user: e.user,
-    sellTokenBalance: new BN(e.sellTokenBalance),
-    buyToken: parseInt(e.buyToken),
-    sellToken: parseInt(e.sellToken),
-    validFrom: parseInt(e.validFrom),
-    validUntil: parseInt(e.validUntil),
-    priceNumerator: new BN(e.priceNumerator),
-    priceDenominator: new BN(e.priceDenominator),
-    remainingAmount: new BN(e.remainingAmount),
-  }))
-}
-
 module.exports = {
   waitForNSeconds,
   fundAccounts,
@@ -201,5 +184,4 @@ module.exports = {
   partitionArray,
   setupMultiCaller,
   sendTxAndGetReturnValue,
-  decodeAuctionElements,
 }

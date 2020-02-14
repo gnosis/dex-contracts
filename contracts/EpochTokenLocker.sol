@@ -120,7 +120,6 @@ contract EpochTokenLocker {
     /**
      * Public view functions
      */
-
     /** @dev getter function used to display pending deposit
       * @param user address of user
       * @param token address of ERC20 token
