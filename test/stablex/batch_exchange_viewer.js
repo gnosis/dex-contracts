@@ -2,7 +2,7 @@ const BatchExchange = artifacts.require("BatchExchange")
 const BatchExchangeViewer = artifacts.require("BatchExchangeViewer")
 const MockContract = artifacts.require("MockContract")
 
-const { decodeAuctionElements } = require("../utilities")
+const { decodeOrdersBN } = require("../../src/encoding")
 const { closeAuction } = require("../../scripts/stablex/utilities.js")
 
 const zero_address = "0x0000000000000000000000000000000000000000"
@@ -41,7 +41,7 @@ contract("BatchExchangeViewer", accounts => {
       )
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeAuctionElements(await viewer.getOpenOrderBook())
+      const result = decodeOrdersBN(await viewer.getOpenOrderBook())
       assert.equal(result.filter(e => e.validFrom == batchId).length, 10)
     })
     it("can be queried with pagination", async () => {
@@ -65,7 +65,7 @@ contract("BatchExchangeViewer", accounts => {
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = await viewer.getOpenOrderBookPaginated(zero_address, 0, 5)
-      assert.equal(decodeAuctionElements(result.elements).filter(e => e.validFrom == batchId).length, 5)
+      assert.equal(decodeOrdersBN(result.elements).filter(e => e.validFrom == batchId).length, 5)
       assert.equal(result.nextPageUser, accounts[0])
       assert.equal(result.nextPageUserOffset, 15)
     })
@@ -95,7 +95,7 @@ contract("BatchExchangeViewer", accounts => {
       await closeAuction(batchExchange)
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeAuctionElements(await viewer.getFinalizedOrderBook())
+      const result = decodeOrdersBN(await viewer.getFinalizedOrderBook())
       assert.equal(result.filter(e => e.validFrom == batchId).length, 10)
     })
     it("can be queried with pagination", async () => {
@@ -122,7 +122,7 @@ contract("BatchExchangeViewer", accounts => {
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = await viewer.getFinalizedOrderBookPaginated(zero_address, 0, 5)
-      assert.equal(decodeAuctionElements(result.elements).filter(e => e.validFrom == batchId).length, 5)
+      assert.equal(decodeOrdersBN(result.elements).filter(e => e.validFrom == batchId).length, 5)
       assert.equal(result.nextPageUser, accounts[0])
       assert.equal(result.nextPageUserOffset, 15)
     })

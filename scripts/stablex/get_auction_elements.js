@@ -14,7 +14,7 @@ const argv = require("yargs")
   })
   .version(false).argv
 
-const { decodeAuctionElements } = require("../../test/utilities.js")
+const { decodeOrdersBN } = require("../../src/encoding")
 
 const COLORS = {
   NONE: "\x1b[0m",
@@ -86,7 +86,7 @@ module.exports = async callback => {
   try {
     const instance = await BatchExchange.deployed()
     const auctionElementsEncoded = await instance.getEncodedOrders.call()
-    let auctionElementsDecoded = decodeAuctionElements(auctionElementsEncoded)
+    let auctionElementsDecoded = decodeOrdersBN(auctionElementsEncoded)
 
     const batchId = (await instance.getCurrentBatchId()).toNumber()
     if (!argv.expired) {
