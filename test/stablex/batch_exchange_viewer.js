@@ -88,7 +88,7 @@ contract("BatchExchangeViewer", accounts => {
         Array(5).fill(0) //sellAmounts
       )
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeAuctionElements(await viewer.getOpenOrderBook([token_1.address, token_2.address]))
+      const result = decodeOrdersBN(await viewer.getOpenOrderBook([token_1.address, token_2.address]))
       assert.equal(result.filter(e => e.validFrom == batchId).length, 5)
     })
   })
@@ -171,7 +171,7 @@ contract("BatchExchangeViewer", accounts => {
       await closeAuction(batchExchange)
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeAuctionElements(await viewer.getFinalizedOrderBook([token_1.address, token_2.address]))
+      const result = decodeOrdersBN(await viewer.getFinalizedOrderBook([token_1.address, token_2.address]))
       assert.equal(result.filter(e => e.validFrom == batchId).length, 5)
     })
   })
