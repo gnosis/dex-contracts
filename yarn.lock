@@ -6923,10 +6923,10 @@ prettier-linter-helpers@^1.0.0:
   dependencies:
     fast-diff "^1.1.2"
 
-prettier-plugin-solidity@^1.0.0-alpha.38:
-  version "1.0.0-alpha.38"
-  resolved "https://registry.yarnpkg.com/prettier-plugin-solidity/-/prettier-plugin-solidity-1.0.0-alpha.38.tgz#afd05790fadf5162cea1505df748e3ffd782575b"
-  integrity sha512-uzyWfq5f+gRy/7GWrbZ5o46vuA/eoBe6/AMtHXL3MAF7l/+SFDieV8xjxv2FLlEeRwepDVnvjC4V+SXO4fLZIQ==
+prettier-plugin-solidity@^1.0.0-alpha.39:
+  version "1.0.0-alpha.39"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-solidity/-/prettier-plugin-solidity-1.0.0-alpha.39.tgz#759cbae55cc6a8338b93e080347d5f60d705911b"
+  integrity sha512-10FtLOZaoUaDYcn5pUpe2OKW2WkALUbaq4N1h7JCjrJSP69wKGOz0Ce3f0KVGDEs7x60k0h+9eU6jr2+goWSDQ==
   dependencies:
     dir-to-object "^2.0.0"
     emoji-regex "^8.0.0"
@@ -6934,7 +6934,7 @@ prettier-plugin-solidity@^1.0.0-alpha.38:
     extract-comments "^1.1.0"
     prettier "^1.15.3"
     semver "^6.3.0"
-    solidity-parser-antlr "^0.4.11"
+    solidity-parser-diligence "^0.4.18"
     string-width "^4.1.0"
 
 prettier@^1.14.2, prettier@^1.14.3, prettier@^1.15.3, prettier@^1.19.1:
@@ -8112,7 +8112,7 @@ solidity-parser-antlr@^0.4.11:
   resolved "https://registry.yarnpkg.com/solidity-parser-antlr/-/solidity-parser-antlr-0.4.11.tgz#af43e1f13b3b88309a875455f5d6e565b05ee5f1"
   integrity sha512-4jtxasNGmyC0midtjH/lTFPZYvTTUMy6agYcF+HoMnzW8+cqo3piFrINb4ZCzpPW+7tTVFCGa5ubP34zOzeuMg==
 
-solidity-parser-diligence@^0.4.17:
+solidity-parser-diligence@^0.4.17, solidity-parser-diligence@^0.4.18:
   version "0.4.18"
   resolved "https://registry.yarnpkg.com/solidity-parser-diligence/-/solidity-parser-diligence-0.4.18.tgz#1ec8c29d320afe048db941828f142dec3e97f657"
   integrity sha512-mauO/qG2v59W9sOn5TYV2dS7+fvFKqIHwiku+TH82e1Yca4H8s6EDG12ZpXO2cmgLlCKX3FOqqC73aYLB8WwNg==
