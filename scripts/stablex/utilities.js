@@ -9,10 +9,19 @@ const fetchTokenInfo = async function(exchangeContract, tokenIds, artifacts) {
   for (const id of tokenIds) {
     const tokenAddress = await exchangeContract.tokenIdToAddressMap(id)
     const tokenInstance = await ERC20.at(tokenAddress)
-    const tokenInfo = {
-      id: id,
-      symbol: await tokenInstance.symbol.call(),
-      decimals: (await tokenInstance.decimals.call()).toNumber(),
+    let tokenInfo
+    try {
+      tokenInfo = {
+        id: id,
+        symbol: await tokenInstance.symbol.call(),
+        decimals: (await tokenInstance.decimals.call()).toNumber(),
+      }
+    } catch (err) {
+      tokenInfo = {
+        id: id,
+        symbol: "UNKNOWN",
+        decimals: "18",
+      }
     }
     tokenObjects[id] = tokenInfo
     console.log(`Found Token ${tokenInfo.symbol} at ID ${tokenInfo.id} with ${tokenInfo.decimals} decimals`)
