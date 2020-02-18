@@ -110,7 +110,8 @@ contract BatchExchangeViewer {
             bytes memory unfiltered = batchExchange.getEncodedUsersPaginated(nextPageUser, nextPageUserOffset, pageSize);
             hasNextPage = unfiltered.length / AUCTION_ELEMENT_WIDTH == pageSize;
             for (uint16 index = 0; index < unfiltered.length / AUCTION_ELEMENT_WIDTH; index++) {
-                bytes memory element = unfiltered.slice(index * AUCTION_ELEMENT_WIDTH, AUCTION_ELEMENT_WIDTH);
+                // make sure we don't overflow index * AUCTION_ELEMENT_WIDTH
+                bytes memory element = unfiltered.slice(uint256(index) * AUCTION_ELEMENT_WIDTH, AUCTION_ELEMENT_WIDTH);
                 if (
                     maxValidFrom >= getValidFrom(element) &&
                     minValidUntil <= getValidUntil(element) &&
