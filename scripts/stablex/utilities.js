@@ -2,6 +2,24 @@ const BN = require("bn.js")
 const { waitForNSeconds } = require("../../test/utilities.js")
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
+const fetchTokenInfo = async function(exchangeContract, tokenIds, artifacts) {
+  const ERC20 = artifacts.require("ERC20Detailed")
+  console.log("Fetching token data from EVM")
+  const tokenObjects = {}
+  for (const id of tokenIds) {
+    const tokenAddress = await exchangeContract.tokenIdToAddressMap(id)
+    const tokenInstance = await ERC20.at(tokenAddress)
+    const tokenInfo = {
+      id: id,
+      symbol: await tokenInstance.symbol.call(),
+      decimals: (await tokenInstance.decimals.call()).toNumber(),
+    }
+    tokenObjects[id] = tokenInfo
+    console.log(`Found Token ${tokenInfo.symbol} at ID ${tokenInfo.id} with ${tokenInfo.decimals} decimals`)
+  }
+  return tokenObjects
+}
+
 const addTokens = async function(token_addresses, web3, artifacts) {
   const accounts = await web3.eth.getAccounts()
 
@@ -41,4 +59,5 @@ module.exports = {
   addTokens,
   closeAuction,
   token_list_url,
+  fetchTokenInfo,
 }

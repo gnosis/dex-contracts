@@ -39,9 +39,9 @@ module.exports = {
   ...truffleConfig({
     mnemonic,
     privateKey,
-    urlRinkeby: "https://rinkeby.infura.io/v3/".concat(infuraKey),
+    urlRinkeby: "https://node.rinkeby.gnosisdev.com",
     urlKovan: "https://kovan.infura.io/v3/".concat(infuraKey),
-    urlMainnet: "https://mainnet.infura.io/v3/".concat(infuraKey),
+    urlMainnet: "https://node.mainnet.gnosisdev.com",
     urlDevelopment,
     gasPriceGWei,
     gas,

@@ -1,9 +1,8 @@
 const BatchExchange = artifacts.require("BatchExchange")
-const ERC20 = artifacts.require("ERC20Detailed")
 const BN = require("bn.js")
 const readline = require("readline")
 
-const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
+const { sendTxAndGetReturnValue, fetchTokenInfo } = require("../../test/utilities.js")
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -12,23 +11,6 @@ const rl = readline.createInterface({
 
 const promptUser = function(message) {
   return new Promise(resolve => rl.question(message, answer => resolve(answer)))
-}
-
-const fetchTokenInfo = async function(contract, tokenIds) {
-  console.log("Fetching token data from EVM")
-  const tokenObjects = {}
-  for (const id of tokenIds) {
-    const tokenAddress = await contract.tokenIdToAddressMap(id)
-    const tokenInstance = await ERC20.at(tokenAddress)
-    const tokenInfo = {
-      id: id,
-      symbol: await tokenInstance.symbol.call(),
-      decimals: (await tokenInstance.decimals.call()).toNumber(),
-    }
-    tokenObjects[id] = tokenInfo
-    console.log(`Found Token ${tokenInfo.symbol} at ID ${tokenInfo.id} with ${tokenInfo.decimals} decimals`)
-  }
-  return tokenObjects
 }
 
 const formatAmount = function(amount, token) {
@@ -80,7 +62,7 @@ module.exports = async callback => {
     const account = accounts[argv.accountId]
 
     const batch_index = (await instance.getCurrentBatchId.call()).toNumber()
-    const token_data = await fetchTokenInfo(instance, argv.tokens)
+    const token_data = await fetchTokenInfo(instance, argv.tokens, artifacts)
     const expectedReturnFactor = 1 + argv.spread / 100
     const sellAmount = argv.sellAmount
     const buyAmount = sellAmount * expectedReturnFactor
