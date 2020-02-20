@@ -1,7 +1,6 @@
 const BatchExchange = artifacts.require("BatchExchange")
 const { decodeOrdersBN } = require("../../src/encoding.js")
 const BN = require("bn.js")
-const { sendTxAndGetReturnValue } = require("../../test/utilities.js")
 const { fetchTokenInfo } = require("./utilities")
 const maxUint32 = new BN(2).pow(new BN(32)).sub(new BN(1))
 
@@ -15,43 +14,50 @@ const OWL_NUMBER_DIGITS = 18
 // stealing OWL by adding new tokens will not be profitable.
 const PRICE_FOR_LIQUIDITY_PROVISION = new BN(10000)
 
-const isOneSellOrderProvidingLiquidity = function(orders) {
-  for (const order of orders) {
-    if (order.sellTokenBalance.gt(MINIMAL_LIQUIDITY_FOR_OWL) && order.remainingAmount.gt(MINIMAL_LIQUIDITY_FOR_OWL)) {
-      return true
-    }
-  }
-  return false
+const containsSellOrderProvidingLiquidity = function(orders) {
+  return orders.some(
+    order => order.sellTokenBalance.gt(MINIMAL_LIQUIDITY_FOR_OWL) && order.remainingAmount.gt(MINIMAL_LIQUIDITY_FOR_OWL)
+  )
 }
 
 // This function checks whether it is likely that there is a liquidity provision order from Gnosis
 // in the set of the orders. It does so by looking at two order criteria: SellAmount and validUntil.
 // While this is really just a heuristic check, it should be sufficient for now.
 const hasOWLLiquidityOrderAlreadyBeenPlaced = function(orders) {
-  for (const order of orders) {
-    if (order.priceDenominator.eq(SELL_ORDER_AMOUNT_OWL) && order.validUntil == maxUint32.toNumber()) {
-      return true
-    }
-  }
-  return false
+  return orders.some(order => order.priceDenominator.eq(SELL_ORDER_AMOUNT_OWL) && order.validUntil == maxUint32.toNumber())
 }
 
-const sendLiquidityOrder = async function(instance, tokenId) {
-  const tokenAddress = await instance.tokenIdToAddressMap.call(tokenId)
-
-  const numberOfDigits = (await fetchTokenInfo(instance, [tokenId], artifacts))[tokenId].decimals
-  let minBuy
-  if (numberOfDigits < OWL_NUMBER_DIGITS) {
-    minBuy = SELL_ORDER_AMOUNT_OWL.mul(PRICE_FOR_LIQUIDITY_PROVISION).div(
-      new BN(10).pow(new BN(OWL_NUMBER_DIGITS - numberOfDigits))
-    )
-  } else {
-    minBuy = SELL_ORDER_AMOUNT_OWL.mul(PRICE_FOR_LIQUIDITY_PROVISION).mul(
-      new BN(10).pow(new BN(numberOfDigits - OWL_NUMBER_DIGITS))
-    )
+const sendLiquidityOrders = async function(instance, tokenIds) {
+  const numberOfOrders = tokenIds.length
+  if (numberOfOrders == 0) {
+    console.log("No liquidity orders will be added")
+    return
   }
-  const id = await sendTxAndGetReturnValue(instance.placeOrder, tokenId, 0, maxUint32, minBuy, SELL_ORDER_AMOUNT_OWL)
-  console.log(`Placed liquidity sell order successfully for token ${tokenAddress} with id: ${id}`)
+  const minBuy = []
+
+  for (const tokenId in tokenIds) {
+    const numberOfDigits = (await fetchTokenInfo(instance, [tokenId], artifacts))[tokenId].decimals
+    if (numberOfDigits < OWL_NUMBER_DIGITS) {
+      minBuy.push(
+        SELL_ORDER_AMOUNT_OWL.mul(PRICE_FOR_LIQUIDITY_PROVISION).div(new BN(10).pow(new BN(OWL_NUMBER_DIGITS - numberOfDigits)))
+      )
+    } else {
+      minBuy.push(
+        SELL_ORDER_AMOUNT_OWL.mul(PRICE_FOR_LIQUIDITY_PROVISION).mul(new BN(10).pow(new BN(numberOfDigits - OWL_NUMBER_DIGITS)))
+      )
+    }
+  }
+  const batchId = (await instance.getCurrentBatchId()).toNumber()
+
+  await instance.placeValidFromOrders(
+    tokenIds,
+    Array(0).fill(numberOfOrders),
+    Array(batchId).fill(numberOfOrders),
+    Array(maxUint32).fill(numberOfOrders),
+    minBuy,
+    Array(SELL_ORDER_AMOUNT_OWL).fill(numberOfOrders)
+  )
+  console.log("Placed liquidity sell order successfully")
 }
 
 module.exports = async callback => {
@@ -75,16 +81,18 @@ module.exports = async callback => {
     orders = orders.filter(order => order.validUntil >= batchId && order.validFrom <= batchId)
 
     // Ensure OWL-liquidity is given
+    const tokensRequiringLiquidityProvision = []
     for (let tokenId = 1; tokenId < numberOfToken; tokenId++) {
       const tokenAddress = await instance.tokenIdToAddressMap.call(tokenId)
       console.log("Checking liquidity for token: ", tokenAddress)
       const ordersForTokenId = orders.filter(order => order.buyToken == tokenId && order.sellToken == 0)
-      if (!isOneSellOrderProvidingLiquidity(ordersForTokenId) && !hasOWLLiquidityOrderAlreadyBeenPlaced(ordersForTokenId)) {
-        await sendLiquidityOrder(instance, tokenId)
+      if (!containsSellOrderProvidingLiquidity(ordersForTokenId) && !hasOWLLiquidityOrderAlreadyBeenPlaced(ordersForTokenId)) {
+        tokensRequiringLiquidityProvision.push(tokenId)
       } else {
         console.log("Liquidity is given or has been provided in the past")
       }
     }
+    await sendLiquidityOrders(instance, tokensRequiringLiquidityProvision)
     callback()
   } catch (error) {
     callback(error)
