@@ -2,7 +2,13 @@ const BN = require("bn.js")
 const { waitForNSeconds } = require("../../test/utilities.js")
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
-const fetchTokenInfo = async function(exchangeContract, tokenIds, artifacts) {
+const fetchTokenInfo = async function(
+  exchangeContract,
+  tokenIds,
+  artifacts,
+  fallbackSymbolName = "UNKNOWN",
+  fallbackDecimals = "UNKNOWN"
+) {
   const ERC20 = artifacts.require("ERC20Detailed")
   console.log("Fetching token data from EVM")
   const tokenObjects = {}
@@ -19,8 +25,34 @@ const fetchTokenInfo = async function(exchangeContract, tokenIds, artifacts) {
     } catch (err) {
       tokenInfo = {
         id: id,
-        symbol: "UNKNOWN",
-        decimals: "18",
+        symbol: fallbackSymbolName,
+        decimals: fallbackDecimals,
+      }
+    }
+    tokenObjects[id] = tokenInfo
+    console.log(`Found Token ${tokenInfo.symbol} at ID ${tokenInfo.id} with ${tokenInfo.decimals} decimals`)
+  }
+  return tokenObjects
+}
+
+const getRawOrderData = async function(exchangeContract, artifacts) {
+  console.log("Fetching order data from EVM via paginated approach")
+  const tokenObjects = {}
+  for (const id of tokenIds) {
+    const tokenAddress = await exchangeContract.tokenIdToAddressMap(id)
+    const tokenInstance = await ERC20.at(tokenAddress)
+    let tokenInfo
+    try {
+      tokenInfo = {
+        id: id,
+        symbol: await tokenInstance.symbol.call(),
+        decimals: (await tokenInstance.decimals.call()).toNumber(),
+      }
+    } catch (err) {
+      tokenInfo = {
+        id: id,
+        symbol: fallbackSymbolName,
+        decimals: fallbackDecimals,
       }
     }
     tokenObjects[id] = tokenInfo
