@@ -14,9 +14,9 @@ const fetchTokenInfo = async function(
   const tokenObjects = {}
   for (const id of tokenIds) {
     const tokenAddress = await exchangeContract.tokenIdToAddressMap(id)
-    const tokenInstance = await ERC20.at(tokenAddress)
     let tokenInfo
     try {
+      const tokenInstance = await ERC20.at(tokenAddress)
       tokenInfo = {
         id: id,
         symbol: await tokenInstance.symbol.call(),
@@ -70,9 +70,76 @@ const closeAuction = async (instance, web3Provider = web3) => {
   await waitForNSeconds(time_remaining + 1, web3Provider)
 }
 
+const getOrdersViaPaginatedApproach = async (instance, pageSize) => {
+  const { decodeOrdersBN } = require("../../src/encoding")
+  let orders = []
+  let currentUser = "0x0000000000000000000000000000000000000000"
+  let currentOffSet = 0
+  let lastPageSize = pageSize
+  while (lastPageSize == pageSize) {
+    const page = decodeOrdersBN(await instance.getEncodedUsersPaginated(currentUser, currentOffSet, pageSize))
+    orders = orders.concat(page)
+    currentUser = page[page.length - 1].user
+    currentOffSet = orders.filter(order => order.user == currentUser).length
+    lastPageSize = page.length
+  }
+  return orders
+}
+
+const sendLiquidityOrders = async function(
+  instance,
+  tokenIds,
+  PRICE_FOR_LIQUIDITY_PROVISION,
+  SELL_ORDER_AMOUNT_OWL,
+  artifacts,
+  OWL_NUMBER_DIGITS = 18
+) {
+  const maxUint32 = new BN(2).pow(new BN(32)).sub(new BN(1))
+
+  const minBuy = []
+
+  for (const tokenId of tokenIds) {
+    const numberOfDigits = (await fetchTokenInfo(instance, [tokenId], artifacts))[tokenId].decimals
+    if (numberOfDigits !== "UNKNOWN") {
+      if (numberOfDigits < OWL_NUMBER_DIGITS) {
+        minBuy.push(
+          SELL_ORDER_AMOUNT_OWL.mul(PRICE_FOR_LIQUIDITY_PROVISION).div(
+            new BN(10).pow(new BN(OWL_NUMBER_DIGITS - numberOfDigits))
+          )
+        )
+      } else {
+        minBuy.push(
+          SELL_ORDER_AMOUNT_OWL.mul(PRICE_FOR_LIQUIDITY_PROVISION).mul(
+            new BN(10).pow(new BN(numberOfDigits - OWL_NUMBER_DIGITS))
+          )
+        )
+      }
+    } else {
+      tokenIds.splice(tokenIds.indexOf(tokenId), 1)
+    }
+  }
+  const numberOfOrders = tokenIds.length
+  const batchId = (await instance.getCurrentBatchId()).toNumber()
+  if (numberOfOrders == 0) {
+    console.log("No liquidity orders will be added")
+    return
+  }
+  await instance.placeValidFromOrders(
+    tokenIds,
+    Array(0).fill(numberOfOrders),
+    Array(batchId).fill(numberOfOrders),
+    Array(maxUint32).fill(numberOfOrders),
+    minBuy,
+    Array(SELL_ORDER_AMOUNT_OWL).fill(numberOfOrders)
+  )
+  console.log("Placed liquidity sell order successfully")
+}
+
 module.exports = {
   addTokens,
   closeAuction,
   token_list_url,
   fetchTokenInfo,
+  getOrdersViaPaginatedApproach,
+  sendLiquidityOrders,
 }
