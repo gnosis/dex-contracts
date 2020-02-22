@@ -35,32 +35,6 @@ const fetchTokenInfo = async function(
   return tokenObjects
 }
 
-const getRawOrderData = async function(exchangeContract, artifacts) {
-  console.log("Fetching order data from EVM via paginated approach")
-  const tokenObjects = {}
-  for (const id of tokenIds) {
-    const tokenAddress = await exchangeContract.tokenIdToAddressMap(id)
-    const tokenInstance = await ERC20.at(tokenAddress)
-    let tokenInfo
-    try {
-      tokenInfo = {
-        id: id,
-        symbol: await tokenInstance.symbol.call(),
-        decimals: (await tokenInstance.decimals.call()).toNumber(),
-      }
-    } catch (err) {
-      tokenInfo = {
-        id: id,
-        symbol: fallbackSymbolName,
-        decimals: fallbackDecimals,
-      }
-    }
-    tokenObjects[id] = tokenInfo
-    console.log(`Found Token ${tokenInfo.symbol} at ID ${tokenInfo.id} with ${tokenInfo.decimals} decimals`)
-  }
-  return tokenObjects
-}
-
 const addTokens = async function(token_addresses, web3, artifacts) {
   const accounts = await web3.eth.getAccounts()
 
