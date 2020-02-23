@@ -61,6 +61,7 @@ module.exports = async callback => {
     await sendLiquidityOrders(
       instance,
       tokensRequiringLiquidityProvision,
+      artifacts,
       PRICE_FOR_LIQUIDITY_PROVISION,
       SELL_ORDER_AMOUNT_OWL,
       artifacts

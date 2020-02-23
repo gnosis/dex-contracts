@@ -3,7 +3,8 @@ const BatchExchange = artifacts.require("BatchExchange")
 const MockContract = artifacts.require("MockContract")
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
 const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
-const ERC20 = artifacts.require("ERC20")
+const DeployableERC20Detailed = artifacts.require("DeployableERC20Detailed")
+const BN = require("bn.js")
 
 contract("Liquidity order placement test", async accounts => {
   let feeToken
@@ -27,18 +28,21 @@ contract("Liquidity order placement test", async accounts => {
   describe("OWL liquidity provision test", async () => {
     it("Adds new tokens to the exchange and create the liquidity for a subset of them", async () => {
       const batchExchange = await BatchExchange.new(2 ** 16 - 1, feeToken.address)
-
-      Array.from(Array(10)).forEach(async () => {
-        const token_1 = await ERC20.new()
+      const SELL_ORDER_AMOUNT_OWL = new BN(10).pow(new BN(18)).mul(new BN(5))
+      const PRICE_FOR_LIQUIDITY_PROVISION = new BN(10000)
+      for (let i = 0; i < 6; i++) {
+        const token_1 = await DeployableERC20Detailed.new("NAME-" + i, "Symbol-" + i, 18)
         await batchExchange.addToken(token_1.address, { from: accounts[0] })
-      })
-
+      }
       const tokenIds = [1, 3, 5]
-      await sendLiquidityOrders(batchExchange, tokenIds)
+      await sendLiquidityOrders(batchExchange, tokenIds, PRICE_FOR_LIQUIDITY_PROVISION, SELL_ORDER_AMOUNT_OWL, artifacts)
 
       const orders = await getOrdersViaPaginatedApproach(batchExchange, 100)
-      assert.equals(orders[0].buyToken, 0)
-      assert.equals(orders[0].sellToken, tokenIds[0])
+      assert.deepEqual(
+        orders.map(o => o.buyToken),
+        tokenIds
+      )
+      assert.equal(orders[0].sellToken, 0)
     })
   })
 })

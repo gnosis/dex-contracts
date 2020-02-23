@@ -13,7 +13,7 @@ const fetchTokenInfo = async function(
   console.log("Fetching token data from EVM")
   const tokenObjects = {}
   for (const id of tokenIds) {
-    const tokenAddress = await exchangeContract.tokenIdToAddressMap(id)
+    const tokenAddress = await exchangeContract.tokenIdToAddressMap.call(id)
     let tokenInfo
     try {
       const tokenInstance = await ERC20.at(tokenAddress)
@@ -124,13 +124,14 @@ const sendLiquidityOrders = async function(
     console.log("No liquidity orders will be added")
     return
   }
+
   await instance.placeValidFromOrders(
-    tokenIds,
-    Array(0).fill(numberOfOrders),
-    Array(batchId).fill(numberOfOrders),
-    Array(maxUint32).fill(numberOfOrders),
-    minBuy,
-    Array(SELL_ORDER_AMOUNT_OWL).fill(numberOfOrders)
+    tokenIds, //sellToken
+    Array(numberOfOrders).fill(0), //buyToken
+    Array(numberOfOrders).fill(batchId + 2), //validFrom
+    Array(numberOfOrders).fill(maxUint32), //validTo
+    minBuy, //buyAmount
+    Array(numberOfOrders).fill(SELL_ORDER_AMOUNT_OWL) //sellAmount
   )
   console.log(
     "Placed liquidity sell orders for tokens {} successfully",
