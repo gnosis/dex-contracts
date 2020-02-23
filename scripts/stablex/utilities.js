@@ -132,7 +132,10 @@ const sendLiquidityOrders = async function(
     minBuy,
     Array(SELL_ORDER_AMOUNT_OWL).fill(numberOfOrders)
   )
-  console.log("Placed liquidity sell order successfully")
+  console.log(
+    "Placed liquidity sell orders for tokens {} successfully",
+    tokenIds.forEach(async i => await instance.tokenIdToAddressMap.call(i))
+  )
 }
 
 module.exports = {
