@@ -37,7 +37,7 @@ const closeAuction = async (instance, web3Provider = web3) => {
   await waitForNSeconds(time_remaining + 1, web3Provider)
 }
 
-const getOrdersViaPaginatedApproach = async (instance, pageSize) => {
+const getOrdersPaginated = async (instance, pageSize) => {
   const { decodeOrdersBN } = require("../../src/encoding")
   let orders = []
   let currentUser = "0x0000000000000000000000000000000000000000"
@@ -57,5 +57,5 @@ module.exports = {
   addTokens,
   closeAuction,
   token_list_url,
-  getOrdersViaPaginatedApproach,
+  getOrdersPaginated,
 }
