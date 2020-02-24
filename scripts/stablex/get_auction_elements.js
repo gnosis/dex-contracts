@@ -12,9 +12,13 @@ const argv = require("yargs")
   .option("tokens", {
     describe: "Filter only orders between the given tokens",
   })
+  .option("pageSize", {
+    default: 100,
+    describe: "The page  size for the function getOrdersPaginated",
+  })
   .version(false).argv
 
-const { decodeOrdersBN } = require("../../src/encoding")
+const { getOrdersPaginated } = require("./utilities")
 
 const COLORS = {
   NONE: "\x1b[0m",
@@ -85,8 +89,7 @@ const printOrder = function(order, currentBatchId) {
 module.exports = async callback => {
   try {
     const instance = await BatchExchange.deployed()
-    const auctionElementsEncoded = await instance.getEncodedOrders.call()
-    let auctionElementsDecoded = decodeOrdersBN(auctionElementsEncoded)
+    let auctionElementsDecoded = await getOrdersPaginated(instance, argv.pageSize)
 
     const batchId = (await instance.getCurrentBatchId()).toNumber()
     if (!argv.expired) {
