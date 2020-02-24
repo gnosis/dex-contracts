@@ -1,5 +1,5 @@
 const BatchExchange = artifacts.require("BatchExchange")
-const { getOrdersViaPaginatedApproach } = require("./utilities")
+const { getOrdersPaginated } = require("./utilities")
 
 const BN = require("bn.js")
 const { sendLiquidityOrders } = require("./utilities")
@@ -43,7 +43,7 @@ module.exports = async callback => {
     // Get the data
     const numberOfToken = await instance.numTokens.call()
     const batchId = (await instance.getCurrentBatchId()).toNumber()
-    let orders = await getOrdersViaPaginatedApproach(instance, 100)
+    let orders = await getOrdersPaginated(instance, 100)
     orders = orders.filter(order => order.validUntil >= batchId && order.validFrom <= batchId)
 
     // Ensure OWL-liquidity is given
