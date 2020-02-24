@@ -20,9 +20,9 @@ const containsSellOrderProvidingLiquidity = function(orders) {
   )
 }
 
-// This function checks whether it is likely that there is a liquidity provision order from Gnosis
-// in the set of the orders. It does so by looking at two order criteria: SellAmount and validUntil.
-// While this is really just a heuristic check, it should be sufficient for now.
+// This function checks whether it is likely that Gnosis has already povided liquidity for this token
+// with an liquidity-order. The check depends on the match of two order criteria: SellAmount and validUntil.
+// Despite being just an heuristic check, it should be sufficient for now.
 const hasOWLLiquidityOrderAlreadyBeenPlaced = function(orders) {
   return orders.some(order => order.priceDenominator.eq(SELL_ORDER_AMOUNT_OWL) && order.validUntil == maxUint32.toNumber())
 }
@@ -40,7 +40,7 @@ module.exports = async callback => {
       callback("Error: The OWL balance is below the 10 OWL threshold, please stock it up again")
     }
 
-    // Get the data
+    // Get the order data
     const numberOfToken = await instance.numTokens.call()
     const batchId = (await instance.getCurrentBatchId()).toNumber()
     let orders = await getOrdersPaginated(instance, 100)
@@ -61,7 +61,6 @@ module.exports = async callback => {
     await sendLiquidityOrders(
       instance,
       tokensRequiringLiquidityProvision,
-      artifacts,
       PRICE_FOR_LIQUIDITY_PROVISION,
       SELL_ORDER_AMOUNT_OWL,
       artifacts
