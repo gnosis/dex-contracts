@@ -1,9 +1,7 @@
 const BatchExchange = artifacts.require("BatchExchange")
-const { getOrdersPaginated } = require("./utilities")
 
 const BN = require("bn.js")
-const { sendLiquidityOrders } = require("./utilities")
-const maxUint32 = new BN(2).pow(new BN(32)).sub(new BN(1))
+const { maxUint32, sendLiquidityOrders, getOrdersPaginated } = require("./utilities")
 
 const MINIMAL_LIQUIDITY_FOR_OWL = new BN(10).pow(new BN(17))
 const SELL_ORDER_AMOUNT_OWL = new BN(10).pow(new BN(18)).mul(new BN(5))
@@ -24,7 +22,7 @@ const containsSellOrderProvidingLiquidity = function(orders) {
 // with an liquidity-order. The check depends on the match of two order criteria: SellAmount and validUntil.
 // Despite being just an heuristic check, it should be sufficient for now.
 const hasOWLLiquidityOrderAlreadyBeenPlaced = function(orders) {
-  return orders.some(order => order.priceDenominator.eq(SELL_ORDER_AMOUNT_OWL) && order.validUntil == maxUint32.toNumber())
+  return orders.some(order => order.priceDenominator.eq(SELL_ORDER_AMOUNT_OWL) && order.validUntil.eq(maxUint32))
 }
 
 module.exports = async callback => {
