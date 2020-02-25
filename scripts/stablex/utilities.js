@@ -46,8 +46,10 @@ const getOrdersPaginated = async (instance, pageSize) => {
   while (lastPageSize == pageSize) {
     const page = decodeOrdersBN(await instance.getEncodedUsersPaginated(currentUser, currentOffSet, pageSize))
     orders = orders.concat(page)
-    currentUser = page[page.length - 1].user
-    currentOffSet = orders.filter(order => order.user == currentUser).length
+    if (page.length > 0) {
+      currentUser = page[page.length - 1].user
+      currentOffSet = orders.filter(order => order.user == currentUser).length
+    }
     lastPageSize = page.length
   }
   return orders
