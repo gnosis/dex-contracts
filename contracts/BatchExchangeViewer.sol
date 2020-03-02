@@ -210,12 +210,12 @@ contract BatchExchangeViewer {
         uint256 sellTokenBalance = getSellTokenBalance(element);
         (uint256 depositAmount, uint32 depositBatch) = batchExchange.getPendingDeposit(user, sellTokenAddress);
         // The deposit is not valid currently but will be valid at target batch, thus add to balance
-        if (depositBatch >= getCurrentBatchId() && depositBatch < targetBatchIndex) {
+        if (depositBatch >= batchExchange.getCurrentBatchId() && depositBatch < targetBatchIndex) {
             sellTokenBalance = sellTokenBalance.add(depositAmount);
         }
         (uint256 withdrawAmount, uint32 withdrawBatch) = batchExchange.getPendingWithdraw(user, sellTokenAddress);
         // The withdraw is not valid currently but will be valid at target batch, thus subtract from balance
-        if (withdrawBatch >= getCurrentBatchId() && withdrawBatch < targetBatchIndex) {
+        if (withdrawBatch >= batchExchange.getCurrentBatchId() && withdrawBatch < targetBatchIndex) {
             sellTokenBalance = sellTokenBalance.sub(Math.min(sellTokenBalance, withdrawAmount));
         }
         return updateSellTokenBalance(element, sellTokenBalance);
