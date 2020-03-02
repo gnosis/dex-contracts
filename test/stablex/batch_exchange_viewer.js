@@ -21,6 +21,33 @@ contract("BatchExchangeViewer", accounts => {
   })
 
   describe("getOpenOrderBook", () => {
+    it("takes pending deposits and withdraws for the next batch into account", async () => {
+      await token_2.givenAnyReturnBool(true)
+
+      const batchId = await batchExchange.getCurrentBatchId()
+      await batchExchange.placeOrder(1, 2, batchId + 1, 200, 300)
+      await batchExchange.deposit(token_2.address, 100)
+      await batchExchange.requestWithdraw(token_2.address, 50)
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      const result = decodeOrdersBN(await viewer.getOpenOrderBook([]))
+      assert.equal(result[0].sellTokenBalance.toNumber(), 50)
+    })
+    it("does not count already matured deposits twice", async () => {
+      await token_2.givenAnyReturnBool(true)
+
+      const batchId = await batchExchange.getCurrentBatchId()
+      await batchExchange.placeOrder(1, 2, batchId + 2, 200, 300)
+      await batchExchange.deposit(token_2.address, 100)
+      await batchExchange.requestWithdraw(token_2.address, 50)
+
+      // Mature the pending withdraw
+      await closeAuction(batchExchange)
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      const result = decodeOrdersBN(await viewer.getOpenOrderBook([]))
+      assert.equal(result[0].sellTokenBalance.toNumber(), 50)
+    })
     it("can be queried without pagination", async () => {
       const batchId = await batchExchange.getCurrentBatchId()
       await batchExchange.placeValidFromOrders(
@@ -94,6 +121,20 @@ contract("BatchExchangeViewer", accounts => {
   })
 
   describe("getFinalizedOrderBook", () => {
+    it("ignores pending deposits and withdraws for the next batch", async () => {
+      await token_2.givenAnyReturnBool(true)
+
+      const batchId = await batchExchange.getCurrentBatchId()
+      await batchExchange.placeOrder(1, 2, batchId + 1, 200, 300)
+      await closeAuction(batchExchange)
+
+      await batchExchange.deposit(token_2.address, 100)
+      await batchExchange.requestWithdraw(token_2.address, 50)
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      const result = decodeOrdersBN(await viewer.getFinalizedOrderBook([]))
+      assert.equal(result[0].sellTokenBalance.toNumber(), 0)
+    })
     it("can be queried without pagination", async () => {
       const batchId = await batchExchange.getCurrentBatchId()
       await batchExchange.placeValidFromOrders(
