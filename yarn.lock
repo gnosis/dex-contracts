@@ -6915,21 +6915,21 @@ prettier-linter-helpers@^1.0.0:
   dependencies:
     fast-diff "^1.1.2"
 
-prettier-plugin-solidity@^1.0.0-alpha.41:
-  version "1.0.0-alpha.41"
-  resolved "https://registry.yarnpkg.com/prettier-plugin-solidity/-/prettier-plugin-solidity-1.0.0-alpha.41.tgz#71cc5ef39d0f67291816e1ddb28f68e2787f29db"
-  integrity sha512-JGLyM2A8xWpQsTF0shnZRJHquEQ8FYMImTCyQzlYuAAcPE7r6jFxN3pno4xQpNNfp+sVy4luqA3M88Y8x1hANw==
+prettier-plugin-solidity@^1.0.0-alpha.44:
+  version "1.0.0-alpha.44"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-solidity/-/prettier-plugin-solidity-1.0.0-alpha.44.tgz#a8732ada301ba3b4d990c398fe601b82f7d371ac"
+  integrity sha512-h+kVNAjjuYShiQXNJ0Vk7BDfa4NOnoXGmQEGalhdVFp370I2kfeL3p7bCc5+l6DDfVlUhe0v6FpV+kyJm2554Q==
   dependencies:
     dir-to-object "^2.0.0"
     emoji-regex "^8.0.0"
     escape-string-regexp "^2.0.0"
     extract-comments "^1.1.0"
-    prettier "^1.15.3"
-    semver "^6.3.0"
+    prettier "^1.19.1"
+    semver "^7.1.3"
     solidity-parser-diligence "^0.4.18"
-    string-width "^4.1.0"
+    string-width "^4.2.0"
 
-prettier@^1.14.2, prettier@^1.14.3, prettier@^1.15.3, prettier@^1.19.1:
+prettier@^1.14.2, prettier@^1.14.3, prettier@^1.19.1:
   version "1.19.1"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-1.19.1.tgz#f7d7f5ff8a9cd872a7be4ca142095956a60797cb"
   integrity sha512-s7PoyDv/II1ObgQunCbB9PdLmUcBZcnWOcxDh7O0N/UwDEsHyqkW+Qh28jW+mVuCdx7gLB0BotYI1Y6uI9iyew==
@@ -7765,6 +7765,11 @@ semver@^6.1.2, semver@^6.2.0, semver@^6.3.0:
   version "6.3.0"
   resolved "https://registry.yarnpkg.com/semver/-/semver-6.3.0.tgz#ee0a64c8af5e8ceea67687b133761e1becbd1d3d"
   integrity sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==
+
+semver@^7.1.3:
+  version "7.1.3"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-7.1.3.tgz#e4345ce73071c53f336445cfc19efb1c311df2a6"
+  integrity sha512-ekM0zfiA9SCBlsKa2X1hxyxiI4L3B6EbVJkkdgQXnSEEaHlGdvyodMruTiulSRWMMB4NeIuYNMC9rTKTz97GxA==
 
 semver@~5.4.1:
   version "5.4.1"
