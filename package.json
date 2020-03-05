@@ -78,7 +78,7 @@
     "eth-gas-reporter": "^0.2.15",
     "ethereumjs-abi": "^0.6.8",
     "ethereumjs-util": "^6.2.0",
-    "fast-memoize": "^2.5.1",
+    "fast-memoize": "^2.5.2",
     "husky": "^4.2.3",
     "merkletreejs": "0.1.11",
     "minimist": "^1.2.0",
