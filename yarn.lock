@@ -247,10 +247,10 @@
     crypto-js "^3.1.9-1"
     debug "^4.1.0"
 
-"@truffle/contract@^4.1.11":
-  version "4.1.11"
-  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.1.11.tgz#660718e253e81d97c65fc93a1fa248bb1d400774"
-  integrity sha512-gU+DXYlxpywmfTUMkbKb/mPENkMtNValxAFPjPY34rxKzMN4LbCzoEXPRUZJd4zBsoMY9ap20l2AptqETIlwUA==
+"@truffle/contract@^4.1.12":
+  version "4.1.12"
+  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.1.12.tgz#3f9e7a299275ffc78ba5c23ea67de34be3239f47"
+  integrity sha512-VTxbbnIUFKCLdZWDzmCaBhT8sRpd8gCWBiAm5xmYD217fWmhnDVubmROoS0PdXuAFhhvAsS5ZeMSywiAgh3vSg==
   dependencies:
     "@truffle/blockchain-utils" "^0.0.17"
     "@truffle/contract-schema" "^3.0.23"
