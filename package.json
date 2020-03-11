@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "truffle build && yarn run networks-reset && yarn run ts",
-    "test": "truffle test &&  yarn run test-ts",
+    "test": "truffle test && yarn run test-ts",
     "test-stablex": "truffle test test/stablex/*",
     "test-snapp": "truffle test test/snapp/*",
     "test-ts": "mocha -r ts-node/register test/models/*.spec.ts",
@@ -67,7 +67,7 @@
     "bn.js": "^5.1.1",
     "chai": "^4.2.0",
     "mocha": "^7.1.0",
-    "ts-node": "^8.6.2",
+    "ts-node": "^8.6.2"
   },
   "devDependencies": {
     "@gnosis.pm/mock-contract": "^3.0.8",
