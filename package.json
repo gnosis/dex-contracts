@@ -81,7 +81,7 @@
     "fast-memoize": "^2.5.2",
     "husky": "^4.2.3",
     "merkletreejs": "0.1.11",
-    "minimist": "^1.2.3",
+    "minimist": "^1.2.4",
     "node-fetch": "^2.6.0",
     "openzeppelin-solidity": "^2.5.0",
     "prettier": "^1.19.1",
