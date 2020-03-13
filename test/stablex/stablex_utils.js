@@ -1,6 +1,3 @@
-const MockContract = artifacts.require("MockContract")
-const BatchExchange = artifacts.require("BatchExchange")
-
 const { sendTxAndGetReturnValue } = require("../utilities")
 
 /**
@@ -18,9 +15,11 @@ const { sendTxAndGetReturnValue } = require("../utilities")
  * @returns {}
  */
 const setupGenericStableX = async function(numTokens = 2, maxTokens = 2 ** 16 - 1) {
+  const MockContract = artifacts.require("MockContract")
   const feeToken = await MockContract.new()
   await feeToken.givenAnyReturnBool(true)
 
+  const BatchExchange = artifacts.require("BatchExchange")
   const instance = await BatchExchange.new(maxTokens, feeToken.address)
   const tokens = [feeToken]
   for (let i = 0; i < numTokens - 1; i++) {
@@ -71,8 +70,29 @@ const placeOrders = async function(contract, accounts, orderList, auctionIndex) 
   return orderIds
 }
 
+async function createMintableToken(artifacts) {
+  const ERC20Mintable = artifacts.require("ERC20Mintable")
+  return ERC20Mintable.new()
+}
+
+async function mintTokens({ tokens, users, amount }) {
+  for (let i = 0; i < tokens.length; i++) {
+    for (let j = 0; j < users.length; j++) {
+      await mintToken({ token: tokens[i], account: users[j], amount })
+    }
+  }
+}
+
+async function mintToken({ token, account, amount }) {
+  console.log("Mint %d of token %s for user %s", amount, token.address, account)
+  await token.mint(account, amount)
+}
+
 module.exports = {
   setupGenericStableX,
   makeDeposits,
   placeOrders,
+  createMintableToken,
+  mintTokens,
+  mintToken,
 }

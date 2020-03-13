@@ -1,4 +1,4 @@
-const { addTokens } = require("./utilities.js")
+const { addTokens, getBatchExchange, getOwl } = require("./utilities.js")
 const argv = require("yargs")
   .option("tokenAddress", {
     describe: "Address of the token to be added",
@@ -9,7 +9,15 @@ const argv = require("yargs")
 
 module.exports = async function(callback) {
   try {
-    await addTokens([argv.tokenAddress], web3, artifacts)
+    const [account] = await web3.eth.getAccounts()
+    const batchExchange = await getBatchExchange(artifacts)
+    const owl = await getOwl(artifacts)
+    await addTokens({
+      tokenAddresses: [argv.tokenAddress],
+      account,
+      batchExchange,
+      owl,
+    })
     callback()
   } catch (error) {
     callback(error)

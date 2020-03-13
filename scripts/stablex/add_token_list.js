@@ -1,4 +1,4 @@
-const { addTokens, token_list_url } = require("./utilities.js")
+const { addTokens, getBatchExchange, getOwl, token_list_url } = require("./utilities.js")
 const fetch = require("node-fetch")
 const argv = require("yargs")
   .option("token_list_url", {
@@ -7,18 +7,23 @@ const argv = require("yargs")
   })
   .help(false)
   .version(false).argv
+
 module.exports = async function(callback) {
   try {
-    const token_list = await (await fetch(argv.token_list_url)).json()
-    const network_id = String(await web3.eth.net.getId())
+    const tokenList = await (await fetch(argv.token_list_url)).json()
+    const networkId = String(await web3.eth.net.getId())
 
-    const addresses = []
-    for (const token in token_list) {
-      const network_address_map = new Map(Object.entries(token_list[token].addressByNetwork))
-      const token_address = network_address_map.get(network_id)
-      addresses.push(token_address)
+    const tokenAddresses = []
+    for (const token in tokenList) {
+      const network_address_map = new Map(Object.entries(tokenList[token].addressByNetwork))
+      const tokenAddress = network_address_map.get(networkId)
+      tokenAddresses.push(tokenAddress)
     }
-    await addTokens(addresses, web3, artifacts)
+    const [account] = await web3.eth.getAccounts()
+    const batchExchange = await getBatchExchange(artifacts)
+    const owl = await getOwl(artifacts)
+
+    await addTokens({ tokenAddresses, account, batchExchange, owl })
 
     callback()
   } catch (error) {
