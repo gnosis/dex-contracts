@@ -195,9 +195,10 @@ const transitiveOrderbook = function(lhs, rhs) {
   }
 
   return result
-async function mintOWL({ account, amount, owl }) {
+
+async function mintOWL({ account, minter, amount, owl }) {
   console.log("Mint %d of OWL for user %s", amount, account)
-  return owl.mintOWL(account, amount)
+  return owl.mintOWL(account, amount, { from: minter })
 }
 
 async function deleteOrders({ orderIds, accounts, batchExchange }) {
@@ -254,9 +255,9 @@ async function setAllowance({ token, account, amount, batchExchange }) {
   await token.approve(batchExchange.address, amount, { from: account })
 }
 
-async function mintOwlForUsers({ users, amount, owl }) {
+async function mintOwlForUsers({ users, minter, amount, owl }) {
   for (let i = 0; i < users.length; i++) {
-    await mintOWL({ account: users[i], amount, owl })
+    await mintOWL({ account: users[i], minter, amount, owl })
   }
 }
 

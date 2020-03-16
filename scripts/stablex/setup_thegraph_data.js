@@ -26,17 +26,18 @@ module.exports = async function(callback) {
     const [user1Address, user2Address] = accounts
     const usersAddresses = [user1Address, user2Address]
     const solverAddress = user1Address
+    const minter = user1Address
 
     // Get current batch id
     let batchId = await getBatchId(batchExchange)
     console.log("Current batch id: ", batchId)
 
     // Set user1 as minter of OWL
-    await owl.setMinter(user1Address)
+    await owl.setMinter(minter)
 
     // Mint OWL for every user
     const amount = web3.utils.toWei("3000")
-    await mintOwlForUsers({ users: usersAddresses, amount, owl })
+    await mintOwlForUsers({ users: usersAddresses, minter, amount, owl })
 
     // Create 1 token
     const token1Instance = await createMintableToken(artifacts)
@@ -57,7 +58,7 @@ module.exports = async function(callback) {
     // Mint tokens for every user
     await mintTokens({
       tokens: tokensInstances,
-      users: [user1Address, user2Address],
+      users: usersAddresses,
       amount,
     })
 
