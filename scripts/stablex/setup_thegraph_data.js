@@ -1,16 +1,18 @@
 const { solutionSubmissionParams, basicTrade } = require("../../test/resources/examples")
 
-const { makeDeposits, placeOrders, createMintableToken, mintTokens } = require("../../test/stablex/stablex_utils")
+const { makeDeposits, placeOrders } = require("../../test/stablex/stablex_utils")
 const {
   closeAuction,
   getOwl,
   getBatchExchange,
-  mintOwlForUsers,
   setAllowances,
   addTokens,
   deleteOrders,
   submitSolution,
   getBatchId,
+  createMintableToken,
+  mintTokens,
+  mintOwl,
 } = require("../../scripts/stablex/utilities.js")
 
 const { toETH } = require("../../test/resources/math")
@@ -37,7 +39,7 @@ module.exports = async function(callback) {
 
     // Mint OWL for every user
     const amount = web3.utils.toWei("3000")
-    await mintOwlForUsers({ users: usersAddresses, minter, amount, owl })
+    await mintOwl({ users: usersAddresses, minter, amount, owl })
 
     // Create 1 token
     const token1Instance = await createMintableToken(artifacts)
@@ -60,6 +62,7 @@ module.exports = async function(callback) {
       tokens: tokensInstances,
       users: usersAddresses,
       amount,
+      minter,
     })
 
     // Make deposits, place orders and close auction [aka runAuctionScenario(basicTrade)]

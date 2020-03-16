@@ -70,29 +70,8 @@ const placeOrders = async function(contract, accounts, orderList, auctionIndex) 
   return orderIds
 }
 
-async function createMintableToken(artifacts) {
-  const ERC20Mintable = artifacts.require("ERC20Mintable")
-  return ERC20Mintable.new()
-}
-
-async function mintTokens({ tokens, users, amount }) {
-  for (let i = 0; i < tokens.length; i++) {
-    for (let j = 0; j < users.length; j++) {
-      await mintToken({ token: tokens[i], account: users[j], amount })
-    }
-  }
-}
-
-async function mintToken({ token, account, amount }) {
-  console.log("Mint %d of token %s for user %s", amount, token.address, account)
-  await token.mint(account, amount)
-}
-
 module.exports = {
   setupGenericStableX,
   makeDeposits,
   placeOrders,
-  createMintableToken,
-  mintTokens,
-  mintToken,
 }

@@ -15,6 +15,11 @@ async function getOwl(artifacts) {
   return TokenOWL.at(owlAddress)
 }
 
+async function createMintableToken(artifacts) {
+  const ERC20Mintable = artifacts.require("ERC20Mintable")
+  return ERC20Mintable.new()
+}
+
 const fetchTokenInfo = async function(
   exchangeContract,
   tokenIds,
@@ -195,10 +200,24 @@ const transitiveOrderbook = function(lhs, rhs) {
   }
 
   return result
+}
 
-async function mintOWL({ account, minter, amount, owl }) {
+async function _mintOwl({ account, minter, amount, owl }) {
   console.log("Mint %d of OWL for user %s", amount, account)
   return owl.mintOWL(account, amount, { from: minter })
+}
+
+async function mintTokens({ tokens, minter, users, amount }) {
+  for (let i = 0; i < tokens.length; i++) {
+    for (let j = 0; j < users.length; j++) {
+      await mintToken({ token: tokens[i], account: users[j], minter, amount })
+    }
+  }
+}
+
+async function mintToken({ token, account, minter, amount }) {
+  console.log("Mint %d of token %s for user %s. Using %s as the minter", amount, token.address, account, minter)
+  await token.mint(account, amount, { from: minter })
 }
 
 async function deleteOrders({ orderIds, accounts, batchExchange }) {
@@ -255,9 +274,9 @@ async function setAllowance({ token, account, amount, batchExchange }) {
   await token.approve(batchExchange.address, amount, { from: account })
 }
 
-async function mintOwlForUsers({ users, minter, amount, owl }) {
+async function mintOwl({ users, minter, amount, owl }) {
   for (let i = 0; i < users.length; i++) {
-    await mintOWL({ account: users[i], minter, amount, owl })
+    await _mintOwl({ account: users[i], minter, amount, owl })
   }
 }
 
@@ -275,8 +294,10 @@ module.exports = {
   maxUint32,
   transitiveOrderbook,
   setAllowances,
-  mintOwlForUsers,
+  mintOwl,
   deleteOrders,
   submitSolution,
   getBatchId,
+  createMintableToken,
+  mintTokens,
 }
