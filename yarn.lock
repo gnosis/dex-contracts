@@ -8053,10 +8053,10 @@ solhint-plugin-prettier@0.0.4:
   dependencies:
     prettier-linter-helpers "^1.0.0"
 
-solhint@^2.3.0:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/solhint/-/solhint-2.3.0.tgz#810ef6427c7a6bd2ef1c31f6024ac79c1954d346"
-  integrity sha512-2yiELLp+MsDtuOTrjc14lgsYmlMchp++SicvqCBu01VXsi9Mk2uynhyN3nBfbGzYq1YfmOEBpUqJfFYXVAR/Ig==
+solhint@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/solhint/-/solhint-2.3.1.tgz#6fee8fc2635112bf5812f7cba8359c14e9d9a491"
+  integrity sha512-wP/G+Dqj8LNWlCI9Mt6XiQRWQfZwv1rkZe/V+HKtip5SAZJVvp144PdH28KE45ZvR99Hhrp/Mujt74fSmXsFiw==
   dependencies:
     ajv "^6.6.1"
     antlr4 "4.7.1"
