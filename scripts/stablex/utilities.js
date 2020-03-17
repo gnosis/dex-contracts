@@ -2,6 +2,24 @@ const BN = require("bn.js")
 const { waitForNSeconds } = require("../../test/utilities.js")
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
+async function getBatchExchange(artifacts) {
+  const BatchExchange = artifacts.require("BatchExchange")
+  return BatchExchange.deployed()
+}
+
+async function getOwl(artifacts) {
+  const TokenOWL = artifacts.require("TokenOWL")
+  const batchExchange = await getBatchExchange(artifacts)
+  const owlAddress = await batchExchange.feeToken.call()
+
+  return TokenOWL.at(owlAddress)
+}
+
+async function createMintableToken(artifacts) {
+  const ERC20Mintable = artifacts.require("ERC20Mintable")
+  return ERC20Mintable.new()
+}
+
 const fetchTokenInfo = async function(
   exchangeContract,
   tokenIds,
@@ -35,34 +53,45 @@ const fetchTokenInfo = async function(
   return tokenObjects
 }
 
-const addTokens = async function(token_addresses, web3, artifacts) {
-  const accounts = await web3.eth.getAccounts()
+const addTokens = async function({ tokenAddresses, account, batchExchange, owl }) {
+  // Get amount of required OWL for listing all tokens
+  const feeForAddingToken = await batchExchange.FEE_FOR_LISTING_TOKEN_IN_OWL.call()
+  const totalFees = feeForAddingToken.mul(new BN(tokenAddresses.length))
 
-  const BatchExchange = artifacts.require("BatchExchange")
-  const instance = await BatchExchange.deployed()
-
-  const TokenOWL = artifacts.require("../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWL")
-  const owl = await TokenOWL.at(await instance.feeToken.call())
-
-  const feeForAddingToken = (await instance.FEE_FOR_LISTING_TOKEN_IN_OWL.call()).mul(new BN(token_addresses.length))
-  const balanceOfOWL = await owl.balanceOf.call(accounts[0])
-  if (feeForAddingToken.gt(balanceOfOWL)) {
-    console.log("More fee tokens are required to add all tokens")
-    return
-  }
-  const allowanceOfOWL = await owl.allowance.call(accounts[0], instance.address)
-  if (feeForAddingToken.gt(allowanceOfOWL)) {
-    await owl.approve(instance.address, feeForAddingToken)
+  // Ensure the user has enough OWL balance
+  const balanceOfOWL = await owl.balanceOf.call(account)
+  if (totalFees.gt(balanceOfOWL)) {
+    throw new Error("More fee tokens are required to add all tokens")
   }
 
-  for (const token_address of token_addresses) {
-    if (!(await instance.hasToken.call(token_address))) {
-      await instance.addToken(token_address)
-      console.log(`Successfully added token ${token_address}`)
+  // Set OWL allowance if necessary
+  const allowanceOfOWL = await owl.allowance.call(account, batchExchange.address)
+  if (totalFees.gt(allowanceOfOWL)) {
+    await setAllowance({ token: owl, account, amount: totalFees, batchExchange })
+  }
+
+  // List all tokens (if not listed previously)
+  const tokens = []
+  for (const tokenAddress of tokenAddresses) {
+    const isTokenListed = await batchExchange.hasToken.call(tokenAddress)
+
+    if (!isTokenListed) {
+      await batchExchange.addToken(tokenAddress)
+      console.log(`Successfully added token ${tokenAddress}`)
     } else {
-      console.log(`The token ${token_address} was already added`)
+      console.log(`The token ${tokenAddress} was already added`)
     }
+
+    // Get token information
+    const tokenId = await batchExchange.tokenAddressToIdMap(tokenAddress)
+    tokens.push({
+      id: tokenId.toNumber(),
+      address: tokenAddress,
+    })
   }
+
+  // Return token information
+  return tokens
 }
 
 const closeAuction = async (instance, web3Provider = web3) => {
@@ -173,9 +202,89 @@ const transitiveOrderbook = function(lhs, rhs) {
   return result
 }
 
+async function _mintOwl({ account, minter, amount, owl }) {
+  console.log("Mint %d of OWL for user %s", amount, account)
+  return owl.mintOWL(account, amount, { from: minter })
+}
+
+async function mintTokens({ tokens, minter, users, amount }) {
+  for (let i = 0; i < tokens.length; i++) {
+    for (let j = 0; j < users.length; j++) {
+      await mintToken({ token: tokens[i], account: users[j], minter, amount })
+    }
+  }
+}
+
+async function mintToken({ token, account, minter, amount }) {
+  console.log("Mint %d of token %s for user %s. Using %s as the minter", amount, token.address, account, minter)
+  await token.mint(account, amount, { from: minter })
+}
+
+async function deleteOrders({ orderIds, accounts, batchExchange }) {
+  console.log("Cancel %d orders for %d users", orderIds.length, accounts.length)
+  for (let i = 0; i < orderIds.length; i++) {
+    const orderId = orderIds[i]
+    const account = accounts[i]
+    const cancelReceipt = await batchExchange.cancelOrders([orderId], { from: account })
+    const events = cancelReceipt.logs.map(log => log.event).join(", ")
+    console.log("Canceled/Deleted order %s for user %s. Emitted events: %s", orderId.toString(10), account, events)
+  }
+}
+
+async function getBatchId(batchExchange) {
+  const batchId = await batchExchange.getCurrentBatchId.call()
+  return batchId.toNumber()
+}
+
+async function submitSolution({ name, batchId, solution, solverAddress, batchExchange }) {
+  console.log(`Submit "${name}":
+  - Objective value: ${solution.objectiveValue}
+  - Touched orders: ${solution.touchedorderIds.join(", ")}
+  - Volumes: ${solution.volumes.join(", ")}
+  - Prices: ${solution.prices.join(", ")}
+  - Token ids for prices: ${solution.tokenIdsForPrice.join(", ")}`)
+  const objectiveValue = await batchExchange.submitSolution(
+    batchId,
+    1,
+    solution.owners,
+    solution.touchedorderIds,
+    solution.volumes,
+    solution.prices,
+    solution.tokenIdsForPrice,
+    { from: solverAddress }
+  )
+  console.log(`Transaction for ${name}: ${objectiveValue.tx}`)
+}
+
+async function setAllowances({ users, amount, batchExchange, tokens }) {
+  for (let i = 0; i < users.length; i++) {
+    for (let j = 0; j < tokens.length; j++) {
+      await setAllowance({
+        token: tokens[j],
+        account: users[i],
+        amount,
+        batchExchange,
+      })
+    }
+  }
+}
+
+async function setAllowance({ token, account, amount, batchExchange }) {
+  console.log("Set allowance of %d for token %s and user %s", amount, token.address, account)
+  await token.approve(batchExchange.address, amount, { from: account })
+}
+
+async function mintOwl({ users, minter, amount, owl }) {
+  for (let i = 0; i < users.length; i++) {
+    await _mintOwl({ account: users[i], minter, amount, owl })
+  }
+}
+
 const maxUint32 = new BN(2).pow(new BN(32)).sub(new BN(1))
 
 module.exports = {
+  getOwl,
+  getBatchExchange,
   addTokens,
   closeAuction,
   token_list_url,
@@ -184,4 +293,11 @@ module.exports = {
   getOrdersPaginated,
   maxUint32,
   transitiveOrderbook,
+  setAllowances,
+  mintOwl,
+  deleteOrders,
+  submitSolution,
+  getBatchId,
+  createMintableToken,
+  mintTokens,
 }
