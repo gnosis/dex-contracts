@@ -36,8 +36,8 @@ contract BatchExchange is EpochTokenLocker {
     uint128 public constant UNLIMITED_ORDER_AMOUNT = uint128(-1);
 
     /** Corresponds to percentage that competing solution must improve on current
-      * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
-      */
+     * (p = IMPROVEMENT_DENOMINATOR + 1 / IMPROVEMENT_DENOMINATOR)
+     */
     uint256 public constant IMPROVEMENT_DENOMINATOR = 100; // 1%
 
     /** @dev A fixed integer used to evaluate fees as a fraction of trade execution 1/FEE_DENOMINATOR */
@@ -154,9 +154,9 @@ contract BatchExchange is EpochTokenLocker {
     );
 
     /** @dev Constructor determines exchange parameters
-      * @param maxTokens The maximum number of tokens that can be listed.
-      * @param _feeToken Address of ERC20 fee token.
-      */
+     * @param maxTokens The maximum number of tokens that can be listed.
+     * @param _feeToken Address of ERC20 fee token.
+     */
     constructor(uint256 maxTokens, address _feeToken) public {
         // All solutions for the batches must have normalized prices. The following line sets the
         // price of OWL to 10**18 for all solutions and hence enforces a normalization.
@@ -170,12 +170,12 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev Used to list a new token on the contract: Hence, making it available for exchange in an auction.
-      * @param token ERC20 token to be listed.
-      *
-      * Requirements:
-      * - `maxTokens` has not already been reached
-      * - `token` has not already been added
-      */
+     * @param token ERC20 token to be listed.
+     *
+     * Requirements:
+     * - `maxTokens` has not already been reached
+     * - `token` has not already been added
+     */
     function addToken(address token) public {
         require(numTokens < MAX_TOKENS, "Max tokens reached");
         if (numTokens > 0) {
@@ -188,15 +188,15 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
-      * @param buyToken id of token to be bought
-      * @param sellToken id of token to be sold
-      * @param validUntil batchId representing order's expiry
-      * @param buyAmount relative minimum amount of requested buy amount
-      * @param sellAmount maximum amount of sell token to be exchanged
-      * @return orderId defined as the index in user's order array
-      *
-      * Emits an {OrderPlacement} event with all relevant order details.
-      */
+     * @param buyToken id of token to be bought
+     * @param sellToken id of token to be sold
+     * @param validUntil batchId representing order's expiry
+     * @param buyAmount relative minimum amount of requested buy amount
+     * @param sellAmount maximum amount of sell token to be exchanged
+     * @return orderId defined as the index in user's order array
+     *
+     * Emits an {OrderPlacement} event with all relevant order details.
+     */
     function placeOrder(uint16 buyToken, uint16 sellToken, uint32 validUntil, uint128 buyAmount, uint128 sellAmount)
         public
         returns (uint256)
@@ -205,17 +205,17 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev A user facing function used to place limit sell orders in auction with expiry defined by batchId
-      * Note that parameters are passed as arrays and the indices correspond to each order.
-      * @param buyTokens ids of tokens to be bought
-      * @param sellTokens ids of tokens to be sold
-      * @param validFroms batchIds representing order's validity start time
-      * @param validUntils batchIds representing order's expiry
-      * @param buyAmounts relative minimum amount of requested buy amounts
-      * @param sellAmounts maximum amounts of sell token to be exchanged
-      * @return `orderIds` an array of indices in which `msg.sender`'s orders are included
-      *
-      * Emits an {OrderPlacement} event with all relevant order details.
-      */
+     * Note that parameters are passed as arrays and the indices correspond to each order.
+     * @param buyTokens ids of tokens to be bought
+     * @param sellTokens ids of tokens to be sold
+     * @param validFroms batchIds representing order's validity start time
+     * @param validUntils batchIds representing order's expiry
+     * @param buyAmounts relative minimum amount of requested buy amounts
+     * @param sellAmounts maximum amounts of sell token to be exchanged
+     * @return `orderIds` an array of indices in which `msg.sender`'s orders are included
+     *
+     * Emits an {OrderPlacement} event with all relevant order details.
+     */
     function placeValidFromOrders(
         uint16[] memory buyTokens,
         uint16[] memory sellTokens,
@@ -238,13 +238,13 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev a user facing function used to cancel orders. If the order is valid for the batch that is currently
-      * being solved, it sets order expiry to that batchId. Otherwise it removes it from storage. Can be called
-      * multiple times (e.g. to eventually free storage once order is expired).
-      *
-      * @param orderIds referencing the indices of user's orders to be cancelled
-      *
-      * Emits an {OrderCancellation} or {OrderDeletion} with sender's address and orderId
-      */
+     * being solved, it sets order expiry to that batchId. Otherwise it removes it from storage. Can be called
+     * multiple times (e.g. to eventually free storage once order is expired).
+     *
+     * @param orderIds referencing the indices of user's orders to be cancelled
+     *
+     * Emits an {OrderCancellation} or {OrderDeletion} with sender's address and orderId
+     */
     function cancelOrders(uint16[] memory orderIds) public {
         uint32 batchIdBeingSolved = getCurrentBatchId() - 1;
         for (uint16 i = 0; i < orderIds.length; i++) {
@@ -259,17 +259,17 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev A user facing wrapper to cancel and place new orders in the same transaction.
-      * @param cancellations indices of orders to be cancelled
-      * @param buyTokens ids of tokens to be bought in new orders
-      * @param sellTokens ids of tokens to be sold in new orders
-      * @param validFroms batchIds representing order's validity start time in new orders
-      * @param validUntils batchIds represnnting order's expiry in new orders
-      * @param buyAmounts relative minimum amount of requested buy amounts in new orders
-      * @param sellAmounts maximum amounts of sell token to be exchanged in new orders
-      * @return an array of indices in which `msg.sender`'s new orders are included
-      *
-      * Emits {OrderCancellation} events for all cancelled orders and {OrderPlacement} events with relevant new order details.
-      */
+     * @param cancellations indices of orders to be cancelled
+     * @param buyTokens ids of tokens to be bought in new orders
+     * @param sellTokens ids of tokens to be sold in new orders
+     * @param validFroms batchIds representing order's validity start time in new orders
+     * @param validUntils batchIds represnnting order's expiry in new orders
+     * @param buyAmounts relative minimum amount of requested buy amounts in new orders
+     * @param sellAmounts maximum amounts of sell token to be exchanged in new orders
+     * @return an array of indices in which `msg.sender`'s new orders are included
+     *
+     * Emits {OrderCancellation} events for all cancelled orders and {OrderPlacement} events with relevant new order details.
+     */
     function replaceOrders(
         uint16[] memory cancellations,
         uint16[] memory buyTokens,
@@ -284,29 +284,29 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev a solver facing function called for auction settlement
-      * @param batchId index of auction solution is referring to
-      * @param owners array of addresses corresponding to touched orders
-      * @param orderIds array of order indices used in parallel with owners to identify touched order
-      * @param buyVolumes executed buy amounts for each order identified by index of owner-orderId arrays
-      * @param prices list of prices for touched tokens indexed by next parameter
-      * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
-      * @return the computed objective value of the solution
-      *
-      * Requirements:
-      * - Solutions for this `batchId` are currently being accepted.
-      * - Claimed objetive value is a great enough improvement on the current winning solution
-      * - Fee Token price is non-zero
-      * - `tokenIdsForPrice` is sorted.
-      * - Number of touched orders does not exceed `MAX_TOUCHED_ORDERS`.
-      * - Each touched order is valid at current `batchId`.
-      * - Each touched order's `executedSellAmount` does not exceed its remaining amount.
-      * - Limit Price of each touched order is respected.
-      * - Solution's objective evaluation must be positive.
-      *
-      * Sub Requirements: Those nested within other functions
-      * - checkAndOverrideObjectiveValue; Objetive value is a great enough improvement on the current winning solution
-      * - checkTokenConservation; for all, non-fee, tokens total amount sold == total amount bought
-      */
+     * @param batchId index of auction solution is referring to
+     * @param owners array of addresses corresponding to touched orders
+     * @param orderIds array of order indices used in parallel with owners to identify touched order
+     * @param buyVolumes executed buy amounts for each order identified by index of owner-orderId arrays
+     * @param prices list of prices for touched tokens indexed by next parameter
+     * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+     * @return the computed objective value of the solution
+     *
+     * Requirements:
+     * - Solutions for this `batchId` are currently being accepted.
+     * - Claimed objetive value is a great enough improvement on the current winning solution
+     * - Fee Token price is non-zero
+     * - `tokenIdsForPrice` is sorted.
+     * - Number of touched orders does not exceed `MAX_TOUCHED_ORDERS`.
+     * - Each touched order is valid at current `batchId`.
+     * - Each touched order's `executedSellAmount` does not exceed its remaining amount.
+     * - Limit Price of each touched order is respected.
+     * - Solution's objective evaluation must be positive.
+     *
+     * Sub Requirements: Those nested within other functions
+     * - checkAndOverrideObjectiveValue; Objetive value is a great enough improvement on the current winning solution
+     * - checkTokenConservation; for all, non-fee, tokens total amount sold == total amount bought
+     */
     function submitSolution(
         uint32 batchId,
         uint256 claimedObjectiveValue,
@@ -395,35 +395,35 @@ contract BatchExchange is EpochTokenLocker {
      * Public View Methods
      */
     /** @dev View returning ID of listed tokens
-      * @param addr address of listed token.
-      * @return tokenId as stored within the contract.
-      */
+     * @param addr address of listed token.
+     * @return tokenId as stored within the contract.
+     */
     function tokenAddressToIdMap(address addr) public view returns (uint16) {
         return IdToAddressBiMap.getId(registeredTokens, addr);
     }
 
     /** @dev View returning address of listed token by ID
-      * @param id tokenId as stored, via BiMap, within the contract.
-      * @return address of (listed) token
-      */
+     * @param id tokenId as stored, via BiMap, within the contract.
+     * @return address of (listed) token
+     */
     function tokenIdToAddressMap(uint16 id) public view returns (address) {
         return IdToAddressBiMap.getAddressAt(registeredTokens, id);
     }
 
     /** @dev View returning a bool attesting whether token was already added
-      * @param addr address of the token to be checked
-      * @return bool attesting whether token was already added
-      */
+     * @param addr address of the token to be checked
+     * @return bool attesting whether token was already added
+     */
     function hasToken(address addr) public view returns (bool) {
         return IdToAddressBiMap.hasAddress(registeredTokens, addr);
     }
 
     /** @dev View returning all byte-encoded sell orders for specified user
-      * @param user address of user whose orders are being queried
-      * @param offset uint determining the starting orderIndex
-      * @param pageSize uint determining the count of elements to be viewed
-      * @return encoded bytes representing all orders
-      */
+     * @param user address of user whose orders are being queried
+     * @param offset uint determining the starting orderIndex
+     * @param pageSize uint determining the count of elements to be viewed
+     * @return encoded bytes representing all orders
+     */
     function getEncodedUserOrdersPaginated(address user, uint16 offset, uint16 pageSize)
         public
         view
@@ -438,10 +438,10 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev View returning all byte-encoded users in paginated form
-      * @param previousPageUser address of last user received in last pages (address(0) for first page)
-      * @param pageSize uint determining the count of users to be returned per page
-      * @return encoded packed bytes of user addresses
-      */
+     * @param previousPageUser address of last user received in last pages (address(0) for first page)
+     * @param pageSize uint determining the count of users to be returned per page
+     * @return encoded packed bytes of user addresses
+     */
     function getUsersPaginated(address previousPageUser, uint16 pageSize) public view returns (bytes memory users) {
         if (allUsers.size() == 0) {
             return users;
@@ -462,19 +462,19 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev View returning all byte-encoded sell orders for specified user
-      * @param user address of user whose orders are being queried
-      * @return encoded bytes representing all orders
-      */
+     * @param user address of user whose orders are being queried
+     * @return encoded bytes representing all orders
+     */
     function getEncodedUserOrders(address user) public view returns (bytes memory elements) {
         return getEncodedUserOrdersPaginated(user, 0, uint16(-1));
     }
 
     /** @dev View returning byte-encoded sell orders in paginated form
-      * @param previousPageUser address of last user received in the previous page (address(0) for first page)
-      * @param previousPageUserOffset the number of orders received for the last user on the previous page (0 for first page).
-      * @param pageSize uint determining the count of orders to be returned per page
-      * @return encoded bytes representing a page of orders ordered by (user, index)
-      */
+     * @param previousPageUser address of last user received in the previous page (address(0) for first page)
+     * @param previousPageUserOffset the number of orders received for the last user on the previous page (0 for first page).
+     * @param pageSize uint determining the count of orders to be returned per page
+     * @return encoded bytes representing a page of orders ordered by (user, index)
+     */
     function getEncodedUsersPaginated(address previousPageUser, uint16 previousPageUserOffset, uint16 pageSize)
         public
         view
@@ -505,8 +505,8 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev View returning all byte-encoded sell orders
-      * @return encoded bytes representing all orders ordered by (user, index)
-      */
+     * @return encoded bytes representing all orders ordered by (user, index)
+     */
     function getEncodedOrders() public view returns (bytes memory elements) {
         if (allUsers.size() > 0) {
             address user = allUsers.first();
@@ -528,8 +528,8 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev gets the objective value of currently winning solution.
-      * @return objective function evaluation of the currently winning solution, or zero if no solution proposed.
-      */
+     * @return objective function evaluation of the currently winning solution, or zero if no solution proposed.
+     */
     function getCurrentObjectiveValue() public view returns (uint256) {
         if (latestSolution.batchId == getCurrentBatchId() - 1) {
             return latestSolution.objectiveValue;
@@ -571,16 +571,16 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev called at the end of submitSolution with a value of tokenConservation / 2
-      * @param feeReward amount to be rewarded to the solver
-      */
+     * @param feeReward amount to be rewarded to the solver
+     */
     function grantRewardToSolutionSubmitter(uint256 feeReward) private {
         latestSolution.feeReward = feeReward;
         addBalanceAndBlockWithdrawForThisBatch(msg.sender, tokenIdToAddressMap(0), feeReward);
     }
 
     /** @dev called during solution submission to burn fees from previous auction
-      * @return amount of OWL burnt
-      */
+     * @return amount of OWL burnt
+     */
     function burnPreviousAuctionFees() private returns (uint256) {
         if (!currentBatchHasSolution()) {
             feeToken.burnOWL(address(this), latestSolution.feeReward);
@@ -590,9 +590,9 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev Called from within submitSolution to update the token prices.
-      * @param prices list of prices for touched tokens only, first price is always fee token price
-      * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
-      */
+     * @param prices list of prices for touched tokens only, first price is always fee token price
+     * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+     */
     function updateCurrentPrices(uint128[] memory prices, uint16[] memory tokenIdsForPrice) private {
         for (uint256 i = 0; i < latestSolution.tokenIdsForPrice.length; i++) {
             currentPrices[latestSolution.tokenIdsForPrice[i]] = 0;
@@ -603,10 +603,10 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev Updates an order's remaing requested sell amount upon (partial) execution of a standing order
-      * @param owner order's corresponding user address
-      * @param orderId index of order in list of owner's orders
-      * @param executedAmount proportion of order's requested sellAmount that was filled.
-      */
+     * @param owner order's corresponding user address
+     * @param orderId index of order in list of owner's orders
+     * @param executedAmount proportion of order's requested sellAmount that was filled.
+     */
     function updateRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
         if (isOrderWithLimitedAmount(orders[owner][orderId])) {
             orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.add(executedAmount).toUint128();
@@ -614,10 +614,10 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev The inverse of updateRemainingOrder, called when reverting a solution in favour of a better one.
-      * @param owner order's corresponding user address
-      * @param orderId index of order in list of owner's orders
-      * @param executedAmount proportion of order's requested sellAmount that was filled.
-      */
+     * @param owner order's corresponding user address
+     * @param orderId index of order in list of owner's orders
+     * @param executedAmount proportion of order's requested sellAmount that was filled.
+     */
     function revertRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
         if (isOrderWithLimitedAmount(orders[owner][orderId])) {
             orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.sub(executedAmount).toUint128();
@@ -625,20 +625,20 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev Checks whether an order is intended to track its usedAmount
-      * @param order order under inspection
-      * @return true if the given order does track its usedAmount
-      */
+     * @param order order under inspection
+     * @return true if the given order does track its usedAmount
+     */
     function isOrderWithLimitedAmount(Order memory order) private pure returns (bool) {
         return order.priceNumerator != UNLIMITED_ORDER_AMOUNT && order.priceDenominator != UNLIMITED_ORDER_AMOUNT;
     }
 
     /** @dev This function writes solution information into contract storage
-      * @param batchId index of referenced auction
-      * @param owners array of addresses corresponding to touched orders
-      * @param orderIds array of order indices used in parallel with owners to identify touched order
-      * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
-      * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
-      */
+     * @param batchId index of referenced auction
+     * @param owners array of addresses corresponding to touched orders
+     * @param orderIds array of order indices used in parallel with owners to identify touched order
+     * @param volumes executed buy amounts for each order identified by index of owner-orderId arrays
+     * @param tokenIdsForPrice price[i] is the price for the token with tokenID tokenIdsForPrice[i]
+     */
     function documentTrades(
         uint32 batchId,
         address[] memory owners,
@@ -655,7 +655,7 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev reverts all relevant contract storage relating to an overwritten auction solution.
-      */
+     */
     function undoCurrentSolution() private {
         if (currentBatchHasSolution()) {
             for (uint256 i = 0; i < latestSolution.trades.length; i++) {
@@ -680,8 +680,8 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev determines if value is better than currently and updates if it is.
-      * @param newObjectiveValue proposed value to be updated if a great enough improvement on the current objective value
-      */
+     * @param newObjectiveValue proposed value to be updated if a great enough improvement on the current objective value
+     */
     function checkAndOverrideObjectiveValue(uint256 newObjectiveValue) private {
         require(
             isObjectiveValueSufficientlyImproved(newObjectiveValue),
@@ -692,10 +692,10 @@ contract BatchExchange is EpochTokenLocker {
 
     // Private view
     /** @dev Evaluates utility of executed trade
-      * @param execBuy represents proportion of order executed (in terms of buy amount)
-      * @param order the sell order whose utility is being evaluated
-      * @return Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
-      */
+     * @param execBuy represents proportion of order executed (in terms of buy amount)
+     * @param order the sell order whose utility is being evaluated
+     * @return Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
+     */
     function evaluateUtility(uint128 execBuy, Order memory order) private view returns (uint256) {
         // Utility = ((execBuy * order.sellAmt - execSell * order.buyAmt) * price.buyToken) / order.sellAmt
         uint256 execSellTimesBuy = getExecutedSellAmount(execBuy, currentPrices[order.buyToken], currentPrices[order.sellToken])
@@ -709,16 +709,16 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev computes a measure of how much of an order was disregarded (only valid when limit price is respected)
-      * @param order the sell order whose disregarded utility is being evaluated
-      * @param user address of order's owner
-      * @return disregardedUtility of the order (after it has been applied)
-      * Note that:
-      * |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
-      * where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken / (1 - phi)
-      * and leftoverSellAmount = order.sellAmt - execSellAmt
-      * Balances and orders have all been updated so: sellAmount - execSellAmt == remainingAmount(order).
-      * For correctness, we take the minimum of this with the user's token balance.
-      */
+     * @param order the sell order whose disregarded utility is being evaluated
+     * @param user address of order's owner
+     * @return disregardedUtility of the order (after it has been applied)
+     * Note that:
+     * |disregardedUtility| = (limitTerm * leftoverSellAmount) / order.sellAmount
+     * where limitTerm = price.SellToken * order.sellAmt - order.buyAmt * price.buyToken / (1 - phi)
+     * and leftoverSellAmount = order.sellAmt - execSellAmt
+     * Balances and orders have all been updated so: sellAmount - execSellAmt == remainingAmount(order).
+     * For correctness, we take the minimum of this with the user's token balance.
+     */
     function evaluateDisregardedUtility(Order memory order, address user) private view returns (uint256) {
         uint256 leftoverSellAmount = Math.min(getRemainingAmount(order), getBalance(user, tokenIdToAddressMap(order.sellToken)));
         uint256 limitTermLeft = currentPrices[order.sellToken].mul(order.priceDenominator);
@@ -733,20 +733,20 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev Evaluates executedBuy amount based on prices and executedBuyAmout (fees included)
-      * @param executedBuyAmount amount of buyToken executed for purchase in batch auction
-      * @param buyTokenPrice uniform clearing price of buyToken
-      * @param sellTokenPrice uniform clearing price of sellToken
-      * @return executedSellAmount as expressed in Equation (2)
-      * https://github.com/gnosis/dex-contracts/issues/173#issuecomment-526163117
-      * execSellAmount * p[sellToken] * (1 - phi) == execBuyAmount * p[buyToken]
-      * where phi = 1/FEE_DENOMINATOR
-      * Note that: 1 - phi = (FEE_DENOMINATOR - 1) / FEE_DENOMINATOR
-      * And so, 1/(1-phi) = FEE_DENOMINATOR / (FEE_DENOMINATOR - 1)
-      * execSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
-      *                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * FEE_DENOMINATOR / (FEE_DENOMINATOR - 1)
-      * in order to minimize rounding errors, the order of operations is switched
-      *                = ((executedBuyAmount * buyTokenPrice) / (FEE_DENOMINATOR - 1)) * FEE_DENOMINATOR) / sellTokenPrice
-      */
+     * @param executedBuyAmount amount of buyToken executed for purchase in batch auction
+     * @param buyTokenPrice uniform clearing price of buyToken
+     * @param sellTokenPrice uniform clearing price of sellToken
+     * @return executedSellAmount as expressed in Equation (2)
+     * https://github.com/gnosis/dex-contracts/issues/173#issuecomment-526163117
+     * execSellAmount * p[sellToken] * (1 - phi) == execBuyAmount * p[buyToken]
+     * where phi = 1/FEE_DENOMINATOR
+     * Note that: 1 - phi = (FEE_DENOMINATOR - 1) / FEE_DENOMINATOR
+     * And so, 1/(1-phi) = FEE_DENOMINATOR / (FEE_DENOMINATOR - 1)
+     * execSellAmount = (execBuyAmount * p[buyToken]) / (p[sellToken] * (1 - phi))
+     *                = (execBuyAmount * buyTokenPrice / sellTokenPrice) * FEE_DENOMINATOR / (FEE_DENOMINATOR - 1)
+     * in order to minimize rounding errors, the order of operations is switched
+     *                = ((executedBuyAmount * buyTokenPrice) / (FEE_DENOMINATOR - 1)) * FEE_DENOMINATOR) / sellTokenPrice
+     */
     function getExecutedSellAmount(uint128 executedBuyAmount, uint128 buyTokenPrice, uint128 sellTokenPrice)
         private
         pure
@@ -764,18 +764,18 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev used to determine if solution if first provided in current batch
-      * @return true if `latestSolution` is storing a solution for current batch, else false
-      */
+     * @return true if `latestSolution` is storing a solution for current batch, else false
+     */
     function currentBatchHasSolution() private view returns (bool) {
         return latestSolution.batchId == getCurrentBatchId() - 1;
     }
 
     // Private view
     /** @dev Compute trade execution based on executedBuyAmount and relevant token prices
-      * @param executedBuyAmount executed buy amount
-      * @param order contains relevant buy-sell token information
-      * @return (executedBuyAmount, executedSellAmount)
-      */
+     * @param executedBuyAmount executed buy amount
+     * @param order contains relevant buy-sell token information
+     * @return (executedBuyAmount, executedSellAmount)
+     */
     function getTradedAmounts(uint128 executedBuyAmount, Order memory order) private view returns (uint128, uint128) {
         uint128 executedSellAmount = getExecutedSellAmount(
             executedBuyAmount,
@@ -786,37 +786,37 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev Checks that the proposed objective value is a significant enough improvement on the latest one
-      * @param objectiveValue the proposed objective value to check
-      * @return true if the objectiveValue is a significant enough improvement, false otherwise
-      */
+     * @param objectiveValue the proposed objective value to check
+     * @return true if the objectiveValue is a significant enough improvement, false otherwise
+     */
     function isObjectiveValueSufficientlyImproved(uint256 objectiveValue) private view returns (bool) {
         return (objectiveValue.mul(IMPROVEMENT_DENOMINATOR) > getCurrentObjectiveValue().mul(IMPROVEMENT_DENOMINATOR + 1));
     }
 
     // Private pure
     /** @dev used to determine if an order is valid for specific auction/batch
-      * @param order object whose validity is in question
-      * @param batchId auction index of validity
-      * @return true if order is valid in auction batchId else false
-      */
+     * @param order object whose validity is in question
+     * @param batchId auction index of validity
+     * @return true if order is valid in auction batchId else false
+     */
     function checkOrderValidity(Order memory order, uint32 batchId) private pure returns (bool) {
         return order.validFrom <= batchId && order.validUntil >= batchId;
     }
 
     /** @dev computes the remaining sell amount for a given order
-      * @param order the order for which remaining amount should be calculated
-      * @return the remaining sell amount
-      */
+     * @param order the order for which remaining amount should be calculated
+     * @return the remaining sell amount
+     */
     function getRemainingAmount(Order memory order) private pure returns (uint128) {
         return order.priceDenominator - order.usedAmount;
     }
 
     /** @dev called only by getEncodedOrders and used to pack auction info into bytes
-      * @param user list of tokenIds
-      * @param sellTokenBalance user's account balance of sell token
-      * @param order a sell order
-      * @return byte encoded, packed, concatenation of relevant order information
-      */
+     * @param user list of tokenIds
+     * @param sellTokenBalance user's account balance of sell token
+     * @param order a sell order
+     * @return byte encoded, packed, concatenation of relevant order information
+     */
     function encodeAuctionElement(address user, uint256 sellTokenBalance, Order memory order)
         private
         pure
@@ -835,8 +835,8 @@ contract BatchExchange is EpochTokenLocker {
     }
 
     /** @dev determines if value is better than currently and updates if it is.
-      * @param amounts array of values to be verified with AMOUNT_MINIMUM
-      */
+     * @param amounts array of values to be verified with AMOUNT_MINIMUM
+     */
     function verifyAmountThreshold(uint128[] memory amounts) private pure returns (bool) {
         for (uint256 i = 0; i < amounts.length; i++) {
             if (amounts[i] < AMOUNT_MINIMUM) {
