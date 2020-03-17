@@ -1,3 +1,6 @@
+const MockContract = artifacts.require("MockContract")
+const BatchExchange = artifacts.require("BatchExchange")
+
 const { sendTxAndGetReturnValue } = require("../utilities")
 
 /**
@@ -15,11 +18,9 @@ const { sendTxAndGetReturnValue } = require("../utilities")
  * @returns {}
  */
 const setupGenericStableX = async function(numTokens = 2, maxTokens = 2 ** 16 - 1) {
-  const MockContract = artifacts.require("MockContract")
   const feeToken = await MockContract.new()
   await feeToken.givenAnyReturnBool(true)
 
-  const BatchExchange = artifacts.require("BatchExchange")
   const instance = await BatchExchange.new(maxTokens, feeToken.address)
   const tokens = [feeToken]
   for (let i = 0; i < numTokens - 1; i++) {
