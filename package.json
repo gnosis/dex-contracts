@@ -105,7 +105,7 @@
     "solhint": "^2.3.1",
     "solhint-plugin-prettier": "0.0.4",
     "solidity-bytes-utils": "0.0.8",
-    "solidity-coverage": "^0.7.1",
+    "solidity-coverage": "^0.7.2",
     "solidity-multicall": "^1.0.0",
     "solium": "^1.2.4",
     "truffle": "^5.1.17",
