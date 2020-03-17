@@ -28,4 +28,35 @@ describe("Orderbook", () => {
       })
     );
   });
+
+  it("inverts by switching bid/asks and inverting prices", () => {
+    const orderbook = new Orderbook("USDC", "DAI");
+
+    // Offering to sell 100 USDC for 2 DAI each, thus willing to buy 200 DAI
+    orderbook.addAsk(new Offer(new Price(2, 1), 100));
+    orderbook.addAsk(new Offer(new Price(1, 1), 200));
+    orderbook.addAsk(new Offer(new Price(4, 1), 300));
+
+    // Offering to buy 50 USDC for 50c each, thus willing to sell 25 DAI
+    orderbook.addBid(new Offer(new Price(1, 2), 50));
+    orderbook.addBid(new Offer(new Price(1, 4), 80));
+    orderbook.addBid(new Offer(new Price(1, 4), 20));
+
+    orderbook.invert();
+
+    assert.equal(
+      JSON.stringify(orderbook.toJSON()),
+      JSON.stringify({
+        bids: [
+          {price: 1, volume: 200},
+          {price: 0.5, volume: 200},
+          {price: 0.25, volume: 1200}
+        ],
+        asks: [
+          {price: 2, volume: 25},
+          {price: 4, volume: 25}
+        ]
+      })
+    );
+  });
 });
