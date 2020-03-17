@@ -25,7 +25,8 @@
     "spread-orders": "npx truffle exec scripts/stablex/place_spread_orders.js",
     "ts": "yarn run ts-contracts && yarn run ts-check",
     "ts-check": "tsc src/index.d.ts",
-    "ts-contracts": "typechain --target web3-v1 --outDir build/types build/contracts/{BatchExchange,SnappAuction}.json"
+    "ts-contracts": "typechain --target web3-v1 --outDir build/types build/contracts/{BatchExchange,SnappAuction}.json",
+    "ganache": "ganache-cli -l 8e6"
   },
   "repository": {
     "type": "git",
