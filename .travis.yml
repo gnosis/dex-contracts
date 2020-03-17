@@ -15,7 +15,8 @@ script:
   - yarn run pretty-check
   - solium -d contracts/
   - yarn run coverage && cat ./coverage/lcov.info | coveralls
-  - yarn run test ./test/stablex/stablex_large_example.js
+  - yarn run test-js ./test/stablex/stablex_large_example.js
+  - yarn run test-ts
 before_deploy:
   - export PACKAGE_VERSION=$(jq -r '.version' package.json)
   - test "v$PACKAGE_VERSION" = "$TRAVIS_TAG"
