@@ -13,6 +13,9 @@ describe("Orderbook", () => {
     orderbook.addBid(new Offer(new Price(99, 100), 70));
     orderbook.addBid(new Offer(new Price(9, 10), 30));
 
+    assert.equal(orderbook.baseToken, "USDC");
+    assert.equal(orderbook.quoteToken, "DAI");
+
     assert.equal(
       JSON.stringify(orderbook.toJSON()),
       JSON.stringify({
@@ -32,17 +35,20 @@ describe("Orderbook", () => {
   it("inverts by switching bid/asks and inverting prices", () => {
     const orderbook = new Orderbook("USDC", "DAI");
 
-    // Offering to sell 100 USDC for 2 DAI each, thus willing to buy 200 DAI
+    // Offering to sell 100 USDC for 2 DAI each, thus willing to buy 200 DAI for 50ç each
     orderbook.addAsk(new Offer(new Price(2, 1), 100));
     orderbook.addAsk(new Offer(new Price(1, 1), 200));
     orderbook.addAsk(new Offer(new Price(4, 1), 300));
 
-    // Offering to buy 50 USDC for 50c each, thus willing to sell 25 DAI
+    // Offering to buy 50 USDC for 50ç each, thus willing to sell 25 DAI for 2 USDC each
     orderbook.addBid(new Offer(new Price(1, 2), 50));
     orderbook.addBid(new Offer(new Price(1, 4), 80));
     orderbook.addBid(new Offer(new Price(1, 4), 20));
 
     orderbook.invert();
+
+    assert.equal(orderbook.baseToken, "DAI");
+    assert.equal(orderbook.quoteToken, "USDC");
 
     assert.equal(
       JSON.stringify(orderbook.toJSON()),

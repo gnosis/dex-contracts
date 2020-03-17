@@ -68,7 +68,7 @@ export class Orderbook {
     // Switch base/quote token
     const baseToken = this.baseToken;
     this.baseToken = this.quoteToken;
-    this.quoteToken = this.baseToken;
+    this.quoteToken = baseToken;
 
     // Invert offers
     const bids = this.bids;
