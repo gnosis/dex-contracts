@@ -32,7 +32,8 @@
     "tsc:commonjs": "rimraf typescript/common && tsc --outDir typescript/common",
     "tsc:esm": "rimraf typescript/esm && tsc -m es6 -t esnext --outDir typescript/esm",
     "ts-check": "tsc src/index.d.ts",
-    "ts-contracts": "typechain --target web3-v1 --outDir build/types build/contracts/{BatchExchange,SnappAuction}.json"
+    "ts-contracts": "typechain --target web3-v1 --outDir build/types build/contracts/{BatchExchange,SnappAuction}.json",
+    "ganache": "ganache-cli -h 0.0.0.0 --gasLimit 8e6 --deterministic"
   },
   "repository": {
     "type": "git",
@@ -91,6 +92,7 @@
     "ethereumjs-abi": "^0.6.8",
     "ethereumjs-util": "^6.2.0",
     "fast-memoize": "^2.5.2",
+    "ganache-cli": "^6.9.1",
     "husky": "^4.2.3",
     "merkletreejs": "0.1.11",
     "minimist": "^1.2.5",

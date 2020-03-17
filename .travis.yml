@@ -2,14 +2,13 @@ language: node_js
 node_js:
   - 10
 cache: yarn
+env: NODE_OPTIONS=--max_old_space_size=4096
 before_install:
   - rm -rf build
   - npm install -g yarn@latest
   - yarn --version
-  - npm install -g ganache-cli@latest
-  - ganache-cli --version
 before_script:
-  - ganache-cli -l 8e6 > /dev/null &
+  - yarn run ganache > /dev/null &
 script:
   - yarn run lint
   - yarn run solhint
