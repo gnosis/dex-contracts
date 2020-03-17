@@ -1,3 +1,5 @@
+import {Order} from ".";
+
 export class Price {
   numerator: number;
   denominator: number;
@@ -47,6 +49,10 @@ export class Orderbook {
     this.bids = new Map();
   }
 
+  pair() {
+    return `${this.baseToken}/${this.quoteToken}`;
+  }
+
   addBid(bid: Offer) {
     addOffer(bid, this.bids);
   }
@@ -74,6 +80,20 @@ export class Orderbook {
     result.asks = invertPricePoints(this.bids);
 
     return result;
+  }
+
+  add(orderbook: Orderbook) {
+    if (orderbook.pair() != this.pair()) {
+      throw new Error(
+        `Cannot add ${orderbook.pair()} orderbook to ${this.pair()} orderbook`
+      );
+    }
+    orderbook.bids.forEach(bid => {
+      this.addBid(bid);
+    });
+    orderbook.asks.forEach(ask => {
+      this.addAsk(ask);
+    });
   }
 }
 
