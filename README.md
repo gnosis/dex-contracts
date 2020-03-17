@@ -34,6 +34,12 @@ npx truffle migrate --network $NETWORKNAME --reset
 yarn run networks-extract           # extracts deployed addresses to networks.json
 ```
 
+If you are building for a local development network, ganache has to be running locally. For this you can e.g. in a separate shell run
+
+```sh
+yarn run ganache # start a development network (blocking)
+```
+
 In case only the StableX or only the SnappAuction should be deployed, you can add the flags `--onlyMigrateStableX` or `--onlyMigrateSnappAuction` to the deployment command.
 
 E.g:

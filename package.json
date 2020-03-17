@@ -25,7 +25,8 @@
     "spread-orders": "npx truffle exec scripts/stablex/place_spread_orders.js",
     "ts": "yarn run ts-contracts && yarn run ts-check",
     "ts-check": "tsc src/index.d.ts",
-    "ts-contracts": "typechain --target web3-v1 --outDir build/types build/contracts/{BatchExchange,SnappAuction}.json"
+    "ts-contracts": "typechain --target web3-v1 --outDir build/types build/contracts/{BatchExchange,SnappAuction}.json",
+    "ganache": "ganache-cli -h 0.0.0.0 --gasLimit 8e6 --deterministic"
   },
   "repository": {
     "type": "git",
@@ -68,6 +69,7 @@
     "@gnosis.pm/owl-token": "^3.1.0",
     "@gnosis.pm/solidity-data-structures": "^1.2.4",
     "@gnosis.pm/util-contracts": "^2.0.6",
+    "@truffle/contract": "^4.1.13",
     "axios": "^0.19.2",
     "coveralls": "^3.0.9",
     "dotenv": "^8.0.0",
@@ -79,6 +81,7 @@
     "ethereumjs-abi": "^0.6.8",
     "ethereumjs-util": "^6.2.0",
     "fast-memoize": "^2.5.2",
+    "ganache-cli": "^6.9.1",
     "husky": "^4.2.3",
     "merkletreejs": "0.1.11",
     "minimist": "^1.2.5",
@@ -94,7 +97,6 @@
     "solium": "^1.2.4",
     "truffle": "^5.1.17",
     "truffle-assertions": "^0.9.2",
-    "@truffle/contract": "^4.1.13",
     "truffle-flattener": "^1.4.2",
     "truffle-plugin-verify": "^0.3.9",
     "typechain": "^1.0.5",
