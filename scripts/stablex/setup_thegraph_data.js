@@ -24,8 +24,7 @@ module.exports = async function(callback) {
     const owl = await getOwl(artifacts)
 
     // Prepare user accounts
-    const accounts = await web3.eth.getAccounts()
-    const [user1Address, user2Address] = accounts
+    const [user1Address, user2Address] = await web3.eth.getAccounts()
     const usersAddresses = [user1Address, user2Address]
     const solverAddress = user1Address
     const minter = user1Address
