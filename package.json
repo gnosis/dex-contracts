@@ -26,7 +26,7 @@
     "ts": "yarn run ts-contracts && yarn run ts-check",
     "ts-check": "tsc src/index.d.ts",
     "ts-contracts": "typechain --target web3-v1 --outDir build/types build/contracts/{BatchExchange,SnappAuction}.json",
-    "ganache": "ganache-cli -l 8e6"
+    "ganache": "ganache-cli -h 0.0.0.0 --gasLimit 8e6 --deterministic"
   },
   "repository": {
     "type": "git",
