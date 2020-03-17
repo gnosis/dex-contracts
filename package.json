@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build": "truffle build && yarn run networks-reset && yarn run ts",
-    "test": "truffle test && yarn run test-ts",
+    "test": "truffle test test/**/*.js && yarn run test-ts",
     "test-stablex": "truffle test test/stablex/*",
     "test-snapp": "truffle test test/snapp/*",
     "test-ts": "mocha -r ts-node/register test/models/*.spec.ts",
