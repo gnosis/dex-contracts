@@ -1,29 +1,29 @@
-import {Orderbook} from "../../src/orderbook";
+import {Offer, Orderbook, Price} from "../../src/orderbook";
 import {assert} from "chai";
 import "mocha";
 
 describe("Orderbook", () => {
-  it("cummulates bids and asks into sorted json", () => {
+  it("cummulates bids and asks sorted by best bid/best ask", () => {
     const orderbook = new Orderbook("USDC", "DAI");
-    orderbook.addAsk(1.1, 100);
-    orderbook.addAsk(1.2, 200);
-    orderbook.addAsk(1.01, 300);
+    orderbook.addAsk(new Offer(new Price(11, 10), 100));
+    orderbook.addAsk(new Offer(new Price(12, 10), 200));
+    orderbook.addAsk(new Offer(new Price(101, 100), 300));
 
-    orderbook.addBid(0.9, 50);
-    orderbook.addBid(0.99, 70);
-    orderbook.addBid(0.9, 30);
+    orderbook.addBid(new Offer(new Price(9, 10), 50));
+    orderbook.addBid(new Offer(new Price(99, 100), 70));
+    orderbook.addBid(new Offer(new Price(9, 10), 30));
 
     assert.equal(
-      orderbook.toJSON(),
+      JSON.stringify(orderbook.toJSON()),
       JSON.stringify({
         bids: [
-          [0.9, 80],
-          [0.99, 70]
+          {price: 0.99, volume: 70},
+          {price: 0.9, volume: 80}
         ],
         asks: [
-          [1.01, 300],
-          [1.1, 100],
-          [1.2, 200]
+          {price: 1.01, volume: 300},
+          {price: 1.1, volume: 100},
+          {price: 1.2, volume: 200}
         ]
       })
     );

@@ -4,6 +4,7 @@ coverage.json
 deploy/*
 node_modules/*
 typescript/
+typescript-esm/
 package-lock.json
 
 .idea/
