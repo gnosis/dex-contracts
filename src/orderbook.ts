@@ -7,6 +7,10 @@ export class Price {
     this.denominator = denominator;
   }
 
+  inverted() {
+    return new Price(this.denominator, this.numerator);
+  }
+
   toNumber() {
     return this.numerator / this.denominator;
   }
@@ -33,8 +37,8 @@ export class Offer {
 export class Orderbook {
   baseToken: string;
   quoteToken: string;
-  private asks: Map<number, Offer>;
-  private bids: Map<number, Offer>;
+  private asks: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
+  private bids: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
 
   constructor(baseToken: string, quoteToken: string) {
     this.baseToken = baseToken;
@@ -59,6 +63,18 @@ export class Orderbook {
     bids.reverse();
     return {bids, asks};
   }
+
+  /**
+   * @returns the inverse of the current order book (e.g. ETH/DAI becomes DAI/ETH)
+   * by switching bids/asks and recomputing price/volume to the new reference token.
+   */
+  inverted() {
+    const result = new Orderbook(this.quoteToken, this.baseToken);
+    result.bids = invertPricePoints(this.asks);
+    result.asks = invertPricePoints(this.bids);
+
+    return result;
+  }
 }
 
 function addOffer(offer: Offer, existingOffers: Map<number, Offer>) {
@@ -76,4 +92,17 @@ function addOffer(offer: Offer, existingOffers: Map<number, Offer>) {
 
 function sortOffersAscending(left: Offer, right: Offer) {
   return left.price.toNumber() - right.price.toNumber();
+}
+
+function invertPricePoints(prices: Map<number, Offer>) {
+  return new Map(
+    Array.from(prices.entries()).map(([_, offer]) => {
+      const inverted_price = offer.price.inverted();
+      const inverted_volume = offer.volume * offer.price.toNumber();
+      return [
+        inverted_price.toNumber(),
+        new Offer(inverted_price, inverted_volume)
+      ];
+    })
+  );
 }
