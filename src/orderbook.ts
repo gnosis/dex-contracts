@@ -37,8 +37,8 @@ export class Offer {
 export class Orderbook {
   baseToken: string;
   quoteToken: string;
-  private asks: Map<number, Offer>; // Mapping from price to cummulative offers at this point.
-  private bids: Map<number, Offer>; // Mapping from price to cummulative offers at this point.
+  private asks: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
+  private bids: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
 
   constructor(baseToken: string, quoteToken: string) {
     this.baseToken = baseToken;
