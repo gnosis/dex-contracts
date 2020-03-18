@@ -13,6 +13,16 @@ export class Price {
     return new Price(this.denominator, this.numerator);
   }
 
+  mul(other: Price) {
+    const numerator = this.numerator * other.numerator;
+    const denominator = this.denominator * other.denominator;
+    const greatest_common_denominator = gcd(numerator, denominator);
+    return new Price(
+      numerator / greatest_common_denominator,
+      denominator / greatest_common_denominator
+    );
+  }
+
   toNumber() {
     return this.numerator / this.denominator;
   }
@@ -99,6 +109,75 @@ export class Orderbook {
       this.addAsk(ask);
     });
   }
+
+  /**
+   * Computes the transitive closure of this orderbook (e.g. ETH/DAI) with another one (e.g. DAI/USDC).
+   * Throws if the orderbooks cannot be combined (baseToken is not equal to quoteToken)
+   * @param orderbook The orderbook for which the transitive closure will be computed
+   * @returns A new instance of an orderbook representing the resulting closure.
+   */
+  transitiveClosure(orderbook: Orderbook) {
+    if (orderbook.baseToken != this.quoteToken) {
+      throw new Error(
+        `Cannot compute transitive closure of ${this.pair()} orderbook and ${orderbook.pair()} orderbook`
+      );
+    }
+
+    const ask_closure = this.transitiveAskClosure(orderbook);
+
+    // Since bids are the asks of the inverted orderbook, computing transitive closure of bids is equivalent to
+    // 1) inverting both orderbooks
+    // 2) computing the transitive ask closure on the inverses
+    // 3) re-inverting the result
+    const bid_closure = orderbook
+      .inverted()
+      .transitiveAskClosure(this.inverted())
+      .inverted();
+
+    ask_closure.add(bid_closure);
+    return ask_closure;
+  }
+
+  private transitiveAskClosure(orderbook: Orderbook) {
+    const result = new Orderbook(this.baseToken, orderbook.quoteToken);
+
+    // Create a copy here so original orders stay untouched
+    const left_asks = Array.from(this.asks.values());
+    const right_asks = Array.from(orderbook.asks.values());
+
+    left_asks.sort(sortOffersAscending);
+    right_asks.sort(sortOffersAscending);
+
+    const left_iterator = left_asks.values();
+    const right_iterator = right_asks.values();
+
+    let right_next = right_iterator.next();
+    let left_next = left_iterator.next();
+    while (!(left_next.done || right_next.done)) {
+      const right_offer = right_next.value;
+      const left_offer = left_next.value;
+      const price = left_offer.price.mul(right_offer.price);
+      let volume;
+      const right_offer_volume_in_left_offer_base_token =
+        right_offer.volume / left_offer.price.toNumber();
+      if (left_offer.volume > right_offer_volume_in_left_offer_base_token) {
+        volume = right_offer_volume_in_left_offer_base_token;
+        left_offer.volume -= volume;
+        right_next = right_iterator.next();
+      } else {
+        volume = left_offer.volume;
+        right_offer.volume -= volume * left_offer.price.toNumber();
+        left_next = left_iterator.next();
+        // In case the orders matched perfectly we will move right as well
+        if (right_offer.volume == 0) {
+          right_next = right_iterator.next();
+        }
+      }
+      result.addAsk(new Offer(price, volume));
+    }
+
+    return result;
+  }
 }
 
 function addOffer(offer: Offer, existingOffers: Map<number, Offer>) {
@@ -129,4 +208,18 @@ function invertPricePoints(prices: Map<number, Offer>) {
       ];
     })
   );
+}
+
+// https://github.com/AllAlgorithms/typescript/blob/master/math/gcd/gcd.ts
+function gcd(num1: number, num2: number): number {
+  if (num1 === 0 || num2 === 0) {
+    return 0;
+  }
+  if (num1 === num2) {
+    return num1;
+  }
+  if (num1 > num2) {
+    return gcd(num1 - num2, num2);
+  }
+  return gcd(num1, num2 - num1);
 }

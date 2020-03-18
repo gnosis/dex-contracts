@@ -126,4 +126,44 @@ describe("Orderbook", () => {
       first_orderbook.add(second_orderbook);
     });
   });
+
+  it("Can compute the transitive closure of two orderbooks", () => {
+    const first_orderbook = new Orderbook("ETH", "DAI");
+    first_orderbook.addBid(new Offer(new Price(90, 1), 3));
+    first_orderbook.addBid(new Offer(new Price(95, 1), 2));
+    first_orderbook.addBid(new Offer(new Price(99, 1), 1));
+    first_orderbook.addAsk(new Offer(new Price(101, 1), 2));
+    first_orderbook.addAsk(new Offer(new Price(105, 1), 1));
+    first_orderbook.addAsk(new Offer(new Price(110, 1), 3));
+
+    const second_orderbook = new Orderbook("DAI", "USDC");
+    second_orderbook.addBid(new Offer(new Price(9, 10), 200));
+    second_orderbook.addBid(new Offer(new Price(99, 100), 100));
+    second_orderbook.addAsk(new Offer(new Price(101, 100), 100));
+    second_orderbook.addAsk(new Offer(new Price(105, 100), 200));
+
+    const closure = first_orderbook.transitiveClosure(second_orderbook);
+
+    assert.equal(closure.pair(), "ETH/USDC");
+    assert.equal(
+      JSON.stringify(closure.toJSON()),
+      JSON.stringify({
+        // The best bid eth_dai has enough liquidity on the best dai_usdc bid
+        // with 1 DAI remaining to be matched from the second best eth_dai bid.
+        // The remainder of the second best eth_dai pair gets matched with the second
+        // best dai_usdc pair, leaving 11 DAI for the worst eth_dai bid.
+        bids: [
+          {price: 98.01, volume: 1}, // best eth_dai * best dai_usdc
+          {price: 94.05, volume: 1 / 94.05}, // 2nd best eth_dai * best dai_usdc
+          {price: 85.5, volume: 189 / 85.5}, // 2nd best eth_dai * 2nd best dai_usdc
+          {price: 81, volume: 11 / 81} // 3rd best eth_dai * 2nd best dai usdc
+        ],
+        asks: [
+          {price: 102.01, volume: 100 / 102.01},
+          {price: 106.05, volume: 2 - 100 / 102.01},
+          {price: 110.25, volume: (200 - (2 - 100 / 102.01) * 106.05) / 110.25}
+        ]
+      })
+    );
+  });
 });
