@@ -45,7 +45,7 @@ describe("Orderbook", () => {
     orderbook.addBid(new Offer(new Price(1, 4), 80));
     orderbook.addBid(new Offer(new Price(1, 4), 20));
 
-    const inverse = orderbook.invert();
+    const inverse = orderbook.inverted();
 
     // Original didn't change
     assert.equal(orderbook.baseToken, "USDC");

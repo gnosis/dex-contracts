@@ -68,7 +68,7 @@ export class Orderbook {
    * @returns the inverse of the current order book (e.g. ETH/DAI becomes DAI/ETH)
    * by switching bids/asks and recomputing price/volume to the new reference token.
    */
-  invert() {
+  inverted() {
     const result = new Orderbook(this.quoteToken, this.baseToken);
     result.bids = invertPricePoints(this.asks);
     result.asks = invertPricePoints(this.bids);
