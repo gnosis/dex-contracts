@@ -117,4 +117,13 @@ describe("Orderbook", () => {
       })
     );
   });
+
+  it("cannot add orderbooks for different token pairs", () => {
+    const first_orderbook = new Orderbook("DAI", "ETH");
+    const second_orderbook = new Orderbook("DAI", "USDC");
+
+    assert.throws(() => {
+      first_orderbook.add(second_orderbook);
+    });
+  });
 });

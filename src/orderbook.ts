@@ -82,6 +82,10 @@ export class Orderbook {
     return result;
   }
 
+  /**
+   * In-place adds the given orderbook to the current one, combining all bids and asks at the same price point
+   * @param orderbook the orderbook to be added to this one
+   */
   add(orderbook: Orderbook) {
     if (orderbook.pair() != this.pair()) {
       throw new Error(
