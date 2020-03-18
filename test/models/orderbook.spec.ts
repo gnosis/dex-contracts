@@ -45,13 +45,33 @@ describe("Orderbook", () => {
     orderbook.addBid(new Offer(new Price(1, 4), 80));
     orderbook.addBid(new Offer(new Price(1, 4), 20));
 
-    orderbook.invert();
+    const inverse = orderbook.invert();
 
-    assert.equal(orderbook.baseToken, "DAI");
-    assert.equal(orderbook.quoteToken, "USDC");
+    // Original didn't change
+    assert.equal(orderbook.baseToken, "USDC");
+    assert.equal(orderbook.quoteToken, "DAI");
 
     assert.equal(
       JSON.stringify(orderbook.toJSON()),
+      JSON.stringify({
+        bids: [
+          {price: 0.5, volume: 50},
+          {price: 0.25, volume: 100}
+        ],
+        asks: [
+          {price: 1, volume: 200},
+          {price: 2, volume: 100},
+          {price: 4, volume: 300}
+        ]
+      })
+    );
+
+    // Check inverse
+    assert.equal(inverse.baseToken, "DAI");
+    assert.equal(inverse.quoteToken, "USDC");
+
+    assert.equal(
+      JSON.stringify(inverse.toJSON()),
       JSON.stringify({
         bids: [
           {price: 1, volume: 200},
