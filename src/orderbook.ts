@@ -1,6 +1,6 @@
 import {Order} from ".";
 
-export class Price {
+export class Fraction {
   numerator: number;
   denominator: number;
 
@@ -9,18 +9,44 @@ export class Price {
     this.denominator = denominator;
   }
 
-  inverted() {
-    return new Price(this.denominator, this.numerator);
+  shorten() {
+    const greatest_common_denominator = gcd(this.numerator, this.denominator);
+    this.numerator /= greatest_common_denominator;
+    this.denominator /= greatest_common_denominator;
   }
 
-  mul(other: Price) {
-    const numerator = this.numerator * other.numerator;
-    const denominator = this.denominator * other.denominator;
-    const greatest_common_denominator = gcd(numerator, denominator);
-    return new Price(
-      numerator / greatest_common_denominator,
-      denominator / greatest_common_denominator
+  inverted() {
+    return new Fraction(this.denominator, this.numerator);
+  }
+
+  negated() {
+    return new Fraction(this.numerator * -1, this.denominator);
+  }
+
+  mul(other: Fraction) {
+    const result = new Fraction(
+      this.numerator * other.numerator,
+      this.denominator * other.denominator
     );
+    result.shorten();
+    return result;
+  }
+
+  div(other: Fraction) {
+    return this.mul(other.inverted());
+  }
+
+  sub(other: Fraction) {
+    return this.add(other.negated());
+  }
+
+  add(other: Fraction) {
+    const result = new Fraction(
+      this.numerator * other.denominator + other.numerator * this.denominator,
+      this.denominator * other.denominator
+    );
+    result.shorten();
+    return result;
   }
 
   toNumber() {
@@ -33,11 +59,15 @@ export class Price {
 }
 
 export class Offer {
-  price: Price;
-  volume: number;
+  price: Fraction;
+  volume: Fraction;
 
-  constructor(price: Price, volume: number) {
-    this.volume = volume;
+  constructor(price: Fraction, volume: number | Fraction) {
+    if (typeof volume == "number") {
+      this.volume = new Fraction(volume, 1);
+    } else {
+      this.volume = volume as Fraction;
+    }
     this.price = price;
   }
 
@@ -86,8 +116,8 @@ export class Orderbook {
    */
   inverted() {
     const result = new Orderbook(this.quoteToken, this.baseToken);
-    result.bids = invertPricePoints(this.asks);
-    result.asks = invertPricePoints(this.bids);
+    result.bids = invertFractionPoints(this.asks);
+    result.asks = invertFractionPoints(this.bids);
 
     return result;
   }
@@ -158,18 +188,24 @@ export class Orderbook {
       const left_offer = left_next.value;
       const price = left_offer.price.mul(right_offer.price);
       let volume;
-      const right_offer_volume_in_left_offer_base_token =
-        right_offer.volume / left_offer.price.toNumber();
-      if (left_offer.volume > right_offer_volume_in_left_offer_base_token) {
+      const right_offer_volume_in_left_offer_base_token = right_offer.volume.div(
+        left_offer.price
+      );
+      if (
+        left_offer.volume.toNumber() >
+        right_offer_volume_in_left_offer_base_token.toNumber()
+      ) {
         volume = right_offer_volume_in_left_offer_base_token;
-        left_offer.volume -= volume;
+        left_offer.volume = left_offer.volume.sub(volume);
         right_next = right_iterator.next();
       } else {
         volume = left_offer.volume;
-        right_offer.volume -= volume * left_offer.price.toNumber();
+        right_offer.volume = right_offer.volume.sub(
+          volume.mul(left_offer.price)
+        );
         left_next = left_iterator.next();
         // In case the orders matched perfectly we will move right as well
-        if (right_offer.volume == 0) {
+        if (right_offer.volume.toNumber() == 0) {
           right_next = right_iterator.next();
         }
       }
@@ -183,13 +219,13 @@ export class Orderbook {
 function addOffer(offer: Offer, existingOffers: Map<number, Offer>) {
   const price = offer.price.toNumber();
   let current_offer_at_price;
-  let current_volume_at_price = 0;
+  let current_volume_at_price = new Fraction(0, 1);
   if ((current_offer_at_price = existingOffers.get(price))) {
     current_volume_at_price = current_offer_at_price.volume;
   }
   existingOffers.set(
     price,
-    new Offer(offer.price, offer.volume + current_volume_at_price)
+    new Offer(offer.price, offer.volume.add(current_volume_at_price))
   );
 }
 
@@ -197,11 +233,11 @@ function sortOffersAscending(left: Offer, right: Offer) {
   return left.price.toNumber() - right.price.toNumber();
 }
 
-function invertPricePoints(prices: Map<number, Offer>) {
+function invertFractionPoints(prices: Map<number, Offer>) {
   return new Map(
     Array.from(prices.entries()).map(([_, offer]) => {
       const inverted_price = offer.price.inverted();
-      const inverted_volume = offer.volume * offer.price.toNumber();
+      const inverted_volume = offer.volume.mul(offer.price);
       return [
         inverted_price.toNumber(),
         new Offer(inverted_price, inverted_volume)
