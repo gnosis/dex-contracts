@@ -78,7 +78,7 @@
     "@gnosis.pm/solidity-data-structures": "^1.2.4",
     "@gnosis.pm/util-contracts": "^2.0.6",
     "@truffle/contract": "^4.1.13",
-    "@types/chai": "^4.2.10",
+    "@types/chai": "^4.2.11",
     "@types/mocha": "^7.0.2",
     "axios": "^0.19.2",
     "chai": "^4.2.0",
