@@ -1,3 +1,5 @@
+import {Order} from ".";
+
 export class Price {
   numerator: number;
   denominator: number;
@@ -47,6 +49,10 @@ export class Orderbook {
     this.bids = new Map();
   }
 
+  pair() {
+    return `${this.baseToken}/${this.quoteToken}`;
+  }
+
   addBid(bid: Offer) {
     addOffer(bid, this.bids);
   }
@@ -74,6 +80,24 @@ export class Orderbook {
     result.asks = invertPricePoints(this.bids);
 
     return result;
+  }
+
+  /**
+   * In-place adds the given orderbook to the current one, combining all bids and asks at the same price point
+   * @param orderbook the orderbook to be added to this one
+   */
+  add(orderbook: Orderbook) {
+    if (orderbook.pair() != this.pair()) {
+      throw new Error(
+        `Cannot add ${orderbook.pair()} orderbook to ${this.pair()} orderbook`
+      );
+    }
+    orderbook.bids.forEach(bid => {
+      this.addBid(bid);
+    });
+    orderbook.asks.forEach(ask => {
+      this.addAsk(ask);
+    });
   }
 }
 

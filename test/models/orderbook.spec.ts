@@ -85,4 +85,45 @@ describe("Orderbook", () => {
       })
     );
   });
+
+  it("can add another orderbook by combining bids and asks", () => {
+    const first_orderbook = new Orderbook("USDC", "DAI");
+    first_orderbook.addAsk(new Offer(new Price(11, 10), 50));
+    first_orderbook.addAsk(new Offer(new Price(12, 10), 150));
+    first_orderbook.addBid(new Offer(new Price(9, 10), 50));
+    first_orderbook.addBid(new Offer(new Price(99, 100), 80));
+
+    const second_orderbook = new Orderbook("USDC", "DAI");
+    second_orderbook.addAsk(new Offer(new Price(11, 10), 60));
+    second_orderbook.addAsk(new Offer(new Price(13, 10), 200));
+    second_orderbook.addBid(new Offer(new Price(9, 10), 50));
+    second_orderbook.addBid(new Offer(new Price(95, 100), 70));
+
+    first_orderbook.add(second_orderbook);
+
+    assert.equal(
+      JSON.stringify(first_orderbook.toJSON()),
+      JSON.stringify({
+        bids: [
+          {price: 0.99, volume: 80},
+          {price: 0.95, volume: 70},
+          {price: 0.9, volume: 100}
+        ],
+        asks: [
+          {price: 1.1, volume: 110},
+          {price: 1.2, volume: 150},
+          {price: 1.3, volume: 200}
+        ]
+      })
+    );
+  });
+
+  it("cannot add orderbooks for different token pairs", () => {
+    const first_orderbook = new Orderbook("DAI", "ETH");
+    const second_orderbook = new Orderbook("DAI", "USDC");
+
+    assert.throws(() => {
+      first_orderbook.add(second_orderbook);
+    });
+  });
 });
