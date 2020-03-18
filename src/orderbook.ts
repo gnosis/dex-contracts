@@ -116,8 +116,8 @@ export class Orderbook {
    */
   inverted() {
     const result = new Orderbook(this.quoteToken, this.baseToken);
-    result.bids = invertFractionPoints(this.asks);
-    result.asks = invertFractionPoints(this.bids);
+    result.bids = invertPricePoints(this.asks);
+    result.asks = invertPricePoints(this.bids);
 
     return result;
   }
@@ -233,7 +233,7 @@ function sortOffersAscending(left: Offer, right: Offer) {
   return left.price.toNumber() - right.price.toNumber();
 }
 
-function invertFractionPoints(prices: Map<number, Offer>) {
+function invertPricePoints(prices: Map<number, Offer>) {
   return new Map(
     Array.from(prices.entries()).map(([_, offer]) => {
       const inverted_price = offer.price.inverted();
