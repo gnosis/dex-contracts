@@ -11,6 +11,8 @@ export class Fraction {
     if (this.denominator.isZero()) {
       throw Error("Denominator cannot be zero");
     }
+
+    this.reduce();
   }
 
   isZero() {
@@ -34,7 +36,11 @@ export class Fraction {
   }
 
   inverted() {
-    return new Fraction(this.denominator, this.numerator);
+    if (this.numerator.isZero()) {
+      return new Fraction(0, 1);
+    } else {
+      return new Fraction(this.denominator, this.numerator);
+    }
   }
 
   negated() {
@@ -42,12 +48,10 @@ export class Fraction {
   }
 
   mul(other: Fraction) {
-    const result = new Fraction(
+    return new Fraction(
       this.numerator.mul(other.numerator),
       this.denominator.mul(other.denominator)
     );
-    result.reduce();
-    return result;
   }
 
   div(other: Fraction) {
@@ -59,18 +63,20 @@ export class Fraction {
   }
 
   add(other: Fraction) {
-    const result = new Fraction(
+    return new Fraction(
       this.numerator
         .mul(other.denominator)
         .iadd(other.numerator.mul(this.denominator)),
       this.denominator.mul(other.denominator)
     );
-    result.reduce();
-    return result;
   }
 
   toNumber() {
     return this.numerator.toNumber() / this.denominator.toNumber();
+  }
+
+  toBN() {
+    return this.numerator.div(this.denominator);
   }
 
   toJSON() {
