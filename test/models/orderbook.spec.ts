@@ -221,4 +221,54 @@ describe("Orderbook", () => {
       assert.isUndefined(orderbook.priceToBuyBaseToken(7));
     });
   });
+
+  describe("reduce", () => {
+    it("returns an exact copy if orderbook is not overlapping", () => {
+      const orderbook = new Orderbook("ETH", "DAI");
+
+      orderbook.addBid(new Offer(new Fraction(95, 1), 2));
+      orderbook.addBid(new Offer(new Fraction(99, 1), 1));
+      orderbook.addAsk(new Offer(new Fraction(101, 1), 2));
+      orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
+
+      assert.equal(
+        JSON.stringify(orderbook.reduced().toJSON()),
+        JSON.stringify(orderbook.toJSON())
+      );
+    });
+
+    it("reduces partially overlapping orderbooks", () => {
+      const orderbook = new Orderbook("ETH", "DAI");
+
+      orderbook.addBid(new Offer(new Fraction(101, 1), 2));
+      orderbook.addBid(new Offer(new Fraction(102, 1), 1));
+      orderbook.addAsk(new Offer(new Fraction(101, 1), 2));
+      orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
+
+      assert.equal(
+        JSON.stringify(orderbook.reduced().toJSON()),
+        JSON.stringify({
+          bids: [{price: 101, volume: 1}],
+          asks: [{price: 105, volume: 1}]
+        })
+      );
+    });
+
+    it("reduces completely overlapping orderbooks", () => {
+      const orderbook = new Orderbook("ETH", "DAI");
+
+      orderbook.addBid(new Offer(new Fraction(101, 1), 2));
+      orderbook.addBid(new Offer(new Fraction(105, 1), 1));
+      orderbook.addAsk(new Offer(new Fraction(95, 1), 2));
+      orderbook.addAsk(new Offer(new Fraction(99, 1), 1));
+
+      assert.equal(
+        JSON.stringify(orderbook.reduced().toJSON()),
+        JSON.stringify({
+          bids: [],
+          asks: []
+        })
+      );
+    });
+  });
 });
