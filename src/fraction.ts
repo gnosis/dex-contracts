@@ -13,8 +13,18 @@ export class Fraction {
     }
   }
 
+  isZero() {
+    return this.numerator.isZero();
+  }
+
   gt(other: Fraction) {
-    return this.sub(other).toNumber() > 0;
+    const diff = this.sub(other);
+    return diff.numerator.mul(diff.denominator).gt(new BN(0));
+  }
+
+  lt(other: Fraction) {
+    const diff = this.sub(other);
+    return diff.numerator.mul(diff.denominator).lt(new BN(0));
   }
 
   reduce() {

@@ -145,7 +145,7 @@ export class Orderbook {
         );
         left_next = left_iterator.next();
         // In case the orders matched perfectly we will move right as well
-        if (right_offer.volume.toNumber() == 0) {
+        if (right_offer.volume.isZero()) {
           right_next = right_iterator.next();
         }
       }
@@ -170,7 +170,13 @@ function addOffer(offer: Offer, existingOffers: Map<number, Offer>) {
 }
 
 function sortOffersAscending(left: Offer, right: Offer) {
-  return left.price.sub(right.price).toNumber();
+  if (left.price.gt(right.price)) {
+    return 1;
+  } else if (left.price.lt(right.price)) {
+    return -1;
+  } else {
+    return 0;
+  }
 }
 
 function invertPricePoints(prices: Map<number, Offer>) {
