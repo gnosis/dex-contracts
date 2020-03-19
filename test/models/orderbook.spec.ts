@@ -181,4 +181,44 @@ describe("Orderbook", () => {
       first_orderbook.transitiveClosure(second_orderbook);
     });
   });
+
+  describe("price estimation", () => {
+    const orderbook = new Orderbook("ETH", "DAI");
+
+    orderbook.addBid(new Offer(new Fraction(90, 1), 3));
+    orderbook.addBid(new Offer(new Fraction(95, 1), 2));
+    orderbook.addBid(new Offer(new Fraction(99, 1), 1));
+
+    orderbook.addAsk(new Offer(new Fraction(101, 1), 2));
+    orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
+    orderbook.addAsk(new Offer(new Fraction(110, 1), 3));
+
+    it("returns best bid's price if buy volume is sufficient", () => {
+      const price = orderbook.priceToSellBaseToken(1);
+      assert.equal((price as Fraction).toNumber(), 99);
+    });
+
+    it("returns n-th bid's for which biy volume is sufficient", () => {
+      const price = orderbook.priceToSellBaseToken(4);
+      assert.equal((price as Fraction).toNumber(), 90);
+    });
+
+    it("returns undefined if there is not enough buy liquidity", () => {
+      assert.isUndefined(orderbook.priceToSellBaseToken(7));
+    });
+
+    it("returns best asks's price if ask volume is sufficient", () => {
+      const price = orderbook.priceToBuyBaseToken(1);
+      assert.equal((price as Fraction).toNumber(), 101);
+    });
+
+    it("returns n-th bid's for which biy volume is sufficient", () => {
+      const price = orderbook.priceToBuyBaseToken(4);
+      assert.equal((price as Fraction).toNumber(), 110);
+    });
+
+    it("returns undefined if there is not enough sell liquidity", () => {
+      assert.isUndefined(orderbook.priceToBuyBaseToken(7));
+    });
+  });
 });
