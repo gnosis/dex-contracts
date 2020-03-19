@@ -22,8 +22,15 @@ export class Fraction {
     }
   }
 
+  gt(other: Fraction) {
+    return this.sub(other).toNumber() > 0;
+  }
+
   reduce() {
-    const greatest_common_denominator = gcd(this.numerator, this.denominator);
+    const greatest_common_denominator = gcd(
+      this.numerator.abs(),
+      this.denominator.abs()
+    );
     this.numerator = this.numerator.div(greatest_common_denominator);
     this.denominator = this.denominator.div(greatest_common_denominator);
   }
@@ -75,6 +82,9 @@ export class Fraction {
 
 // https://github.com/AllAlgorithms/typescript/blob/master/math/gcd/gcd.ts
 function gcd(num1: BN, num2: BN): BN {
+  if (num1.isNeg() || num2.isNeg()) {
+    throw new Error("GCD only defined on positive numbers");
+  }
   if (num1.isZero() || num2.isZero()) {
     return new BN(0);
   }

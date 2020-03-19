@@ -134,10 +134,7 @@ export class Orderbook {
       const right_offer_volume_in_left_offer_base_token = right_offer.volume.div(
         left_offer.price
       );
-      if (
-        left_offer.volume.toNumber() >
-        right_offer_volume_in_left_offer_base_token.toNumber()
-      ) {
+      if (left_offer.volume.gt(right_offer_volume_in_left_offer_base_token)) {
         volume = right_offer_volume_in_left_offer_base_token;
         left_offer.volume = left_offer.volume.sub(volume);
         right_next = right_iterator.next();
@@ -173,7 +170,7 @@ function addOffer(offer: Offer, existingOffers: Map<number, Offer>) {
 }
 
 function sortOffersAscending(left: Offer, right: Offer) {
-  return left.price.toNumber() - right.price.toNumber();
+  return left.price.sub(right.price).toNumber();
 }
 
 function invertPricePoints(prices: Map<number, Offer>) {
