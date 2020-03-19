@@ -1,4 +1,5 @@
-import {Offer, Orderbook, Fraction} from "../../src/orderbook";
+import {Offer, Orderbook} from "../../src/orderbook";
+import {Fraction} from "../../src/fraction";
 import {assert} from "chai";
 import "mocha";
 
