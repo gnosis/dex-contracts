@@ -9,7 +9,7 @@ export class Fraction {
     this.denominator = denominator;
   }
 
-  shorten() {
+  reduce() {
     const greatest_common_denominator = gcd(this.numerator, this.denominator);
     this.numerator /= greatest_common_denominator;
     this.denominator /= greatest_common_denominator;
@@ -28,7 +28,7 @@ export class Fraction {
       this.numerator * other.numerator,
       this.denominator * other.denominator
     );
-    result.shorten();
+    result.reduce();
     return result;
   }
 
@@ -45,7 +45,7 @@ export class Fraction {
       this.numerator * other.denominator + other.numerator * this.denominator,
       this.denominator * other.denominator
     );
-    result.shorten();
+    result.reduce();
     return result;
   }
 
