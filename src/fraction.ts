@@ -4,6 +4,9 @@ export class Fraction {
 
   constructor(numerator: number, denominator: number) {
     this.numerator = numerator;
+    if (denominator == 0) {
+      throw Error("Denominator cannot be zero");
+    }
     this.denominator = denominator;
   }
 
