@@ -193,17 +193,17 @@ describe("Orderbook", () => {
     orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
     orderbook.addAsk(new Offer(new Fraction(110, 1), 3));
 
-    it("returns best bid's price if buy volume is sufficient", () => {
+    it("returns best bid's price if bid volume is sufficient", () => {
       const price = orderbook.priceToSellBaseToken(1);
       assert.equal((price as Fraction).toNumber(), 99);
     });
 
-    it("returns n-th bid's for which biy volume is sufficient", () => {
+    it("returns n-th bid's for which cumulative bid volume is sufficient", () => {
       const price = orderbook.priceToSellBaseToken(4);
       assert.equal((price as Fraction).toNumber(), 90);
     });
 
-    it("returns undefined if there is not enough buy liquidity", () => {
+    it("returns undefined if there is not enough bid liquidity", () => {
       assert.isUndefined(orderbook.priceToSellBaseToken(7));
     });
 
@@ -212,12 +212,12 @@ describe("Orderbook", () => {
       assert.equal((price as Fraction).toNumber(), 101);
     });
 
-    it("returns n-th bid's for which biy volume is sufficient", () => {
+    it("returns n-th bid's for which cumulative ask volume is sufficient", () => {
       const price = orderbook.priceToBuyBaseToken(4);
       assert.equal((price as Fraction).toNumber(), 110);
     });
 
-    it("returns undefined if there is not enough sell liquidity", () => {
+    it("returns undefined if there is not enough ask liquidity", () => {
       assert.isUndefined(orderbook.priceToBuyBaseToken(7));
     });
   });
