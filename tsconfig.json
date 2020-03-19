@@ -63,5 +63,5 @@
     /* Advanced Options */
     "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "./node_modules/bn.js-typings/index.d.ts"]
 }

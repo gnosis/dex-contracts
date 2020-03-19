@@ -1,33 +1,16 @@
 import {Order} from ".";
-
-export class Price {
-  numerator: number;
-  denominator: number;
-
-  constructor(numerator: number, denominator: number) {
-    this.numerator = numerator;
-    this.denominator = denominator;
-  }
-
-  inverted() {
-    return new Price(this.denominator, this.numerator);
-  }
-
-  toNumber() {
-    return this.numerator / this.denominator;
-  }
-
-  toJSON() {
-    return this.toNumber();
-  }
-}
+import {Fraction} from "./fraction";
 
 export class Offer {
-  price: Price;
-  volume: number;
+  price: Fraction;
+  volume: Fraction;
 
-  constructor(price: Price, volume: number) {
-    this.volume = volume;
+  constructor(price: Fraction, volume: number | Fraction) {
+    if (typeof volume == "number") {
+      this.volume = new Fraction(volume, 1);
+    } else {
+      this.volume = volume as Fraction;
+    }
     this.price = price;
   }
 
@@ -99,30 +82,108 @@ export class Orderbook {
       this.addAsk(ask);
     });
   }
+
+  /**
+   * Computes the transitive closure of this orderbook (e.g. ETH/DAI) with another one (e.g. DAI/USDC).
+   * Throws if the orderbooks cannot be combined (baseToken is not equal to quoteToken)
+   * @param orderbook The orderbook for which the transitive closure will be computed
+   * @returns A new instance of an orderbook representing the resulting closure.
+   */
+  transitiveClosure(orderbook: Orderbook) {
+    if (orderbook.baseToken != this.quoteToken) {
+      throw new Error(
+        `Cannot compute transitive closure of ${this.pair()} orderbook and ${orderbook.pair()} orderbook`
+      );
+    }
+
+    const ask_closure = this.transitiveAskClosure(orderbook);
+
+    // Since bids are the asks of the inverted orderbook, computing transitive closure of bids is equivalent to
+    // 1) inverting both orderbooks
+    // 2) computing the transitive ask closure on the inverses
+    // 3) re-inverting the result
+    const bid_closure = orderbook
+      .inverted()
+      .transitiveAskClosure(this.inverted())
+      .inverted();
+
+    ask_closure.add(bid_closure);
+    return ask_closure;
+  }
+
+  private transitiveAskClosure(orderbook: Orderbook) {
+    const result = new Orderbook(this.baseToken, orderbook.quoteToken);
+
+    // Create a copy here so original orders stay untouched
+    const left_asks = Array.from(this.asks.values());
+    const right_asks = Array.from(orderbook.asks.values());
+
+    left_asks.sort(sortOffersAscending);
+    right_asks.sort(sortOffersAscending);
+
+    const left_iterator = left_asks.values();
+    const right_iterator = right_asks.values();
+
+    let right_next = right_iterator.next();
+    let left_next = left_iterator.next();
+    while (!(left_next.done || right_next.done)) {
+      const right_offer = right_next.value;
+      const left_offer = left_next.value;
+      const price = left_offer.price.mul(right_offer.price);
+      let volume;
+      const right_offer_volume_in_left_offer_base_token = right_offer.volume.div(
+        left_offer.price
+      );
+      if (left_offer.volume.gt(right_offer_volume_in_left_offer_base_token)) {
+        volume = right_offer_volume_in_left_offer_base_token;
+        left_offer.volume = left_offer.volume.sub(volume);
+        right_next = right_iterator.next();
+      } else {
+        volume = left_offer.volume;
+        right_offer.volume = right_offer.volume.sub(
+          volume.mul(left_offer.price)
+        );
+        left_next = left_iterator.next();
+        // In case the orders matched perfectly we will move right as well
+        if (right_offer.volume.isZero()) {
+          right_next = right_iterator.next();
+        }
+      }
+      result.addAsk(new Offer(price, volume));
+    }
+
+    return result;
+  }
 }
 
 function addOffer(offer: Offer, existingOffers: Map<number, Offer>) {
   const price = offer.price.toNumber();
   let current_offer_at_price;
-  let current_volume_at_price = 0;
+  let current_volume_at_price = new Fraction(0, 1);
   if ((current_offer_at_price = existingOffers.get(price))) {
     current_volume_at_price = current_offer_at_price.volume;
   }
   existingOffers.set(
     price,
-    new Offer(offer.price, offer.volume + current_volume_at_price)
+    new Offer(offer.price, offer.volume.add(current_volume_at_price))
   );
 }
 
 function sortOffersAscending(left: Offer, right: Offer) {
-  return left.price.toNumber() - right.price.toNumber();
+  if (left.price.gt(right.price)) {
+    return 1;
+  } else if (left.price.lt(right.price)) {
+    return -1;
+  } else {
+    return 0;
+  }
 }
 
 function invertPricePoints(prices: Map<number, Offer>) {
   return new Map(
     Array.from(prices.entries()).map(([_, offer]) => {
       const inverted_price = offer.price.inverted();
-      const inverted_volume = offer.volume * offer.price.toNumber();
+      const inverted_volume = offer.volume.mul(offer.price);
       return [
         inverted_price.toNumber(),
         new Offer(inverted_price, inverted_volume)
