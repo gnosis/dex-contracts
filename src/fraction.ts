@@ -5,17 +5,8 @@ export class Fraction {
   private denominator: BN;
 
   constructor(numerator: BN | number, denominator: BN | number) {
-    if (typeof numerator == "number") {
-      this.numerator = new BN(numerator);
-    } else {
-      this.numerator = numerator;
-    }
-
-    if (typeof denominator == "number") {
-      this.denominator = new BN(denominator);
-    } else {
-      this.denominator = denominator;
-    }
+    this.numerator = new BN(numerator);
+    this.denominator = new BN(denominator);
 
     if (this.denominator.isZero()) {
       throw Error("Denominator cannot be zero");
@@ -27,10 +18,7 @@ export class Fraction {
   }
 
   reduce() {
-    const greatest_common_denominator = gcd(
-      this.numerator.abs(),
-      this.denominator.abs()
-    );
+    const greatest_common_denominator = this.numerator.gcd(this.denominator);
     this.numerator = this.numerator.div(greatest_common_denominator);
     this.denominator = this.denominator.div(greatest_common_denominator);
   }
@@ -64,7 +52,7 @@ export class Fraction {
     const result = new Fraction(
       this.numerator
         .mul(other.denominator)
-        .add(other.numerator.mul(this.denominator)),
+        .iadd(other.numerator.mul(this.denominator)),
       this.denominator.mul(other.denominator)
     );
     result.reduce();
@@ -78,21 +66,4 @@ export class Fraction {
   toJSON() {
     return this.toNumber();
   }
-}
-
-// https://github.com/AllAlgorithms/typescript/blob/master/math/gcd/gcd.ts
-function gcd(num1: BN, num2: BN): BN {
-  if (num1.isNeg() || num2.isNeg()) {
-    throw new Error("GCD only defined on positive numbers");
-  }
-  if (num1.isZero() || num2.isZero()) {
-    return new BN(0);
-  }
-  if (num1.eq(num2)) {
-    return num1;
-  }
-  if (num1.gt(num2)) {
-    return gcd(num1.sub(num2), num2);
-  }
-  return gcd(num1, num2.sub(num1));
 }
