@@ -36,7 +36,7 @@ export class Fraction {
   }
 
   inverted() {
-    if (this.numerator.isZero()) {
+    if (this.isZero()) {
       return new Fraction(0, 1);
     } else {
       return new Fraction(this.denominator, this.numerator);

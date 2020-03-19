@@ -25,25 +25,32 @@ describe("Fraction", () => {
         new Fraction(42, 0);
       });
     });
+    it("Can be created with 0 numerator", () => {
+      const f = new Fraction(0, 4);
+      assert.isTrue(f.isZero());
+    });
   });
 
-  describe("gt", () => {
-    it("return true if left greater than right", () => {
+  describe("gt/lt", () => {
+    it("return true/false if left greater than right", () => {
       const f1 = new Fraction(tenPow18.add(new BN(10).pow(new BN(16))), 1);
       const f2 = new Fraction(tenPow18, 1);
       assert.isTrue(f1.gt(f2));
+      assert.isFalse(f1.lt(f2));
     });
 
-    it("return false if left smaller than right", () => {
+    it("return false/true if left smaller than right", () => {
       const f1 = new Fraction(tenPow18, 1);
       const f2 = new Fraction(tenPow18.add(new BN(10).pow(new BN(16))), 1);
       assert.isFalse(f1.gt(f2));
+      assert.isTrue(f1.lt(f2));
     });
 
-    it("return false if left equal to right", () => {
+    it("return false/false if left equal to right", () => {
       const f1 = new Fraction(tenPow18, 1);
       const f2 = new Fraction(tenPow18, 1);
       assert.isFalse(f1.gt(f2));
+      assert.isFalse(f1.lt(f2));
     });
   });
 
