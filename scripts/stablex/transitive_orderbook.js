@@ -63,8 +63,8 @@ const getAllOrderbooks = async function(instance, pageSize) {
 const transitiveOrderbook = function(orderbooks, start, end) {
   const result = new Orderbook(start, end)
   // Add the direct book if it exists
-  if (orderbooks.has(result.pair)) {
-    result.add(orderbooks.get(result.pair))
+  if (orderbooks.has(result.pair())) {
+    result.add(orderbooks.get(result.pair()))
   }
 
   // Check for each orderbook that starts with same baseToken, if there exists a connecting book.
