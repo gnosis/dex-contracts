@@ -104,6 +104,58 @@ export class Orderbook {
   }
 
   /**
+   * Removes any overlapping bid/asks which could be matched in the current orderbook
+   * @return A new instance of the orderbook with no more overlapping orders.
+   */
+  reduced() {
+    const result = new Orderbook(this.baseToken, this.quoteToken);
+
+    const bids = Array.from(this.bids.values());
+    bids.sort(sortOffersDescending);
+    const asks = Array.from(this.asks.values());
+    asks.sort(sortOffersAscending);
+
+    const bid_iterator = bids.values();
+    const ask_iterator = asks.values();
+
+    let best_bid = bid_iterator.next();
+    let best_ask = ask_iterator.next();
+    while (
+      !(best_bid.done || best_ask.done) &&
+      !best_bid.value.price.lt(best_ask.value.price)
+    ) {
+      // We have an overlapping bid/ask. Subtract the smaller from the larger and remove the smaller
+      if (best_bid.value.volume.gt(best_ask.value.volume)) {
+        best_bid.value = new Offer(
+          best_bid.value.price,
+          best_bid.value.volume.sub(best_ask.value.volume)
+        );
+        best_ask = ask_iterator.next();
+      } else {
+        best_ask.value = new Offer(
+          best_ask.value.price,
+          best_ask.value.volume.sub(best_bid.value.volume)
+        );
+        best_bid = bid_iterator.next();
+        // In case the orders matched perfectly we will move ask as well
+        if (best_ask.value.volume.isZero()) {
+          best_ask = ask_iterator.next();
+        }
+      }
+    }
+    //Add remaining bids/asks to result
+    while (!best_ask.done) {
+      result.addAsk(best_ask.value);
+      best_ask = ask_iterator.next();
+    }
+    while (!best_bid.done) {
+      result.addBid(best_bid.value);
+      best_bid = bid_iterator.next();
+    }
+    return result;
+  }
+
+  /**
    * Computes the transitive closure of this orderbook (e.g. ETH/DAI) with another one (e.g. DAI/USDC).
    * Throws if the orderbooks cannot be combined (baseToken is not equal to quoteToken)
    * @param orderbook The orderbook for which the transitive closure will be computed
