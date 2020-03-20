@@ -270,5 +270,17 @@ describe("Orderbook", () => {
         })
       );
     });
+
+    it("does not modify original orderbook", () => {
+      const orderbook = new Orderbook("ETH", "DAI");
+
+      orderbook.addBid(new Offer(new Fraction(102, 1), 1));
+      orderbook.addAsk(new Offer(new Fraction(101, 1), 2));
+
+      const original_serialized = JSON.stringify(orderbook.toJSON());
+      orderbook.reduced();
+
+      assert.equal(JSON.stringify(orderbook.toJSON()), original_serialized);
+    });
   });
 });

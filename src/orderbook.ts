@@ -126,13 +126,15 @@ export class Orderbook {
     ) {
       // We have an overlapping bid/ask. Subtract the smaller from the larger and remove the smaller
       if (best_bid.value.volume.gt(best_ask.value.volume)) {
-        best_bid.value.volume = best_bid.value.volume.sub(
-          best_ask.value.volume
+        best_bid.value = new Offer(
+          best_bid.value.price,
+          best_bid.value.volume.sub(best_ask.value.volume)
         );
         best_ask = ask_iterator.next();
       } else {
-        best_ask.value.volume = best_ask.value.volume.sub(
-          best_bid.value.volume
+        best_ask.value = new Offer(
+          best_ask.value.price,
+          best_ask.value.volume.sub(best_bid.value.volume)
         );
         best_bid = bid_iterator.next();
         // In case the orders matched perfectly we will move ask as well
