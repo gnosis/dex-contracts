@@ -64,7 +64,15 @@ export class Fraction {
   }
 
   toNumber() {
-    return this.numerator.toNumber() / this.denominator.toNumber();
+    let numerator = this.numerator;
+    let denominator = this.denominator;
+    if (numerator.bitLength() > 53 || denominator.bitLength() > 53) {
+      const overhead =
+        Math.max(numerator.bitLength(), denominator.bitLength()) - 53;
+      numerator = numerator.shrn(overhead);
+      denominator = denominator.shrn(overhead);
+    }
+    return numerator.toNumber() / denominator.toNumber();
   }
 
   toBN() {

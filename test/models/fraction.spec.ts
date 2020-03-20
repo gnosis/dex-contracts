@@ -137,4 +137,15 @@ describe("Fraction", () => {
       assert.equal(f1.sub(f2).toNumber(), 0.00000001);
     });
   });
+
+  describe("toNumber", () => {
+    it("Can serialize large coprime Fractions", () => {
+      // Using two prime number ~10**18
+      const f = new Fraction(
+        new BN("1000000000000000003", 10),
+        new BN("1000000000000000009", 10)
+      );
+      assert.equal(f.toNumber(), 1);
+    });
+  });
 });
