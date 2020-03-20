@@ -20,11 +20,6 @@ describe("Fraction", () => {
       const f4 = new Fraction(new BN(2), new BN(1));
       assert.equal(f4.toNumber(), 2);
     });
-    it("Cannot be created with 0 denominator", () => {
-      assert.throws(() => {
-        new Fraction(42, 0);
-      });
-    });
     it("Can be created with 0 numerator", () => {
       const f = new Fraction(0, 4);
       assert.isTrue(f.isZero());
@@ -62,7 +57,7 @@ describe("Fraction", () => {
 
     it("can invert 0", () => {
       const f = new Fraction(0, 1);
-      assert.equal(f.inverted().toNumber(), 0);
+      assert.equal(f.inverted().toNumber(), Infinity);
     });
   });
 

@@ -8,10 +8,6 @@ export class Fraction {
     this.numerator = new BN(numerator);
     this.denominator = new BN(denominator);
 
-    if (this.denominator.isZero()) {
-      throw Error("Denominator cannot be zero");
-    }
-
     this.reduce();
   }
 
@@ -36,11 +32,7 @@ export class Fraction {
   }
 
   inverted() {
-    if (this.isZero()) {
-      return new Fraction(0, 1);
-    } else {
-      return new Fraction(this.denominator, this.numerator);
-    }
+    return new Fraction(this.denominator, this.numerator);
   }
 
   negated() {
