@@ -1,5 +1,6 @@
 import {Order} from ".";
 import {Fraction} from "./fraction";
+import BN from "bn.js";
 
 export class Offer {
   price: Fraction;
@@ -48,8 +49,7 @@ export class Orderbook {
     const asks = Array.from(this.asks.values());
     const bids = Array.from(this.bids.values());
     asks.sort(sortOffersAscending);
-    bids.sort(sortOffersAscending);
-    bids.reverse();
+    bids.sort(sortOffersDescending);
     return {bids, asks};
   }
 
@@ -81,6 +81,26 @@ export class Orderbook {
     orderbook.asks.forEach(ask => {
       this.addAsk(ask);
     });
+  }
+
+  /**
+   * @param amount the amount of base tokens to be sold
+   * @return the price for which there are enough bids to fill the specified amount or undefined if there is not enough liquidity
+   */
+  priceToSellBaseToken(amount: number | BN) {
+    const bids = Array.from(this.bids.values());
+    bids.sort(sortOffersDescending);
+    return priceToCoverAmount(new Fraction(amount, 1), bids);
+  }
+
+  /**
+   * @param amount the amount of base tokens to be bought
+   * @return the price for which there are enough asks to fill the specified amount or undefined if there is not enough liquidity
+   */
+  priceToBuyBaseToken(amount: number | BN) {
+    const asks = Array.from(this.asks.values());
+    asks.sort(sortOffersAscending);
+    return priceToCoverAmount(new Fraction(amount, 1), asks);
   }
 
   /**
@@ -177,6 +197,21 @@ function sortOffersAscending(left: Offer, right: Offer) {
   } else {
     return 0;
   }
+}
+
+function sortOffersDescending(left: Offer, right: Offer) {
+  return sortOffersAscending(left, right) * -1;
+}
+
+function priceToCoverAmount(amount: Fraction, offers: Offer[]) {
+  for (const offer of offers) {
+    if (offer.volume.lt(amount)) {
+      amount = amount.sub(offer.volume);
+    } else {
+      return offer.price;
+    }
+  }
+  return undefined;
 }
 
 function invertPricePoints(prices: Map<number, Offer>) {
