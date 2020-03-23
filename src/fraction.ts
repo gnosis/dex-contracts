@@ -26,9 +26,9 @@ export class Fraction {
   }
 
   reduce() {
-    const greatest_common_denominator = this.numerator.gcd(this.denominator);
-    this.numerator = this.numerator.div(greatest_common_denominator);
-    this.denominator = this.denominator.div(greatest_common_denominator);
+    const greatest_common_divisor = this.numerator.gcd(this.denominator);
+    this.numerator = this.numerator.div(greatest_common_divisor);
+    this.denominator = this.denominator.div(greatest_common_divisor);
   }
 
   inverted() {
@@ -64,7 +64,10 @@ export class Fraction {
   }
 
   toNumber() {
-    return this.numerator.toNumber() / this.denominator.toNumber();
+    return (
+      parseInt(this.numerator.toString()) /
+      parseInt(this.denominator.toString())
+    );
   }
 
   toBN() {
