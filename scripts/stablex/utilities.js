@@ -172,36 +172,6 @@ const sendLiquidityOrders = async function(
   )
 }
 
-// Given an orderbook A:B & B:C compute orderbook B:C
-const transitiveOrderbook = function(lhs, rhs) {
-  const result = { bids: [], asks: [] }
-  const lhs_asks = lhs.asks.values()
-  const rhs_asks = rhs.asks.values()
-
-  let rhs_next = rhs_asks.next()
-  let lhs_next = lhs_asks.next()
-  while (!(lhs_next.done || rhs_next.done)) {
-    const price = lhs_next.value[0] * rhs_next.value[0]
-    let volume
-    if (lhs_next.value[1] > rhs_next.value[1] / price) {
-      volume = rhs_next.value[1] / price
-      lhs_next.value[1] -= volume
-      rhs_next = rhs_asks.next()
-    } else {
-      volume = lhs_next.value[1]
-      rhs_next.value[1] -= volume * price
-      lhs_next = lhs_asks.next()
-      // In case the orders matched perfectly we will move rhs as well
-      if (rhs_next.value[1] == 0) {
-        rhs_next = rhs_asks.next()
-      }
-    }
-    result.asks.push([price, volume])
-  }
-
-  return result
-}
-
 async function _mintOwl({ account, minter, amount, owl }) {
   console.log("Mint %d of OWL for user %s", amount, account)
   return owl.mintOWL(account, amount, { from: minter })
@@ -292,7 +262,6 @@ module.exports = {
   sendLiquidityOrders,
   getOrdersPaginated,
   maxUint32,
-  transitiveOrderbook,
   setAllowances,
   mintOwl,
   deleteOrders,
