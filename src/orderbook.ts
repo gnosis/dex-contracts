@@ -252,7 +252,7 @@ export class Orderbook {
           right_next = right_iterator.next();
         }
       }
-      result.addAsk(new Offer(price, volume));
+      addOffer(new Offer(price, volume), result.asks);
     }
 
     return result;

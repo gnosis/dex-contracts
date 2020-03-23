@@ -52,6 +52,9 @@ const transitiveOrderbook = function(orderbooks, start, end) {
     result.add(orderbooks.get(result.pair()))
   }
 
+  console.log(JSON.stringify(orderbooks.get("7/16")))
+  console.log(JSON.stringify(orderbooks.get("16/1")))
+
   // Check for each orderbook that starts with same baseToken, if there exists a connecting book.
   // If yes, build transitive closure
   orderbooks.forEach(book => {

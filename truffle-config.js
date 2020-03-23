@@ -41,7 +41,7 @@ module.exports = {
     privateKey,
     urlRinkeby: "https://rinkeby.infura.io/v3/".concat(infuraKey),
     urlKovan: "https://kovan.infura.io/v3/".concat(infuraKey),
-    urlMainnet: "https://mainnet.infura.io/v3/".concat(infuraKey),
+    urlMainnet: "https://node.mainnet.gnosisdev.com",
     urlDevelopment,
     gasPriceGWei,
     gas,

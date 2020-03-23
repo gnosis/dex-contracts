@@ -350,5 +350,30 @@ describe("Orderbook", () => {
         })
       );
     });
+
+    it("multiplies fee when building transitive closure", () => {
+      const first_orderbook = new Orderbook(
+        "USDC",
+        "DAI",
+        new Fraction(1, 100)
+      );
+      first_orderbook.addBid(new Offer(new Fraction(1, 1), 100));
+
+      const second_orderbook = new Orderbook(
+        "DAI",
+        "TUSD",
+        new Fraction(1, 100)
+      );
+      second_orderbook.addBid(new Offer(new Fraction(1, 1), 100));
+
+      const closure = first_orderbook.transitiveClosure(second_orderbook);
+      assert.equal(
+        JSON.stringify(closure.toJSON()),
+        JSON.stringify({
+          bids: [{price: 0.99 * 0.99, volume: 99}],
+          asks: []
+        })
+      );
+    });
   });
 });
