@@ -150,7 +150,7 @@ describe("Fraction", () => {
 
     it("Can serialize large number to Infinity", () => {
       const f = new Fraction(tenPow18, 1);
-      assert.equal(f.toNumber(), Infinity);
+      assert.equal(f.toNumber(), 1e18);
     });
   });
 });
