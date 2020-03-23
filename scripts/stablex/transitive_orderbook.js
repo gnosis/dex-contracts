@@ -1,5 +1,5 @@
 const BatchExchangeViewer = artifacts.require("BatchExchangeViewer")
-const { decodeOrdersBN } = require("../../src/encoding.js")
+const { getOpenOrdersPaginated } = require("./utilities.js")
 const BN = require("bn.js")
 
 const { Orderbook, Offer } = require("../../typescript/common/orderbook.js")
@@ -37,26 +37,11 @@ const addItemToOrderbooks = function(orderbooks, item) {
 }
 
 const getAllOrderbooks = async function(instance, pageSize) {
-  let nextPageUser = "0x0000000000000000000000000000000000000000"
-  let nextPageUserOffset = 0
-  let lastPageSize = pageSize
-
-  const orderbooks = new Map() // Mapping orderbook.pair => {bids, asks}
-
-  while (lastPageSize == pageSize) {
-    console.log("Fetching Page")
-    const page = await instance.getOpenOrderBookPaginated([], nextPageUser, nextPageUserOffset, pageSize)
-    const elements = decodeOrdersBN(page.elements)
-    // Split elements in buy and sell
-    elements.forEach(item => {
-      addItemToOrderbooks(orderbooks, item)
-    })
-
-    //Update page info
-    lastPageSize = elements.length
-    nextPageUser = page.nextPageUser
-    nextPageUserOffset = page.nextPageUserOffset
-  }
+  const elements = await getOpenOrdersPaginated(instance, pageSize)
+  const orderbooks = new Map()
+  elements.forEach(item => {
+    addItemToOrderbooks(orderbooks, item)
+  })
   return orderbooks
 }
 
