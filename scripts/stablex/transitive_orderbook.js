@@ -15,6 +15,10 @@ const argv = require("yargs")
   .option("sellAmount", {
     describe: "the amount you are looking to sell",
   })
+  .option("hops", {
+    default: 1,
+    describe: "Number of hops in potential ring trades",
+  })
   .option("pageSize", {
     default: 100,
     describe: "The page  size for the function getOrdersPaginated",
@@ -45,18 +49,22 @@ const getAllOrderbooks = async function(instance, pageSize) {
   return orderbooks
 }
 
-const transitiveOrderbook = function(orderbooks, start, end) {
+const transitiveOrderbook = function(orderbooks, start, end, hops, ignore) {
   const result = new Orderbook(start, end)
   // Add the direct book if it exists
   if (orderbooks.has(result.pair())) {
     result.add(orderbooks.get(result.pair()))
   }
 
+  if (hops === 0) {
+    return result
+  }
+
   // Check for each orderbook that starts with same baseToken, if there exists a connecting book.
   // If yes, build transitive closure
   orderbooks.forEach(book => {
-    const otherBook = orderbooks.get(new Orderbook(book.quoteToken, end).pair())
-    if (book.baseToken === start && otherBook) {
+    if (book.baseToken === start && !(book.quoteToken === end) && !ignore.includes(book.quoteToken)) {
+      const otherBook = transitiveOrderbook(orderbooks, book.quoteToken, end, hops - 1, ignore.concat(book.baseToken))
       const closure = book.transitiveClosure(otherBook)
       result.add(closure)
     }
@@ -88,7 +96,7 @@ module.exports = async callback => {
       }
     }
 
-    const transitive_book = transitiveOrderbook(orderbooks, argv.sellToken, argv.buyToken)
+    const transitive_book = transitiveOrderbook(orderbooks, argv.sellToken, argv.buyToken, parseInt(argv.hops), [])
     const price = transitive_book.priceToSellBaseToken(sellAmount)
     console.log(
       `Suggested price to sell ${argv.sellAmount} of token ${argv.sellToken} for token ${argv.buyToken} is: ${price.toNumber()}`
