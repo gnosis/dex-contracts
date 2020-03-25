@@ -41,15 +41,13 @@ const addItemToOrderbooks = function (orderbooks, item) {
 }
 
 const getAllOrderbooks = async function (instance, pageSize) {
-  let elements = []
+  const orderbooks = new Map()
   for await (const page of getOpenOrdersPaginated(instance.contract, pageSize)) {
     console.log("Fetched Page")
-    elements = elements.concat(page)
+    page.forEach((item) => {
+      addItemToOrderbooks(orderbooks, item)
+    })
   }
-  const orderbooks = new Map()
-  elements.forEach((item) => {
-    addItemToOrderbooks(orderbooks, item)
-  })
   return orderbooks
 }
 
