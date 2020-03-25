@@ -8,6 +8,7 @@
 
 module.exports = {
   BatchExchange: require("../build/contracts/BatchExchange.json"),
+  BatchExchangeViewer: require("../build/contracts/BatchExchangeViewer.json"),
   SnappAuction: require("../build/contracts/SnappAuction.json"),
   ...require("./encoding.js"),
 }

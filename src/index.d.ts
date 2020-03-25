@@ -1,3 +1,7 @@
+import BN from "bn.js";
+export * from "./orderbook";
+export * from "./fraction";
+
 export interface ContractAbiEntry {
   type: string;
   name?: string;
@@ -53,15 +57,28 @@ export declare const BatchExchange: ContractArtifact;
 export declare const SnappAuction: ContractArtifact;
 
 export interface Order {
-  user: string,
-  sellTokenBalance: string,
-  buyToken: string,
-  sellToken: string,
-  validFrom: string,
-  validUntil: string,
-  priceNumerator: string,
-  priceDenominator: string,
-  remainingAmount: string,
+  user: string;
+  sellTokenBalance: string;
+  buyToken: string;
+  sellToken: string;
+  validFrom: string;
+  validUntil: string;
+  priceNumerator: string;
+  priceDenominator: string;
+  remainingAmount: string;
+}
+
+export interface OrderBN {
+  user: string;
+  sellTokenBalance: BN;
+  buyToken: number;
+  sellToken: number;
+  validFrom: number;
+  validUntil: number;
+  priceNumerator: BN;
+  priceDenominator: BN;
+  remainingAmount: BN;
 }
 
 export declare function decodeOrders(bytes: string): Order[];
+export declare function decodeOrdersBN(bytes: string): OrderBN[];
