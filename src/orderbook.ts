@@ -1,5 +1,6 @@
 import {Fraction} from "./fraction";
 import BN from "bn.js";
+import {Order} from ".";
 
 export class Offer {
   price: Fraction;
@@ -97,10 +98,10 @@ export class Orderbook {
         `Cannot add ${orderbook.pair()} orderbook to ${this.pair()} orderbook`
       );
     }
-    orderbook.bids.forEach((bid) => {
+    orderbook.bids.forEach(bid => {
       addOffer(bid, this.bids);
     });
-    orderbook.asks.forEach((ask) => {
+    orderbook.asks.forEach(ask => {
       addOffer(ask, this.asks);
     });
   }
@@ -273,7 +274,7 @@ export function transitiveOrderbook(
   hops: number
 ) {
   const complete_orderbooks = new Map();
-  direct_orderbooks.forEach((book) => {
+  direct_orderbooks.forEach(book => {
     complete_orderbooks.set(book.pair(), book);
     // If inverse pair doesn't exist we will create an empty one
     if (!direct_orderbooks.has(book.inverted().pair())) {
@@ -326,7 +327,7 @@ function transitiveOrderbookRecursive(
 
   // Check for each orderbook that starts with same baseToken, if there exists a connecting book.
   // If yes, build transitive closure
-  orderbooks.forEach((book) => {
+  orderbooks.forEach(book => {
     if (
       book.baseToken === base &&
       !(book.quoteToken === quote) &&
@@ -395,7 +396,7 @@ function invertPricePoints(
       const inverted_volume = offer.volume.mul(price_before_fee);
       return [
         inverted_price.toNumber(),
-        new Offer(inverted_price, inverted_volume),
+        new Offer(inverted_price, inverted_volume)
       ];
     })
   );
