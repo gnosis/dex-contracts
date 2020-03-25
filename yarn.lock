@@ -6628,16 +6628,16 @@ prettier-linter-helpers@^1.0.0:
   dependencies:
     fast-diff "^1.1.2"
 
-prettier-plugin-solidity@^1.0.0-alpha.46:
-  version "1.0.0-alpha.46"
-  resolved "https://registry.yarnpkg.com/prettier-plugin-solidity/-/prettier-plugin-solidity-1.0.0-alpha.46.tgz#7ecd5892b17ed0ff45be615abaf37cdb0affe4a4"
-  integrity sha512-KgsX46LVw03aNoYXBUqnv9Gv1weFCGkNHRnxglv63p1f7fbJEXSK+DNLgJ7hFbEjmfQrbPZn3zSWwb8CYS1+cw==
+prettier-plugin-solidity@^1.0.0-alpha.47:
+  version "1.0.0-alpha.47"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-solidity/-/prettier-plugin-solidity-1.0.0-alpha.47.tgz#96058eb28eaf653f4bc8b4b25dfc56918095cf0c"
+  integrity sha512-3cDt2SEJz0irrTpx9UE2CFKYQ1Z9eDfjVm5jatpYqZSkCueEBDaPKEA6rrBPfz6Z6jVbjNKoDuJDzHa/y7oleQ==
   dependencies:
     dir-to-object "^2.0.0"
     emoji-regex "^8.0.0"
     escape-string-regexp "^2.0.0"
     extract-comments "^1.1.0"
-    prettier "^1.19.1"
+    prettier "^2.0.2"
     semver "^7.1.3"
     solidity-parser-diligence "^0.4.18"
     string-width "^4.2.0"
@@ -6646,6 +6646,11 @@ prettier@^1.14.2, prettier@^1.14.3, prettier@^1.19.1:
   version "1.19.1"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-1.19.1.tgz#f7d7f5ff8a9cd872a7be4ca142095956a60797cb"
   integrity sha512-s7PoyDv/II1ObgQunCbB9PdLmUcBZcnWOcxDh7O0N/UwDEsHyqkW+Qh28jW+mVuCdx7gLB0BotYI1Y6uI9iyew==
+
+prettier@^2.0.2:
+  version "2.0.2"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.0.2.tgz#1ba8f3eb92231e769b7fcd7cb73ae1b6b74ade08"
+  integrity sha512-5xJQIPT8BraI7ZnaDwSbu5zLrB6vvi8hVV58yHQ+QK64qrY40dULy0HSRlQ2/2IdzeBpjhDkqdcFBnFeDEMVdg==
 
 private@^0.1.6, private@^0.1.8:
   version "0.1.8"
