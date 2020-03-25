@@ -71,10 +71,10 @@ export interface Order {
 export interface OrderBN {
   user: string;
   sellTokenBalance: BN;
-  buyToken: string;
-  sellToken: string;
-  validFrom: string;
-  validUntil: string;
+  buyToken: number;
+  sellToken: number;
+  validFrom: number;
+  validUntil: number;
   priceNumerator: BN;
   priceDenominator: BN;
   remainingAmount: BN;
