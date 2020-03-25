@@ -1,6 +1,6 @@
 {
   "name": "@gnosis.pm/dex-contracts",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Contracts for dFusion multi-token batch auction exchange",
   "main": "src/index.js",
   "module": "typescript/esm/index.js",
@@ -50,6 +50,7 @@
     "build/contracts/SnappBaseCore.json",
     "build/contracts/TokenConservation.json",
     "build/types",
+    "typescript/common",
     "networks.json",
     "src"
   ],
