@@ -120,27 +120,6 @@ const getOrdersPaginated = async (instance, pageSize) => {
   return orders
 }
 
-const getOpenOrdersPaginated = async function (instance, pageSize) {
-  const { decodeOrdersBN } = require("../../src/encoding")
-  let orders = []
-  let nextPageUser = "0x0000000000000000000000000000000000000000"
-  let nextPageUserOffset = 0
-  let lastPageSize = pageSize
-
-  while (lastPageSize == pageSize) {
-    console.log("Fetching Page")
-    const page = await instance.getOpenOrderBookPaginated([], nextPageUser, nextPageUserOffset, pageSize)
-    const elements = decodeOrdersBN(page.elements)
-    orders = orders.concat(elements)
-
-    //Update page info
-    lastPageSize = elements.length
-    nextPageUser = page.nextPageUser
-    nextPageUserOffset = page.nextPageUserOffset
-  }
-  return orders
-}
-
 const sendLiquidityOrders = async function (
   instance,
   tokenIds,
@@ -282,7 +261,6 @@ module.exports = {
   fetchTokenInfo,
   sendLiquidityOrders,
   getOrdersPaginated,
-  getOpenOrdersPaginated,
   maxUint32,
   setAllowances,
   mintOwl,

@@ -1,4 +1,5 @@
 import BN from "bn.js";
+import {BatchExchangeViewer} from "../build/types/BatchExchangeViewer";
 export * from "./orderbook";
 export * from "./fraction";
 
@@ -82,3 +83,8 @@ export interface OrderBN {
 
 export declare function decodeOrders(bytes: string): Order[];
 export declare function decodeOrdersBN(bytes: string): OrderBN[];
+
+export declare function getOpenOrdersPaginated(
+  contract: BatchExchangeViewer,
+  pageSize: number
+): Iterator<OrderBN[]>;
