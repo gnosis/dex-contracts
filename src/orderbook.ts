@@ -299,14 +299,13 @@ function priceToCoverAmount(amount: Fraction, offers: Offer[]) {
 
 function invertPricePoints(
   prices: Map<number, Offer>,
-  volumePriceAdjustmentForFee: Fraction
+  priceAdjustmentForFee: Fraction
 ) {
   return new Map(
     Array.from(prices.entries()).map(([_, offer]) => {
       const inverted_price = offer.price.inverted();
-      const inverted_volume = offer.volume
-        .mul(offer.price)
-        .mul(volumePriceAdjustmentForFee);
+      const price_before_fee = offer.price.mul(priceAdjustmentForFee);
+      const inverted_volume = offer.volume.mul(price_before_fee);
       return [
         inverted_price.toNumber(),
         new Offer(inverted_price, inverted_volume)
