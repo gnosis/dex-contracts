@@ -87,4 +87,4 @@ export declare function decodeOrdersBN(bytes: string): OrderBN[];
 export declare function getOpenOrdersPaginated(
   contract: BatchExchangeViewer,
   pageSize: number
-): Iterator<Promise<OrderBN[]>>;
+): AsyncIterable<OrderBN[]>;
