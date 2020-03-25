@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "module": "typescript/esm/index.js",
   "jsnext:main": "typescript/esm/index.js",
-  "types": "typescript/esm/index.d.ts",
+  "types": "src/index.d.ts",
   "directories": {
     "test": "test"
   },
