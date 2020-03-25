@@ -1,4 +1,4 @@
-import {Offer, Orderbook} from "../../src/orderbook";
+import {Offer, Orderbook, transitiveOrderbook} from "../../src/orderbook";
 import {Fraction} from "../../src/fraction";
 import {assert} from "chai";
 import "mocha";
@@ -375,5 +375,117 @@ describe("Orderbook", () => {
         })
       );
     });
+  });
+});
+
+describe("transitiveOrderbook", () => {
+  it("computes transitive orderbook with 0 hops", () => {
+    const orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+    orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
+
+    const transitive = transitiveOrderbook(
+      new Map([[orderbook.pair(), orderbook]]),
+      "DAI",
+      "USDC",
+      0
+    );
+
+    assert.equal(JSON.stringify(orderbook), JSON.stringify(transitive));
+  });
+
+  it("computes transitive orderbook with 1 hop", () => {
+    const direct = new Orderbook("DAI", "ETH", new Fraction(0, 1));
+    direct.addAsk(new Offer(new Fraction(1, 80), 80));
+
+    const first_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+    first_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
+
+    const second_orderbook = new Orderbook("USDC", "ETH", new Fraction(0, 1));
+    second_orderbook.addAsk(new Offer(new Fraction(1, 100), 100));
+
+    const transitive = transitiveOrderbook(
+      new Map([
+        [direct.pair(), direct],
+        [first_orderbook.pair(), first_orderbook],
+        [second_orderbook.pair(), second_orderbook]
+      ]),
+      "DAI",
+      "ETH",
+      1
+    );
+
+    assert.equal(
+      JSON.stringify(transitive),
+      JSON.stringify({
+        bids: [],
+        asks: [
+          {price: 0.01, volume: 100},
+          {price: 0.0125, volume: 80}
+        ]
+      })
+    );
+  });
+
+  it("computes transitive orderbook with 2 hop", () => {
+    const direct = new Orderbook("DAI", "ETH", new Fraction(0, 1));
+    direct.addAsk(new Offer(new Fraction(1, 80), 80));
+
+    const first_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+    first_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
+
+    const second_orderbook = new Orderbook("USDC", "USDT", new Fraction(0, 1));
+    second_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
+
+    const third_orderbook = new Orderbook("USDT", "ETH", new Fraction(0, 1));
+    third_orderbook.addAsk(new Offer(new Fraction(1, 100), 100));
+
+    const transitive = transitiveOrderbook(
+      new Map([
+        [direct.pair(), direct],
+        [first_orderbook.pair(), first_orderbook],
+        [second_orderbook.pair(), second_orderbook],
+        [third_orderbook.pair(), third_orderbook]
+      ]),
+      "DAI",
+      "ETH",
+      2
+    );
+
+    assert.equal(
+      JSON.stringify(transitive),
+      JSON.stringify({
+        bids: [],
+        asks: [
+          {price: 0.01, volume: 100},
+          {price: 0.0125, volume: 80}
+        ]
+      })
+    );
+  });
+
+  it("computes transitive orderbook from bids and asks", () => {
+    const first_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+    first_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
+
+    const second_orderbook = new Orderbook("ETH", "USDC", new Fraction(0, 1));
+    second_orderbook.addBid(new Offer(new Fraction(100, 1), 1));
+
+    const transitive = transitiveOrderbook(
+      new Map([
+        [first_orderbook.pair(), first_orderbook],
+        [second_orderbook.pair(), second_orderbook]
+      ]),
+      "DAI",
+      "ETH",
+      1
+    );
+
+    assert.equal(
+      JSON.stringify(transitive),
+      JSON.stringify({
+        bids: [],
+        asks: [{price: 0.01, volume: 100}]
+      })
+    );
   });
 });

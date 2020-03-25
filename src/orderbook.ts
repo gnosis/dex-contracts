@@ -1,6 +1,6 @@
-import {Order} from ".";
 import {Fraction} from "./fraction";
 import BN from "bn.js";
+import {Order} from ".";
 
 export class Offer {
   price: Fraction;
@@ -257,6 +257,94 @@ export class Orderbook {
 
     return result;
   }
+}
+
+/**
+ * Given a list of direct orderbooks this method returns the transitive orderbook
+ * between two tokens by computing the transitive closure via a certain number of "hops".
+ * @param direct_orderbooks the map direct (non-transitive) orderbooks between tokens
+ * @param base the base token for which the transitive orderbook should be computed
+ * @param quote the quote token for which the transitive orderbook should be computed
+ * @param hops the number of intermediate tokens that should be considered when computing the transitive orderbook
+ */
+export function transitiveOrderbook(
+  direct_orderbooks: Map<string, Orderbook>,
+  base: string,
+  quote: string,
+  hops: number
+) {
+  const complete_orderbooks = new Map();
+  direct_orderbooks.forEach(book => {
+    complete_orderbooks.set(book.pair(), book);
+    // If inverse pair doesn't exist we will create an empty one
+    if (!direct_orderbooks.has(book.inverted().pair())) {
+      const empty_book = new Orderbook(book.quoteToken, book.baseToken);
+      complete_orderbooks.set(empty_book.pair(), empty_book);
+    }
+  });
+
+  // Merge bid/ask orderbooks
+  complete_orderbooks.forEach((book, pair) => {
+    const inverse = book.inverted();
+    const inverse_pair = inverse.pair();
+
+    // Only update one of the two sides
+    if (pair > inverse_pair) {
+      complete_orderbooks.get(inverse_pair)!.add(inverse);
+      complete_orderbooks.set(
+        pair,
+        complete_orderbooks.get(inverse_pair)!.inverted()
+      );
+    }
+  });
+
+  return transitiveOrderbookRecursive(
+    complete_orderbooks,
+    base,
+    quote,
+    hops,
+    []
+  );
+}
+
+function transitiveOrderbookRecursive(
+  orderbooks: Map<string, Orderbook>,
+  base: string,
+  quote: string,
+  hops: number,
+  ignore: string[]
+) {
+  const result = new Orderbook(base, quote);
+  // Add the direct book if it exists
+  const orderbook = orderbooks.get(result.pair());
+  if (orderbook) {
+    result.add(orderbook);
+  }
+
+  if (hops === 0) {
+    return result;
+  }
+
+  // Check for each orderbook that starts with same baseToken, if there exists a connecting book.
+  // If yes, build transitive closure
+  orderbooks.forEach(book => {
+    if (
+      book.baseToken === base &&
+      !(book.quoteToken === quote) &&
+      !ignore.includes(book.quoteToken)
+    ) {
+      const otherBook = transitiveOrderbookRecursive(
+        orderbooks,
+        book.quoteToken,
+        quote,
+        hops - 1,
+        ignore.concat(book.baseToken)
+      );
+      const closure = book.transitiveClosure(otherBook);
+      result.add(closure);
+    }
+  });
+  return result;
 }
 
 function addOffer(offer: Offer, existingOffers: Map<number, Offer>) {
