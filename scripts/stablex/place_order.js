@@ -23,7 +23,7 @@ const argv = require("yargs")
   .help(false)
   .version(false).argv
 
-module.exports = async callback => {
+module.exports = async (callback) => {
   try {
     const minBuy = web3.utils.toWei(String(argv.minBuy))
     const maxSell = web3.utils.toWei(String(argv.maxSell))

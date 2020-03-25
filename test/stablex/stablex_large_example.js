@@ -2,7 +2,7 @@ const { closeAuction } = require("../../scripts/stablex/utilities.js")
 const { solutionSubmissionParams, largeRing30 } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
-contract("BatchExchange", async accounts => {
+contract("BatchExchange", async (accounts) => {
   const solver = accounts.pop()
   const competingSolver = accounts.pop()
 

@@ -22,7 +22,7 @@ const argv = require("yargs")
   .help(false)
   .version(false).argv
 
-module.exports = async callback => {
+module.exports = async (callback) => {
   try {
     const instance = await SnappAuction.deployed()
     const accountId = argv.accountId

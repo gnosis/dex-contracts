@@ -12,20 +12,20 @@ const SELL_ORDER_AMOUNT_OWL = new BN(10).pow(new BN(18)).mul(new BN(5))
 // stealing OWL by adding new tokens will not be profitable.
 const PRICE_FOR_LIQUIDITY_PROVISION = new BN(10000)
 
-const containsSellOrderProvidingLiquidity = function(orders) {
+const containsSellOrderProvidingLiquidity = function (orders) {
   return orders.some(
-    order => order.sellTokenBalance.gt(MINIMAL_LIQUIDITY_FOR_OWL) && order.remainingAmount.gt(MINIMAL_LIQUIDITY_FOR_OWL)
+    (order) => order.sellTokenBalance.gt(MINIMAL_LIQUIDITY_FOR_OWL) && order.remainingAmount.gt(MINIMAL_LIQUIDITY_FOR_OWL)
   )
 }
 
 // This function checks whether it is likely that Gnosis has already povided liquidity for this token
 // with an liquidity-order. The check depends on the match of two order criteria: SellAmount and validUntil.
 // Despite being just an heuristic check, it should be sufficient for now.
-const hasOWLLiquidityOrderAlreadyBeenPlaced = function(orders) {
-  return orders.some(order => order.priceDenominator.eq(SELL_ORDER_AMOUNT_OWL) && order.validUntil.eq(maxUint32))
+const hasOWLLiquidityOrderAlreadyBeenPlaced = function (orders) {
+  return orders.some((order) => order.priceDenominator.eq(SELL_ORDER_AMOUNT_OWL) && order.validUntil.eq(maxUint32))
 }
 
-module.exports = async callback => {
+module.exports = async (callback) => {
   try {
     const instance = await BatchExchange.deployed()
     const owlTokenAddress = await instance.tokenIdToAddressMap.call(0)
@@ -42,14 +42,14 @@ module.exports = async callback => {
     const numberOfToken = await instance.numTokens.call()
     const batchId = (await instance.getCurrentBatchId()).toNumber()
     let orders = await getOrdersPaginated(instance, 100)
-    orders = orders.filter(order => order.validUntil >= batchId && order.validFrom <= batchId)
+    orders = orders.filter((order) => order.validUntil >= batchId && order.validFrom <= batchId)
 
     // Ensure OWL-liquidity is given
     const tokensRequiringLiquidityProvision = []
     for (let tokenId = 1; tokenId < numberOfToken; tokenId++) {
       const tokenAddress = await instance.tokenIdToAddressMap.call(tokenId)
       console.log("Checking liquidity for token: ", tokenAddress)
-      const ordersForTokenId = orders.filter(order => order.buyToken == tokenId && order.sellToken == 0)
+      const ordersForTokenId = orders.filter((order) => order.buyToken == tokenId && order.sellToken == 0)
       if (!containsSellOrderProvidingLiquidity(ordersForTokenId) && !hasOWLLiquidityOrderAlreadyBeenPlaced(ordersForTokenId)) {
         tokensRequiringLiquidityProvision.push(tokenId)
       } else {

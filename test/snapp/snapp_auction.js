@@ -8,7 +8,7 @@ const { waitForNSeconds, setupEnvironment, partitionArray, registerTokens } = re
 
 const { isActive, encodeOrder } = require("./snapp_utils.js")
 
-contract("SnappAuction", async accounts => {
+contract("SnappAuction", async (accounts) => {
   const [token_owner, user_1, user_2] = accounts
 
   describe("public view functions", () => {
@@ -182,7 +182,7 @@ contract("SnappAuction", async accounts => {
         [0, 0, 3, 3],
         [0, 1, 1, 1],
       ]
-      orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
+      orders = orders.map((x) => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
       await instance.placeStandingSellOrder(orders, { from: user_1 })
 
@@ -200,14 +200,14 @@ contract("SnappAuction", async accounts => {
         [0, 0, 3, 3],
         [0, 1, 1, 1],
       ]
-      orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
+      orders = orders.map((x) => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
       await instance.placeStandingSellOrder(orders, { from: user_1 })
       orders = [
         [0, 0, 3, 3],
         [0, 1, 1, 0],
       ]
-      orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
+      orders = orders.map((x) => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
       await instance.placeStandingSellOrder(orders, { from: user_1 })
 
@@ -229,7 +229,7 @@ contract("SnappAuction", async accounts => {
         [0, 0, 3, 3],
         [0, 1, 1, 1],
       ]
-      orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
+      orders = orders.map((x) => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
       await instance.placeStandingSellOrder(orders, { from: user_1 })
 
@@ -239,7 +239,7 @@ contract("SnappAuction", async accounts => {
         [0, 0, 3, 3],
         [0, 1, 1, 0],
       ]
-      orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
+      orders = orders.map((x) => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
       await instance.placeStandingSellOrder(orders, { from: user_1 })
 
@@ -545,7 +545,7 @@ contract("SnappAuction", async accounts => {
         [0, 0, 3, 3],
         [0, 1, 1, 1],
       ]
-      orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
+      orders = orders.map((x) => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
       await instance.placeStandingSellOrder(orders, { from: user_1 })
 
@@ -555,7 +555,7 @@ contract("SnappAuction", async accounts => {
         [0, 0, 3, 3],
         [0, 1, 1, 0],
       ]
-      orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
+      orders = orders.map((x) => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
       await instance.placeStandingSellOrder(orders, { from: user_1 })
 
@@ -585,7 +585,7 @@ contract("SnappAuction", async accounts => {
         [0, 0, 3, 3],
         [0, 1, 1, 1],
       ]
-      orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
+      orders = orders.map((x) => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
       await instance.placeStandingSellOrder(orders, { from: user_1 })
 
@@ -595,7 +595,7 @@ contract("SnappAuction", async accounts => {
         [0, 0, 3, 3],
         [0, 1, 1, 0],
       ]
-      orders = orders.map(x => encodeOrder(x[0], x[1], x[2], x[3]))
+      orders = orders.map((x) => encodeOrder(x[0], x[1], x[2], x[3]))
       orders = Buffer.concat(orders)
       await instance.placeStandingSellOrder(orders, { from: user_1 })
 
@@ -1075,7 +1075,7 @@ contract("SnappAuction", async accounts => {
       const partitionedOrders = partitionArray(orders, 100)
 
       await Promise.all(
-        partitionedOrders.map(part => {
+        partitionedOrders.map((part) => {
           const concatenated_orders = Buffer.concat(part)
           return instance.placeSellOrders(concatenated_orders, { from: user_1 })
         })

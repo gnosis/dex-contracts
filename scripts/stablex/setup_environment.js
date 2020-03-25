@@ -12,7 +12,7 @@ const argv = require("yargs")
   .help()
   .version(false).argv
 
-module.exports = async function(callback) {
+module.exports = async function (callback) {
   try {
     const instance = await BatchExchange.deployed()
     const TokenOWL = artifacts.require("TokenOWL")

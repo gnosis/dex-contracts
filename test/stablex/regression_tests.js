@@ -11,7 +11,7 @@ const { closeAuction } = require("../../scripts/stablex/utilities.js")
 const { solutionSubmissionParams, basicTrade, utilityOverflow } = require("../resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
-contract("BatchExchange", async accounts => {
+contract("BatchExchange", async (accounts) => {
   const solver = accounts[0]
 
   before(async () => {

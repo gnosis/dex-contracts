@@ -62,13 +62,13 @@ contract("TokenConservation", async () => {
           buyAmount,
           sellAmount
         )
-      ).map(a => a.toNumber())
+      ).map((a) => a.toNumber())
       const expectedArray = [0, 3, -10, 0]
       assert.deepEqual(updatedArray, expectedArray)
 
       const secondUpdatedArray = (
         await tokenConservation.updateTokenConservationTest.call(testArray, 2, 3, tokenIdsForPrice, 1, 2)
-      ).map(a => a.toNumber())
+      ).map((a) => a.toNumber())
       assert.deepEqual([0, 0, -1, 2], secondUpdatedArray)
     })
     it("throws, if findPriceIndex does not find the token, as it is not supplied", async () => {

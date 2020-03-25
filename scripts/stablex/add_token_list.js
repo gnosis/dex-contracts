@@ -8,7 +8,7 @@ const argv = require("yargs")
   .help(false)
   .version(false).argv
 
-module.exports = async function(callback) {
+module.exports = async function (callback) {
   try {
     const tokenList = await (await fetch(argv.token_list_url)).json()
     const networkId = String(await web3.eth.net.getId())

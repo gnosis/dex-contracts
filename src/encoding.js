@@ -21,10 +21,10 @@ function decodeOrders(bytes) {
   assert((bytes.length - 2) % 112 === 0, "malformed bytes")
 
   let index = 2 // skip '0x'
-  const readBytes = size => bytes.slice(index, (index += size * 2))
+  const readBytes = (size) => bytes.slice(index, (index += size * 2))
 
   const decodeAddr = () => `0x${readBytes(20)}`
-  const decodeInt = size => new BN(readBytes(size / 8), 16).toString()
+  const decodeInt = (size) => new BN(readBytes(size / 8), 16).toString()
 
   const result = []
   while (index < bytes.length) {
@@ -44,7 +44,7 @@ function decodeOrders(bytes) {
 }
 
 function decodeOrdersBN(bytes) {
-  return decodeOrders(bytes).map(e => ({
+  return decodeOrders(bytes).map((e) => ({
     user: e.user,
     sellTokenBalance: new BN(e.sellTokenBalance),
     buyToken: parseInt(e.buyToken),

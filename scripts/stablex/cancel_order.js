@@ -6,15 +6,15 @@ const argv = require("yargs")
   .option("orderIds", {
     type: "string",
     describe: "Order IDs to be canceled",
-    coerce: str => {
-      return str.split(",").map(o => parseInt(o))
+    coerce: (str) => {
+      return str.split(",").map((o) => parseInt(o))
     },
   })
   .demand(["accountId", "orderIds"])
   .help(false)
   .version(false).argv
 
-module.exports = async callback => {
+module.exports = async (callback) => {
   try {
     const accounts = await web3.eth.getAccounts()
     const instance = await BatchExchange.deployed()

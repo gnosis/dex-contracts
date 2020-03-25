@@ -25,12 +25,9 @@ const { toHex } = require("../../test/utilities.js")
 const axios = require("axios")
 const url = process.env.GRAPH_URL || "http://localhost:8000/subgraphs/name/dfusion"
 
-const withdraw_search = async function(_slot, valid = null, a_id = null, t_id = null) {
+const withdraw_search = async function (_slot, valid = null, a_id = null, t_id = null) {
   let where_clause = `slot: ${_slot} `
-  if (a_id)
-    where_clause += `accountId: "${parseInt(a_id)
-      .toString(16)
-      .padStart(40, "0")}" `
+  if (a_id) where_clause += `accountId: "${parseInt(a_id).toString(16).padStart(40, "0")}" `
   if (t_id) where_clause += `tokenId: ${parseInt(t_id)} `
   if (valid) where_clause += `valid: ${valid}`
 
@@ -46,7 +43,7 @@ const withdraw_search = async function(_slot, valid = null, a_id = null, t_id = 
   return eval(response.data).data.withdraws
 }
 
-module.exports = async callback => {
+module.exports = async (callback) => {
   try {
     const instance = await SnappAuction.deployed()
 
@@ -93,7 +90,7 @@ module.exports = async callback => {
       } else {
         console.log("Attempting to claim:", toClaim)
         const leaf = encodePacked_16_8_128(argv.accountId, argv.tokenId, parseInt(toClaim.amount))
-        const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
+        const proof = Buffer.concat(tree.getProof(leaf).map((x) => x.data))
 
         // Could also check if leaf if contained in withdraw_hashes
         if (!proof.length) {

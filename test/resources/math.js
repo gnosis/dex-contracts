@@ -69,11 +69,7 @@ function getExecutedSellAmount(executedBuyAmount, buyTokenPrice, sellTokenPrice)
   assert(BN.isBN(buyTokenPrice), "buyTokenPrice is not a bignum")
   assert(BN.isBN(sellTokenPrice), "sellTokenPrice is not a bignum")
 
-  return executedBuyAmount
-    .mul(buyTokenPrice)
-    .div(FEE_DENOMINATOR_MINUS_ONE)
-    .mul(FEE_DENOMINATOR)
-    .div(sellTokenPrice)
+  return executedBuyAmount.mul(buyTokenPrice).div(FEE_DENOMINATOR_MINUS_ONE).mul(FEE_DENOMINATOR).div(sellTokenPrice)
 }
 
 /**
@@ -103,10 +99,7 @@ function orderUtility(order, executedBuyAmount, prices) {
   const executedSellAmount = getExecutedSellAmount(executedBuyAmount, prices[order.buyToken], prices[order.sellToken])
   const execSellTimesBuy = executedSellAmount.mul(order.buyAmount)
   const roundedUtility = executedBuyAmount.sub(execSellTimesBuy.div(order.sellAmount)).mul(prices[order.buyToken])
-  const utilityError = execSellTimesBuy
-    .mod(order.sellAmount)
-    .mul(prices[order.buyToken])
-    .div(order.sellAmount)
+  const utilityError = execSellTimesBuy.mod(order.sellAmount).mul(prices[order.buyToken]).div(order.sellAmount)
   return roundedUtility.sub(utilityError)
 }
 
@@ -129,10 +122,7 @@ function orderDisregardedUtility(order, executedBuyAmount, prices) {
   // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
   const leftoverSellAmount = order.sellAmount.sub(executedSellAmount)
   const limitTermLeft = prices[order.sellToken].mul(order.sellAmount)
-  const limitTermRight = prices[order.buyToken]
-    .mul(order.buyAmount)
-    .mul(FEE_DENOMINATOR)
-    .div(FEE_DENOMINATOR_MINUS_ONE)
+  const limitTermRight = prices[order.buyToken].mul(order.buyAmount).mul(FEE_DENOMINATOR).div(FEE_DENOMINATOR_MINUS_ONE)
   let limitTerm = toETH(0)
   if (limitTermLeft.gt(limitTermRight)) {
     limitTerm = limitTermLeft.sub(limitTermRight)
@@ -181,13 +171,13 @@ function solutionObjectiveValue(orders, solution) {
  * @return {ObjectiveValueComputation} The solution's objective value computation object
  */
 function solutionObjectiveValueComputation(orders, solution, strict = true) {
-  const tokenCount = Math.max(...flat(orders.map(o => [o.buyToken, o.sellToken]))) + 1
+  const tokenCount = Math.max(...flat(orders.map((o) => [o.buyToken, o.sellToken]))) + 1
 
   assert(orders.length === solution.buyVolumes.length, "solution buy volumes do not match orders")
   assert(tokenCount === solution.prices.length, "solution prices does not include all tokens")
   assert(toETH(1).eq(solution.prices[0]), "fee token price is not 1 ether")
 
-  const touchedOrders = orders.map((o, i) => (solution.buyVolumes[i].isZero() ? null : [o, i])).filter(pair => !!pair)
+  const touchedOrders = orders.map((o, i) => (solution.buyVolumes[i].isZero() ? null : [o, i])).filter((pair) => !!pair)
 
   const orderExecutedAmounts = orders.map(() => new BN(0))
   const orderTokenConservation = orders.map(() => solution.prices.map(() => new BN(0)))

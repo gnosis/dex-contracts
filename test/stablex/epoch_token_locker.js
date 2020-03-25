@@ -6,7 +6,7 @@ const ERC20Interface = artifacts.require("ERC20")
 const truffleAssert = require("truffle-assertions")
 const { closeAuction } = require("../../scripts/stablex/utilities")
 
-contract("EpochTokenLocker", async accounts => {
+contract("EpochTokenLocker", async (accounts) => {
   const [user_1, user_2] = accounts
 
   describe("deposit()", () => {

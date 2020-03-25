@@ -7,7 +7,7 @@ const argv = require("yargs")
   .help(false)
   .version(false).argv
 
-module.exports = async function(callback) {
+module.exports = async function (callback) {
   try {
     const [account] = await web3.eth.getAccounts()
     const batchExchange = await getBatchExchange(artifacts)

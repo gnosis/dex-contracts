@@ -16,7 +16,7 @@ const argv = require("yargs")
 
 const zero_address = 0x0
 
-module.exports = async callback => {
+module.exports = async (callback) => {
   try {
     const amount = web3.utils.toWei(String(argv.amount))
     const instance = await BatchExchange.deployed()

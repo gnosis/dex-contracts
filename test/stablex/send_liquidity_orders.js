@@ -6,7 +6,7 @@ const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
 const DeployableERC20Detailed = artifacts.require("DeployableERC20Detailed")
 const BN = require("bn.js")
 
-contract("Liquidity order placement test", async accounts => {
+contract("Liquidity order placement test", async (accounts) => {
   let feeToken
   before(async () => {
     feeToken = await MockContract.new()
@@ -39,7 +39,7 @@ contract("Liquidity order placement test", async accounts => {
 
       const orders = await getOrdersPaginated(batchExchange, 100)
       assert.deepEqual(
-        orders.map(o => o.buyToken),
+        orders.map((o) => o.buyToken),
         tokenIds
       )
       assert.equal(orders[0].sellToken, 0)

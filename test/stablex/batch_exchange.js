@@ -38,7 +38,7 @@ const smallTradeData = {
   ],
 }
 
-contract("BatchExchange", async accounts => {
+contract("BatchExchange", async (accounts) => {
   const [user_1, user_2, user_3, solver, competingSolver] = accounts
   const zero_address = "0x0000000000000000000000000000000000000000"
 
@@ -1047,7 +1047,7 @@ contract("BatchExchange", async accounts => {
       await closeAuction(batchExchange)
 
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
-      const badVolumes = solution.volumes.map(amt => amt.add(new BN(10)))
+      const badVolumes = solution.volumes.map((amt) => amt.add(new BN(10)))
 
       await truffleAssert.reverts(
         batchExchange.submitSolution(
@@ -1079,7 +1079,7 @@ contract("BatchExchange", async accounts => {
           solution.objectiveValue,
           solution.owners,
           solution.touchedorderIds,
-          basicTrade.orders.map(x => x.buyAmount), // <----- THIS IS THE DIFFERENCE!
+          basicTrade.orders.map((x) => x.buyAmount), // <----- THIS IS THE DIFFERENCE!
           solution.prices,
           solution.tokenIdsForPrice,
           { from: solver }
@@ -1200,7 +1200,7 @@ contract("BatchExchange", async accounts => {
       const orderIds = await placeOrders(batchExchange, accounts, smallTradeData.orders, batchId + 1)
       await closeAuction(batchExchange)
 
-      const tooSmallBuyAmounts = [10000, 9990].map(val => new BN(val))
+      const tooSmallBuyAmounts = [10000, 9990].map((val) => new BN(val))
       await truffleAssert.reverts(
         batchExchange.submitSolution(batchId, 1, accounts.slice(0, 2), orderIds, tooSmallBuyAmounts, [toETH(1)], [1], {
           from: solver,

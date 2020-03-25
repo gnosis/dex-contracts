@@ -9,11 +9,11 @@ const rl = readline.createInterface({
   output: process.stdout,
 })
 
-const promptUser = function(message) {
-  return new Promise(resolve => rl.question(message, answer => resolve(answer)))
+const promptUser = function (message) {
+  return new Promise((resolve) => rl.question(message, (answer) => resolve(answer)))
 }
 
-const formatAmount = function(amount, token) {
+const formatAmount = function (amount, token) {
   return new BN(10).pow(new BN(token.decimals)).muln(amount)
 }
 
@@ -22,8 +22,8 @@ const argv = require("yargs")
     alias: "t",
     type: "string",
     describe: "Collection of trusted tokenIds",
-    coerce: str => {
-      return str.split(",").map(t => parseInt(t))
+    coerce: (str) => {
+      return str.split(",").map((t) => parseInt(t))
     },
   })
   .option("accountId", {
@@ -55,7 +55,7 @@ const argv = require("yargs")
   )
   .version(false).argv
 
-module.exports = async callback => {
+module.exports = async (callback) => {
   try {
     const instance = await BatchExchange.deployed()
     const accounts = await web3.eth.getAccounts()
