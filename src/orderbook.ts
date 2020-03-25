@@ -21,14 +21,20 @@ export class Offer {
 }
 
 export class Orderbook {
-  baseToken: string;
-  quoteToken: string;
+  readonly baseToken: string;
+  readonly quoteToken: string;
+  readonly remainingFractionAfterFee: Fraction;
   private asks: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
   private bids: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
 
-  constructor(baseToken: string, quoteToken: string) {
+  constructor(
+    baseToken: string,
+    quoteToken: string,
+    fee = new Fraction(1, 1000)
+  ) {
     this.baseToken = baseToken;
     this.quoteToken = quoteToken;
+    this.remainingFractionAfterFee = new Fraction(1, 1).sub(fee);
     this.asks = new Map();
     this.bids = new Map();
   }
@@ -38,11 +44,21 @@ export class Orderbook {
   }
 
   addBid(bid: Offer) {
-    addOffer(bid, this.bids);
+    // For bids the effective price after fee becomes smaller
+    const offer = new Offer(
+      bid.price.mul(this.remainingFractionAfterFee),
+      bid.volume.mul(this.remainingFractionAfterFee)
+    );
+    addOffer(offer, this.bids);
   }
 
   addAsk(ask: Offer) {
-    addOffer(ask, this.asks);
+    // For asks the effective price after fee becomes larger
+    const offer = new Offer(
+      ask.price.div(this.remainingFractionAfterFee),
+      ask.volume.mul(this.remainingFractionAfterFee)
+    );
+    addOffer(offer, this.asks);
   }
 
   toJSON() {
@@ -58,9 +74,16 @@ export class Orderbook {
    * by switching bids/asks and recomputing price/volume to the new reference token.
    */
   inverted() {
-    const result = new Orderbook(this.quoteToken, this.baseToken);
-    result.bids = invertPricePoints(this.asks);
-    result.asks = invertPricePoints(this.bids);
+    const result = new Orderbook(
+      this.quoteToken,
+      this.baseToken,
+      new Fraction(1, 1).sub(this.remainingFractionAfterFee)
+    );
+    result.bids = invertPricePoints(this.asks, this.remainingFractionAfterFee);
+    result.asks = invertPricePoints(
+      this.bids,
+      this.remainingFractionAfterFee.inverted()
+    );
 
     return result;
   }
@@ -76,10 +99,10 @@ export class Orderbook {
       );
     }
     orderbook.bids.forEach(bid => {
-      this.addBid(bid);
+      addOffer(bid, this.bids);
     });
     orderbook.asks.forEach(ask => {
-      this.addAsk(ask);
+      addOffer(ask, this.asks);
     });
   }
 
@@ -90,7 +113,9 @@ export class Orderbook {
   priceToSellBaseToken(amount: number | BN) {
     const bids = Array.from(this.bids.values());
     bids.sort(sortOffersDescending);
-    return priceToCoverAmount(new Fraction(amount, 1), bids);
+    const price_before_fee = priceToCoverAmount(new Fraction(amount, 1), bids);
+    // Price to sell base token after fee will be lower
+    return price_before_fee?.mul(this.remainingFractionAfterFee);
   }
 
   /**
@@ -100,7 +125,9 @@ export class Orderbook {
   priceToBuyBaseToken(amount: number | BN) {
     const asks = Array.from(this.asks.values());
     asks.sort(sortOffersAscending);
-    return priceToCoverAmount(new Fraction(amount, 1), asks);
+    const price_before_fee = priceToCoverAmount(new Fraction(amount, 1), asks);
+    // Price to buy base token after fee will be higher
+    return price_before_fee?.div(this.remainingFractionAfterFee);
   }
 
   /**
@@ -145,11 +172,11 @@ export class Orderbook {
     }
     //Add remaining bids/asks to result
     while (!best_ask.done) {
-      result.addAsk(best_ask.value);
+      addOffer(best_ask.value, result.asks);
       best_ask = ask_iterator.next();
     }
     while (!best_bid.done) {
-      result.addBid(best_bid.value);
+      addOffer(best_bid.value, result.bids);
       best_bid = bid_iterator.next();
     }
     return result;
@@ -184,7 +211,11 @@ export class Orderbook {
   }
 
   private transitiveAskClosure(orderbook: Orderbook) {
-    const result = new Orderbook(this.baseToken, orderbook.quoteToken);
+    const result = new Orderbook(
+      this.baseToken,
+      orderbook.quoteToken,
+      new Fraction(1, 1).sub(this.remainingFractionAfterFee)
+    );
 
     // Create a copy here so original orders stay untouched
     const left_asks = Array.from(this.asks.values());
@@ -221,7 +252,7 @@ export class Orderbook {
           right_next = right_iterator.next();
         }
       }
-      result.addAsk(new Offer(price, volume));
+      addOffer(new Offer(price, volume), result.asks);
     }
 
     return result;
@@ -266,11 +297,15 @@ function priceToCoverAmount(amount: Fraction, offers: Offer[]) {
   return undefined;
 }
 
-function invertPricePoints(prices: Map<number, Offer>) {
+function invertPricePoints(
+  prices: Map<number, Offer>,
+  priceAdjustmentForFee: Fraction
+) {
   return new Map(
     Array.from(prices.entries()).map(([_, offer]) => {
       const inverted_price = offer.price.inverted();
-      const inverted_volume = offer.volume.mul(offer.price);
+      const price_before_fee = offer.price.mul(priceAdjustmentForFee);
+      const inverted_volume = offer.volume.mul(price_before_fee);
       return [
         inverted_price.toNumber(),
         new Offer(inverted_price, inverted_volume)

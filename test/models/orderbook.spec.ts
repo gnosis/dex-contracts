@@ -5,7 +5,7 @@ import "mocha";
 
 describe("Orderbook", () => {
   it("cummulates bids and asks sorted by best bid/best ask", () => {
-    const orderbook = new Orderbook("USDC", "DAI");
+    const orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
     orderbook.addAsk(new Offer(new Fraction(11, 10), 100));
     orderbook.addAsk(new Offer(new Fraction(12, 10), 200));
     orderbook.addAsk(new Offer(new Fraction(101, 100), 300));
@@ -34,7 +34,7 @@ describe("Orderbook", () => {
   });
 
   it("inverts by switching bid/asks and inverting prices", () => {
-    const orderbook = new Orderbook("USDC", "DAI");
+    const orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
 
     // Offering to sell 100 USDC for 2 DAI each, thus willing to buy 200 DAI for 50ç each
     orderbook.addAsk(new Offer(new Fraction(2, 1), 100));
@@ -88,13 +88,13 @@ describe("Orderbook", () => {
   });
 
   it("can add another orderbook by combining bids and asks", () => {
-    const first_orderbook = new Orderbook("USDC", "DAI");
+    const first_orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
     first_orderbook.addAsk(new Offer(new Fraction(11, 10), 50));
     first_orderbook.addAsk(new Offer(new Fraction(12, 10), 150));
     first_orderbook.addBid(new Offer(new Fraction(9, 10), 50));
     first_orderbook.addBid(new Offer(new Fraction(99, 100), 80));
 
-    const second_orderbook = new Orderbook("USDC", "DAI");
+    const second_orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
     second_orderbook.addAsk(new Offer(new Fraction(11, 10), 60));
     second_orderbook.addAsk(new Offer(new Fraction(13, 10), 200));
     second_orderbook.addBid(new Offer(new Fraction(9, 10), 50));
@@ -129,7 +129,7 @@ describe("Orderbook", () => {
   });
 
   it("Can compute the transitive closure of two orderbooks", () => {
-    const first_orderbook = new Orderbook("ETH", "DAI");
+    const first_orderbook = new Orderbook("ETH", "DAI", new Fraction(0, 1));
     first_orderbook.addBid(new Offer(new Fraction(90, 1), 3));
     first_orderbook.addBid(new Offer(new Fraction(95, 1), 2));
     first_orderbook.addBid(new Offer(new Fraction(99, 1), 1));
@@ -137,7 +137,7 @@ describe("Orderbook", () => {
     first_orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
     first_orderbook.addAsk(new Offer(new Fraction(110, 1), 3));
 
-    const second_orderbook = new Orderbook("DAI", "USDC");
+    const second_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
     second_orderbook.addBid(new Offer(new Fraction(99, 100), 100));
     second_orderbook.addBid(new Offer(new Fraction(9, 10), 200));
     second_orderbook.addAsk(new Offer(new Fraction(101, 100), 100));
@@ -183,7 +183,7 @@ describe("Orderbook", () => {
   });
 
   describe("price estimation", () => {
-    const orderbook = new Orderbook("ETH", "DAI");
+    const orderbook = new Orderbook("ETH", "DAI", new Fraction(0, 1));
 
     orderbook.addBid(new Offer(new Fraction(90, 1), 3));
     orderbook.addBid(new Offer(new Fraction(95, 1), 2));
@@ -238,7 +238,7 @@ describe("Orderbook", () => {
     });
 
     it("reduces partially overlapping orderbooks", () => {
-      const orderbook = new Orderbook("ETH", "DAI");
+      const orderbook = new Orderbook("ETH", "DAI", new Fraction(0, 1));
 
       orderbook.addBid(new Offer(new Fraction(101, 1), 2));
       orderbook.addBid(new Offer(new Fraction(102, 1), 1));
@@ -281,6 +281,99 @@ describe("Orderbook", () => {
       orderbook.reduced();
 
       assert.equal(JSON.stringify(orderbook.toJSON()), original_serialized);
+    });
+  });
+
+  describe("fee mechanism", () => {
+    it("incorporates fee when asks/bids are added", () => {
+      const orderbook = new Orderbook("USDC", "DAI", new Fraction(1, 100));
+      orderbook.addBid(new Offer(new Fraction(100, 1), 100));
+      orderbook.addAsk(new Offer(new Fraction(200, 1), 200));
+
+      // Spread gets larger and volumes decrease
+      assert.equal(
+        JSON.stringify(orderbook.toJSON()),
+        JSON.stringify({
+          bids: [{price: 99, volume: 99}],
+          asks: [{price: 200 / 0.99, volume: 198}]
+        })
+      );
+
+      const inverted = orderbook.inverted();
+      assert.equal(
+        JSON.stringify(inverted.toJSON()),
+        JSON.stringify({
+          // Inverse of 200 without fees is 0.005 becomes 0.00495 with fee
+          bids: [{price: 0.00495, volume: 39600}],
+          // Inverse of 11 without fees is 0.01 becomes 0.0101... with fee
+          asks: [{price: 0.01 / 0.99, volume: 9900}]
+        })
+      );
+    });
+
+    it("Doesn't count fee twice when adding orderbooks", () => {
+      const first_orderbook = new Orderbook(
+        "USDC",
+        "DAI",
+        new Fraction(1, 100)
+      );
+      first_orderbook.addBid(new Offer(new Fraction(100, 1), 100));
+
+      const second_orderbook = new Orderbook(
+        "USDC",
+        "DAI",
+        new Fraction(1, 100)
+      );
+      second_orderbook.addBid(new Offer(new Fraction(100, 1), 100));
+      first_orderbook.add(second_orderbook);
+
+      assert.equal(
+        JSON.stringify(first_orderbook.toJSON()),
+        JSON.stringify({
+          bids: [{price: 99, volume: 198}],
+          asks: []
+        })
+      );
+    });
+
+    it("Doesn't count fee twice when reducing orderbooks", () => {
+      const orderbook = new Orderbook("USDC", "DAI", new Fraction(1, 100));
+      orderbook.addBid(new Offer(new Fraction(100, 1), 100));
+      orderbook.addAsk(new Offer(new Fraction(200, 1), 200));
+
+      const reduced = orderbook.reduced();
+      assert.equal(
+        JSON.stringify(reduced.toJSON()),
+        JSON.stringify({
+          bids: [{price: 99, volume: 99}],
+          asks: [{price: 200 / 0.99, volume: 198}]
+        })
+      );
+    });
+
+    it("multiplies fee when building transitive closure", () => {
+      const first_orderbook = new Orderbook(
+        "USDC",
+        "DAI",
+        new Fraction(1, 100)
+      );
+      first_orderbook.addBid(new Offer(new Fraction(1, 1), 100));
+
+      const second_orderbook = new Orderbook(
+        "DAI",
+        "TUSD",
+        new Fraction(1, 100)
+      );
+      second_orderbook.addBid(new Offer(new Fraction(1, 1), 100));
+
+      const closure = first_orderbook.transitiveClosure(second_orderbook);
+      assert.equal(
+        JSON.stringify(closure.toJSON()),
+        JSON.stringify({
+          bids: [{price: 0.99 * 0.99, volume: 99}],
+          asks: []
+        })
+      );
     });
   });
 });
