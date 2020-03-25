@@ -26,7 +26,7 @@ const argv = require("yargs")
   .demand(["sellToken", "buyToken", "sellAmount"])
   .version(false).argv
 
-const addItemToOrderbooks = function(orderbooks, item) {
+const addItemToOrderbooks = function (orderbooks, item) {
   let orderbook = new Orderbook(item.sellToken, item.buyToken)
   if (!orderbooks.has(orderbook.pair())) {
     orderbooks.set(orderbook.pair(), orderbook)
@@ -40,16 +40,16 @@ const addItemToOrderbooks = function(orderbooks, item) {
   }
 }
 
-const getAllOrderbooks = async function(instance, pageSize) {
+const getAllOrderbooks = async function (instance, pageSize) {
   const elements = await getOpenOrdersPaginated(instance, pageSize)
   const orderbooks = new Map()
-  elements.forEach(item => {
+  elements.forEach((item) => {
     addItemToOrderbooks(orderbooks, item)
   })
   return orderbooks
 }
 
-module.exports = async callback => {
+module.exports = async (callback) => {
   try {
     const sellAmount = new BN(argv.sellAmount)
     const instance = await BatchExchangeViewer.deployed()
