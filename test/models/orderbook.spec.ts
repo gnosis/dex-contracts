@@ -380,7 +380,7 @@ describe("Orderbook", () => {
 
 describe("transitiveOrderbook", () => {
   it("computes transitive orderbook with 0 hops", () => {
-    const orderbook = new Orderbook("DAI", "USDC");
+    const orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
     orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
 
     const transitive = transitiveOrderbook(
@@ -394,13 +394,13 @@ describe("transitiveOrderbook", () => {
   });
 
   it("computes transitive orderbook with 1 hop", () => {
-    const direct = new Orderbook("DAI", "ETH");
+    const direct = new Orderbook("DAI", "ETH", new Fraction(0, 1));
     direct.addAsk(new Offer(new Fraction(1, 80), 80));
 
-    const first_orderbook = new Orderbook("DAI", "USDC");
+    const first_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
     first_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
 
-    const second_orderbook = new Orderbook("USDC", "ETH");
+    const second_orderbook = new Orderbook("USDC", "ETH", new Fraction(0, 1));
     second_orderbook.addAsk(new Offer(new Fraction(1, 100), 100));
 
     const transitive = transitiveOrderbook(
@@ -427,16 +427,16 @@ describe("transitiveOrderbook", () => {
   });
 
   it("computes transitive orderbook with 2 hop", () => {
-    const direct = new Orderbook("DAI", "ETH");
+    const direct = new Orderbook("DAI", "ETH", new Fraction(0, 1));
     direct.addAsk(new Offer(new Fraction(1, 80), 80));
 
-    const first_orderbook = new Orderbook("DAI", "USDC");
+    const first_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
     first_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
 
-    const second_orderbook = new Orderbook("USDC", "USDT");
+    const second_orderbook = new Orderbook("USDC", "USDT", new Fraction(0, 1));
     second_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
 
-    const third_orderbook = new Orderbook("USDT", "ETH");
+    const third_orderbook = new Orderbook("USDT", "ETH", new Fraction(0, 1));
     third_orderbook.addAsk(new Offer(new Fraction(1, 100), 100));
 
     const transitive = transitiveOrderbook(
@@ -464,10 +464,10 @@ describe("transitiveOrderbook", () => {
   });
 
   it("computes transitive orderbook from bids and asks", () => {
-    const first_orderbook = new Orderbook("DAI", "USDC");
+    const first_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
     first_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
 
-    const second_orderbook = new Orderbook("ETH", "USDC");
+    const second_orderbook = new Orderbook("ETH", "USDC", new Fraction(0, 1));
     second_orderbook.addBid(new Offer(new Fraction(100, 1), 1));
 
     const transitive = transitiveOrderbook(
