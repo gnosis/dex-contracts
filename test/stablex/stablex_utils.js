@@ -14,7 +14,7 @@ const { sendTxAndGetReturnValue } = require("../utilities")
  * @param {number} maxTokens - Maximum number of tokens (a contract contructor parameter)
  * @returns {}
  */
-const setupGenericStableX = async function(numTokens = 2, maxTokens = 2 ** 16 - 1) {
+const setupGenericStableX = async function (numTokens = 2, maxTokens = 2 ** 16 - 1) {
   const MockContract = artifacts.require("MockContract")
   const BatchExchange = artifacts.require("BatchExchange")
 
@@ -39,7 +39,7 @@ const setupGenericStableX = async function(numTokens = 2, maxTokens = 2 ** 16 - 
  * @param {Deposit[]} depositList an array of Deposit Objects
  * @param {number} sufficiencyFactor factor of deposit amount to be deposited (default: 1)
  */
-const makeDeposits = async function(contract, accounts, depositList, sufficiencyFactor = 1) {
+const makeDeposits = async function (contract, accounts, depositList, sufficiencyFactor = 1) {
   for (const deposit of depositList) {
     const tokenAddress = await contract.tokenIdToAddressMap.call(deposit.token)
     await contract.deposit(tokenAddress, deposit.amount.muln(sufficiencyFactor), { from: accounts[deposit.user] })
@@ -53,7 +53,7 @@ const makeDeposits = async function(contract, accounts, depositList, sufficiency
  * @param {Order[]} - an array of Order Objects
  * @returns {BN[]}
  */
-const placeOrders = async function(contract, accounts, orderList, auctionIndex) {
+const placeOrders = async function (contract, accounts, orderList, auctionIndex) {
   const orderIds = []
   for (const order of orderList) {
     orderIds.push(

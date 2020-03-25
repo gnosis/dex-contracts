@@ -6,7 +6,7 @@ const argv = require("yargs")
   .help(false)
   .version(false).argv
 
-module.exports = async function(deployer, network, accounts) {
+module.exports = async function (deployer, network, accounts) {
   if (!argv.onlyMigrateStableX) {
     return migrateSnappAuction({
       artifacts,

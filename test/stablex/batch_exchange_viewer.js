@@ -7,7 +7,7 @@ const { closeAuction } = require("../../scripts/stablex/utilities.js")
 
 const zero_address = "0x0000000000000000000000000000000000000000"
 
-contract("BatchExchangeViewer", accounts => {
+contract("BatchExchangeViewer", (accounts) => {
   let batchExchange, token_1, token_2
   beforeEach(async () => {
     const feeToken = await MockContract.new()
@@ -69,7 +69,7 @@ contract("BatchExchangeViewer", accounts => {
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = decodeOrdersBN(await viewer.getOpenOrderBook([]))
-      assert.equal(result.filter(e => e.validFrom == batchId).length, 10)
+      assert.equal(result.filter((e) => e.validFrom == batchId).length, 10)
     })
     it("can be queried with pagination", async () => {
       const batchId = await batchExchange.getCurrentBatchId()
@@ -92,7 +92,7 @@ contract("BatchExchangeViewer", accounts => {
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = await viewer.getOpenOrderBookPaginated([], zero_address, 0, 5)
-      assert.equal(decodeOrdersBN(result.elements).filter(e => e.validFrom == batchId).length, 5)
+      assert.equal(decodeOrdersBN(result.elements).filter((e) => e.validFrom == batchId).length, 5)
       assert.equal(result.nextPageUser, accounts[0])
       assert.equal(result.nextPageUserOffset, 15)
     })
@@ -116,7 +116,7 @@ contract("BatchExchangeViewer", accounts => {
       )
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = decodeOrdersBN(await viewer.getOpenOrderBook([token_1.address, token_2.address]))
-      assert.equal(result.filter(e => e.validFrom == batchId).length, 5)
+      assert.equal(result.filter((e) => e.validFrom == batchId).length, 5)
     })
   })
 
@@ -159,7 +159,7 @@ contract("BatchExchangeViewer", accounts => {
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = decodeOrdersBN(await viewer.getFinalizedOrderBook([]))
-      assert.equal(result.filter(e => e.validFrom == batchId).length, 10)
+      assert.equal(result.filter((e) => e.validFrom == batchId).length, 10)
     })
     it("can be queried with pagination", async () => {
       const batchId = await batchExchange.getCurrentBatchId()
@@ -185,7 +185,7 @@ contract("BatchExchangeViewer", accounts => {
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = await viewer.getFinalizedOrderBookPaginated([], zero_address, 0, 5)
-      assert.equal(decodeOrdersBN(result.elements).filter(e => e.validFrom == batchId).length, 5)
+      assert.equal(decodeOrdersBN(result.elements).filter((e) => e.validFrom == batchId).length, 5)
       assert.equal(result.nextPageUser, accounts[0])
       assert.equal(result.nextPageUserOffset, 15)
     })
@@ -213,7 +213,7 @@ contract("BatchExchangeViewer", accounts => {
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = decodeOrdersBN(await viewer.getFinalizedOrderBook([token_1.address, token_2.address]))
-      assert.equal(result.filter(e => e.validFrom == batchId).length, 5)
+      assert.equal(result.filter((e) => e.validFrom == batchId).length, 5)
     })
   })
 })

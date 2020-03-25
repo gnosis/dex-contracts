@@ -18,7 +18,7 @@ const {
 const { toETH } = require("../../test/resources/math")
 const { waitForNSeconds } = require("../../test/utilities")
 
-module.exports = async function(callback) {
+module.exports = async function (callback) {
   try {
     const batchExchange = await getBatchExchange(artifacts)
     const owl = await getOwl(artifacts)

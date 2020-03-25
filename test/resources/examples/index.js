@@ -95,7 +95,7 @@ const n = 30
 const largeRing30 = generateTestCase({
   name: "Longest Ring Trade",
   orders: [...Array(n).keys()]
-    .map(i => ({
+    .map((i) => ({
       sellToken: i % n,
       buyToken: (i + 1) % n,
       sellAmount: toETH(1),
@@ -103,7 +103,7 @@ const largeRing30 = generateTestCase({
       user: i % 2,
     }))
     .concat(
-      [...Array(n).keys()].map(i => ({
+      [...Array(n).keys()].map((i) => ({
         sellToken: i % n,
         buyToken: (i + 1) % n,
         sellAmount: toETH(1),
@@ -358,7 +358,7 @@ const tooSmallBuyAmountTrade = generateTestCase(
       {
         name: "Small buy amounts",
         prices: [1, 1].map(toETH),
-        buyVolumes: [10000, 9990].map(val => new BN(val)),
+        buyVolumes: [10000, 9990].map((val) => new BN(val)),
       },
     ],
   },
@@ -385,7 +385,7 @@ const smallExample = generateTestCase({
     {
       name: "Small Solution",
       prices: [1, 1].map(toETH),
-      buyVolumes: [100000, 99900, 99810, 99711].map(val => new BN(val)),
+      buyVolumes: [100000, 99900, 99810, 99711].map((val) => new BN(val)),
     },
   ],
 })
@@ -450,8 +450,8 @@ const utilityOverflow = generateTestCase({
   solutions: [
     {
       name: "Utility Overflow",
-      prices: ["1000000000000000000", "998999900119977150048", "10000000000198528574"].map(val => new BN(val)),
-      buyVolumes: ["1998999800099984", "99800080039994614733", "998000900199892164"].map(val => new BN(val)),
+      prices: ["1000000000000000000", "998999900119977150048", "10000000000198528574"].map((val) => new BN(val)),
+      buyVolumes: ["1998999800099984", "99800080039994614733", "998000900199892164"].map((val) => new BN(val)),
     },
   ],
 })

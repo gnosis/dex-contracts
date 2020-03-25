@@ -6,7 +6,7 @@ const argv = require("yargs")
   .help(false)
   .version(false).argv
 
-module.exports = async function(deployer, network, accounts, web3) {
+module.exports = async function (deployer, network, accounts, web3) {
   if (!argv.onlyMigrateSnappAuction) {
     return migrateBatchExchange({
       artifacts,

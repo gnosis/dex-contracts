@@ -26,7 +26,7 @@ const argv = require("yargs")
   .demand(["sellToken", "buyToken", "sellAmount"])
   .version(false).argv
 
-const addItemToOrderbooks = function(orderbooks, item) {
+const addItemToOrderbooks = function (orderbooks, item) {
   let orderbook = new Orderbook(item.sellToken, item.buyToken)
   if (!orderbooks.has(orderbook.pair())) {
     orderbooks.set(orderbook.pair(), orderbook)
@@ -40,16 +40,16 @@ const addItemToOrderbooks = function(orderbooks, item) {
   }
 }
 
-const getAllOrderbooks = async function(instance, pageSize) {
+const getAllOrderbooks = async function (instance, pageSize) {
   const elements = await getOpenOrdersPaginated(instance, pageSize)
   const orderbooks = new Map()
-  elements.forEach(item => {
+  elements.forEach((item) => {
     addItemToOrderbooks(orderbooks, item)
   })
   return orderbooks
 }
 
-const transitiveOrderbook = function(orderbooks, start, end, hops, ignore) {
+const transitiveOrderbook = function (orderbooks, start, end, hops, ignore) {
   const result = new Orderbook(start, end)
   // Add the direct book if it exists
   if (orderbooks.has(result.pair())) {
@@ -62,7 +62,7 @@ const transitiveOrderbook = function(orderbooks, start, end, hops, ignore) {
 
   // Check for each orderbook that starts with same baseToken, if there exists a connecting book.
   // If yes, build transitive closure
-  orderbooks.forEach(book => {
+  orderbooks.forEach((book) => {
     if (book.baseToken === start && !(book.quoteToken === end) && !ignore.includes(book.quoteToken)) {
       const otherBook = transitiveOrderbook(orderbooks, book.quoteToken, end, hops - 1, ignore.concat(book.baseToken))
       const closure = book.transitiveClosure(otherBook)
@@ -72,7 +72,7 @@ const transitiveOrderbook = function(orderbooks, start, end, hops, ignore) {
   return result
 }
 
-module.exports = async callback => {
+module.exports = async (callback) => {
   try {
     const sellAmount = new BN(argv.sellAmount)
     const instance = await BatchExchangeViewer.deployed()

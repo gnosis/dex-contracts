@@ -24,7 +24,7 @@ const {
 
 const { encodePacked_16_8_128 } = require("./snapp_utils")
 
-contract("SnappBase", async accounts => {
+contract("SnappBase", async (accounts) => {
   const [owner, token_owner, user_1, user_2] = accounts
 
   beforeEach(async () => {
@@ -578,7 +578,7 @@ contract("SnappBase", async accounts => {
           .map(() => instance.requestWithdrawal(0, 1, { from: user_1 }))
       )
 
-      const request_slots = txs.map(tx => tx.logs[0].args.slot.toNumber())
+      const request_slots = txs.map((tx) => tx.logs[0].args.slot.toNumber())
       const slot_frequency = request_slots.reduce(countDuplicates, {})
 
       const slots = []
@@ -841,7 +841,7 @@ contract("SnappBase", async accounts => {
       await instance.addToken(token.address)
 
       const tree = generateMerkleTree(0, zeroHash)
-      const proof = Buffer.concat(tree.getProof(zeroHash).map(x => x.data))
+      const proof = Buffer.concat(tree.getProof(zeroHash).map((x) => x.data))
 
       await truffleAssert.reverts(instance.claimWithdrawal(0, 0, 1, 1, 1, proof), "Requested slot has not been processed")
     })
@@ -874,7 +874,7 @@ contract("SnappBase", async accounts => {
       const leaf = encodePacked_16_8_128(account_id, token_id, withdraw_amount)
       const tree = generateMerkleTree(0, leaf)
       const merkle_root = tree.getRoot()
-      const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
+      const proof = Buffer.concat(tree.getProof(leaf).map((x) => x.data))
 
       await instance.applyWithdrawals(withdraw_slot, merkle_root, await instance.getCurrentStateRoot(), "0x2", withdraw_hash)
 
@@ -914,7 +914,7 @@ contract("SnappBase", async accounts => {
       const leaf = encodePacked_16_8_128(account_id, token_id, withdraw_amount)
       const tree = generateMerkleTree(0, leaf)
       const merkle_root = tree.getRoot()
-      const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
+      const proof = Buffer.concat(tree.getProof(leaf).map((x) => x.data))
 
       await instance.applyWithdrawals(withdraw_slot, merkle_root, await instance.getCurrentStateRoot(), "0x2", withdraw_hash)
 
@@ -958,7 +958,7 @@ contract("SnappBase", async accounts => {
       const leaf = encodePacked_16_8_128(account_id, token_id, withdraw_amount)
       const tree = generateMerkleTree(0, leaf)
       const merkle_root = tree.getRoot()
-      const proof = Buffer.concat(tree.getProof(leaf).map(x => x.data))
+      const proof = Buffer.concat(tree.getProof(leaf).map((x) => x.data))
 
       await instance.applyWithdrawals(withdraw_slot, merkle_root, await instance.getCurrentStateRoot(), "0x2", withdraw_hash)
 

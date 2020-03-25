@@ -26,7 +26,7 @@ const COLORS = {
   YELLOW: "\x1b[33m",
 }
 
-const formatAmount = function(amount) {
+const formatAmount = function (amount) {
   const string = amount.toString()
   if (string.length > 4) {
     return `${string.substring(0, 2)} * 10^${string.length - 2}`
@@ -35,7 +35,7 @@ const formatAmount = function(amount) {
   }
 }
 
-const colorForValidFrom = function(order, currentBatchId) {
+const colorForValidFrom = function (order, currentBatchId) {
   let color = COLORS.NONE
   if (order.validFrom >= currentBatchId) {
     color = COLORS.RED
@@ -46,7 +46,7 @@ const colorForValidFrom = function(order, currentBatchId) {
   return color
 }
 
-const colorForValidUntil = function(order, currentBatchId) {
+const colorForValidUntil = function (order, currentBatchId) {
   let color = COLORS.NONE
   if (order.validUntil - 5 <= currentBatchId) {
     color = COLORS.YELLOW
@@ -57,21 +57,15 @@ const colorForValidUntil = function(order, currentBatchId) {
   return color
 }
 
-const colorForRemainingAmount = function(order) {
-  if (
-    order.priceDenominator > 0 &&
-    order.remainingAmount
-      .mul(new BN(100))
-      .div(order.priceDenominator)
-      .toNumber() < 1
-  ) {
+const colorForRemainingAmount = function (order) {
+  if (order.priceDenominator > 0 && order.remainingAmount.mul(new BN(100)).div(order.priceDenominator).toNumber() < 1) {
     return COLORS.YELLOW
   } else {
     return COLORS.NONE
   }
 }
 
-const printOrder = function(order, currentBatchId) {
+const printOrder = function (order, currentBatchId) {
   console.log("{")
   console.log(`  user: ${order.user}`)
   console.log(`  sellTokenBalance: ${formatAmount(order.sellTokenBalance)}`)
@@ -86,26 +80,28 @@ const printOrder = function(order, currentBatchId) {
   console.log("}")
 }
 
-module.exports = async callback => {
+module.exports = async (callback) => {
   try {
     const instance = await BatchExchange.deployed()
     let auctionElementsDecoded = await getOrdersPaginated(instance, argv.pageSize)
 
     const batchId = (await instance.getCurrentBatchId()).toNumber()
     if (!argv.expired) {
-      auctionElementsDecoded = auctionElementsDecoded.filter(order => order.validUntil >= batchId)
+      auctionElementsDecoded = auctionElementsDecoded.filter((order) => order.validUntil >= batchId)
     }
 
     if (argv.covered) {
-      auctionElementsDecoded = auctionElementsDecoded.filter(order => !order.sellTokenBalance.isZero())
+      auctionElementsDecoded = auctionElementsDecoded.filter((order) => !order.sellTokenBalance.isZero())
     }
 
     if (argv.tokens) {
-      const tokens = new Set(argv.tokens.split(",").map(t => parseInt(t)))
-      auctionElementsDecoded = auctionElementsDecoded.filter(order => tokens.has(order.buyToken) && tokens.has(order.sellToken))
+      const tokens = new Set(argv.tokens.split(",").map((t) => parseInt(t)))
+      auctionElementsDecoded = auctionElementsDecoded.filter(
+        (order) => tokens.has(order.buyToken) && tokens.has(order.sellToken)
+      )
     }
 
-    auctionElementsDecoded.forEach(order => printOrder(order, batchId))
+    auctionElementsDecoded.forEach((order) => printOrder(order, batchId))
     console.log(`Found ${auctionElementsDecoded.length} orders`)
 
     callback()

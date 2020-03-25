@@ -20,7 +20,7 @@ async function createMintableToken(artifacts) {
   return ERC20Mintable.new()
 }
 
-const fetchTokenInfo = async function(
+const fetchTokenInfo = async function (
   exchangeContract,
   tokenIds,
   artifacts,
@@ -53,7 +53,7 @@ const fetchTokenInfo = async function(
   return tokenObjects
 }
 
-const addTokens = async function({ tokenAddresses, account, batchExchange, owl }) {
+const addTokens = async function ({ tokenAddresses, account, batchExchange, owl }) {
   // Get amount of required OWL for listing all tokens
   const feeForAddingToken = await batchExchange.FEE_FOR_LISTING_TOKEN_IN_OWL.call()
   const totalFees = feeForAddingToken.mul(new BN(tokenAddresses.length))
@@ -120,7 +120,7 @@ const getOrdersPaginated = async (instance, pageSize) => {
   return orders
 }
 
-const getOpenOrdersPaginated = async function(instance, pageSize) {
+const getOpenOrdersPaginated = async function (instance, pageSize) {
   const { decodeOrdersBN } = require("../../src/encoding")
   let orders = []
   let nextPageUser = "0x0000000000000000000000000000000000000000"
@@ -141,7 +141,7 @@ const getOpenOrdersPaginated = async function(instance, pageSize) {
   return orders
 }
 
-const sendLiquidityOrders = async function(
+const sendLiquidityOrders = async function (
   instance,
   tokenIds,
   PRICE_FOR_LIQUIDITY_PROVISION,
@@ -189,7 +189,7 @@ const sendLiquidityOrders = async function(
   )
   console.log(
     "Placed liquidity sell orders for the following tokens",
-    await Promise.all(validTokenIds.map(async i => await instance.tokenIdToAddressMap.call(i)))
+    await Promise.all(validTokenIds.map(async (i) => await instance.tokenIdToAddressMap.call(i)))
   )
 }
 
@@ -217,7 +217,7 @@ async function deleteOrders({ orderIds, accounts, batchExchange }) {
     const orderId = orderIds[i]
     const account = accounts[i]
     const cancelReceipt = await batchExchange.cancelOrders([orderId], { from: account })
-    const events = cancelReceipt.logs.map(log => log.event).join(", ")
+    const events = cancelReceipt.logs.map((log) => log.event).join(", ")
     console.log("Canceled/Deleted order %s for user %s. Emitted events: %s", orderId.toString(10), account, events)
   }
 }
