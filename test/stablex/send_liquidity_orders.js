@@ -1,4 +1,5 @@
-const { closeAuction, sendLiquidityOrders, getOrdersPaginated } = require("../../scripts/stablex/utilities.js")
+const { closeAuction, sendLiquidityOrders } = require("../../scripts/stablex/utilities.js")
+const { getOrdersPaginated } = require("../../src/onchain_reading")
 const BatchExchange = artifacts.require("BatchExchange")
 const MockContract = artifacts.require("MockContract")
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
@@ -37,7 +38,7 @@ contract("Liquidity order placement test", async (accounts) => {
       const tokenIds = [1, 3, 5]
       await sendLiquidityOrders(batchExchange, tokenIds, PRICE_FOR_LIQUIDITY_PROVISION, SELL_ORDER_AMOUNT_OWL, artifacts)
 
-      const orders = await getOrdersPaginated(batchExchange, 100)
+      const orders = await getOrdersPaginated(batchExchange.contract, 100)
       assert.deepEqual(
         orders.map((o) => o.buyToken),
         tokenIds

@@ -13,4 +13,5 @@ module.exports = {
   ...require("../typescript/common/fraction.js"),
   ...require("../typescript/common/orderbook.js"),
   ...require("./encoding.js"),
+  ...require("./onchain_reading.js"),
 }

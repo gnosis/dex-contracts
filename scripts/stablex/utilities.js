@@ -99,48 +99,6 @@ const closeAuction = async (instance, web3Provider = web3) => {
   await waitForNSeconds(time_remaining + 1, web3Provider)
 }
 
-const getOrdersPaginated = async (instance, pageSize) => {
-  const { decodeOrdersBN } = require("../../src/encoding")
-  let orders = []
-  let currentUser = "0x0000000000000000000000000000000000000000"
-  let currentOffSet = 0
-  let lastPageSize = pageSize
-  while (lastPageSize == pageSize) {
-    const page = decodeOrdersBN(await instance.getEncodedUsersPaginated(currentUser, currentOffSet, pageSize))
-    orders = orders.concat(page)
-    for (const index in page) {
-      if (page[index].user != currentUser) {
-        currentUser = page[index].user
-        currentOffSet = 0
-      }
-      currentOffSet += 1
-    }
-    lastPageSize = page.length
-  }
-  return orders
-}
-
-const getOpenOrdersPaginated = async function (instance, pageSize) {
-  const { decodeOrdersBN } = require("../../src/encoding")
-  let orders = []
-  let nextPageUser = "0x0000000000000000000000000000000000000000"
-  let nextPageUserOffset = 0
-  let lastPageSize = pageSize
-
-  while (lastPageSize == pageSize) {
-    console.log("Fetching Page")
-    const page = await instance.getOpenOrderBookPaginated([], nextPageUser, nextPageUserOffset, pageSize)
-    const elements = decodeOrdersBN(page.elements)
-    orders = orders.concat(elements)
-
-    //Update page info
-    lastPageSize = elements.length
-    nextPageUser = page.nextPageUser
-    nextPageUserOffset = page.nextPageUserOffset
-  }
-  return orders
-}
-
 const sendLiquidityOrders = async function (
   instance,
   tokenIds,
@@ -281,8 +239,6 @@ module.exports = {
   token_list_url,
   fetchTokenInfo,
   sendLiquidityOrders,
-  getOrdersPaginated,
-  getOpenOrdersPaginated,
   maxUint32,
   setAllowances,
   mintOwl,

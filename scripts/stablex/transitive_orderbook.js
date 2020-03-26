@@ -1,5 +1,5 @@
 const BatchExchangeViewer = artifacts.require("BatchExchangeViewer")
-const { getOpenOrdersPaginated } = require("./utilities.js")
+const { getOpenOrdersPaginated } = require("../../src/onchain_reading.js")
 const BN = require("bn.js")
 
 const { Orderbook, Offer, transitiveOrderbook } = require("../../typescript/common/orderbook.js")
@@ -41,11 +41,13 @@ const addItemToOrderbooks = function (orderbooks, item) {
 }
 
 const getAllOrderbooks = async function (instance, pageSize) {
-  const elements = await getOpenOrdersPaginated(instance, pageSize)
   const orderbooks = new Map()
-  elements.forEach((item) => {
-    addItemToOrderbooks(orderbooks, item)
-  })
+  for await (const page of getOpenOrdersPaginated(instance.contract, pageSize)) {
+    console.log("Fetched Page")
+    page.forEach((item) => {
+      addItemToOrderbooks(orderbooks, item)
+    })
+  }
   return orderbooks
 }
 

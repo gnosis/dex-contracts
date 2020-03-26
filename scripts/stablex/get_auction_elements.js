@@ -18,7 +18,7 @@ const argv = require("yargs")
   })
   .version(false).argv
 
-const { getOrdersPaginated } = require("./utilities")
+const { getOrdersPaginated } = require("../../src/onchain_reading")
 
 const COLORS = {
   NONE: "\x1b[0m",
@@ -83,7 +83,7 @@ const printOrder = function (order, currentBatchId) {
 module.exports = async (callback) => {
   try {
     const instance = await BatchExchange.deployed()
-    let auctionElementsDecoded = await getOrdersPaginated(instance, argv.pageSize)
+    let auctionElementsDecoded = await getOrdersPaginated(instance.contract, argv.pageSize)
 
     const batchId = (await instance.getCurrentBatchId()).toNumber()
     if (!argv.expired) {
