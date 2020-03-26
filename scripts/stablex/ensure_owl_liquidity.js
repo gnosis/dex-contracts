@@ -1,7 +1,8 @@
 const BatchExchange = artifacts.require("BatchExchange")
 
 const BN = require("bn.js")
-const { maxUint32, sendLiquidityOrders, getOrdersPaginated } = require("./utilities")
+const { maxUint32, sendLiquidityOrders } = require("./utilities")
+const { getOrdersPaginated } = require("../../src/onchain_reading")
 
 const MINIMAL_LIQUIDITY_FOR_OWL = new BN(10).pow(new BN(17))
 const SELL_ORDER_AMOUNT_OWL = new BN(10).pow(new BN(18)).mul(new BN(5))
@@ -41,7 +42,7 @@ module.exports = async (callback) => {
     // Get the order data
     const numberOfToken = await instance.numTokens.call()
     const batchId = (await instance.getCurrentBatchId()).toNumber()
-    let orders = await getOrdersPaginated(instance, 100)
+    let orders = await getOrdersPaginated(instance.contract, 100)
     orders = orders.filter((order) => order.validUntil >= batchId && order.validFrom <= batchId)
 
     // Ensure OWL-liquidity is given
