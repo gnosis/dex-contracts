@@ -1,4 +1,4 @@
-pragma solidity ^0.5.10;
+pragma solidity ^0.5.0;
 
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";

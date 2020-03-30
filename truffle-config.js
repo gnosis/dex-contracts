@@ -16,7 +16,7 @@ if (!privateKey && !mnemonic) {
 
 // Solc
 let solcUseDocker = process.env.SOLC_USE_DOCKER === "true" || false
-let solcVersion = "<0.5.11"
+let solcVersion = "<0.5.7"
 
 // Gas price
 const gasPriceGWei = process.env.GAS_PRICE_GWEI || DEFAULT_GAS_PRICE_GWEI
