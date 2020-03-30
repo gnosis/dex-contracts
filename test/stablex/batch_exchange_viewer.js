@@ -2,12 +2,16 @@ const BatchExchange = artifacts.require("BatchExchange")
 const BatchExchangeViewer = artifacts.require("BatchExchangeViewer")
 const MockContract = artifacts.require("MockContract")
 
+const BN = require("bn.js")
+
 const { decodeOrdersBN } = require("../../src/encoding")
 const { closeAuction } = require("../../scripts/stablex/utilities.js")
+const { setupGenericStableX } = require("./stablex_utils")
 
 const zero_address = "0x0000000000000000000000000000000000000000"
 
 contract("BatchExchangeViewer", (accounts) => {
+  const [user_1, user_2, user_3] = accounts
   let batchExchange, token_1, token_2
   beforeEach(async () => {
     const feeToken = await MockContract.new()
@@ -214,6 +218,110 @@ contract("BatchExchangeViewer", (accounts) => {
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = decodeOrdersBN(await viewer.getFinalizedOrderBook([token_1.address, token_2.address]))
       assert.equal(result.filter((e) => e.validFrom == batchId).length, 5)
+    })
+  })
+
+  describe("getEncodedOrdersPaginated", async () => {
+    it("returns empty bytes when no users", async () => {
+      const batchExchange = await setupGenericStableX()
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+
+      const auctionElements = await viewer.getEncodedOrdersPaginated(zero_address, 0, 10)
+      assert.equal(auctionElements, null)
+    })
+    it("returns three orders one per page", async () => {
+      const batchExchange = await setupGenericStableX(3)
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_2 })
+
+      const firstPage = decodeOrdersBN(await viewer.getEncodedOrdersPaginated(zero_address, 0, 1))
+      assert.equal(
+        JSON.stringify(firstPage),
+        JSON.stringify([
+          {
+            user: user_1.toLowerCase(),
+            sellTokenBalance: new BN(0),
+            buyToken: 0,
+            sellToken: 1,
+            validFrom: batchId,
+            validUntil: batchId + 10,
+            priceNumerator: new BN(100),
+            priceDenominator: new BN(100),
+            remainingAmount: new BN(100),
+          },
+        ])
+      )
+
+      const secondPage = decodeOrdersBN(await viewer.getEncodedOrdersPaginated(user_1, 1, 1))
+      assert.equal(
+        JSON.stringify(secondPage),
+        JSON.stringify([
+          {
+            user: user_1.toLowerCase(),
+            sellTokenBalance: new BN(0),
+            buyToken: 1,
+            sellToken: 2,
+            validFrom: batchId,
+            validUntil: batchId + 10,
+            priceNumerator: new BN(100),
+            priceDenominator: new BN(100),
+            remainingAmount: new BN(100),
+          },
+        ])
+      )
+
+      const thirdPage = decodeOrdersBN(await viewer.getEncodedOrdersPaginated(user_1, 2, 1))
+      assert.equal(
+        JSON.stringify(thirdPage),
+        JSON.stringify([
+          {
+            user: user_2.toLowerCase(),
+            sellTokenBalance: new BN(0),
+            buyToken: 0,
+            sellToken: 1,
+            validFrom: batchId,
+            validUntil: batchId + 10,
+            priceNumerator: new BN(100),
+            priceDenominator: new BN(100),
+            remainingAmount: new BN(100),
+          },
+        ])
+      )
+
+      // 4th page is empty
+      assert.equal(await viewer.getEncodedOrdersPaginated(user_2, 1, 1), null)
+    })
+    it("returns three orders when page size is overlapping users", async () => {
+      const batchExchange = await setupGenericStableX(3)
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_2 })
+
+      const page = decodeOrdersBN(await viewer.getEncodedOrdersPaginated(user_1, 1, 2))
+      assert.equal(page[0].user, user_1.toLowerCase())
+      assert.equal(page[1].user, user_2.toLowerCase())
+    })
+    it("returns three orders from three users with larger page size", async () => {
+      const batchExchange = await setupGenericStableX(3)
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_2 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_3 })
+
+      const page = decodeOrdersBN(await viewer.getEncodedOrdersPaginated(zero_address, 0, 5))
+      assert.equal(page.length, 3)
+      assert.equal(page[0].user, user_1.toLowerCase())
+      assert.equal(page[1].user, user_2.toLowerCase())
+      assert.equal(page[2].user, user_3.toLowerCase())
     })
   })
 })
