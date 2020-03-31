@@ -10,6 +10,7 @@ contract BatchExchangeViewer {
     using SafeMath for uint256;
 
     uint8 public constant AUCTION_ELEMENT_WIDTH = 112;
+    uint16 public constant LARGE_PAGE_SIZE = 5000;
     // Can be used by external contracts to indicate no filter as it doesn't seem possible
     // to create an empty memory array in solidity.
     uint16[] public ALL_TOKEN_FILTER;
@@ -22,10 +23,11 @@ contract BatchExchangeViewer {
 
     /** @dev Queries the orderbook for the auction that is still accepting orders
      *  @param tokenFilter all returned order will have buy *and* sell token from this list (leave empty for "no filter")
-     *  @return encoded bytes representing orders
+     *  @return encoded bytes representing orders, maxed at 5000 elements
      */
     function getOpenOrderBook(address[] memory tokenFilter) public view returns (bytes memory) {
-        (bytes memory elements, , ) = getOpenOrderBookPaginated(tokenFilter, address(0), 0, uint16(-1));
+        (bytes memory elements, , ) = getOpenOrderBookPaginated(tokenFilter, address(0), 0, LARGE_PAGE_SIZE);
+        require(elements.length < LARGE_PAGE_SIZE * AUCTION_ELEMENT_WIDTH, "Orderbook too large, use paginated view functions");
         return elements;
     }
 
@@ -44,7 +46,7 @@ contract BatchExchangeViewer {
     ) public view returns (bytes memory elements, address nextPageUser, uint16 nextPageUserOffset) {
         uint32 batch = batchExchange.getCurrentBatchId();
         return
-            getEncodedOrdersPaginated(
+            getFilteredOrdersPaginated(
                 batch,
                 batch,
                 batch + 1,
@@ -57,10 +59,11 @@ contract BatchExchangeViewer {
 
     /** @dev Queries the orderbook for the auction that is currently being solved
      *  @param tokenFilter all returned order will have buy *and* sell token from this list (leave empty for "no filter")
-     *  @return encoded bytes representing orders
+     *  @return encoded bytes representing orders, maxed at 5000 elements
      */
     function getFinalizedOrderBook(address[] memory tokenFilter) public view returns (bytes memory) {
-        (bytes memory elements, , ) = getFinalizedOrderBookPaginated(tokenFilter, address(0), 0, uint16(-1));
+        (bytes memory elements, , ) = getFinalizedOrderBookPaginated(tokenFilter, address(0), 0, LARGE_PAGE_SIZE);
+        require(elements.length < LARGE_PAGE_SIZE * AUCTION_ELEMENT_WIDTH, "Orderbook too large, use paginated view functions");
         return elements;
     }
 
@@ -79,7 +82,7 @@ contract BatchExchangeViewer {
     ) public view returns (bytes memory elements, address nextPageUser, uint16 nextPageUserOffset) {
         uint32 batch = batchExchange.getCurrentBatchId();
         return
-            getEncodedOrdersPaginated(
+            getFilteredOrdersPaginated(
                 batch - 1,
                 batch - 1,
                 batch,
@@ -101,7 +104,7 @@ contract BatchExchangeViewer {
      *  @param pageSize count of elements to be returned per page (same value is used for subqueries on the exchange)
      *  @return encoded bytes representing orders and page information for next page
      */
-    function getEncodedOrdersPaginated(
+    function getFilteredOrdersPaginated(
         uint32 maxValidFrom,
         uint32 minValidUntil,
         uint32 sellBalanceTargetBatchIndex,
@@ -114,7 +117,7 @@ contract BatchExchangeViewer {
         nextPageUserOffset = previousPageUserOffset;
         bool hasNextPage = true;
         while (hasNextPage) {
-            bytes memory unfiltered = batchExchange.getEncodedUsersPaginated(nextPageUser, nextPageUserOffset, pageSize);
+            bytes memory unfiltered = getEncodedOrdersPaginated(nextPageUser, nextPageUserOffset, pageSize);
             hasNextPage = unfiltered.length / AUCTION_ELEMENT_WIDTH == pageSize;
             for (uint16 index = 0; index < unfiltered.length / AUCTION_ELEMENT_WIDTH; index++) {
                 // make sure we don't overflow index * AUCTION_ELEMENT_WIDTH
@@ -142,6 +145,44 @@ contract BatchExchangeViewer {
             }
         }
         return (elements, nextPageUser, nextPageUserOffset);
+    }
+
+    /** @dev View returning byte-encoded sell orders in paginated form. It has the same behavior as
+     * BatchExchange.getEncodedUsersPaginated but uses less memory and thus is more gas efficient.
+     * @param previousPageUser address of last user received in the previous page (address(0) for first page)
+     * @param previousPageUserOffset the number of orders received for the last user on the previous page (0 for first page).
+     * @param pageSize uint determining the count of orders to be returned per page
+     * @return encoded bytes representing a page of orders ordered by (user, index)
+     */
+    function getEncodedOrdersPaginated(address previousPageUser, uint16 previousPageUserOffset, uint256 pageSize)
+        public
+        view
+        returns (bytes memory)
+    {
+        bytes memory elements = new bytes(pageSize * AUCTION_ELEMENT_WIDTH);
+        uint16 currentOffset = previousPageUserOffset;
+        uint256 index = 0;
+        address currentUser = previousPageUser;
+        while (index < pageSize) {
+            bytes memory element = batchExchange.getEncodedUserOrdersPaginated(currentUser, currentOffset, 1);
+            if (element.length > 0) {
+                currentOffset += 1;
+                for (uint256 i = 0; i < element.length; i++) {
+                    elements[(index * AUCTION_ELEMENT_WIDTH) + i] = element[i];
+                }
+                index += 1;
+            } else {
+                currentOffset = 0;
+                bytes memory nextUser = batchExchange.getUsersPaginated(currentUser, 1);
+                if (nextUser.length > 0) {
+                    currentUser = nextUser.toAddress(0);
+                } else {
+                    break;
+                }
+            }
+        }
+        setLength(elements, index * AUCTION_ELEMENT_WIDTH);
+        return elements;
     }
 
     function matchesTokenFilter(uint16 buyToken, uint16 sellToken, uint16[] memory filter) public pure returns (bool) {
@@ -219,5 +260,16 @@ contract BatchExchangeViewer {
             sellTokenBalance = sellTokenBalance.sub(Math.min(sellTokenBalance, withdrawAmount));
         }
         return updateSellTokenBalance(element, sellTokenBalance);
+    }
+
+    /**
+     * @dev Sets the length of the given buffer (truncating any items exceeding the length).
+     * Note, that this can lead to memory leakage or undefined behavior if length  is larger than the size
+     * that was originally allocated by the buffer.
+     */
+    function setLength(bytes memory buffer, uint256 length) public pure {
+        assembly {
+            mstore(buffer, length)
+        }
     }
 }
