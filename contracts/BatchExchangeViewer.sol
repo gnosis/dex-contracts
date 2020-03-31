@@ -27,6 +27,7 @@ contract BatchExchangeViewer {
      */
     function getOpenOrderBook(address[] memory tokenFilter) public view returns (bytes memory) {
         (bytes memory elements, , ) = getOpenOrderBookPaginated(tokenFilter, address(0), 0, LARGE_PAGE_SIZE);
+        require(elements.length < LARGE_PAGE_SIZE * AUCTION_ELEMENT_WIDTH, "Orderbook too large, use paginated view functions");
         return elements;
     }
 
@@ -62,6 +63,7 @@ contract BatchExchangeViewer {
      */
     function getFinalizedOrderBook(address[] memory tokenFilter) public view returns (bytes memory) {
         (bytes memory elements, , ) = getFinalizedOrderBookPaginated(tokenFilter, address(0), 0, LARGE_PAGE_SIZE);
+        require(elements.length < LARGE_PAGE_SIZE * AUCTION_ELEMENT_WIDTH, "Orderbook too large, use paginated view functions");
         return elements;
     }
 
