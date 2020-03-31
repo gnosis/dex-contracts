@@ -7,7 +7,7 @@ const ERC20 = artifacts.require("ERC20")
 
 const BN = require("bn.js")
 const truffleAssert = require("truffle-assertions")
-const { waitForNSeconds, sendTxAndGetReturnValue } = require("./utilities")
+const { waitForNSeconds, sendTxAndGetReturnValue } = require("../build/common/test/utilities")
 
 const { closeAuction } = require("../scripts/utilities.js")
 const { decodeOrdersBN } = require("../src/encoding")
