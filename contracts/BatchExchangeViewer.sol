@@ -172,11 +172,7 @@ contract BatchExchangeViewer {
                 }
             }
         }
-        //setLength(elements, index * AUCTION_ELEMENT_WIDTH);
-        uint256 total = index * AUCTION_ELEMENT_WIDTH;
-        assembly {
-            mstore(elements, total)
-        }
+        setLength(elements, index * AUCTION_ELEMENT_WIDTH);
         return elements;
     }
 
