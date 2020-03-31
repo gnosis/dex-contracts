@@ -3,8 +3,8 @@
   "version": "0.2.7",
   "description": "Contracts for dFusion multi-token batch auction exchange",
   "main": "src/index.js",
-  "module": "typescript/esm/index.js",
-  "jsnext:main": "typescript/esm/index.js",
+  "module": "lib/esm/index.js",
+  "jsnext:main": "lib/esm/index.js",
   "types": "src/index.d.ts",
   "directories": {
     "test": "test"
@@ -15,7 +15,7 @@
     "test-stablex": "yarn run test-js test/stablex/*",
     "test-js": "truffle test",
     "test-ts": "mocha -r ts-node/register test/models/*.spec.ts",
-    "coverage": "truffle run coverage --network coverage --file \"test/**/*js\"",
+    "coverage": "truffle run coverage --network coverage --file \"{lib/common/,}test/**/*js\"",
     "networks-extract": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/extract_network_info.js",
     "networks-inject": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/inject_network_info.js",
     "networks-reset": "mkdir -p build/contracts && truffle networks --clean && yarn run networks-inject",
@@ -28,8 +28,8 @@
     "pretty-check": "prettier --check 'contracts/**/*.sol' && prettier --check './**/*.js'",
     "spread-orders": "npx truffle exec scripts/place_spread_orders.js",
     "ts": "yarn run ts-contracts && yarn run ts-check && yarn run tsc:commonjs && yarn run tsc:esm",
-    "tsc:commonjs": "rimraf typescript/common && tsc --outDir typescript/common",
-    "tsc:esm": "rimraf typescript/esm && tsc -m es6 -t esnext --outDir typescript/esm",
+    "tsc:commonjs": "rimraf lib/common && tsc --outDir lib/common",
+    "tsc:esm": "rimraf lib/esm && tsc -m es6 -t esnext --outDir lib/esm",
     "ts-check": "tsc --esModuleInterop --noEmit src/index.d.ts",
     "ts-contracts": "typechain --target web3-v1 --outDir build/types \"build/contracts/{BatchExchange,BatchExchangeViewer}.json\"",
     "ganache": "ganache-cli -h 0.0.0.0 --gasLimit 8e6 --deterministic"
@@ -46,7 +46,7 @@
     "build/contracts/Migrations.json",
     "build/contracts/TokenConservation.json",
     "build/types",
-    "typescript/common",
+    "lib/common",
     "networks.json",
     "src"
   ],
@@ -75,11 +75,12 @@
     "@gnosis.pm/owl-token": "^3.1.0",
     "@gnosis.pm/solidity-data-structures": "^1.2.4",
     "@gnosis.pm/util-contracts": "^2.0.6",
+    "@openeth/truffle-typings": "^0.0.1",
     "@truffle/contract": "^4.1.14",
     "@types/bn.js": "^4.11.6",
     "@types/chai": "^4.2.11",
-    "@types/mocha": "^7.0.2",
     "axios": "^0.19.2",
+    "bignumber.js": "^9.0.0",
     "chai": "^4.2.0",
     "coveralls": "^3.0.9",
     "dotenv": "^8.0.0",
@@ -112,9 +113,11 @@
     "truffle-plugin-verify": "^0.3.10",
     "ts-node": "^8.8.1",
     "typechain": "^1.0.5",
+    "typechain-target-trufflehotfix": "^0.0.4-alpha",
     "typechain-target-web3-v1": "^1.0.4",
     "typescript": "^3.8.3",
     "web3-core": "^1.2.6",
+    "web3-eth-contract": "^1.2.6",
     "yargs": "^15.3.1"
   }
 }

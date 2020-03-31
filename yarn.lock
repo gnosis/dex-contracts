@@ -195,6 +195,15 @@
     "@nodelib/fs.scandir" "2.1.3"
     fastq "^1.6.0"
 
+"@openeth/truffle-typings@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@openeth/truffle-typings/-/truffle-typings-0.0.1.tgz#2b07ceb87fa770db399f73a9e806f4a9ee48017a"
+  integrity sha512-di6ChzaPRXFdpXI5lM/vKMPxDwMWdh2iqW676cXDGDC0BtNnRM79fnMud7eqlBmjhp/ASM1fxPLyBnMgmocN7g==
+  dependencies:
+    "@types/chai" "^4.1.4"
+    "@types/mocha" "^5.2.5"
+    "@types/web3" "^1.2.2"
+
 "@resolver-engine/core@^0.2.1":
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/@resolver-engine/core/-/core-0.2.1.tgz#0d71803f6d3b8cb2e9ed481a1bf0ca5f5256d0c0"
@@ -344,7 +353,7 @@
   dependencies:
     "@types/node" "*"
 
-"@types/chai@^4.2.11":
+"@types/chai@^4.1.4", "@types/chai@^4.2.11":
   version "4.2.11"
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.2.11.tgz#d3614d6c5f500142358e6ed24e1bf16657536c50"
   integrity sha512-t7uW6eFafjO+qJ3BIV2gGUyZs27egcNRkUdalkud+Qa3+kg//f129iuOFivHDXQ+vnU3fDXuwgv0cqMCbcE8sw==
@@ -394,10 +403,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/mocha@^7.0.2":
-  version "7.0.2"
-  resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-7.0.2.tgz#b17f16cf933597e10d6d78eae3251e692ce8b0ce"
-  integrity sha512-ZvO2tAcjmMi8V/5Z3JsyofMe3hasRcaw88cto5etSVMwVQfeivGAlEYmaQgceUSVYFofVjT+ioHsATjdWcFt1w==
+"@types/mocha@^5.2.5":
+  version "5.2.7"
+  resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-5.2.7.tgz#315d570ccb56c53452ff8638738df60726d5b6ea"
+  integrity sha512-NYrtPht0wGzhwe9+/idPaBB+TqkY9AhTvOLMkThm0IoEfLaiVQZwBwyJ5puCkO3AUCWrmcoePjp2mbFocKy4SQ==
 
 "@types/node@*", "@types/node@^10.0.3", "@types/node@^10.12.18", "@types/node@^10.3.2":
   version "10.14.18"
@@ -435,6 +444,13 @@
   integrity sha512-auApPaJf3NPfe18hSoJkp8EbZzer2ISk7o8mCC3M9he/a04+gbMF97NkpD2S8riMGvm4BMRI59/SZQSaLTKpsQ==
   dependencies:
     "@types/node" "*"
+
+"@types/web3@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@types/web3/-/web3-1.2.2.tgz#d95a101547ce625c5ebd0470baa5dbd4b9f3c015"
+  integrity sha512-eFiYJKggNrOl0nsD+9cMh2MLk4zVBfXfGnVeRFbpiZzBE20eet4KLA3fXcjSuHaBn0RnQzwLAGdgzgzdet4C0A==
+  dependencies:
+    web3 "*"
 
 "@web3-js/scrypt-shim@^0.1.0":
   version "0.1.0"
@@ -1387,6 +1403,11 @@ bignumber.js@^7.2.1:
   version "7.2.1"
   resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-7.2.1.tgz#80c048759d826800807c4bfd521e50edbba57a5f"
   integrity sha512-S4XzBk5sMB+Rcb/LNcpzXr57VRTxgAvaAEDAl1AwRx27j00hT84O6OkteE7u8UB3NuaaygCRrEpqox4uDOrbdQ==
+
+bignumber.js@^9.0.0:
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-9.0.0.tgz#805880f84a329b5eac6e7cb6f8274b6d82bdf075"
+  integrity sha512-t/OYhhJ2SD+YGBQcjY8GzzDHEk9f3nerxjtfa6tlMXfe7frs/WozhvCNoGvpM0P3bNf3Gq5ZRMlGr5f3r4/N8A==
 
 "bignumber.js@git+https://github.com/debris/bignumber.js#master":
   version "2.0.7"
@@ -8465,6 +8486,13 @@ type@^1.0.1:
   resolved "https://registry.yarnpkg.com/type/-/type-1.2.0.tgz#848dd7698dafa3e54a6c479e759c4bc3f18847a0"
   integrity sha512-+5nt5AAniqsCnu2cEQQdpzCAh33kVx8n0VoFidKpB1dVVLAN/F+bgVOqOJqOnEnrhp222clB5p3vUlD+1QAnfg==
 
+typechain-target-trufflehotfix@^0.0.4-alpha:
+  version "0.0.4-alpha"
+  resolved "https://registry.yarnpkg.com/typechain-target-trufflehotfix/-/typechain-target-trufflehotfix-0.0.4-alpha.tgz#3a1286a9640245723e71b041ccf27ca8af73219e"
+  integrity sha512-fabI25L8rsMUFiHiptEdwnDx1qzRQddoDwslwxFeO8SCyCrc5ozwl79RwG3qwR0qRy0h9I0YnWJfEAdcMLCpsg==
+  dependencies:
+    lodash "^4.17.15"
+
 typechain-target-web3-v1@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/typechain-target-web3-v1/-/typechain-target-web3-v1-1.0.4.tgz#0157359e534737c07fc62529d5d8570a2047a2da"
@@ -8996,7 +9024,7 @@ web3-eth-contract@1.2.2:
     web3-eth-abi "1.2.2"
     web3-utils "1.2.2"
 
-web3-eth-contract@1.2.6:
+web3-eth-contract@1.2.6, web3-eth-contract@^1.2.6:
   version "1.2.6"
   resolved "https://registry.yarnpkg.com/web3-eth-contract/-/web3-eth-contract-1.2.6.tgz#39111543960035ed94c597a239cf5aa1da796741"
   integrity sha512-ak4xbHIhWgsbdPCkSN+HnQc1SH4c856y7Ly+S57J/DQVzhFZemK5HvWdpwadJrQTcHET3ZeId1vq3kmW7UYodw==
@@ -9390,6 +9418,20 @@ web3-utils@1.2.6:
     underscore "1.9.1"
     utf8 "3.0.0"
 
+web3@*, web3@1.2.6, web3@^1.0.0-beta.34, web3@^1.2.1, web3@^1.2.4:
+  version "1.2.6"
+  resolved "https://registry.yarnpkg.com/web3/-/web3-1.2.6.tgz#c497dcb14cdd8d6d9fb6b445b3b68ff83f8ccf68"
+  integrity sha512-tpu9fLIComgxGrFsD8LUtA4s4aCZk7px8UfcdEy6kS2uDi/ZfR07KJqpXZMij7Jvlq+cQrTAhsPSiBVvoMaivA==
+  dependencies:
+    "@types/node" "^12.6.1"
+    web3-bzz "1.2.6"
+    web3-core "1.2.6"
+    web3-eth "1.2.6"
+    web3-eth-personal "1.2.6"
+    web3-net "1.2.6"
+    web3-shh "1.2.6"
+    web3-utils "1.2.6"
+
 web3@1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/web3/-/web3-1.2.1.tgz#5d8158bcca47838ab8c2b784a2dee4c3ceb4179b"
@@ -9416,20 +9458,6 @@ web3@1.2.2:
     web3-net "1.2.2"
     web3-shh "1.2.2"
     web3-utils "1.2.2"
-
-web3@1.2.6, web3@^1.0.0-beta.34, web3@^1.2.1, web3@^1.2.4:
-  version "1.2.6"
-  resolved "https://registry.yarnpkg.com/web3/-/web3-1.2.6.tgz#c497dcb14cdd8d6d9fb6b445b3b68ff83f8ccf68"
-  integrity sha512-tpu9fLIComgxGrFsD8LUtA4s4aCZk7px8UfcdEy6kS2uDi/ZfR07KJqpXZMij7Jvlq+cQrTAhsPSiBVvoMaivA==
-  dependencies:
-    "@types/node" "^12.6.1"
-    web3-bzz "1.2.6"
-    web3-core "1.2.6"
-    web3-eth "1.2.6"
-    web3-eth-personal "1.2.6"
-    web3-net "1.2.6"
-    web3-shh "1.2.6"
-    web3-utils "1.2.6"
 
 web3@^0.16.0:
   version "0.16.0"

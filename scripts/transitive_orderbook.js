@@ -2,8 +2,8 @@ const BatchExchangeViewer = artifacts.require("BatchExchangeViewer")
 const { getOpenOrdersPaginated } = require("../src/onchain_reading.js")
 const BN = require("bn.js")
 
-const { Orderbook, Offer, transitiveOrderbook } = require("../typescript/common/orderbook.js")
-const { Fraction } = require("../typescript/common/fraction.js")
+const { Orderbook, Offer, transitiveOrderbook } = require("../lib/common/orderbook.js")
+const { Fraction } = require("../lib/common/fraction.js")
 
 const argv = require("yargs")
   .option("sellToken", {
