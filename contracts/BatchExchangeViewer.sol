@@ -260,6 +260,11 @@ contract BatchExchangeViewer {
         return updateSellTokenBalance(element, sellTokenBalance);
     }
 
+    /**
+     * @dev Sets the length of the given buffer (truncating any items exceeding the length).
+     * Note, that this can lead to memory leakage or undefined behavior if length  is larger than the size
+     * that was originally allocated by the buffer.
+     */
     function setLength(bytes memory buffer, uint256 length) public pure {
         assembly {
             mstore(buffer, length)
