@@ -55,7 +55,6 @@ export interface ContractArtifact {
 }
 
 export declare const BatchExchange: ContractArtifact;
-export declare const SnappAuction: ContractArtifact;
 
 export interface Order {
   user: string;

@@ -1,4 +1,4 @@
-const { closeAuction, sendLiquidityOrders } = require("../../scripts/stablex/utilities.js")
+const { closeAuction, sendLiquidityOrders } = require("../../scripts/utilities.js")
 const { getOrdersPaginated } = require("../../src/onchain_reading")
 const BatchExchange = artifacts.require("BatchExchange")
 const MockContract = artifacts.require("MockContract")

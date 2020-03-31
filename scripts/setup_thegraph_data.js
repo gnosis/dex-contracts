@@ -1,6 +1,6 @@
-const { solutionSubmissionParams, basicTrade } = require("../../test/resources/examples")
+const { solutionSubmissionParams, basicTrade } = require("../test/resources/examples")
 
-const { makeDeposits, placeOrders } = require("../../test/stablex/stablex_utils")
+const { makeDeposits, placeOrders } = require("../test/stablex/stablex_utils")
 const {
   closeAuction,
   getOwl,
@@ -13,10 +13,10 @@ const {
   createMintableToken,
   mintTokens,
   mintOwl,
-} = require("../../scripts/stablex/utilities.js")
+} = require("./utilities.js")
 
-const { toETH } = require("../../test/resources/math")
-const { waitForNSeconds } = require("../../test/utilities")
+const { toETH } = require("../test/resources/math")
+const { waitForNSeconds } = require("../test/utilities")
 
 module.exports = async function (callback) {
   try {

@@ -9,7 +9,7 @@ const BN = require("bn.js")
 const truffleAssert = require("truffle-assertions")
 const { waitForNSeconds, sendTxAndGetReturnValue } = require("../utilities")
 
-const { closeAuction } = require("../../scripts/stablex/utilities.js")
+const { closeAuction } = require("../../scripts/utilities.js")
 const { decodeOrdersBN } = require("../../src/encoding")
 
 const { toETH, getExecutedSellAmount, ERROR_EPSILON, feeAdded, feeSubtracted } = require("../resources/math")
