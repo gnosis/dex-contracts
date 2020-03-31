@@ -145,6 +145,13 @@ contract BatchExchangeViewer {
         return (elements, nextPageUser, nextPageUserOffset);
     }
 
+    /** @dev View returning byte-encoded sell orders in paginated form. It has the same behavior as
+     * BatchExchange.getEncodedUsersPaginated but uses less memory and thus is more gas efficient.
+     * @param previousPageUser address of last user received in the previous page (address(0) for first page)
+     * @param previousPageUserOffset the number of orders received for the last user on the previous page (0 for first page).
+     * @param pageSize uint determining the count of orders to be returned per page
+     * @return encoded bytes representing a page of orders ordered by (user, index)
+     */
     function getEncodedOrdersPaginated(address previousPageUser, uint16 previousPageUserOffset, uint256 pageSize)
         public
         view
