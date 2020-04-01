@@ -3,7 +3,8 @@ coverage/*
 coverage.json
 deploy/*
 node_modules/*
-typescript/
+build/
+types/
 package-lock.json
 
 .idea/
