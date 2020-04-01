@@ -1,5 +1,5 @@
-const { closeAuction, sendLiquidityOrders } = require("../../scripts/utilities.js")
-const { getOrdersPaginated } = require("../../src/onchain_reading")
+const { closeAuction, sendLiquidityOrders } = require("../scripts/utilities.js")
+const { getOrdersPaginated } = require("../src/onchain_reading")
 const BatchExchange = artifacts.require("BatchExchange")
 const MockContract = artifacts.require("MockContract")
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap")
