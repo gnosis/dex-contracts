@@ -10,13 +10,14 @@ before_install:
 before_script:
   - yarn run ganache > /dev/null &
 script:
-  - yarn run lint
-  - yarn run solhint
-  - yarn run pretty-check
+  - yarn lint
+  - yarn solhint
+  - yarn pretty-check
+  - yarn build
   - solium -d contracts/
-  - yarn run coverage && cat ./coverage/lcov.info | coveralls
-  - yarn run test-js ./test/stablex_large_example.js
-  - yarn run test-ts
+  - yarn coverage && cat ./coverage/lcov.info | coveralls
+  - yarn test-js ./test/stablex_large_example.js
+  - yarn test-ts
 before_deploy:
   - export PACKAGE_VERSION=$(jq -r '.version' package.json)
   - test "v$PACKAGE_VERSION" = "$TRAVIS_TAG"

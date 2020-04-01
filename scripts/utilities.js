@@ -1,5 +1,5 @@
 const BN = require("bn.js")
-const { waitForNSeconds } = require("../test/utilities.js")
+const { waitForNSeconds } = require("../build/common/test/utilities.js")
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
 const getArgumentsHelper = function () {
