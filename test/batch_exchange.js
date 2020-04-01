@@ -12,7 +12,7 @@ const { waitForNSeconds, sendTxAndGetReturnValue } = require("../build/common/te
 const { closeAuction } = require("../scripts/utilities.js")
 const { decodeOrdersBN } = require("../src/encoding")
 
-const { toETH, getExecutedSellAmount, ERROR_EPSILON, feeAdded, feeSubtracted } = require("./resources/math")
+const { toETH, getExecutedSellAmount, ERROR_EPSILON, feeAdded, feeSubtracted } = require("../build/common/test/resources/math")
 const {
   solutionSubmissionParams,
   basicTrade,
@@ -22,7 +22,7 @@ const {
   smallExample,
   marginalTrade,
   exampleOrderWithUnlimitedAmount,
-} = require("./resources/examples")
+} = require("../build/common/test/resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
 const fiveThousand = new BN("5000")

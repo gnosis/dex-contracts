@@ -1,5 +1,5 @@
 const { closeAuction } = require("../scripts/utilities.js")
-const { solutionSubmissionParams, largeRing30 } = require("./resources/examples")
+const { solutionSubmissionParams, largeRing30 } = require("../build/common/test/resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
 
 contract("BatchExchange", async (accounts) => {
