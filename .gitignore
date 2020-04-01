@@ -3,7 +3,7 @@ coverage/*
 coverage.json
 deploy/*
 node_modules/*
-lib/
+build/
 types/
 package-lock.json
 
