@@ -1,7 +1,3 @@
-const { sha256 } = require("ethereumjs-util")
-const memoize = require("fast-memoize")
-const { MerkleTree } = require("merkletreejs")
-
 /**
  * funds accounts with specified value for Mintable Token
  * The object consists of:
@@ -80,26 +76,6 @@ const setupEnvironment = async function (token_artifact, contract, token_owner, 
   return tokens
 }
 
-/**
- * Dev tool to register the multiCaller contract on the dFusion exchange.
- * Note: assumes tokens are registered.
- * @param snappInstance: dFusion - base contract address
- * @param tokenOwner: Someone who can mint requested token (to fund account)
- * @param tokens: tokens that multiCaller will have balance in
- * @param multiCaller: contract address
- */
-const setupMultiCaller = async function (snappInstance, tokenOwner, tokens, multiCaller) {
-  const amount = "300000000000000000000"
-  for (let i = 0; i < tokens.length; i++) {
-    await fundAccounts(tokenOwner, [multiCaller.address], tokens[i], amount)
-
-    const approveCalldata = tokens[i].contract.methods.approve(snappInstance.address, amount).encodeABI()
-    await multiCaller.executeWithCalldata(tokens[i].address, 1, approveCalldata)
-  }
-  const openAccountCallData = snappInstance.contract.methods.openAccount(11).encodeABI()
-  await multiCaller.executeWithCalldata(snappInstance.address, 1, openAccountCallData)
-}
-
 const jsonrpc = "2.0"
 const id = 0
 const send = function (method, params, web3Provider) {
@@ -136,21 +112,6 @@ const countDuplicates = function (obj, num) {
   return obj
 }
 
-/**
- * Given a sequence of index1, elements1, ..., indexN elementN this function returns
- * the corresponding MerkleTree of height 7.
- */
-const _generateMerkleTree = function (...args) {
-  const txs = Array(2 ** 7).fill(sha256(0x0))
-  for (let i = 0; i < args.length; i += 2) {
-    txs[args[i]] = args[i + 1]
-  }
-  return new MerkleTree(txs, sha256)
-}
-const generateMerkleTree = memoize(_generateMerkleTree, {
-  strategy: memoize.strategies.variadic,
-})
-
 const sendTxAndGetReturnValue = async function (method, ...args) {
   const result = await method.call(...args)
   await method(...args)
@@ -180,8 +141,6 @@ module.exports = {
   setupEnvironment,
   toHex,
   countDuplicates,
-  generateMerkleTree,
   partitionArray,
-  setupMultiCaller,
   sendTxAndGetReturnValue,
 }

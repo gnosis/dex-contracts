@@ -2,7 +2,7 @@ const BatchExchange = artifacts.require("BatchExchange")
 const BN = require("bn.js")
 const readline = require("readline")
 
-const { sendTxAndGetReturnValue, fetchTokenInfo } = require("../../test/utilities.js")
+const { sendTxAndGetReturnValue, fetchTokenInfo } = require("../test/utilities.js")
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -51,7 +51,7 @@ const argv = require("yargs")
   })
   .demand(["tokens", "accountId"])
   .help(
-    "Make sure that you have an RPC connection to the network in consideration. For network configurations, please see truffle-config.js Example usage \n   npx truffle exec scripts/stablex/place_spread_orders.js --tokens=2,3,4 --accountId 0 --spread 0.3 --validFrom 5"
+    "Make sure that you have an RPC connection to the network in consideration. For network configurations, please see truffle-config.js Example usage \n   npx truffle exec scripts/place_spread_orders.js --tokens=2,3,4 --accountId 0 --spread 0.3 --validFrom 5"
   )
   .version(false).argv
 
@@ -104,7 +104,7 @@ module.exports = async (callback) => {
       )
       console.log(`Successfully placed spread orders with IDs ${ids}`)
       console.log(`If this was undesired, these can be canceled as follows:\n
-        npx truffle exec scripts/stablex/cancel_order.js --accountId ${argv.accountId} --orderIds ${ids}`)
+        npx truffle exec scripts/cancel_order.js --accountId ${argv.accountId} --orderIds ${ids}`)
     }
 
     callback()

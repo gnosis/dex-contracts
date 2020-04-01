@@ -4,8 +4,8 @@ const MockContract = artifacts.require("MockContract")
 
 const BN = require("bn.js")
 
-const { decodeOrdersBN } = require("../../src/encoding")
-const { closeAuction } = require("../../scripts/stablex/utilities.js")
+const { decodeOrdersBN } = require("../src/encoding")
+const { closeAuction } = require("../scripts/utilities.js")
 const { setupGenericStableX } = require("./stablex_utils")
 
 const zero_address = "0x0000000000000000000000000000000000000000"

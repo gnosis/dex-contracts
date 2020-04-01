@@ -1,5 +1,4 @@
 contracts/Migrations.sol
-contracts/BatchExchangeViewer.sol
 
 .solhint.json
 .solhintignore

@@ -7682,13 +7682,6 @@ solidity-coverage@^0.7.2:
     solidity-parser-diligence "^0.4.16"
     web3 "1.2.6"
 
-solidity-multicall@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/solidity-multicall/-/solidity-multicall-1.0.0.tgz#6e5d79de8945a76004aec2a8dafbd6adbb08a497"
-  integrity sha512-vq4PbLUIZE/3Qh+Hvb+Hpcs/UaakO1q4+CqqQvVOZ10gz3x+SbcIkPfplGVJxhgl0yBj9jF3vMaX5bH8zf6Bjg==
-  dependencies:
-    truffle "^5.0.25"
-
 solidity-parser-antlr@^0.4.11:
   version "0.4.11"
   resolved "https://registry.yarnpkg.com/solidity-parser-antlr/-/solidity-parser-antlr-0.4.11.tgz#af43e1f13b3b88309a875455f5d6e565b05ee5f1"
@@ -8380,7 +8373,7 @@ truffle-plugin-verify@^0.3.10:
     querystring "0.2.0"
     sol-merger "2.0.1"
 
-truffle@^5.0.25, truffle@^5.1.19:
+truffle@^5.1.19:
   version "5.1.19"
   resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.1.19.tgz#daf0aca071b9e2cdd88f456f10c1a81e840794aa"
   integrity sha512-H4S7GbKCN56eW5ftLo+l160c+SLyF8C205hUF9VRfulxFBdXvmTIeHdRO/zcnBWiKfEbXzuHWSI9gyFkPtkvmw==

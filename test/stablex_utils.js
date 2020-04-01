@@ -1,4 +1,4 @@
-const { sendTxAndGetReturnValue } = require("../utilities")
+const { sendTxAndGetReturnValue } = require("./utilities")
 
 /**
  * @typedef Deposit
