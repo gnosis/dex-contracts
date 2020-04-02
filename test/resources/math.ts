@@ -1,7 +1,7 @@
 import assert from "assert";
 import BN from "bn.js";
 import {flat} from "./array-shims.js";
-import {Order, Solution, ObjectiveValueComputation} from "./examples";
+import {Order, Solution, ObjectiveValueComputation} from "./examples/model";
 
 /**
  * Converts the amount value to `ether` unit.

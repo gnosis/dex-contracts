@@ -1,5 +1,3 @@
-import assert from "assert";
-
 /**
  * A shim for the `flat()` method that creates a new array with all sub-array
  * elements concatenated into it recursively up to the specified depth

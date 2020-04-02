@@ -12,13 +12,14 @@ import {
   ObjectiveValueComputation,
   ComputedSolution,
   ComputedOrder,
-} from "./";
+} from "./model";
 
 /**
  * Generates a test case to be used for unit and e2e testing with the contract
  * with computed solution values and objective values.
  * @param {TestCaseInput} input The input to the test case
  * @param {boolean} [debug=false] Print debug information in case of
+ * @param {boolean} [strict=true] Throw when solution is determined to be invalid
  * @return {TestCase} The test case
  */
 export function generateTestCase(
@@ -109,7 +110,7 @@ export function generateTestCase(
 /**
  * Prints debug information for a test case.
  * @param {TestCase} testCase The test case
- * @param {BN[]|number[]} [orderIds] The optional order indices for display, defaults to [0...]
+ * @param {number[]} [orderIds] The optional order indices for display, defaults to [0...]
  * @param {string[]} [accounts] The optional accounts for display, defaults to [1...]
  */
 export function debugTestCase(
@@ -222,7 +223,7 @@ export function debugTestCase(
  * that thifrom  order indices as they are not known until runtime
  * @param {ComputedSolution} solution The computed solution
  * @param {string[]} accounts The order indices as they are on the contract
- * @param {BN[]|number[]} orderIds The order indices as they are on the contract
+ * @param {number[]} orderIds The order indices as they are on the contract
  * @return {SolutionParams} The parameters to submit the solution
  */
 export function solutionSubmissionParams(
