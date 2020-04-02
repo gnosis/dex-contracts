@@ -7,7 +7,7 @@ const ERC20Interface = artifacts.require("ERC20");
 
 const truffleAssert = require("truffle-assertions");
 
-import {closeAuction} from "../utilities";
+import {closeAuction} from "./utilities";
 import BN from "bn.js";
 
 contract("EpochTokenLocker", async (accounts) => {
