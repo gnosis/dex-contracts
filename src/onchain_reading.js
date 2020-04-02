@@ -8,15 +8,15 @@ const { decodeOrdersBN } = require("./encoding")
 const getOpenOrdersPaginated = async function* (contract, pageSize) {
   let nextPageUser = "0x0000000000000000000000000000000000000000"
   let nextPageUserOffset = 0
-  let lastPageSize = pageSize
+  let hasNextPage = true
 
-  while (lastPageSize == pageSize) {
+  while (hasNextPage) {
     const page = await contract.methods.getOpenOrderBookPaginated([], nextPageUser, nextPageUserOffset, pageSize).call()
     const elements = decodeOrdersBN(page.elements)
     yield elements
 
     //Update page info
-    lastPageSize = elements.length
+    hasNextPage = page.hasNextPage
     nextPageUser = page.nextPageUser
     nextPageUserOffset = page.nextPageUserOffset
   }
