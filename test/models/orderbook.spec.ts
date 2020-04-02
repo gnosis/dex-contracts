@@ -22,155 +22,198 @@ describe("Orderbook", () => {
       JSON.stringify({
         bids: [
           {price: 0.99, volume: 70},
-          {price: 0.9, volume: 80}
+          {price: 0.9, volume: 80},
         ],
         asks: [
           {price: 1.01, volume: 300},
           {price: 1.1, volume: 100},
-          {price: 1.2, volume: 200}
-        ]
+          {price: 1.2, volume: 200},
+        ],
       })
     );
   });
 
-  it("inverts by switching bid/asks and inverting prices", () => {
-    const orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+  describe("inverted", () => {
+    it("inverts by switching bid/asks and inverting prices", () => {
+      const orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
 
-    // Offering to sell 100 USDC for 2 DAI each, thus willing to buy 200 DAI for 50ç each
-    orderbook.addAsk(new Offer(new Fraction(2, 1), 100));
-    orderbook.addAsk(new Offer(new Fraction(1, 1), 200));
-    orderbook.addAsk(new Offer(new Fraction(4, 1), 300));
+      // Offering to sell 100 USDC for 2 DAI each, thus willing to buy 200 DAI for 50ç each
+      orderbook.addAsk(new Offer(new Fraction(2, 1), 100));
+      orderbook.addAsk(new Offer(new Fraction(1, 1), 200));
+      orderbook.addAsk(new Offer(new Fraction(4, 1), 300));
 
-    // Offering to buy 50 USDC for 50ç each, thus willing to sell 25 DAI for 2 USDC each
-    orderbook.addBid(new Offer(new Fraction(1, 2), 50));
-    orderbook.addBid(new Offer(new Fraction(1, 4), 80));
-    orderbook.addBid(new Offer(new Fraction(1, 4), 20));
+      // Offering to buy 50 USDC for 50ç each, thus willing to sell 25 DAI for 2 USDC each
+      orderbook.addBid(new Offer(new Fraction(1, 2), 50));
+      orderbook.addBid(new Offer(new Fraction(1, 4), 80));
+      orderbook.addBid(new Offer(new Fraction(1, 4), 20));
 
-    const inverse = orderbook.inverted();
+      const inverse = orderbook.inverted();
 
-    // Original didn't change
-    assert.equal(orderbook.baseToken, "USDC");
-    assert.equal(orderbook.quoteToken, "DAI");
+      // Original didn't change
+      assert.equal(orderbook.baseToken, "USDC");
+      assert.equal(orderbook.quoteToken, "DAI");
 
-    assert.equal(
-      JSON.stringify(orderbook.toJSON()),
-      JSON.stringify({
-        bids: [
-          {price: 0.5, volume: 50},
-          {price: 0.25, volume: 100}
-        ],
-        asks: [
-          {price: 1, volume: 200},
-          {price: 2, volume: 100},
-          {price: 4, volume: 300}
-        ]
-      })
-    );
+      assert.equal(
+        JSON.stringify(orderbook.toJSON()),
+        JSON.stringify({
+          bids: [
+            {price: 0.5, volume: 50},
+            {price: 0.25, volume: 100},
+          ],
+          asks: [
+            {price: 1, volume: 200},
+            {price: 2, volume: 100},
+            {price: 4, volume: 300},
+          ],
+        })
+      );
 
-    // Check inverse
-    assert.equal(inverse.baseToken, "DAI");
-    assert.equal(inverse.quoteToken, "USDC");
+      // Check inverse
+      assert.equal(inverse.baseToken, "DAI");
+      assert.equal(inverse.quoteToken, "USDC");
 
-    assert.equal(
-      JSON.stringify(inverse.toJSON()),
-      JSON.stringify({
-        bids: [
-          {price: 1, volume: 200},
-          {price: 0.5, volume: 200},
-          {price: 0.25, volume: 1200}
-        ],
-        asks: [
-          {price: 2, volume: 25},
-          {price: 4, volume: 25}
-        ]
-      })
-    );
-  });
+      assert.equal(
+        JSON.stringify(inverse.toJSON()),
+        JSON.stringify({
+          bids: [
+            {price: 1, volume: 200},
+            {price: 0.5, volume: 200},
+            {price: 0.25, volume: 1200},
+          ],
+          asks: [
+            {price: 2, volume: 25},
+            {price: 4, volume: 25},
+          ],
+        })
+      );
+    });
 
-  it("can add another orderbook by combining bids and asks", () => {
-    const first_orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
-    first_orderbook.addAsk(new Offer(new Fraction(11, 10), 50));
-    first_orderbook.addAsk(new Offer(new Fraction(12, 10), 150));
-    first_orderbook.addBid(new Offer(new Fraction(9, 10), 50));
-    first_orderbook.addBid(new Offer(new Fraction(99, 100), 80));
+    it("does not mutate original orderbook", () => {
+      const orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+      orderbook.addAsk(new Offer(new Fraction(2, 1), 100));
+      orderbook.addBid(new Offer(new Fraction(1, 4), 20));
 
-    const second_orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
-    second_orderbook.addAsk(new Offer(new Fraction(11, 10), 60));
-    second_orderbook.addAsk(new Offer(new Fraction(13, 10), 200));
-    second_orderbook.addBid(new Offer(new Fraction(9, 10), 50));
-    second_orderbook.addBid(new Offer(new Fraction(95, 100), 70));
-
-    first_orderbook.add(second_orderbook);
-
-    assert.equal(
-      JSON.stringify(first_orderbook.toJSON()),
-      JSON.stringify({
-        bids: [
-          {price: 0.99, volume: 80},
-          {price: 0.95, volume: 70},
-          {price: 0.9, volume: 100}
-        ],
-        asks: [
-          {price: 1.1, volume: 110},
-          {price: 1.2, volume: 150},
-          {price: 1.3, volume: 200}
-        ]
-      })
-    );
-  });
-
-  it("cannot add orderbooks for different token pairs", () => {
-    const first_orderbook = new Orderbook("DAI", "ETH");
-    const second_orderbook = new Orderbook("DAI", "USDC");
-
-    assert.throws(() => {
-      first_orderbook.add(second_orderbook);
+      const original_serialized = JSON.stringify(orderbook);
+      orderbook.inverted();
+      assert.equal(JSON.stringify(orderbook), original_serialized);
     });
   });
 
-  it("Can compute the transitive closure of two orderbooks", () => {
-    const first_orderbook = new Orderbook("ETH", "DAI", new Fraction(0, 1));
-    first_orderbook.addBid(new Offer(new Fraction(90, 1), 3));
-    first_orderbook.addBid(new Offer(new Fraction(95, 1), 2));
-    first_orderbook.addBid(new Offer(new Fraction(99, 1), 1));
-    first_orderbook.addAsk(new Offer(new Fraction(101, 1), 2));
-    first_orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
-    first_orderbook.addAsk(new Offer(new Fraction(110, 1), 3));
+  describe("add", () => {
+    it("can add another orderbook by combining bids and asks", () => {
+      const first_orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+      first_orderbook.addAsk(new Offer(new Fraction(11, 10), 50));
+      first_orderbook.addAsk(new Offer(new Fraction(12, 10), 150));
+      first_orderbook.addBid(new Offer(new Fraction(9, 10), 50));
+      first_orderbook.addBid(new Offer(new Fraction(99, 100), 80));
 
-    const second_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
-    second_orderbook.addBid(new Offer(new Fraction(99, 100), 100));
-    second_orderbook.addBid(new Offer(new Fraction(9, 10), 200));
-    second_orderbook.addAsk(new Offer(new Fraction(101, 100), 100));
-    second_orderbook.addAsk(new Offer(new Fraction(105, 100), 200));
+      const second_orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+      second_orderbook.addAsk(new Offer(new Fraction(11, 10), 60));
+      second_orderbook.addAsk(new Offer(new Fraction(13, 10), 200));
+      second_orderbook.addBid(new Offer(new Fraction(9, 10), 50));
+      second_orderbook.addBid(new Offer(new Fraction(95, 100), 70));
 
-    const closure = first_orderbook.transitiveClosure(second_orderbook);
+      first_orderbook.add(second_orderbook);
 
-    assert.equal(closure.pair(), "ETH/USDC");
-    assert.equal(
-      JSON.stringify(closure.toJSON()),
-      JSON.stringify({
-        // The best bid eth_dai has enough liquidity on the best dai_usdc bid
-        // with 1 DAI remaining to be matched from the second best eth_dai bid (190 DAI).
-        // The remainder of the second best eth_dai bid (189 DAI) gets matched with the second
-        // best dai_usdc bid (200 DAI), leaving 11 DAI for the worst eth_dai bid (270 DAI).
-        // The remaining 259 DAI are unmatchable.
-        bids: [
-          {price: 98.01, volume: 1}, // best eth_dai * best dai_usdc
-          {price: 94.05, volume: 1 / 95}, // 2nd best eth_dai * best dai_usdc (190 & 1 DAI remaining at 95 DAI/ETH)
-          {price: 85.5, volume: 189 / 95}, // 2nd best eth_dai * 2nd best dai_usdc (189 & 200 DAI remaining at 95 DAI/ETH)
-          {price: 81, volume: 11 / 90} // 3rd best eth_dai * 2nd best dai usdc (270 & 11 DAI remaining at 90 DAI/ETH)
-        ],
-        // The best ask eth_dai has more liquidity (202 DAI) than the best dai_usdc ask (100 DAI),
-        // with 102 DAI remaining to be matched from the second best dai_usdc ask (200 DAI).
-        // The remainder of the second best dai_usd ask (98 DAI) get matched with the second best
-        // eth_dai ask (105 DAI), leaving 7 DAI + the third best eth_dai ask (330 DAI) unmatchable.
-        asks: [
-          {price: 102.01, volume: 100 / 101}, // best eth_dai * best dai_usdc
-          {price: 106.05, volume: 102 / 101}, // best eth_dai * 2nd best dai_usdc
-          {price: 110.25, volume: 98 / 105} // 2nd best eth_dai * 2nd best dai_usdc
-        ]
-      })
-    );
+      assert.equal(
+        JSON.stringify(first_orderbook.toJSON()),
+        JSON.stringify({
+          bids: [
+            {price: 0.99, volume: 80},
+            {price: 0.95, volume: 70},
+            {price: 0.9, volume: 100},
+          ],
+          asks: [
+            {price: 1.1, volume: 110},
+            {price: 1.2, volume: 150},
+            {price: 1.3, volume: 200},
+          ],
+        })
+      );
+    });
+
+    it("cannot add orderbooks for different token pairs", () => {
+      const first_orderbook = new Orderbook("DAI", "ETH");
+      const second_orderbook = new Orderbook("DAI", "USDC");
+
+      assert.throws(() => {
+        first_orderbook.add(second_orderbook);
+      });
+    });
+  });
+  describe("transitive closure", () => {
+    it("Can compute the transitive closure of two orderbooks", () => {
+      const first_orderbook = new Orderbook("ETH", "DAI", new Fraction(0, 1));
+      first_orderbook.addBid(new Offer(new Fraction(90, 1), 3));
+      first_orderbook.addBid(new Offer(new Fraction(95, 1), 2));
+      first_orderbook.addBid(new Offer(new Fraction(99, 1), 1));
+      first_orderbook.addAsk(new Offer(new Fraction(101, 1), 2));
+      first_orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
+      first_orderbook.addAsk(new Offer(new Fraction(110, 1), 3));
+
+      const second_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+      second_orderbook.addBid(new Offer(new Fraction(99, 100), 100));
+      second_orderbook.addBid(new Offer(new Fraction(9, 10), 200));
+      second_orderbook.addAsk(new Offer(new Fraction(101, 100), 100));
+      second_orderbook.addAsk(new Offer(new Fraction(105, 100), 200));
+
+      const closure = first_orderbook.transitiveClosure(second_orderbook);
+
+      assert.equal(closure.pair(), "ETH/USDC");
+      assert.equal(
+        JSON.stringify(closure.toJSON()),
+        JSON.stringify({
+          // The best bid eth_dai has enough liquidity on the best dai_usdc bid
+          // with 1 DAI remaining to be matched from the second best eth_dai bid (190 DAI).
+          // The remainder of the second best eth_dai bid (189 DAI) gets matched with the second
+          // best dai_usdc bid (200 DAI), leaving 11 DAI for the worst eth_dai bid (270 DAI).
+          // The remaining 259 DAI are unmatchable.
+          bids: [
+            {price: 98.01, volume: 1}, // best eth_dai * best dai_usdc
+            {price: 94.05, volume: 1 / 95}, // 2nd best eth_dai * best dai_usdc (190 & 1 DAI remaining at 95 DAI/ETH)
+            {price: 85.5, volume: 189 / 95}, // 2nd best eth_dai * 2nd best dai_usdc (189 & 200 DAI remaining at 95 DAI/ETH)
+            {price: 81, volume: 11 / 90}, // 3rd best eth_dai * 2nd best dai usdc (270 & 11 DAI remaining at 90 DAI/ETH)
+          ],
+          // The best ask eth_dai has more liquidity (202 DAI) than the best dai_usdc ask (100 DAI),
+          // with 102 DAI remaining to be matched from the second best dai_usdc ask (200 DAI).
+          // The remainder of the second best dai_usd ask (98 DAI) get matched with the second best
+          // eth_dai ask (105 DAI), leaving 7 DAI + the third best eth_dai ask (330 DAI) unmatchable.
+          asks: [
+            {price: 102.01, volume: 100 / 101}, // best eth_dai * best dai_usdc
+            {price: 106.05, volume: 102 / 101}, // best eth_dai * 2nd best dai_usdc
+            {price: 110.25, volume: 98 / 105}, // 2nd best eth_dai * 2nd best dai_usdc
+          ],
+        })
+      );
+    });
+
+    it("does not modify the original orderbook when computing the closure", () => {
+      const first_orderbook = new Orderbook("ETH", "DAI", new Fraction(0, 1));
+      first_orderbook.addBid(new Offer(new Fraction(90, 1), 3));
+      first_orderbook.addBid(new Offer(new Fraction(95, 1), 2));
+      first_orderbook.addBid(new Offer(new Fraction(99, 1), 1));
+      first_orderbook.addAsk(new Offer(new Fraction(101, 1), 2));
+      first_orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
+      first_orderbook.addAsk(new Offer(new Fraction(110, 1), 3));
+
+      const second_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+      second_orderbook.addBid(new Offer(new Fraction(99, 100), 100));
+      second_orderbook.addBid(new Offer(new Fraction(9, 10), 200));
+      second_orderbook.addAsk(new Offer(new Fraction(101, 100), 100));
+      second_orderbook.addAsk(new Offer(new Fraction(105, 100), 200));
+
+      const first_serialized_original = JSON.stringify(first_orderbook);
+      const second_serialized_original = JSON.stringify(second_orderbook);
+
+      // Compute the closure
+      first_orderbook.transitiveClosure(second_orderbook);
+
+      assert.equal(JSON.stringify(first_orderbook), first_serialized_original);
+      assert.equal(
+        JSON.stringify(second_orderbook),
+        second_serialized_original
+      );
+    });
   });
 
   it("cannot compute the transitive closure for non-transient orderbooks pairs", () => {
@@ -249,7 +292,7 @@ describe("Orderbook", () => {
         JSON.stringify(orderbook.reduced().toJSON()),
         JSON.stringify({
           bids: [{price: 101, volume: 1}],
-          asks: [{price: 105, volume: 1}]
+          asks: [{price: 105, volume: 1}],
         })
       );
     });
@@ -266,7 +309,7 @@ describe("Orderbook", () => {
         JSON.stringify(orderbook.reduced().toJSON()),
         JSON.stringify({
           bids: [],
-          asks: []
+          asks: [],
         })
       );
     });
@@ -295,7 +338,7 @@ describe("Orderbook", () => {
         JSON.stringify(orderbook.toJSON()),
         JSON.stringify({
           bids: [{price: 99, volume: 99}],
-          asks: [{price: 200 / 0.99, volume: 198}]
+          asks: [{price: 200 / 0.99, volume: 198}],
         })
       );
 
@@ -306,7 +349,7 @@ describe("Orderbook", () => {
           // Inverse of 200 without fees is 0.005 becomes 0.00495 with fee
           bids: [{price: 0.00495, volume: 39600}],
           // Inverse of 11 without fees is 0.01 becomes 0.0101... with fee
-          asks: [{price: 0.01 / 0.99, volume: 9900}]
+          asks: [{price: 0.01 / 0.99, volume: 9900}],
         })
       );
     });
@@ -331,7 +374,7 @@ describe("Orderbook", () => {
         JSON.stringify(first_orderbook.toJSON()),
         JSON.stringify({
           bids: [{price: 99, volume: 198}],
-          asks: []
+          asks: [],
         })
       );
     });
@@ -346,7 +389,7 @@ describe("Orderbook", () => {
         JSON.stringify(reduced.toJSON()),
         JSON.stringify({
           bids: [{price: 99, volume: 99}],
-          asks: [{price: 200 / 0.99, volume: 198}]
+          asks: [{price: 200 / 0.99, volume: 198}],
         })
       );
     });
@@ -371,9 +414,22 @@ describe("Orderbook", () => {
         JSON.stringify(closure.toJSON()),
         JSON.stringify({
           bids: [{price: 0.99 * 0.99, volume: 99}],
-          asks: []
+          asks: [],
         })
       );
+    });
+  });
+
+  describe("clone", () => {
+    it("Make a deep copy of the original orderbook", () => {
+      const orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+      orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
+
+      const copy = orderbook.clone();
+      assert.deepEqual(copy, orderbook);
+
+      orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
+      assert.notDeepEqual(copy, orderbook);
     });
   });
 });
@@ -407,7 +463,7 @@ describe("transitiveOrderbook", () => {
       new Map([
         [direct.pair(), direct],
         [first_orderbook.pair(), first_orderbook],
-        [second_orderbook.pair(), second_orderbook]
+        [second_orderbook.pair(), second_orderbook],
       ]),
       "DAI",
       "ETH",
@@ -420,8 +476,8 @@ describe("transitiveOrderbook", () => {
         bids: [],
         asks: [
           {price: 0.01, volume: 100},
-          {price: 0.0125, volume: 80}
-        ]
+          {price: 0.0125, volume: 80},
+        ],
       })
     );
   });
@@ -444,7 +500,7 @@ describe("transitiveOrderbook", () => {
         [direct.pair(), direct],
         [first_orderbook.pair(), first_orderbook],
         [second_orderbook.pair(), second_orderbook],
-        [third_orderbook.pair(), third_orderbook]
+        [third_orderbook.pair(), third_orderbook],
       ]),
       "DAI",
       "ETH",
@@ -457,8 +513,8 @@ describe("transitiveOrderbook", () => {
         bids: [],
         asks: [
           {price: 0.01, volume: 100},
-          {price: 0.0125, volume: 80}
-        ]
+          {price: 0.0125, volume: 80},
+        ],
       })
     );
   });
@@ -473,7 +529,7 @@ describe("transitiveOrderbook", () => {
     const transitive = transitiveOrderbook(
       new Map([
         [first_orderbook.pair(), first_orderbook],
-        [second_orderbook.pair(), second_orderbook]
+        [second_orderbook.pair(), second_orderbook],
       ]),
       "DAI",
       "ETH",
@@ -484,8 +540,43 @@ describe("transitiveOrderbook", () => {
       JSON.stringify(transitive),
       JSON.stringify({
         bids: [],
-        asks: [{price: 0.01, volume: 100}]
+        asks: [{price: 0.01, volume: 100}],
       })
     );
+  });
+
+  it("does not modify the underlying orderbooks", () => {
+    const direct = new Orderbook("DAI", "ETH", new Fraction(0, 1));
+    direct.addAsk(new Offer(new Fraction(1, 80), 80));
+    const direct_serialized = JSON.stringify(direct);
+
+    const first_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+    first_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
+    const first_serialized = JSON.stringify(first_orderbook);
+
+    const second_orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+    second_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
+    const second_serialized = JSON.stringify(second_orderbook);
+
+    const third_orderbook = new Orderbook("USDT", "ETH", new Fraction(0, 1));
+    third_orderbook.addAsk(new Offer(new Fraction(1, 100), 100));
+    const third_serialized = JSON.stringify(third_orderbook);
+
+    const transitive = transitiveOrderbook(
+      new Map([
+        [direct.pair(), direct],
+        [first_orderbook.pair(), first_orderbook],
+        [second_orderbook.pair(), second_orderbook],
+        [third_orderbook.pair(), third_orderbook],
+      ]),
+      "DAI",
+      "ETH",
+      2
+    );
+
+    assert.equal(JSON.stringify(direct), direct_serialized);
+    assert.equal(JSON.stringify(first_orderbook), first_serialized);
+    assert.equal(JSON.stringify(second_orderbook), second_serialized);
+    assert.equal(JSON.stringify(third_orderbook), third_serialized);
   });
 });

@@ -9,8 +9,8 @@
 module.exports = {
   BatchExchange: require("../build/contracts/BatchExchange.json"),
   BatchExchangeViewer: require("../build/contracts/BatchExchangeViewer.json"),
-  ...require("../build/common/fraction.js"),
-  ...require("../build/common/orderbook.js"),
+  ...require("../build/common/src/fraction.js"),
+  ...require("../build/common/src/orderbook.js"),
   ...require("./encoding.js"),
   ...require("./onchain_reading.js"),
 }
