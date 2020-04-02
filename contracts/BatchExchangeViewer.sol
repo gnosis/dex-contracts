@@ -47,9 +47,7 @@ contract BatchExchangeViewer {
         uint32 batch = batchExchange.getCurrentBatchId();
         return
             getFilteredOrdersPaginated(
-                batch,
-                batch,
-                batch + 1,
+                [batch, batch, batch + 1],
                 getTokenIdsFromAdresses(tokenFilter),
                 previousPageUser,
                 previousPageUserOffset,
@@ -83,9 +81,7 @@ contract BatchExchangeViewer {
         uint32 batch = batchExchange.getCurrentBatchId();
         return
             getFilteredOrdersPaginated(
-                batch - 1,
-                batch - 1,
-                batch,
+                [batch - 1, batch - 1, batch],
                 getTokenIdsFromAdresses(tokenFilter),
                 previousPageUser,
                 previousPageUserOffset,
@@ -94,9 +90,11 @@ contract BatchExchangeViewer {
     }
 
     /** @dev Queries a page in the list of all orders
-     *  @param maxValidFrom all returned orders will have a validFrom <= this value (they were placed at or before that batch)
-     *  @param minValidUntil all returned orders will have a validUntil >= this value (validity ends at or after that batch)
-     *  @param sellBalanceTargetBatchIndex the batchIndex at which we are expecting the sellTokenBalance to be valid
+     *  @param batchIds Triple with the following values [maxValidFrom, minValidUntil, sellBalanceTargetBatchIndex]
+     *  Batched together as we are running out of local variables (Solidity does not compile with Stack too deep error)
+     *      - maxValidFrom: all returned orders will have a validFrom <= this value (they were placed at or before that batch)
+     *      - minValidUntil all returned orders will have a validUntil >= this value (validity ends at or after that batch)
+     *      - sellBalanceTargetBatchIndex the batchIndex at which we are expecting the sellTokenBalance to be valid
         (e.g. in the current live orderbook we want to include sellBalances that are valid in currentBatch + 1).
      *  @param tokenFilter all returned order will have buy *and* sell token from this list (leave empty for "no filter")
      *  @param previousPageUser address taken from nextPageUser return value from last page (address(0) for first page)
@@ -106,14 +104,14 @@ contract BatchExchangeViewer {
      *  maxPageSize if remaining gas is low.
      */
     function getFilteredOrdersPaginated(
-        uint32 maxValidFrom,
-        uint32 minValidUntil,
-        uint32 sellBalanceTargetBatchIndex,
+        uint32[3] memory batchIds, // batched to save local variables
         uint16[] memory tokenFilter,
         address previousPageUser,
         uint16 previousPageUserOffset,
         uint16 maxPageSize
     ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
+        elements = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
+        uint256 elementCount = 0;
         nextPageUser = previousPageUser;
         nextPageUserOffset = previousPageUserOffset;
         hasNextPage = true;
@@ -126,13 +124,14 @@ contract BatchExchangeViewer {
             for (uint16 index = 0; index < unfiltered.length / AUCTION_ELEMENT_WIDTH; index++) {
                 // make sure we don't overflow index * AUCTION_ELEMENT_WIDTH
                 bytes memory element = unfiltered.slice(uint256(index) * AUCTION_ELEMENT_WIDTH, AUCTION_ELEMENT_WIDTH);
-                element = updateSellTokenBalanceForBatchId(element, sellBalanceTargetBatchIndex);
+                element = updateSellTokenBalanceForBatchId(element, batchIds[2]);
                 if (
-                    maxValidFrom >= getValidFrom(element) &&
-                    minValidUntil <= getValidUntil(element) &&
+                    batchIds[0] >= getValidFrom(element) &&
+                    batchIds[1] <= getValidUntil(element) &&
                     matchesTokenFilter(getBuyToken(element), getSellToken(element), tokenFilter)
                 ) {
-                    elements = elements.concat(element);
+                    copyInPlace(element, elements, elementCount * AUCTION_ELEMENT_WIDTH);
+                    elementCount += 1;
                 }
                 // Update pagination info
                 address user = getUser(element);
@@ -142,12 +141,13 @@ contract BatchExchangeViewer {
                     nextPageUserOffset = 1;
                     nextPageUser = user;
                 }
-                if (elements.length / AUCTION_ELEMENT_WIDTH >= maxPageSize) {
+                if (elementCount >= maxPageSize) {
                     // We are at capacity, return
                     return (elements, hasNextPage, nextPageUser, nextPageUserOffset);
                 }
             }
         }
+        setLength(elements, elementCount * AUCTION_ELEMENT_WIDTH);
         return (elements, hasNextPage, nextPageUser, nextPageUserOffset);
     }
 
@@ -171,9 +171,7 @@ contract BatchExchangeViewer {
             bytes memory element = batchExchange.getEncodedUserOrdersPaginated(currentUser, currentOffset, 1);
             if (element.length > 0) {
                 currentOffset += 1;
-                for (uint256 i = 0; i < element.length; i++) {
-                    elements[(index * AUCTION_ELEMENT_WIDTH) + i] = element[i];
-                }
+                copyInPlace(element, elements, index * AUCTION_ELEMENT_WIDTH);
                 index += 1;
             } else {
                 currentOffset = 0;
@@ -274,6 +272,12 @@ contract BatchExchangeViewer {
     function setLength(bytes memory buffer, uint256 length) public pure {
         assembly {
             mstore(buffer, length)
+        }
+    }
+
+    function copyInPlace(bytes memory source, bytes memory destination, uint256 offset) public pure {
+        for (uint256 i = 0; i < source.length; i++) {
+            destination[offset + i] = source[i];
         }
     }
 }
