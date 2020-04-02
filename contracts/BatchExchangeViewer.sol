@@ -155,19 +155,19 @@ contract BatchExchangeViewer {
      * BatchExchange.getEncodedUsersPaginated but uses less memory and thus is more gas efficient.
      * @param previousPageUser address of last user received in the previous page (address(0) for first page)
      * @param previousPageUserOffset the number of orders received for the last user on the previous page (0 for first page).
-     * @param maxPageSize uint determining the count of orders to be returned per page
+     * @param pageSize uint determining the count of orders to be returned per page
      * @return encoded bytes representing a page of orders ordered by (user, index)
      */
-    function getEncodedOrdersPaginated(address previousPageUser, uint16 previousPageUserOffset, uint256 maxPageSize)
+    function getEncodedOrdersPaginated(address previousPageUser, uint16 previousPageUserOffset, uint256 pageSize)
         public
         view
         returns (bytes memory)
     {
-        bytes memory elements = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
+        bytes memory elements = new bytes(pageSize * AUCTION_ELEMENT_WIDTH);
         uint16 currentOffset = previousPageUserOffset;
         uint256 index = 0;
         address currentUser = previousPageUser;
-        while (index < maxPageSize) {
+        while (index < pageSize) {
             bytes memory element = batchExchange.getEncodedUserOrdersPaginated(currentUser, currentOffset, 1);
             if (element.length > 0) {
                 currentOffset += 1;
