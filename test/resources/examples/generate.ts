@@ -17,10 +17,10 @@ import {
 /**
  * Generates a test case to be used for unit and e2e testing with the contract
  * with computed solution values and objective values.
- * @param {TestCaseInput} input The input to the test case
- * @param {boolean} [debug=false] Print debug information in case of
- * @param {boolean} [strict=true] Throw when solution is determined to be invalid
- * @return {TestCase} The test case
+ * @param input The input to the test case
+ * @param debug Print debug information in case of
+ * @param strict Throw when solution is determined to be invalid
+ * @return The test case
  */
 export function generateTestCase(
   input: TestCaseInput,
@@ -109,9 +109,9 @@ export function generateTestCase(
 
 /**
  * Prints debug information for a test case.
- * @param {TestCase} testCase The test case
- * @param {number[]} [orderIds] The optional order indices for display, defaults to [0...]
- * @param {string[]} [accounts] The optional accounts for display, defaults to [1...]
+ * @param testCase The test case
+ * @param [orderIds] The optional order indices for display, defaults to [0...]
+ * @param [accounts] The optional accounts for display, defaults to [1...]
  */
 export function debugTestCase(
   testCase: TestCase,
@@ -208,23 +208,12 @@ export function debugTestCase(
 }
 
 /**
- * @typedef SolutionParam
- * @type {object}
- * @property {BN} objectiveValue The computed objective value for the solution
- * @property {string[]} owners The account addresses for thr order orners
- * @property {string[]} touchedorderIds The indices of touched orders
- * @property {BN[]} volumes The buy volumes
- * @property {BN[]} prices The prices of touched tokens
- * @property {number[]} tokenIdsForPrice The ids of the touched tokens
- */
-
-/**
  * Generates `submitSolution` parameters for a given computed solution. Note
  * that thifrom  order indices as they are not known until runtime
- * @param {ComputedSolution} solution The computed solution
- * @param {string[]} accounts The order indices as they are on the contract
- * @param {number[]} orderIds The order indices as they are on the contract
- * @return {SolutionParams} The parameters to submit the solution
+ * @param solution The computed solution
+ * @param accounts The order indices as they are on the contract
+ * @param orderIds The order indices as they are on the contract
+ * @return The parameters to submit the solution
  */
 export function solutionSubmissionParams(
   solution: ComputedSolution,

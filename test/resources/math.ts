@@ -5,8 +5,8 @@ import {Order, Solution, ObjectiveValueComputation} from "./examples/model";
 
 /**
  * Converts the amount value to `ether` unit.
- * @param {number} value The amount to convert
- * @return {BN} The value in `ether` as a bignum
+ * @param value The amount to convert
+ * @return The value in `ether` as a bignum
  */
 export function toETH(value: number) {
   const GWEI = 1000000000;
@@ -15,21 +15,19 @@ export function toETH(value: number) {
 
 /**
  * The fee denominator used for calculating fees.
- * @type {BN}
  */
 const FEE_DENOMINATOR = new BN(1000);
 
 /**
  * The fee denominator minus one.
- * @type {BN}
  */
 const FEE_DENOMINATOR_MINUS_ONE = FEE_DENOMINATOR.sub(new BN(1));
 
 /**
  * Removes fees to the specified value `n` times.
- * @param {BN} x The value to apply the fee to
- * @param {number} [n=1] The number of times to apply the fee, must be greater than 0
- * @return {BN} The value minus fees
+ * @param x The value to apply the fee to
+ * @param n The number of times to apply the fee, must be greater than 0
+ * @return The value minus fees
  */
 export function feeSubtracted(x: BN, n = 1): BN {
   const result = x.mul(FEE_DENOMINATOR_MINUS_ONE).div(FEE_DENOMINATOR);
@@ -38,8 +36,8 @@ export function feeSubtracted(x: BN, n = 1): BN {
 
 /**
  * Adds fees to the specified.
- * @param {BN} x The value to apply the fee to
- * @return {BN} The value plus fees
+ * @param x The value to apply the fee to
+ * @return The value plus fees
  */
 export function feeAdded(x: BN): BN {
   return x.mul(FEE_DENOMINATOR).div(FEE_DENOMINATOR_MINUS_ONE);
@@ -55,10 +53,10 @@ export const ERROR_EPSILON = new BN(999000);
 /**
  * Calculates the executed buy amout given a buy volume and the settled buy and
  * sell prices.
- * @param {BN} executedBuyAmount The executed buy amount
- * @param {BN} buyTokenPrice The buy token price
- * @param {BN} sellTokenPrice The sell token price
- * @return {BN} The value plus fees
+ * @param executedBuyAmount The executed buy amount
+ * @param buyTokenPrice The buy token price
+ * @param sellTokenPrice The sell token price
+ * @return The value plus fees
  */
 export function getExecutedSellAmount(
   executedBuyAmount: BN,
@@ -75,10 +73,10 @@ export function getExecutedSellAmount(
 /**
  * Calculates the utility of an order given an executed buy amount and settled
  * solution prices.
- * @param {Order} order The order
- * @param {BN} executedBuyAmount The executed buy amount
- * @param {BN[]} prices The prices
- * @return {BN} The order's utility
+ * @param order The order
+ * @param executedBuyAmount The executed buy amount
+ * @param prices The prices
+ * @return The order's utility
  */
 export function orderUtility(
   order: Order,
@@ -113,10 +111,10 @@ export function orderUtility(
 /**
  * Calculates the disregarded utility of an order given an executed buy amount
  * and settled solution prices.
- * @param {Order} order The order
- * @param {BN} executedBuyAmount The executed buy amount
- * @param {BN[]} prices The prices
- * @return {BN} The order's disregarded utility
+ * @param order The order
+ * @param executedBuyAmount The executed buy amount
+ * @param prices The prices
+ * @return The order's disregarded utility
  */
 export function orderDisregardedUtility(
   order: Order,
@@ -155,9 +153,9 @@ export function orderDisregardedUtility(
 /**
  * Calculates the total objective value for the specified solution given the
  * order book.
- * @param {Order[]} orders The orders
- * @param {Solution} solution The solution
- * @return {BN} The solution's objective value
+ * @param orders The orders
+ * @param solution The solution
+ * @return The solution's objective value
  */
 export function solutionObjectiveValue(
   orders: Order[],
@@ -169,10 +167,10 @@ export function solutionObjectiveValue(
 /**
  * Calculates the solutions objective value returning a computation object with
  * all the intermediate values - useful for debugging.
- * @param {Order[]} orders The orders
- * @param {Solution} solution The solution
- * @param {boolean} [strict=true] Throw when solution is determined to be invalid
- * @return {ObjectiveValueComputation} The solution's objective value computation object
+ * @param orders The orders
+ * @param solution The solution
+ * @param strict Throw when solution is determined to be invalid
+ * @return The solution's objective value computation object
  */
 export function solutionObjectiveValueComputation(
   orders: Order[],
