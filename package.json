@@ -78,7 +78,7 @@
     "@gnosis.pm/owl-token": "^3.1.0",
     "@gnosis.pm/solidity-data-structures": "^1.2.4",
     "@gnosis.pm/util-contracts": "^2.0.6",
-    "@openeth/truffle-typings": "^0.0.1",
+    "@openeth/truffle-typings": "^0.0.3",
     "@truffle/contract": "^4.1.15",
     "@types/bn.js": "^4.11.6",
     "@types/chai": "^4.2.11",
