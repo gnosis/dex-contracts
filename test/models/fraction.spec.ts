@@ -117,10 +117,7 @@ describe("Fraction", () => {
       const f2 = new Fraction(tenPow18, tenPow18);
 
       assert.equal(
-        f1
-          .sub(f2)
-          .toBN()
-          .toString(),
+        f1.sub(f2).toBN().toString(),
         tenPow18.sub(new BN(1)).toString()
       );
     });
@@ -151,6 +148,17 @@ describe("Fraction", () => {
     it("Can serialize large number", () => {
       const f = new Fraction(tenPow18, 1);
       assert.equal(f.toNumber(), 1e18);
+    });
+  });
+
+  describe("clone", () => {
+    it("creates a deep copy", () => {
+      const original = new Fraction(1, 2);
+      const serialized = JSON.stringify(original);
+
+      const clone = original.clone();
+      clone.mul(new Fraction(1, 2));
+      assert.equal(JSON.stringify(original), serialized);
     });
   });
 });

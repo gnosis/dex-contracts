@@ -17,6 +17,10 @@ export class Offer {
   toJSON() {
     return {price: this.price, volume: this.volume};
   }
+
+  clone() {
+    return new Offer(this.price.clone(), this.volume.clone());
+  }
 }
 
 export class Orderbook {
@@ -73,11 +77,7 @@ export class Orderbook {
    * by switching bids/asks and recomputing price/volume to the new reference token.
    */
   inverted() {
-    const result = new Orderbook(
-      this.quoteToken,
-      this.baseToken,
-      new Fraction(1, 1).sub(this.remainingFractionAfterFee)
-    );
+    const result = new Orderbook(this.quoteToken, this.baseToken, this.fee());
     result.bids = invertPricePoints(this.asks, this.remainingFractionAfterFee);
     result.asks = invertPricePoints(
       this.bids,
@@ -213,12 +213,12 @@ export class Orderbook {
     const result = new Orderbook(
       this.baseToken,
       orderbook.quoteToken,
-      new Fraction(1, 1).sub(this.remainingFractionAfterFee)
+      this.fee()
     );
 
     // Create a copy here so original orders stay untouched
-    const left_asks = Array.from(this.asks.values());
-    const right_asks = Array.from(orderbook.asks.values());
+    const left_asks = Array.from(this.asks.values(), (o) => o.clone());
+    const right_asks = Array.from(orderbook.asks.values(), (o) => o.clone());
 
     left_asks.sort(sortOffersAscending);
     right_asks.sort(sortOffersAscending);
@@ -256,6 +256,17 @@ export class Orderbook {
 
     return result;
   }
+
+  fee() {
+    return new Fraction(1, 1).sub(this.remainingFractionAfterFee);
+  }
+
+  clone() {
+    const result = new Orderbook(this.baseToken, this.quoteToken, this.fee());
+    this.bids.forEach((o) => addOffer(o, result.bids));
+    this.asks.forEach((o) => addOffer(o, result.asks));
+    return result;
+  }
 }
 
 /**
@@ -274,7 +285,7 @@ export function transitiveOrderbook(
 ) {
   const complete_orderbooks = new Map();
   direct_orderbooks.forEach((book) => {
-    complete_orderbooks.set(book.pair(), book);
+    complete_orderbooks.set(book.pair(), book.clone());
     // If inverse pair doesn't exist we will create an empty one
     if (!direct_orderbooks.has(book.inverted().pair())) {
       const empty_book = new Orderbook(book.quoteToken, book.baseToken);

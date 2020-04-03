@@ -77,4 +77,8 @@ export class Fraction {
   toJSON() {
     return this.toNumber();
   }
+
+  clone() {
+    return new Fraction(this.numerator.clone(), this.denominator.clone());
+  }
 }
