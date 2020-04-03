@@ -22,7 +22,7 @@ const send = function (method: string, params: any, web3Provider: Web3) {
 // Wait for n blocks to pass
 /**
  * Wait for n (evm) seconds to pass
- * @param seconds: int
+ * @param seconds: time to wait
  * @param web3Provider: potentially different in contract tests and system end-to-end testing.
  */
 export const waitForNSeconds = async function (
