@@ -26,7 +26,7 @@ contract BatchExchangeViewer {
      *  @return encoded bytes representing orders, maxed at 5000 elements
      */
     function getOpenOrderBook(address[] memory tokenFilter) public view returns (bytes memory) {
-        (bytes memory elements, , ) = getOpenOrderBookPaginated(tokenFilter, address(0), 0, LARGE_PAGE_SIZE);
+        (bytes memory elements, , , ) = getOpenOrderBookPaginated(tokenFilter, address(0), 0, LARGE_PAGE_SIZE);
         require(elements.length < LARGE_PAGE_SIZE * AUCTION_ELEMENT_WIDTH, "Orderbook too large, use paginated view functions");
         return elements;
     }
@@ -35,15 +35,15 @@ contract BatchExchangeViewer {
      *  @param tokenFilter all returned order will have buy *and* sell token from this list (leave empty for "no filter")
      *  @param previousPageUser address taken from nextPageUser return value from last page (address(0) for first page)
      *  @param previousPageUserOffset offset taken nextPageUserOffset return value from last page (0 for first page)
-     *  @param pageSize count of elements to be returned per page (same value is used for subqueries on the exchange)
+     *  @param maxPageSize count of elements to be returned per page (same value is used for subqueries on the exchange)
      *  @return encoded bytes representing orders and page information for next page
      */
     function getOpenOrderBookPaginated(
         address[] memory tokenFilter,
         address previousPageUser,
         uint16 previousPageUserOffset,
-        uint16 pageSize
-    ) public view returns (bytes memory elements, address nextPageUser, uint16 nextPageUserOffset) {
+        uint16 maxPageSize
+    ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
         uint32 batch = batchExchange.getCurrentBatchId();
         return
             getFilteredOrdersPaginated(
@@ -53,7 +53,7 @@ contract BatchExchangeViewer {
                 getTokenIdsFromAdresses(tokenFilter),
                 previousPageUser,
                 previousPageUserOffset,
-                pageSize
+                maxPageSize
             );
     }
 
@@ -62,7 +62,7 @@ contract BatchExchangeViewer {
      *  @return encoded bytes representing orders, maxed at 5000 elements
      */
     function getFinalizedOrderBook(address[] memory tokenFilter) public view returns (bytes memory) {
-        (bytes memory elements, , ) = getFinalizedOrderBookPaginated(tokenFilter, address(0), 0, LARGE_PAGE_SIZE);
+        (bytes memory elements, , , ) = getFinalizedOrderBookPaginated(tokenFilter, address(0), 0, LARGE_PAGE_SIZE);
         require(elements.length < LARGE_PAGE_SIZE * AUCTION_ELEMENT_WIDTH, "Orderbook too large, use paginated view functions");
         return elements;
     }
@@ -71,15 +71,15 @@ contract BatchExchangeViewer {
      *  @param tokenFilter all returned order will have buy *and* sell token from this list (leave empty for "no filter")
      *  @param previousPageUser address taken from nextPageUser return value from last page (address(0) for first page)
      *  @param previousPageUserOffset offset taken nextPageUserOffset return value from last page (0 for first page)
-     *  @param pageSize count of elements to be returned per page (same value is used for subqueries on the exchange)
+     *  @param maxPageSize count of elements to be returned per page (same value is used for subqueries on the exchange)
      *  @return encoded bytes representing orders and page information for next page
      */
     function getFinalizedOrderBookPaginated(
         address[] memory tokenFilter,
         address previousPageUser,
         uint16 previousPageUserOffset,
-        uint16 pageSize
-    ) public view returns (bytes memory elements, address nextPageUser, uint16 nextPageUserOffset) {
+        uint16 maxPageSize
+    ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
         uint32 batch = batchExchange.getCurrentBatchId();
         return
             getFilteredOrdersPaginated(
@@ -89,7 +89,7 @@ contract BatchExchangeViewer {
                 getTokenIdsFromAdresses(tokenFilter),
                 previousPageUser,
                 previousPageUserOffset,
-                pageSize
+                maxPageSize
             );
     }
 
@@ -101,8 +101,9 @@ contract BatchExchangeViewer {
      *  @param tokenFilter all returned order will have buy *and* sell token from this list (leave empty for "no filter")
      *  @param previousPageUser address taken from nextPageUser return value from last page (address(0) for first page)
      *  @param previousPageUserOffset offset taken nextPageUserOffset return value from last page (0 for first page)
-     *  @param pageSize count of elements to be returned per page (same value is used for subqueries on the exchange)
-     *  @return encoded bytes representing orders and page information for next page
+     *  @param maxPageSize maximum count of elements to be returned per page (same value is used for subqueries on the exchange)
+     *  @return encoded bytes representing orders and page information for next page. Result can contain less elements than
+     *  maxPageSize if remaining gas is low.
      */
     function getFilteredOrdersPaginated(
         uint32 maxValidFrom,
@@ -111,14 +112,17 @@ contract BatchExchangeViewer {
         uint16[] memory tokenFilter,
         address previousPageUser,
         uint16 previousPageUserOffset,
-        uint16 pageSize
-    ) public view returns (bytes memory elements, address nextPageUser, uint16 nextPageUserOffset) {
+        uint16 maxPageSize
+    ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
         nextPageUser = previousPageUser;
         nextPageUserOffset = previousPageUserOffset;
-        bool hasNextPage = true;
-        while (hasNextPage) {
-            bytes memory unfiltered = getEncodedOrdersPaginated(nextPageUser, nextPageUserOffset, pageSize);
-            hasNextPage = unfiltered.length / AUCTION_ELEMENT_WIDTH == pageSize;
+        hasNextPage = true;
+        uint256 gasLeftBeforePage = gasleft();
+        // Continue while more pages exist or we used more than 1/2 of remaining gas in previous page
+        while (hasNextPage && 2 * gasleft() > gasLeftBeforePage) {
+            gasLeftBeforePage = gasleft();
+            bytes memory unfiltered = getEncodedOrdersPaginated(nextPageUser, nextPageUserOffset, maxPageSize);
+            hasNextPage = unfiltered.length / AUCTION_ELEMENT_WIDTH == maxPageSize;
             for (uint16 index = 0; index < unfiltered.length / AUCTION_ELEMENT_WIDTH; index++) {
                 // make sure we don't overflow index * AUCTION_ELEMENT_WIDTH
                 bytes memory element = unfiltered.slice(uint256(index) * AUCTION_ELEMENT_WIDTH, AUCTION_ELEMENT_WIDTH);
@@ -138,13 +142,13 @@ contract BatchExchangeViewer {
                     nextPageUserOffset = 1;
                     nextPageUser = user;
                 }
-                if (elements.length / AUCTION_ELEMENT_WIDTH >= pageSize) {
+                if (elements.length / AUCTION_ELEMENT_WIDTH >= maxPageSize) {
                     // We are at capacity, return
-                    return (elements, nextPageUser, nextPageUserOffset);
+                    return (elements, hasNextPage, nextPageUser, nextPageUserOffset);
                 }
             }
         }
-        return (elements, nextPageUser, nextPageUserOffset);
+        return (elements, hasNextPage, nextPageUser, nextPageUserOffset);
     }
 
     /** @dev View returning byte-encoded sell orders in paginated form. It has the same behavior as
