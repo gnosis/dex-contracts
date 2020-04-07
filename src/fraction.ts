@@ -1,4 +1,5 @@
 import BN from "bn.js";
+import {numberToFraction} from "./float_parser";
 
 export class Fraction {
   private numerator: BN;
@@ -67,6 +68,14 @@ export class Fraction {
     return (
       parseInt(this.numerator.toString()) /
       parseInt(this.denominator.toString())
+    );
+  }
+
+  static fromNumber(number: number) {
+    const [numerator, denominator] = numberToFraction(number);
+    return new Fraction(
+      new BN(numerator.toString()),
+      new BN(denominator.toString())
     );
   }
 
