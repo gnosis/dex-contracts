@@ -1,10 +1,9 @@
 import BN from "bn.js";
 
-const buf = new ArrayBuffer(8);
-const view = new DataView(buf);
 
 export function numberToFraction(number: number) {
   // retrieve mantissa, exponent, and sign from bit representation of number
+  const view = new DataView(new ArrayBuffer(8));
   view.setFloat64(0, number);
   const bits = view.getBigUint64(0);
   const sign = (bits >> BigInt(63)) ? BigInt(-1) : BigInt(1);
