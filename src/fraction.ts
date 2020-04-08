@@ -70,8 +70,13 @@ export class Fraction {
     );
   }
 
+  /**
+   * Represents a Javascript number as a pair numerator/denominator without precision loss
+   * by retrieving mantissa, exponent, and sign from its bit representation
+   * @param number The Javascript number to be represented
+   * @return a BigInt array with two elements: numerator and denominator
+   */
   private static numberToNumAndDen(number: number) {
-    // retrieve mantissa, exponent, and sign from bit representation of number
     const view = new DataView(new ArrayBuffer(8));
     view.setFloat64(0, number);
     const bits = view.getBigUint64(0);
