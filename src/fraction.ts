@@ -70,7 +70,7 @@ export class Fraction {
     );
   }
 
-  private static numberToFraction(number: number) {
+  private static numberToNumAndDen(number: number) {
     // retrieve mantissa, exponent, and sign from bit representation of number
     const view = new DataView(new ArrayBuffer(8));
     view.setFloat64(0, number);
@@ -107,7 +107,7 @@ export class Fraction {
   }
 
   static fromNumber(number: number) {
-    const [numerator, denominator] = Fraction.numberToFraction(number);
+    const [numerator, denominator] = Fraction.numberToNumAndDen(number);
     return new Fraction(
       new BN(numerator.toString()),
       new BN(denominator.toString())
