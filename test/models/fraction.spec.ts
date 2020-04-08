@@ -151,6 +151,71 @@ describe("Fraction", () => {
     });
   });
 
+  describe("fromNumber", () => {
+    it("converts numbers to Fraction", () => {
+      const testCases = [
+        {
+          number: 0.5,
+          expected: new Fraction(1, 2)
+        },
+        {
+          number: 2,
+          expected: new Fraction(2, 1)
+        }
+      ];
+      for (const {number, expected} of testCases)
+        assert(
+          Fraction.fromNumber(number)
+            .sub(expected)
+            .isZero()
+        );
+    });
+
+    it("fails on bad input", () => {
+      const testCases = [NaN, Infinity, -Infinity];
+      let hasThrown = false;
+      for (const number of testCases) {
+        try {
+          Fraction.fromNumber(number);
+        } catch (error) {
+          assert(error.message, "Invalid number");
+          hasThrown = true;
+        }
+      }
+      assert(hasThrown);
+    });
+
+    it("fails with subnormal numbers", () => {
+      const testCases = [2 ** -1023, Number.MIN_VALUE];
+      let hasThrown = false;
+      for (const number of testCases) {
+        try {
+          Fraction.fromNumber(number);
+        } catch (error) {
+          assert(error.message, "Subnormal numbers are not supported");
+          hasThrown = true;
+        }
+      }
+      assert(hasThrown);
+    });
+
+    it("has toNumber as its right inverse", () => {
+      const testCases = [
+        1 / 3,
+        1.0,
+        1.1,
+        1000000000000000000,
+        0,
+        -0,
+        Number.MAX_VALUE,
+        1 + Number.EPSILON,
+        2 ** -1022
+      ];
+      for (const number of testCases)
+        assert.equal(Fraction.fromNumber(number).toNumber(), number);
+    });
+  });
+
   describe("clone", () => {
     it("creates a deep copy", () => {
       const original = new Fraction(1, 2);
