@@ -30,6 +30,7 @@ deploy:
   secret_access_key: $AWS_SECRET_ACCESS_KEY
   local_dir: deploy
   skip_cleanup: true
+  region: $AWS_REGION
   on:
     tags: true
 after_deploy:
