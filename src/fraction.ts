@@ -64,10 +64,17 @@ export class Fraction {
   }
 
   toNumber() {
-    return (
-      parseInt(this.numerator.toString()) /
-      parseInt(this.denominator.toString())
-    );
+    let numerator = this.numerator;
+    let denominator = this.denominator;
+    // Prevent overflow by removing bits
+    while (
+      parseInt(numerator.toString()) === Infinity ||
+      parseInt(denominator.toString()) === Infinity
+    ) {
+      numerator = numerator.shrn(1);
+      denominator = denominator.shrn(1);
+    }
+    return parseInt(numerator.toString()) / parseInt(denominator.toString());
   }
 
   /**
