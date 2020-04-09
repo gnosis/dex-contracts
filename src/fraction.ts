@@ -73,13 +73,13 @@ export class Fraction {
     // If ratio between numerator and denominator is larger than the maximum
     // float number precision, use integer division
     if (
-      !denominator.isZero &&
+      !denominator.isZero() &&
       numerator.div(denominator).bitLength() > MAX_FLOAT_PRECISION
     ) {
       numerator = numerator.div(denominator);
       denominator = new BN(1);
     } else if (
-      !numerator.isZero &&
+      !numerator.isZero() &&
       denominator.div(numerator).bitLength() > MAX_FLOAT_PRECISION
     ) {
       denominator = denominator.div(numerator);
