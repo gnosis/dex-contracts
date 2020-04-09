@@ -10,6 +10,7 @@ contract BatchExchangeViewer {
     using SafeMath for uint256;
 
     uint8 public constant AUCTION_ELEMENT_WIDTH = 112;
+    uint8 public constant ADDRESS_WIDTH = 20;
     uint16 public constant LARGE_PAGE_SIZE = 5000;
     // Can be used by external contracts to indicate no filter as it doesn't seem possible
     // to create an empty memory array in solidity.
@@ -164,26 +165,28 @@ contract BatchExchangeViewer {
         returns (bytes memory)
     {
         bytes memory elements = new bytes(pageSize * AUCTION_ELEMENT_WIDTH);
+        bytes memory users = batchExchange.getUsersPaginated(previousPageUser, uint16(pageSize));
         uint16 currentOffset = previousPageUserOffset;
-        uint256 index = 0;
         address currentUser = previousPageUser;
-        while (index < pageSize) {
+        uint256 orderIndex = 0;
+        uint256 userIndex = 0;
+        while (orderIndex < pageSize) {
             bytes memory element = batchExchange.getEncodedUserOrdersPaginated(currentUser, currentOffset, 1);
             if (element.length > 0) {
                 currentOffset += 1;
-                copyInPlace(element, elements, index * AUCTION_ELEMENT_WIDTH);
-                index += 1;
+                copyInPlace(element, elements, orderIndex * AUCTION_ELEMENT_WIDTH);
+                orderIndex += 1;
             } else {
                 currentOffset = 0;
-                bytes memory nextUser = batchExchange.getUsersPaginated(currentUser, 1);
-                if (nextUser.length > 0) {
-                    currentUser = nextUser.toAddress(0);
+                if (users.length >= (userIndex * ADDRESS_WIDTH) + ADDRESS_WIDTH) {
+                    currentUser = getUser(users.slice(userIndex * ADDRESS_WIDTH, ADDRESS_WIDTH));
+                    userIndex += 1;
                 } else {
                     break;
                 }
             }
         }
-        setLength(elements, index * AUCTION_ELEMENT_WIDTH);
+        setLength(elements, orderIndex * AUCTION_ELEMENT_WIDTH);
         return elements;
     }
 
@@ -205,17 +208,20 @@ contract BatchExchangeViewer {
     }
 
     function getUser(bytes memory element) public pure returns (address) {
-        bytes memory slice = element.slice(0, 20);
+        bytes memory slice = element.slice(0, ADDRESS_WIDTH);
         return slice.toAddress(0);
     }
 
     function getSellTokenBalance(bytes memory element) public pure returns (uint256) {
-        bytes memory slice = element.slice(20, 52);
+        bytes memory slice = element.slice(ADDRESS_WIDTH, 52);
         return slice.toUint(0);
     }
 
     function updateSellTokenBalance(bytes memory element, uint256 amount) public pure returns (bytes memory) {
-        return element.slice(0, 20).concat(abi.encodePacked(amount)).concat(element.slice(52, AUCTION_ELEMENT_WIDTH - 52));
+        return
+            element.slice(0, ADDRESS_WIDTH).concat(abi.encodePacked(amount)).concat(
+                element.slice(52, AUCTION_ELEMENT_WIDTH - 52)
+            );
     }
 
     function getBuyToken(bytes memory element) public pure returns (uint16) {
