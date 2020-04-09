@@ -86,7 +86,8 @@ export class Fraction {
       numerator = new BN(1);
     }
 
-    // Prevent overflow by removing least significant bits
+    // Prevent overflow by only keeping the most 1023 significant bits.
+    // Since 2**1023 < Number.MAX_VALUE < 2**1024 this is safe.
     if (
       Math.max(
         parseInt(numerator.toString()),
