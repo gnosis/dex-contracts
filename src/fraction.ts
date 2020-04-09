@@ -1,5 +1,8 @@
 import BN from "bn.js";
 
+const MAX_FLOAT_WIDTH = 1024;
+const MAX_FLOAT_PRECISION = 52;
+
 export class Fraction {
   private numerator: BN;
   private denominator: BN;
@@ -66,13 +69,31 @@ export class Fraction {
   toNumber() {
     let numerator = this.numerator.clone();
     let denominator = this.denominator.clone();
-    // Prevent overflow by removing least significant bits
-    while (
-      parseInt(numerator.toString()) === Infinity ||
-      parseInt(denominator.toString()) === Infinity
+
+    // If ratio between numerator and denominator is larger than the maximum
+    // float number precision, use integer division
+    if (
+      !denominator.isZero &&
+      numerator.div(denominator).bitLength() > MAX_FLOAT_PRECISION
     ) {
-      numerator = numerator.ishrn(1);
-      denominator = denominator.ishrn(1);
+      numerator = numerator.div(denominator);
+      denominator = new BN(1);
+    } else if (
+      !numerator.isZero &&
+      denominator.div(numerator).bitLength() > MAX_FLOAT_PRECISION
+    ) {
+      denominator = denominator.div(numerator);
+      numerator = new BN(1);
+    }
+
+    // Prevent overflow by removing least significant bits
+    const longestWidth = Math.max(
+      numerator.bitLength(),
+      denominator.bitLength()
+    );
+    if (longestWidth >= MAX_FLOAT_WIDTH) {
+      numerator = numerator.ishrn(longestWidth - MAX_FLOAT_WIDTH + 1);
+      denominator = denominator.ishrn(longestWidth - MAX_FLOAT_WIDTH + 1);
     }
     return parseInt(numerator.toString()) / parseInt(denominator.toString());
   }
