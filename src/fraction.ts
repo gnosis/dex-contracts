@@ -1,5 +1,8 @@
 import BN from "bn.js";
 
+const MAX_FLOAT_WIDTH = 1024;
+const MAX_FLOAT_PRECISION = 52;
+
 export class Fraction {
   private numerator: BN;
   private denominator: BN;
@@ -64,10 +67,41 @@ export class Fraction {
   }
 
   toNumber() {
-    return (
-      parseInt(this.numerator.toString()) /
-      parseInt(this.denominator.toString())
-    );
+    let numerator = this.numerator.clone();
+    let denominator = this.denominator.clone();
+
+    // If ratio between numerator and denominator is larger than the maximum
+    // float number precision, use integer division
+    if (
+      !denominator.isZero() &&
+      numerator.div(denominator).bitLength() > MAX_FLOAT_PRECISION
+    ) {
+      numerator = numerator.div(denominator);
+      denominator = new BN(1);
+    } else if (
+      !numerator.isZero() &&
+      denominator.div(numerator).bitLength() > MAX_FLOAT_PRECISION
+    ) {
+      denominator = denominator.div(numerator);
+      numerator = new BN(1);
+    }
+
+    // Prevent overflow by only keeping the most 1023 significant bits.
+    // Since 2**1023 < Number.MAX_VALUE < 2**1024 this is safe.
+    if (
+      Math.max(
+        parseInt(numerator.toString()),
+        parseInt(denominator.toString())
+      ) === Infinity
+    ) {
+      const longestWidth = Math.max(
+        numerator.bitLength(),
+        denominator.bitLength()
+      );
+      numerator = numerator.ishrn(longestWidth - MAX_FLOAT_WIDTH + 1);
+      denominator = denominator.ishrn(longestWidth - MAX_FLOAT_WIDTH + 1);
+    }
+    return parseInt(numerator.toString()) / parseInt(denominator.toString());
   }
 
   /**
@@ -90,10 +124,11 @@ export class Fraction {
       case BigInt(1024): // infinities and NaN
         throw Error("Invalid number");
       case BigInt(-1023):
-        if (mantissa == BigInt(0)) // positive and negative zero
+        if (mantissa == BigInt(0))
+          // positive and negative zero
           return [BigInt(0), sign];
-        else // subnormal numbers
-          throw Error("Subnormal numbers are not supported");
+        // subnormal numbers
+        else throw Error("Subnormal numbers are not supported");
     }
 
     const mantissa_plus_one = mantissa + one;
@@ -102,13 +137,9 @@ export class Fraction {
     if (shifted_exponent >= BigInt(0))
       return [
         sign * mantissa_plus_one * (BigInt(1) << shifted_exponent),
-        BigInt(1)
-      ]
-    else
-      return [
-        sign * mantissa_plus_one,
-        BigInt(1) << -shifted_exponent
-      ]
+        BigInt(1),
+      ];
+    else return [sign * mantissa_plus_one, BigInt(1) << -shifted_exponent];
   }
 
   static fromNumber(number: number) {
