@@ -17,7 +17,7 @@ const BN = require("bn.js")
  * @return {Object[]} The decoded array of orders
  */
 function decodeOrders(bytes) {
-  if (!bytes) {
+  if (bytes === null || bytes === undefined || bytes.length === 0) {
     return []
   }
   assert(typeof bytes === "string" || bytes instanceof String, "bytes parameter must be a string")
