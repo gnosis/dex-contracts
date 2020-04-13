@@ -17,6 +17,9 @@ const BN = require("bn.js")
  * @return {Object[]} The decoded array of orders
  */
 function decodeOrders(bytes) {
+  if (!bytes) {
+    return []
+  }
   assert(typeof bytes === "string" || bytes instanceof String, "bytes parameter must be a string")
   assert((bytes.length - 2) % 112 === 0, "malformed bytes")
 
