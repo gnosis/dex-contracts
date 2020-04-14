@@ -1,5 +1,5 @@
 const BatchExchange = artifacts.require("BatchExchange")
-const { sendTxAndGetReturnValue } = require("../test/utilities.js")
+const { sendTxAndGetReturnValue } = require("../build/common/test/utilities.js")
 const argv = require("yargs")
   .option("accountId", {
     describe: "Account index of the order placer",
