@@ -120,17 +120,18 @@ contract BatchExchangeViewer {
         // Continue while more pages exist or we used more than 1/2 of remaining gas in previous page
         while (hasNextPage && 2 * gasleft() > gasLeftBeforePage) {
             gasLeftBeforePage = gasleft();
-            bytes memory unfiltered = getEncodedOrdersPaginated(nextPageUser, nextPageUserOffset, maxPageSize);
+            bytes memory unfiltered = getEncodedOrdersPaginatedWithTokenFilter(
+                tokenFilter,
+                nextPageUser,
+                nextPageUserOffset,
+                maxPageSize
+            );
             hasNextPage = unfiltered.length / AUCTION_ELEMENT_WIDTH == maxPageSize;
             for (uint16 index = 0; index < unfiltered.length / AUCTION_ELEMENT_WIDTH; index++) {
                 // make sure we don't overflow index * AUCTION_ELEMENT_WIDTH
                 bytes memory element = unfiltered.slice(uint256(index) * AUCTION_ELEMENT_WIDTH, AUCTION_ELEMENT_WIDTH);
                 element = updateSellTokenBalanceForBatchId(element, batchIds[2]);
-                if (
-                    batchIds[0] >= getValidFrom(element) &&
-                    batchIds[1] <= getValidUntil(element) &&
-                    matchesTokenFilter(getBuyToken(element), getSellToken(element), tokenFilter)
-                ) {
+                if (batchIds[0] >= getValidFrom(element) && batchIds[1] <= getValidUntil(element)) {
                     copyInPlace(element, elements, elementCount * AUCTION_ELEMENT_WIDTH);
                     elementCount += 1;
                 }
@@ -164,6 +165,15 @@ contract BatchExchangeViewer {
         view
         returns (bytes memory)
     {
+        return getEncodedOrdersPaginatedWithTokenFilter(ALL_TOKEN_FILTER, previousPageUser, previousPageUserOffset, pageSize);
+    }
+
+    function getEncodedOrdersPaginatedWithTokenFilter(
+        uint16[] memory tokenFilter,
+        address previousPageUser,
+        uint16 previousPageUserOffset,
+        uint256 pageSize
+    ) public view returns (bytes memory) {
         bytes memory elements = new bytes(pageSize * AUCTION_ELEMENT_WIDTH);
         bytes memory users = batchExchange.getUsersPaginated(previousPageUser, uint16(pageSize));
         uint16 currentOffset = previousPageUserOffset;
@@ -171,10 +181,12 @@ contract BatchExchangeViewer {
         uint256 orderIndex = 0;
         uint256 userIndex = 0;
         while (orderIndex < pageSize) {
-            bytes memory element = batchExchange.getEncodedUserOrdersPaginated(currentUser, currentOffset, 1);
-            if (element.length > 0) {
+            (bool success, bytes memory order) = address(batchExchange).staticcall.gas(5000)(
+                abi.encodeWithSignature("orders(address,uint256)", currentUser, currentOffset)
+            );
+            if (success) {
                 currentOffset += 1;
-                copyInPlace(element, elements, orderIndex * AUCTION_ELEMENT_WIDTH);
+                encodeAuctionElement(tokenFilter, currentUser, order, elements, orderIndex * AUCTION_ELEMENT_WIDTH);
                 orderIndex += 1;
             } else {
                 currentOffset = 0;
@@ -284,6 +296,47 @@ contract BatchExchangeViewer {
     function copyInPlace(bytes memory source, bytes memory destination, uint256 offset) public pure {
         for (uint256 i = 0; i < source.length; i++) {
             destination[offset + i] = source[i];
+        }
+    }
+
+    /** @dev Encodes the auction elements in the same format as BatchExchange.encodeAuctionElement with
+     * the only difference that order with tokens that match the token filter will be 0 serialized
+     * (as if they were deleted)
+     */
+    function encodeAuctionElement(
+        uint16[] memory tokenFilter,
+        address user,
+        bytes memory order,
+        bytes memory target,
+        uint256 offset
+    ) private view {
+        (
+            uint16 buyToken,
+            uint16 sellToken,
+            uint32 validFrom,
+            uint32 validUntil,
+            uint128 priceNumerator,
+            uint128 priceDenominator,
+            uint128 usedAmount
+        ) = abi.decode(order, (uint16, uint16, uint32, uint32, uint128, uint128, uint128));
+        if (matchesTokenFilter(buyToken, sellToken, tokenFilter)) {
+            uint128 remainingAmount = priceDenominator - usedAmount;
+            uint256 sellTokenBalance = batchExchange.getBalance(user, batchExchange.tokenIdToAddressMap(sellToken));
+            copyInPlace(
+                abi.encodePacked(
+                    user,
+                    sellTokenBalance,
+                    buyToken,
+                    sellToken,
+                    validFrom,
+                    validUntil,
+                    priceNumerator,
+                    priceDenominator,
+                    remainingAmount
+                ),
+                target,
+                offset
+            );
         }
     }
 }
