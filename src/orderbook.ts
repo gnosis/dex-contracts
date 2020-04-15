@@ -21,12 +21,20 @@ export class Offer {
   clone() {
     return new Offer(this.price.clone(), this.volume.clone());
   }
+
+  serialize(): object {
+    return { price: this.price.serialize(), volume: this.volume.serialize() };
+  }
+
+  static deserialize(o: any): Offer {
+    return new Offer(Fraction.deserialize(o.price), Fraction.deserialize(o.volume));
+  }
 }
 
 export class Orderbook {
-  readonly baseToken: string;
-  readonly quoteToken: string;
-  readonly remainingFractionAfterFee: Fraction;
+  baseToken: string;
+  quoteToken: string;
+  remainingFractionAfterFee: Fraction;
   private asks: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
   private bids: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
 
@@ -40,6 +48,40 @@ export class Orderbook {
     this.remainingFractionAfterFee = new Fraction(1, 1).sub(fee);
     this.asks = new Map();
     this.bids = new Map();
+  }
+
+  static serializeOffers(offers: Map<number, Offer>): object {
+    const o: any = {};
+    offers.forEach((value, key) => { o[key] = value.serialize(); });
+    return o;
+  }
+
+  static deserializeOffers(o: any): Map<number, Offer> {
+    const offers = new Map();
+    for (let [key, value] of Object.entries(o)) {
+      offers.set(key, Offer.deserialize(value));
+    }
+    return offers;
+  }
+
+  serialize(): object {
+    return {
+      baseToken: this.baseToken,
+      quoteToken: this.quoteToken,
+      remainingFractionAfterFee: this.remainingFractionAfterFee.serialize(),
+      asks: Orderbook.serializeOffers(this.asks),
+      bids: Orderbook.serializeOffers(this.bids)
+    };
+  }
+
+  static deserialize(o: any): Orderbook {
+    const result = new Orderbook("", "");
+    result.baseToken = o.baseToken;
+    result.quoteToken = o.quoteToken;
+    result.remainingFractionAfterFee = Fraction.deserialize(o.remainingFractionAfterFee);
+    result.asks = Orderbook.deserializeOffers(o.asks);
+    result.bids = Orderbook.deserializeOffers(o.bids);
+    return result;
   }
 
   pair() {

@@ -248,4 +248,13 @@ describe("Fraction", () => {
       assert.equal(JSON.stringify(original), serialized);
     });
   });
+
+  describe("serialize", () => {
+    it("can be deserialized", () => {
+      const original = new Fraction(10, 1);
+      const serialized = JSON.stringify(original.serialize());
+      const deserialized = Fraction.deserialize(JSON.parse(serialized));
+      assert.equal(JSON.stringify(original), JSON.stringify(deserialized));
+    });
+  });
 });

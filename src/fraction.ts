@@ -161,4 +161,14 @@ export class Fraction {
   clone() {
     return new Fraction(this.numerator.clone(), this.denominator.clone());
   }
+
+  serialize(): object {
+    return { numerator: this.numerator.toJSON(), denominator: this.denominator.toJSON() };
+  }
+
+  static deserialize(o: any): Fraction {
+    const numerator = new BN(o.numerator, "hex");
+    const denominator = new BN(o.denominator, "hex");
+    return new Fraction(numerator, denominator);
+  }
 }

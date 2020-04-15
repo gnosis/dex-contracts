@@ -432,6 +432,25 @@ describe("Orderbook", () => {
       assert.notDeepEqual(copy, orderbook);
     });
   });
+
+  describe("serialize", () => {
+    it("can be deserialized", () => {
+      const original = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+      original.addAsk(new Offer(new Fraction(11, 10), 100));
+      original.addAsk(new Offer(new Fraction(12, 10), 200));
+      original.addAsk(new Offer(new Fraction(101, 100), 300));
+      original.addBid(new Offer(new Fraction(9, 10), 50));
+      original.addBid(new Offer(new Fraction(99, 100), 70));
+      original.addBid(new Offer(new Fraction(9, 10), 30));
+
+      const serialized = JSON.stringify(original.serialize());
+      const deserialized = Orderbook.deserialize(JSON.parse(serialized));
+      assert.equal(original.baseToken, deserialized.baseToken);
+      assert.equal(original.quoteToken, deserialized.quoteToken);
+      assert.equal(JSON.stringify(original.remainingFractionAfterFee), JSON.stringify(deserialized.remainingFractionAfterFee));
+      assert.equal(JSON.stringify(original), JSON.stringify(deserialized));
+    });
+  });
 });
 
 describe("transitiveOrderbook", () => {
