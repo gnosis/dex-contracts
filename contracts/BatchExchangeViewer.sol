@@ -181,6 +181,9 @@ contract BatchExchangeViewer {
         uint256 orderIndex = 0;
         uint256 userIndex = 0;
         while (orderIndex < pageSize) {
+            // There is no way of getting the number of orders a user has, thus "try" fetching the next order and
+            // check if the static call succeeded. Otherwise move on to the next user. Limit the amount of gas as
+            // in the failure case IVALID_OPCODE consumes all remaining gas.
             (bool success, bytes memory order) = address(batchExchange).staticcall.gas(5000)(
                 abi.encodeWithSignature("orders(address,uint256)", currentUser, currentOffset)
             );
