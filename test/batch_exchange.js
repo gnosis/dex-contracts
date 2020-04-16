@@ -205,7 +205,7 @@ contract("BatchExchange", async (accounts) => {
     it("places multiple orders with sepcified validFrom", async () => {
       const batchExchange = await setupGenericStableX()
       const currentBatch = (await batchExchange.getCurrentBatchId()).toNumber()
-      const id = batchExchange.placeValidFromOrders.call(
+      const ids = (await batchExchange.placeValidFromOrders.call(
         [0, 1],
         [1, 0],
         [currentBatch, currentBatch],
@@ -213,21 +213,31 @@ contract("BatchExchange", async (accounts) => {
         [10, 11],
         [20, 21],
         { from: user_1 }
-      )
+      )).map((x) => x.toNumber())
       await batchExchange.placeValidFromOrders([0, 1], [1, 0], [currentBatch, currentBatch], [3, 4], [10, 11], [20, 21], {
         from: user_1,
       })
 
-      for (let i = 1; i <= id; i++) {
-        const orderResult = await batchExchange.orders.call(user_1, id)
-        assert.equal(orderResult.priceDenominator.toNumber(), 20, `order ${i}: priceDenominator was stored incorrectly`)
-        assert.equal(orderResult.priceNumerator.toNumber(), 10, `order ${i}: priceNumerator was stored incorrectly`)
-        assert.equal(orderResult.sellToken.toNumber(), 1, `order ${i}: sellToken was stored incorrectly`)
-        assert.equal(orderResult.buyToken.toNumber(), 0, `order ${i}: buyToken was stored incorrectly`)
-        // Note that this order will be stored, but never valid. However, this can not affect the exchange in any maliciouis way!
-        assert.equal(orderResult.validFrom.toNumber(), currentBatch, `order ${i}: validFrom was stored incorrectly`)
-        assert.equal(orderResult.validUntil.toNumber(), 3, `order ${i}: validUntil was stored incorrectly`)
-      }
+      // sanity check the IDs returned from the call before testing the orders with particular IDs
+      assert.deepEqual(ids, [0, 1])
+
+      const orderResult0 = await batchExchange.orders.call(user_1, 0)
+      assert.equal(orderResult0.priceDenominator.toNumber(), 20, "order 1: priceDenominator was stored incorrectly")
+      assert.equal(orderResult0.priceNumerator.toNumber(), 10, "order 1: priceNumerator was stored incorrectly")
+      assert.equal(orderResult0.sellToken.toNumber(), 1, "order 1: sellToken was stored incorrectly")
+      assert.equal(orderResult0.buyToken.toNumber(), 0, "order 1: buyToken was stored incorrectly")
+      // Note that this order will be stored, but never valid. However, this can not affect the exchange in any maliciouis way!
+      assert.equal(orderResult0.validFrom.toNumber(), currentBatch, "order 1: validFrom was stored incorrectly")
+      assert.equal(orderResult0.validUntil.toNumber(), 3, "order 1: validUntil was stored incorrectly")
+
+      const orderResult1 = await batchExchange.orders.call(user_1, 1)
+      assert.equal(orderResult1.priceDenominator.toNumber(), 21, "order 2: priceDenominator was stored incorrectly")
+      assert.equal(orderResult1.priceNumerator.toNumber(), 11, "order 2: priceNumerator was stored incorrectly")
+      assert.equal(orderResult1.sellToken.toNumber(), 0, "order 2: sellToken was stored incorrectly")
+      assert.equal(orderResult1.buyToken.toNumber(), 1, "order 2: buyToken was stored incorrectly")
+      // Note that this order will be stored, but never valid. However, this can not affect the exchange in any maliciouis way!
+      assert.equal(orderResult1.validFrom.toNumber(), currentBatch, "order 2: validFrom was stored incorrectly")
+      assert.equal(orderResult1.validUntil.toNumber(), 4, "order 2: validUntil was stored incorrectly")
     })
   })
   describe("cancelOrders()", () => {
