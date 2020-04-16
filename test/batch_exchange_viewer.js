@@ -11,7 +11,10 @@ const { setupGenericStableX } = require("./stablex_utils")
 
 const zero_address = "0x0000000000000000000000000000000000000000"
 
-contract("BatchExchangeViewer", (accounts) => {
+// The contract can't be profiled with solcover as we rely on invoking a staticcall with
+// minimal gas amount (which gets burned in case the call fails). Coverage adds solidity
+// instructions to determine which lines were touched which increases the amount of gas used.
+contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
   const [user_1, user_2, user_3] = accounts
   let batchExchange, token_1, token_2
   beforeEach(async () => {
