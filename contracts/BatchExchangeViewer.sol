@@ -121,7 +121,7 @@ contract BatchExchangeViewer {
         // Continue while more pages exist or we used more than 1/2 of remaining gas in previous page
         while (hasNextPage && 2 * gasleft() > gasLeftBeforePage) {
             gasLeftBeforePage = gasleft();
-            uint256 unfilteredCount = getEncodedOrdersPaginatedWithTokenFilterBuffered(
+            uint256 unfilteredCount = writeEncodedOrdersPaginatedWithTokenFilter(
                 tokenFilter,
                 nextPageUser,
                 nextPageUserOffset,
@@ -175,7 +175,7 @@ contract BatchExchangeViewer {
         uint256 pageSize
     ) public view returns (bytes memory) {
         bytes memory elements = new bytes(pageSize * AUCTION_ELEMENT_WIDTH);
-        uint256 orderCount = getEncodedOrdersPaginatedWithTokenFilterBuffered(
+        uint256 orderCount = writeEncodedOrdersPaginatedWithTokenFilter(
             tokenFilter,
             previousPageUser,
             previousPageUserOffset,
@@ -185,7 +185,7 @@ contract BatchExchangeViewer {
         return elements;
     }
 
-    function getEncodedOrdersPaginatedWithTokenFilterBuffered(
+    function writeEncodedOrdersPaginatedWithTokenFilter(
         uint16[] memory tokenFilter,
         address previousPageUser,
         uint16 previousPageUserOffset,
