@@ -23,21 +23,27 @@ export class Offer {
   }
 }
 
+type OrderbookOptions =
+  { fee: Fraction } |
+  { fee: undefined, remainingFractionAfterFee: Fraction }
+
 export class Orderbook {
-  baseToken: string;
-  quoteToken: string;
-  remainingFractionAfterFee: Fraction;
+  readonly baseToken: string;
+  readonly quoteToken: string;
+  readonly remainingFractionAfterFee: Fraction;
   private asks: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
   private bids: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
 
   constructor(
     baseToken: string,
     quoteToken: string,
-    fee = new Fraction(1, 1000)
+    options: OrderbookOptions = { fee: new Fraction(1, 1000) },
   ) {
     this.baseToken = baseToken;
     this.quoteToken = quoteToken;
-    this.remainingFractionAfterFee = new Fraction(1, 1).sub(fee);
+    this.remainingFractionAfterFee = options.fee ?
+      new Fraction(1, 1).sub(options.fee) :
+      options.remainingFractionAfterFee;
     this.asks = new Map();
     this.bids = new Map();
   }
@@ -75,10 +81,7 @@ export class Orderbook {
   }
 
   static fromJSON(o: any): Orderbook {
-    const result = new Orderbook("", "");
-    result.baseToken = o.baseToken;
-    result.quoteToken = o.quoteToken;
-    result.remainingFractionAfterFee = Fraction.fromJSON(o.remainingFractionAfterFee);
+    const result = new Orderbook(o.baseToken, o.quoteToken, { fee: undefined, remainingFractionAfterFee: Fraction.fromJSON(o.remainingFractionAfterFee) });
     result.asks = Orderbook.offersFromJSON(o.asks);
     result.bids = Orderbook.offersFromJSON(o.bids);
     return result;
@@ -111,7 +114,7 @@ export class Orderbook {
    * by switching bids/asks and recomputing price/volume to the new reference token.
    */
   inverted() {
-    const result = new Orderbook(this.quoteToken, this.baseToken, this.fee());
+    const result = new Orderbook(this.quoteToken, this.baseToken, { fee: this.fee() });
     result.bids = invertPricePoints(this.asks, this.remainingFractionAfterFee);
     result.asks = invertPricePoints(
       this.bids,
@@ -247,7 +250,7 @@ export class Orderbook {
     const result = new Orderbook(
       this.baseToken,
       orderbook.quoteToken,
-      this.fee()
+      { fee: this.fee() }
     );
 
     // Create a copy here so original orders stay untouched
@@ -296,7 +299,7 @@ export class Orderbook {
   }
 
   clone() {
-    const result = new Orderbook(this.baseToken, this.quoteToken, this.fee());
+    const result = new Orderbook(this.baseToken, this.quoteToken, { fee: this.fee() });
     this.bids.forEach((o) => addOffer(o, result.bids));
     this.asks.forEach((o) => addOffer(o, result.asks));
     return result;

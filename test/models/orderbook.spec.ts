@@ -19,7 +19,7 @@ function assertOffers(orderbook: Orderbook, bids: [Number, Number][], asks: [Num
 
 describe("Orderbook", () => {
   it("cummulates bids and asks sorted by best bid/best ask", () => {
-    const orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+    const orderbook = new Orderbook("USDC", "DAI", { fee: new Fraction(0, 1) });
     orderbook.addAsk(new Offer(new Fraction(11, 10), 100));
     orderbook.addAsk(new Offer(new Fraction(12, 10), 200));
     orderbook.addAsk(new Offer(new Fraction(101, 100), 300));
@@ -36,7 +36,7 @@ describe("Orderbook", () => {
 
   describe("inverted", () => {
     it("inverts by switching bid/asks and inverting prices", () => {
-      const orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+      const orderbook = new Orderbook("USDC", "DAI", { fee: new Fraction(0, 1) });
 
       // Offering to sell 100 USDC for 2 DAI each, thus willing to buy 200 DAI for 50ç each
       orderbook.addAsk(new Offer(new Fraction(2, 1), 100));
@@ -62,7 +62,7 @@ describe("Orderbook", () => {
     });
 
     it("does not mutate original orderbook", () => {
-      const orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+      const orderbook = new Orderbook("USDC", "DAI", { fee: new Fraction(0, 1) });
       orderbook.addAsk(new Offer(new Fraction(2, 1), 100));
       orderbook.addBid(new Offer(new Fraction(1, 4), 20));
 
@@ -74,13 +74,13 @@ describe("Orderbook", () => {
 
   describe("add", () => {
     it("can add another orderbook by combining bids and asks", () => {
-      const first_orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+      const first_orderbook = new Orderbook("USDC", "DAI", { fee: new Fraction(0, 1) });
       first_orderbook.addAsk(new Offer(new Fraction(11, 10), 50));
       first_orderbook.addAsk(new Offer(new Fraction(12, 10), 150));
       first_orderbook.addBid(new Offer(new Fraction(9, 10), 50));
       first_orderbook.addBid(new Offer(new Fraction(99, 100), 80));
 
-      const second_orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+      const second_orderbook = new Orderbook("USDC", "DAI", { fee: new Fraction(0, 1) });
       second_orderbook.addAsk(new Offer(new Fraction(11, 10), 60));
       second_orderbook.addAsk(new Offer(new Fraction(13, 10), 200));
       second_orderbook.addBid(new Offer(new Fraction(9, 10), 50));
@@ -102,7 +102,7 @@ describe("Orderbook", () => {
   });
   describe("transitive closure", () => {
     it("Can compute the transitive closure of two orderbooks", () => {
-      const first_orderbook = new Orderbook("ETH", "DAI", new Fraction(0, 1));
+      const first_orderbook = new Orderbook("ETH", "DAI", { fee: new Fraction(0, 1) });
       first_orderbook.addBid(new Offer(new Fraction(90, 1), 3));
       first_orderbook.addBid(new Offer(new Fraction(95, 1), 2));
       first_orderbook.addBid(new Offer(new Fraction(99, 1), 1));
@@ -110,7 +110,7 @@ describe("Orderbook", () => {
       first_orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
       first_orderbook.addAsk(new Offer(new Fraction(110, 1), 3));
 
-      const second_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+      const second_orderbook = new Orderbook("DAI", "USDC", { fee: new Fraction(0, 1) });
       second_orderbook.addBid(new Offer(new Fraction(99, 100), 100));
       second_orderbook.addBid(new Offer(new Fraction(9, 10), 200));
       second_orderbook.addAsk(new Offer(new Fraction(101, 100), 100));
@@ -143,7 +143,7 @@ describe("Orderbook", () => {
     });
 
     it("does not modify the original orderbook when computing the closure", () => {
-      const first_orderbook = new Orderbook("ETH", "DAI", new Fraction(0, 1));
+      const first_orderbook = new Orderbook("ETH", "DAI", { fee: new Fraction(0, 1) });
       first_orderbook.addBid(new Offer(new Fraction(90, 1), 3));
       first_orderbook.addBid(new Offer(new Fraction(95, 1), 2));
       first_orderbook.addBid(new Offer(new Fraction(99, 1), 1));
@@ -151,7 +151,7 @@ describe("Orderbook", () => {
       first_orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
       first_orderbook.addAsk(new Offer(new Fraction(110, 1), 3));
 
-      const second_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+      const second_orderbook = new Orderbook("DAI", "USDC", { fee: new Fraction(0, 1) });
       second_orderbook.addBid(new Offer(new Fraction(99, 100), 100));
       second_orderbook.addBid(new Offer(new Fraction(9, 10), 200));
       second_orderbook.addAsk(new Offer(new Fraction(101, 100), 100));
@@ -181,7 +181,7 @@ describe("Orderbook", () => {
   });
 
   describe("price estimation", () => {
-    const orderbook = new Orderbook("ETH", "DAI", new Fraction(0, 1));
+    const orderbook = new Orderbook("ETH", "DAI", { fee: new Fraction(0, 1) });
 
     orderbook.addBid(new Offer(new Fraction(90, 1), 3));
     orderbook.addBid(new Offer(new Fraction(95, 1), 2));
@@ -236,7 +236,7 @@ describe("Orderbook", () => {
     });
 
     it("reduces partially overlapping orderbooks", () => {
-      const orderbook = new Orderbook("ETH", "DAI", new Fraction(0, 1));
+      const orderbook = new Orderbook("ETH", "DAI", { fee: new Fraction(0, 1) });
 
       orderbook.addBid(new Offer(new Fraction(101, 1), 2));
       orderbook.addBid(new Offer(new Fraction(102, 1), 1));
@@ -272,7 +272,7 @@ describe("Orderbook", () => {
 
   describe("fee mechanism", () => {
     it("incorporates fee when asks/bids are added", () => {
-      const orderbook = new Orderbook("USDC", "DAI", new Fraction(1, 100));
+      const orderbook = new Orderbook("USDC", "DAI", { fee: new Fraction(1, 100) });
       orderbook.addBid(new Offer(new Fraction(100, 1), 100));
       orderbook.addAsk(new Offer(new Fraction(200, 1), 200));
 
@@ -291,14 +291,14 @@ describe("Orderbook", () => {
       const first_orderbook = new Orderbook(
         "USDC",
         "DAI",
-        new Fraction(1, 100)
+        { fee: new Fraction(1, 100) }
       );
       first_orderbook.addBid(new Offer(new Fraction(100, 1), 100));
 
       const second_orderbook = new Orderbook(
         "USDC",
         "DAI",
-        new Fraction(1, 100)
+        { fee: new Fraction(1, 100) }
       );
       second_orderbook.addBid(new Offer(new Fraction(100, 1), 100));
       first_orderbook.add(second_orderbook);
@@ -307,7 +307,7 @@ describe("Orderbook", () => {
     });
 
     it("Doesn't count fee twice when reducing orderbooks", () => {
-      const orderbook = new Orderbook("USDC", "DAI", new Fraction(1, 100));
+      const orderbook = new Orderbook("USDC", "DAI", { fee: new Fraction(1, 100) });
       orderbook.addBid(new Offer(new Fraction(100, 1), 100));
       orderbook.addAsk(new Offer(new Fraction(200, 1), 200));
 
@@ -319,14 +319,14 @@ describe("Orderbook", () => {
       const first_orderbook = new Orderbook(
         "USDC",
         "DAI",
-        new Fraction(1, 100)
+        { fee: new Fraction(1, 100) }
       );
       first_orderbook.addBid(new Offer(new Fraction(1, 1), 100));
 
       const second_orderbook = new Orderbook(
         "DAI",
         "TUSD",
-        new Fraction(1, 100)
+        { fee: new Fraction(1, 100) }
       );
       second_orderbook.addBid(new Offer(new Fraction(1, 1), 100));
 
@@ -337,7 +337,7 @@ describe("Orderbook", () => {
 
   describe("clone", () => {
     it("Make a deep copy of the original orderbook", () => {
-      const orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+      const orderbook = new Orderbook("DAI", "USDC", { fee: new Fraction(0, 1) });
       orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
 
       const copy = orderbook.clone();
@@ -350,7 +350,7 @@ describe("Orderbook", () => {
 
   describe("serialize", () => {
     it("can be deserialized", () => {
-      const original = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+      const original = new Orderbook("USDC", "DAI", { fee: new Fraction(0, 1) });
       original.addAsk(new Offer(new Fraction(11, 10), 100));
       original.addAsk(new Offer(new Fraction(12, 10), 200));
       original.addAsk(new Offer(new Fraction(101, 100), 300));
@@ -367,7 +367,7 @@ describe("Orderbook", () => {
 
 describe("transitiveOrderbook", () => {
   it("computes transitive orderbook with 0 hops", () => {
-    const orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+    const orderbook = new Orderbook("DAI", "USDC", { fee: new Fraction(0, 1) });
     orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
 
     const transitive = transitiveOrderbook(
@@ -381,13 +381,13 @@ describe("transitiveOrderbook", () => {
   });
 
   it("computes transitive orderbook with 1 hop", () => {
-    const direct = new Orderbook("DAI", "ETH", new Fraction(0, 1));
+    const direct = new Orderbook("DAI", "ETH", { fee: new Fraction(0, 1) });
     direct.addAsk(new Offer(new Fraction(1, 80), 80));
 
-    const first_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+    const first_orderbook = new Orderbook("DAI", "USDC", { fee: new Fraction(0, 1) });
     first_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
 
-    const second_orderbook = new Orderbook("USDC", "ETH", new Fraction(0, 1));
+    const second_orderbook = new Orderbook("USDC", "ETH", { fee: new Fraction(0, 1) });
     second_orderbook.addAsk(new Offer(new Fraction(1, 100), 100));
 
     const transitive = transitiveOrderbook(
@@ -405,16 +405,16 @@ describe("transitiveOrderbook", () => {
   });
 
   it("computes transitive orderbook with 2 hop", () => {
-    const direct = new Orderbook("DAI", "ETH", new Fraction(0, 1));
+    const direct = new Orderbook("DAI", "ETH", { fee: new Fraction(0, 1) });
     direct.addAsk(new Offer(new Fraction(1, 80), 80));
 
-    const first_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+    const first_orderbook = new Orderbook("DAI", "USDC", { fee: new Fraction(0, 1) });
     first_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
 
-    const second_orderbook = new Orderbook("USDC", "USDT", new Fraction(0, 1));
+    const second_orderbook = new Orderbook("USDC", "USDT", { fee: new Fraction(0, 1) });
     second_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
 
-    const third_orderbook = new Orderbook("USDT", "ETH", new Fraction(0, 1));
+    const third_orderbook = new Orderbook("USDT", "ETH", { fee: new Fraction(0, 1) });
     third_orderbook.addAsk(new Offer(new Fraction(1, 100), 100));
 
     const transitive = transitiveOrderbook(
@@ -433,10 +433,10 @@ describe("transitiveOrderbook", () => {
   });
 
   it("computes transitive orderbook from bids and asks", () => {
-    const first_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+    const first_orderbook = new Orderbook("DAI", "USDC", { fee: new Fraction(0, 1) });
     first_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
 
-    const second_orderbook = new Orderbook("ETH", "USDC", new Fraction(0, 1));
+    const second_orderbook = new Orderbook("ETH", "USDC", { fee: new Fraction(0, 1) });
     second_orderbook.addBid(new Offer(new Fraction(100, 1), 1));
 
     const transitive = transitiveOrderbook(
@@ -453,19 +453,19 @@ describe("transitiveOrderbook", () => {
   });
 
   it("does not modify the underlying orderbooks", () => {
-    const direct = new Orderbook("DAI", "ETH", new Fraction(0, 1));
+    const direct = new Orderbook("DAI", "ETH", { fee: new Fraction(0, 1) });
     direct.addAsk(new Offer(new Fraction(1, 80), 80));
     const direct_serialized = JSON.stringify(direct);
 
-    const first_orderbook = new Orderbook("DAI", "USDC", new Fraction(0, 1));
+    const first_orderbook = new Orderbook("DAI", "USDC", { fee: new Fraction(0, 1) });
     first_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
     const first_serialized = JSON.stringify(first_orderbook);
 
-    const second_orderbook = new Orderbook("USDC", "DAI", new Fraction(0, 1));
+    const second_orderbook = new Orderbook("USDC", "DAI", { fee: new Fraction(0, 1) });
     second_orderbook.addAsk(new Offer(new Fraction(1, 1), 100));
     const second_serialized = JSON.stringify(second_orderbook);
 
-    const third_orderbook = new Orderbook("USDT", "ETH", new Fraction(0, 1));
+    const third_orderbook = new Orderbook("USDT", "ETH", { fee: new Fraction(0, 1) });
     third_orderbook.addAsk(new Offer(new Fraction(1, 100), 100));
     const third_serialized = JSON.stringify(third_orderbook);
 
