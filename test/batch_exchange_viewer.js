@@ -3,6 +3,7 @@ const BatchExchangeViewer = artifacts.require("BatchExchangeViewer")
 const MockContract = artifacts.require("MockContract")
 
 const BN = require("bn.js")
+const truffleAssert = require("truffle-assertions")
 
 const { decodeOrdersBN } = require("../src/encoding")
 const { closeAuction } = require("../scripts/utilities.js")
@@ -10,7 +11,10 @@ const { setupGenericStableX } = require("./stablex_utils")
 
 const zero_address = "0x0000000000000000000000000000000000000000"
 
-contract("BatchExchangeViewer", (accounts) => {
+// The contract can't be profiled with solcover as we rely on invoking a staticcall with
+// minimal gas amount (which gets burned in case the call fails). Coverage adds solidity
+// instructions to determine which lines were touched which increases the amount of gas used.
+contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
   const [user_1, user_2, user_3] = accounts
   let batchExchange, token_1, token_2
   beforeEach(async () => {
@@ -322,6 +326,25 @@ contract("BatchExchangeViewer", (accounts) => {
       assert.equal(page[0].user, user_1.toLowerCase())
       assert.equal(page[1].user, user_2.toLowerCase())
       assert.equal(page[2].user, user_3.toLowerCase())
+    })
+  })
+  describe("getEncodedOrdersPaginatedWithTokenFilter", () => {
+    it("Does not query balance for filtered tokens", async () => {
+      await token_1.givenAnyReturnBool(true)
+      const batchId = await batchExchange.getCurrentBatchId()
+      await batchExchange.placeOrder(2, 1, batchId + 10, 200, 300)
+      await batchExchange.deposit(token_1.address, new BN(2).pow(new BN(255)))
+      await closeAuction(batchExchange)
+      // getBalance(token1) now reverts due to math overflow
+      await batchExchange.deposit(token_1.address, new BN(2).pow(new BN(255)))
+      await closeAuction(batchExchange)
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      await truffleAssert.reverts(viewer.getEncodedOrdersPaginatedWithTokenFilter([], zero_address, 0, 10))
+      const result = decodeOrdersBN(await viewer.getEncodedOrdersPaginatedWithTokenFilter([0, 2], zero_address, 0, 10))
+      // Filtered orders still show up as 0s to preserve order indices
+      assert.equal(result.length, 1)
+      assert.equal(result[0].user, zero_address)
     })
   })
 })

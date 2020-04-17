@@ -16,7 +16,7 @@ script:
   - yarn build
   - solium -d contracts/
   - yarn coverage && cat ./coverage/lcov.info | coveralls
-  - yarn test-js ./test/stablex_large_example.js
+  - yarn test-js --grep @skip-on-coverage
   - yarn test-ts
 before_deploy:
   - export PACKAGE_VERSION=$(jq -r '.version' package.json)
