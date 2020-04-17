@@ -113,6 +113,7 @@ contract BatchExchangeViewer {
     ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
         elements = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
         setLength(elements, 0);
+        bytes memory unfiltered = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
         nextPageUser = previousPageUser;
         nextPageUserOffset = previousPageUserOffset;
         hasNextPage = true;
@@ -120,14 +121,14 @@ contract BatchExchangeViewer {
         // Continue while more pages exist or we used more than 1/2 of remaining gas in previous page
         while (hasNextPage && 2 * gasleft() > gasLeftBeforePage) {
             gasLeftBeforePage = gasleft();
-            bytes memory unfiltered = getEncodedOrdersPaginatedWithTokenFilter(
+            uint256 unfilteredCount = getEncodedOrdersPaginatedWithTokenFilterBuffered(
                 tokenFilter,
                 nextPageUser,
                 nextPageUserOffset,
-                maxPageSize
+                unfiltered
             );
-            hasNextPage = unfiltered.length / AUCTION_ELEMENT_WIDTH == maxPageSize;
-            for (uint16 index = 0; index < unfiltered.length / AUCTION_ELEMENT_WIDTH; index++) {
+            hasNextPage = unfilteredCount == maxPageSize;
+            for (uint16 index = 0; index < unfilteredCount; index++) {
                 // make sure we don't overflow index * AUCTION_ELEMENT_WIDTH
                 bytes memory element = unfiltered.slice(uint256(index) * AUCTION_ELEMENT_WIDTH, AUCTION_ELEMENT_WIDTH);
                 element = updateSellTokenBalanceForBatchId(element, batchIds[2]);
