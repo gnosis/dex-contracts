@@ -10,6 +10,8 @@ contract BatchExchangeViewer {
     using SafeMath for uint256;
 
     uint8 public constant AUCTION_ELEMENT_WIDTH = 112;
+    // Contains the orderId on top of the normal auction element data
+    uint8 public constant INDEXED_AUCTION_ELEMENT_WIDTH = AUCTION_ELEMENT_WIDTH + 2;
     uint8 public constant ADDRESS_WIDTH = 20;
     uint16 public constant LARGE_PAGE_SIZE = 5000;
     // Can be used by external contracts to indicate no filter as it doesn't seem possible
@@ -28,7 +30,10 @@ contract BatchExchangeViewer {
      */
     function getOpenOrderBook(address[] memory tokenFilter) public view returns (bytes memory) {
         (bytes memory elements, , , ) = getOpenOrderBookPaginated(tokenFilter, address(0), 0, LARGE_PAGE_SIZE);
-        require(elements.length < LARGE_PAGE_SIZE * AUCTION_ELEMENT_WIDTH, "Orderbook too large, use paginated view functions");
+        require(
+            elements.length < uint256(LARGE_PAGE_SIZE) * INDEXED_AUCTION_ELEMENT_WIDTH,
+            "Orderbook too large, use paginated view functions"
+        );
         return elements;
     }
 
@@ -44,16 +49,7 @@ contract BatchExchangeViewer {
         address previousPageUser,
         uint16 previousPageUserOffset,
         uint16 maxPageSize
-    )
-        public
-        view
-        returns (
-            bytes memory elements,
-            bool hasNextPage,
-            address nextPageUser,
-            uint16 nextPageUserOffset
-        )
-    {
+    ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
         uint32 batch = batchExchange.getCurrentBatchId();
         return
             getFilteredOrdersPaginated(
@@ -71,7 +67,10 @@ contract BatchExchangeViewer {
      */
     function getFinalizedOrderBook(address[] memory tokenFilter) public view returns (bytes memory) {
         (bytes memory elements, , , ) = getFinalizedOrderBookPaginated(tokenFilter, address(0), 0, LARGE_PAGE_SIZE);
-        require(elements.length < LARGE_PAGE_SIZE * AUCTION_ELEMENT_WIDTH, "Orderbook too large, use paginated view functions");
+        require(
+            elements.length < uint256(LARGE_PAGE_SIZE) * INDEXED_AUCTION_ELEMENT_WIDTH,
+            "Orderbook too large, use paginated view functions"
+        );
         return elements;
     }
 
@@ -87,16 +86,7 @@ contract BatchExchangeViewer {
         address previousPageUser,
         uint16 previousPageUserOffset,
         uint16 maxPageSize
-    )
-        public
-        view
-        returns (
-            bytes memory elements,
-            bool hasNextPage,
-            address nextPageUser,
-            uint16 nextPageUserOffset
-        )
-    {
+    ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
         uint32 batch = batchExchange.getCurrentBatchId();
         return
             getFilteredOrdersPaginated(
@@ -128,17 +118,8 @@ contract BatchExchangeViewer {
         address previousPageUser,
         uint16 previousPageUserOffset,
         uint16 maxPageSize
-    )
-        public
-        view
-        returns (
-            bytes memory elements,
-            bool hasNextPage,
-            address nextPageUser,
-            uint16 nextPageUserOffset
-        )
-    {
-        elements = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
+    ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
+        elements = new bytes(maxPageSize * INDEXED_AUCTION_ELEMENT_WIDTH);
         uint256 elementCount = 0;
         nextPageUser = previousPageUser;
         nextPageUserOffset = previousPageUserOffset;
@@ -158,10 +139,6 @@ contract BatchExchangeViewer {
                 // make sure we don't overflow index * AUCTION_ELEMENT_WIDTH
                 bytes memory element = unfiltered.slice(uint256(index) * AUCTION_ELEMENT_WIDTH, AUCTION_ELEMENT_WIDTH);
                 element = updateSellTokenBalanceForBatchId(element, batchIds[2]);
-                if (batchIds[0] >= getValidFrom(element) && batchIds[1] <= getValidUntil(element)) {
-                    copyInPlace(element, elements, elementCount * AUCTION_ELEMENT_WIDTH);
-                    elementCount += 1;
-                }
                 // Update pagination info
                 address user = getUser(element);
                 if (user == nextPageUser) {
@@ -169,6 +146,16 @@ contract BatchExchangeViewer {
                 } else {
                     nextPageUserOffset = 1;
                     nextPageUser = user;
+                }
+                if (batchIds[0] >= getValidFrom(element) && batchIds[1] <= getValidUntil(element)) {
+                    copyInPlace(element, elements, elementCount * INDEXED_AUCTION_ELEMENT_WIDTH);
+                    // Append index so order information can be used to construct solutions
+                    copyInPlace(
+                        abi.encodePacked(nextPageUserOffset - 1),
+                        elements,
+                        (elementCount * INDEXED_AUCTION_ELEMENT_WIDTH) + AUCTION_ELEMENT_WIDTH
+                    );
+                    elementCount += 1;
                 }
                 if (elementCount >= maxPageSize) {
                     // We are at capacity, return
@@ -179,7 +166,7 @@ contract BatchExchangeViewer {
                 }
             }
         }
-        setLength(elements, elementCount * AUCTION_ELEMENT_WIDTH);
+        setLength(elements, elementCount * INDEXED_AUCTION_ELEMENT_WIDTH);
         return (elements, hasNextPage, nextPageUser, nextPageUserOffset);
     }
 
@@ -190,11 +177,11 @@ contract BatchExchangeViewer {
      * @param pageSize uint determining the count of orders to be returned per page
      * @return encoded bytes representing a page of orders ordered by (user, index)
      */
-    function getEncodedOrdersPaginated(
-        address previousPageUser,
-        uint16 previousPageUserOffset,
-        uint256 pageSize
-    ) public view returns (bytes memory) {
+    function getEncodedOrdersPaginated(address previousPageUser, uint16 previousPageUserOffset, uint256 pageSize)
+        public
+        view
+        returns (bytes memory)
+    {
         return getEncodedOrdersPaginatedWithTokenFilter(ALL_TOKEN_FILTER, previousPageUser, previousPageUserOffset, pageSize);
     }
 
@@ -235,11 +222,7 @@ contract BatchExchangeViewer {
         return elements;
     }
 
-    function matchesTokenFilter(
-        uint16 buyToken,
-        uint16 sellToken,
-        uint16[] memory filter
-    ) public pure returns (bool) {
+    function matchesTokenFilter(uint16 buyToken, uint16 sellToken, uint16[] memory filter) public pure returns (bool) {
         // An empty filter is interpreted as "select all"
         if (filter.length == 0) {
             return true;
@@ -330,11 +313,7 @@ contract BatchExchangeViewer {
         }
     }
 
-    function copyInPlace(
-        bytes memory source,
-        bytes memory destination,
-        uint256 offset
-    ) public pure {
+    function copyInPlace(bytes memory source, bytes memory destination, uint256 offset) public pure {
         for (uint256 i = 0; i < source.length; i++) {
             destination[offset + i] = source[i];
         }
