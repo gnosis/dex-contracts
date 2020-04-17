@@ -1,7 +1,21 @@
-import {Offer, Orderbook, transitiveOrderbook} from "../../src/orderbook";
-import {Fraction} from "../../src/fraction";
-import {assert} from "chai";
+import { Offer, Orderbook, transitiveOrderbook } from "../../src/orderbook";
+import { Fraction } from "../../src/fraction";
+import { assert } from "chai";
 import "mocha";
+
+function assertOffers(orderbook: Orderbook, bids: [Number, Number][], asks: [Number, Number][]) {
+  let offers = orderbook.getOffers();
+  assert.equal(offers.bids.length, bids.length, "bids length does not match");
+  assert.equal(offers.asks.length, asks.length, "asks length does not match");
+  for (let i = 0; i < offers.bids.length; i++) {
+    assert.equal(offers.bids[i].price.toNumber(), bids[i][0], "bid price does not match");
+    assert.equal(offers.bids[i].volume.toNumber(), bids[i][1], "bid volume does not match");
+  }
+  for (let i = 0; i < offers.asks.length; i++) {
+    assert.equal(offers.asks[i].price.toNumber(), asks[i][0], "ask price does not match");
+    assert.equal(offers.asks[i].volume.toNumber(), asks[i][1], "ask volume does not match");
+  }
+}
 
 describe("Orderbook", () => {
   it("cummulates bids and asks sorted by best bid/best ask", () => {
@@ -17,20 +31,7 @@ describe("Orderbook", () => {
     assert.equal(orderbook.baseToken, "USDC");
     assert.equal(orderbook.quoteToken, "DAI");
 
-    assert.equal(
-      JSON.stringify(orderbook.toJSON()),
-      JSON.stringify({
-        bids: [
-          {price: 0.99, volume: 70},
-          {price: 0.9, volume: 80},
-        ],
-        asks: [
-          {price: 1.01, volume: 300},
-          {price: 1.1, volume: 100},
-          {price: 1.2, volume: 200},
-        ],
-      })
-    );
+    assertOffers(orderbook, [[0.99, 70], [0.9, 80]], [[1.01, 300], [1.1, 100], [1.2, 200]]);
   });
 
   describe("inverted", () => {
@@ -52,40 +53,12 @@ describe("Orderbook", () => {
       // Original didn't change
       assert.equal(orderbook.baseToken, "USDC");
       assert.equal(orderbook.quoteToken, "DAI");
-
-      assert.equal(
-        JSON.stringify(orderbook.toJSON()),
-        JSON.stringify({
-          bids: [
-            {price: 0.5, volume: 50},
-            {price: 0.25, volume: 100},
-          ],
-          asks: [
-            {price: 1, volume: 200},
-            {price: 2, volume: 100},
-            {price: 4, volume: 300},
-          ],
-        })
-      );
+      assertOffers(orderbook, [[0.5, 50], [0.25, 100]], [[1, 200], [2, 100], [4, 300]]);
 
       // Check inverse
       assert.equal(inverse.baseToken, "DAI");
       assert.equal(inverse.quoteToken, "USDC");
-
-      assert.equal(
-        JSON.stringify(inverse.toJSON()),
-        JSON.stringify({
-          bids: [
-            {price: 1, volume: 200},
-            {price: 0.5, volume: 200},
-            {price: 0.25, volume: 1200},
-          ],
-          asks: [
-            {price: 2, volume: 25},
-            {price: 4, volume: 25},
-          ],
-        })
-      );
+      assertOffers(inverse, [[1, 200], [0.5, 200], [0.25, 1200]], [[2, 25], [4, 25]]);
     });
 
     it("does not mutate original orderbook", () => {
@@ -115,21 +88,7 @@ describe("Orderbook", () => {
 
       first_orderbook.add(second_orderbook);
 
-      assert.equal(
-        JSON.stringify(first_orderbook.toJSON()),
-        JSON.stringify({
-          bids: [
-            {price: 0.99, volume: 80},
-            {price: 0.95, volume: 70},
-            {price: 0.9, volume: 100},
-          ],
-          asks: [
-            {price: 1.1, volume: 110},
-            {price: 1.2, volume: 150},
-            {price: 1.3, volume: 200},
-          ],
-        })
-      );
+      assertOffers(first_orderbook, [[0.99, 80], [0.95, 70], [0.9, 100]], [[1.1, 110], [1.2, 150], [1.3, 200]]);
     });
 
     it("cannot add orderbooks for different token pairs", () => {
@@ -160,30 +119,26 @@ describe("Orderbook", () => {
       const closure = first_orderbook.transitiveClosure(second_orderbook);
 
       assert.equal(closure.pair(), "ETH/USDC");
-      assert.equal(
-        JSON.stringify(closure.toJSON()),
-        JSON.stringify({
-          // The best bid eth_dai has enough liquidity on the best dai_usdc bid
-          // with 1 DAI remaining to be matched from the second best eth_dai bid (190 DAI).
-          // The remainder of the second best eth_dai bid (189 DAI) gets matched with the second
-          // best dai_usdc bid (200 DAI), leaving 11 DAI for the worst eth_dai bid (270 DAI).
-          // The remaining 259 DAI are unmatchable.
-          bids: [
-            {price: 98.01, volume: 1}, // best eth_dai * best dai_usdc
-            {price: 94.05, volume: 1 / 95}, // 2nd best eth_dai * best dai_usdc (190 & 1 DAI remaining at 95 DAI/ETH)
-            {price: 85.5, volume: 189 / 95}, // 2nd best eth_dai * 2nd best dai_usdc (189 & 200 DAI remaining at 95 DAI/ETH)
-            {price: 81, volume: 11 / 90}, // 3rd best eth_dai * 2nd best dai usdc (270 & 11 DAI remaining at 90 DAI/ETH)
-          ],
-          // The best ask eth_dai has more liquidity (202 DAI) than the best dai_usdc ask (100 DAI),
-          // with 102 DAI remaining to be matched from the second best dai_usdc ask (200 DAI).
-          // The remainder of the second best dai_usd ask (98 DAI) get matched with the second best
-          // eth_dai ask (105 DAI), leaving 7 DAI + the third best eth_dai ask (330 DAI) unmatchable.
-          asks: [
-            {price: 102.01, volume: 100 / 101}, // best eth_dai * best dai_usdc
-            {price: 106.05, volume: 102 / 101}, // best eth_dai * 2nd best dai_usdc
-            {price: 110.25, volume: 98 / 105}, // 2nd best eth_dai * 2nd best dai_usdc
-          ],
-        })
+      assertOffers(closure,
+        // with 1 DAI remaining to be matched from the second best eth_dai bid (190 DAI).
+        // The remainder of the second best eth_dai bid (189 DAI) gets matched with the second
+        // best dai_usdc bid (200 DAI), leaving 11 DAI for the worst eth_dai bid (270 DAI).
+        // The remaining 259 DAI are unmatchable.
+        [
+          [98.01, 1], // best eth_dai * best dai_usdc
+          [94.05, 1 / 95], // 2nd best eth_dai * best dai_usdc (190 & 1 DAI remaining at 95 DAI/ETH)
+          [85.5, 189 / 95], // 2nd best eth_dai * 2nd best dai_usdc (189 & 200 DAI remaining at 95 DAI/ETH)
+          [81, 11 / 90], // 3rd best eth_dai * 2nd best dai usdc (270 & 11 DAI remaining at 90 DAI/ETH)
+        ],
+        // The best ask eth_dai has more liquidity (202 DAI) than the best dai_usdc ask (100 DAI),
+        // with 102 DAI remaining to be matched from the second best dai_usdc ask (200 DAI).
+        // The remainder of the second best dai_usd ask (98 DAI) get matched with the second best
+        // eth_dai ask (105 DAI), leaving 7 DAI + the third best eth_dai ask (330 DAI) unmatchable.
+        [
+          [102.01, 100 / 101], // best eth_dai * best dai_usdc
+          [106.05, 102 / 101], // best eth_dai * 2nd best dai_usdc
+          [110.25, 98 / 105], // 2nd best eth_dai * 2nd best dai_usdc
+        ]
       );
     });
 
@@ -275,8 +230,8 @@ describe("Orderbook", () => {
       orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
 
       assert.equal(
-        JSON.stringify(orderbook.reduced().toJSON()),
-        JSON.stringify(orderbook.toJSON())
+        JSON.stringify(orderbook.reduced().getOffers()),
+        JSON.stringify(orderbook.getOffers())
       );
     });
 
@@ -288,13 +243,7 @@ describe("Orderbook", () => {
       orderbook.addAsk(new Offer(new Fraction(101, 1), 2));
       orderbook.addAsk(new Offer(new Fraction(105, 1), 1));
 
-      assert.equal(
-        JSON.stringify(orderbook.reduced().toJSON()),
-        JSON.stringify({
-          bids: [{price: 101, volume: 1}],
-          asks: [{price: 105, volume: 1}],
-        })
-      );
+      assertOffers(orderbook.reduced(), [[101, 1]], [[105, 1]]);
     });
 
     it("reduces completely overlapping orderbooks", () => {
@@ -305,13 +254,7 @@ describe("Orderbook", () => {
       orderbook.addAsk(new Offer(new Fraction(95, 1), 2));
       orderbook.addAsk(new Offer(new Fraction(99, 1), 1));
 
-      assert.equal(
-        JSON.stringify(orderbook.reduced().toJSON()),
-        JSON.stringify({
-          bids: [],
-          asks: [],
-        })
-      );
+      assertOffers(orderbook.reduced(), [], []);
     });
 
     it("does not modify original orderbook", () => {
@@ -334,24 +277,14 @@ describe("Orderbook", () => {
       orderbook.addAsk(new Offer(new Fraction(200, 1), 200));
 
       // Spread gets larger and volumes decrease
-      assert.equal(
-        JSON.stringify(orderbook.toJSON()),
-        JSON.stringify({
-          bids: [{price: 99, volume: 99}],
-          asks: [{price: 200 / 0.99, volume: 198}],
-        })
-      );
+      assertOffers(orderbook, [[99, 99]], [[200 / 0.99, 198]]);
 
       const inverted = orderbook.inverted();
-      assert.equal(
-        JSON.stringify(inverted.toJSON()),
-        JSON.stringify({
-          // Inverse of 200 without fees is 0.005 becomes 0.00495 with fee
-          bids: [{price: 0.00495, volume: 39600}],
-          // Inverse of 11 without fees is 0.01 becomes 0.0101... with fee
-          asks: [{price: 0.01 / 0.99, volume: 9900}],
-        })
-      );
+      assertOffers(inverted,
+        // Inverse of 200 without fees is 0.005 becomes 0.00495 with fee
+        [[0.00495, 39600]],
+        // Inverse of 11 without fees is 0.01 becomes 0.0101... with fee
+        [[0.01 / 0.99, 9900]]);
     });
 
     it("Doesn't count fee twice when adding orderbooks", () => {
@@ -370,13 +303,7 @@ describe("Orderbook", () => {
       second_orderbook.addBid(new Offer(new Fraction(100, 1), 100));
       first_orderbook.add(second_orderbook);
 
-      assert.equal(
-        JSON.stringify(first_orderbook.toJSON()),
-        JSON.stringify({
-          bids: [{price: 99, volume: 198}],
-          asks: [],
-        })
-      );
+      assertOffers(first_orderbook, [[99, 198]], []);
     });
 
     it("Doesn't count fee twice when reducing orderbooks", () => {
@@ -385,13 +312,7 @@ describe("Orderbook", () => {
       orderbook.addAsk(new Offer(new Fraction(200, 1), 200));
 
       const reduced = orderbook.reduced();
-      assert.equal(
-        JSON.stringify(reduced.toJSON()),
-        JSON.stringify({
-          bids: [{price: 99, volume: 99}],
-          asks: [{price: 200 / 0.99, volume: 198}],
-        })
-      );
+      assertOffers(reduced, [[99, 99]], [[200 / 0.99, 198]]);
     });
 
     it("multiplies fee when building transitive closure", () => {
@@ -410,13 +331,7 @@ describe("Orderbook", () => {
       second_orderbook.addBid(new Offer(new Fraction(1, 1), 100));
 
       const closure = first_orderbook.transitiveClosure(second_orderbook);
-      assert.equal(
-        JSON.stringify(closure.toJSON()),
-        JSON.stringify({
-          bids: [{price: 0.99 * 0.99, volume: 99}],
-          asks: [],
-        })
-      );
+      assertOffers(closure, [[0.99 * 0.99, 99]], []);
     });
   });
 
@@ -443,11 +358,8 @@ describe("Orderbook", () => {
       original.addBid(new Offer(new Fraction(99, 100), 70));
       original.addBid(new Offer(new Fraction(9, 10), 30));
 
-      const serialized = JSON.stringify(original.serialize());
-      const deserialized = Orderbook.deserialize(JSON.parse(serialized));
-      assert.equal(original.baseToken, deserialized.baseToken);
-      assert.equal(original.quoteToken, deserialized.quoteToken);
-      assert.equal(JSON.stringify(original.remainingFractionAfterFee), JSON.stringify(deserialized.remainingFractionAfterFee));
+      const serialized = JSON.stringify(original);
+      const deserialized = Orderbook.fromJSON(JSON.parse(serialized));
       assert.equal(JSON.stringify(original), JSON.stringify(deserialized));
     });
   });
@@ -465,7 +377,7 @@ describe("transitiveOrderbook", () => {
       0
     );
 
-    assert.equal(JSON.stringify(orderbook), JSON.stringify(transitive));
+    assert.equal(JSON.stringify(orderbook.getOffers()), JSON.stringify(transitive.getOffers()));
   });
 
   it("computes transitive orderbook with 1 hop", () => {
@@ -489,16 +401,7 @@ describe("transitiveOrderbook", () => {
       1
     );
 
-    assert.equal(
-      JSON.stringify(transitive),
-      JSON.stringify({
-        bids: [],
-        asks: [
-          {price: 0.01, volume: 100},
-          {price: 0.0125, volume: 80},
-        ],
-      })
-    );
+    assertOffers(transitive, [], [[0.01, 100], [0.0125, 80]]);
   });
 
   it("computes transitive orderbook with 2 hop", () => {
@@ -526,16 +429,7 @@ describe("transitiveOrderbook", () => {
       2
     );
 
-    assert.equal(
-      JSON.stringify(transitive),
-      JSON.stringify({
-        bids: [],
-        asks: [
-          {price: 0.01, volume: 100},
-          {price: 0.0125, volume: 80},
-        ],
-      })
-    );
+    assertOffers(transitive, [], [[0.01, 100], [0.0125, 80]]);
   });
 
   it("computes transitive orderbook from bids and asks", () => {
@@ -555,13 +449,7 @@ describe("transitiveOrderbook", () => {
       1
     );
 
-    assert.equal(
-      JSON.stringify(transitive),
-      JSON.stringify({
-        bids: [],
-        asks: [{price: 0.01, volume: 100}],
-      })
-    );
+    assertOffers(transitive, [], [[0.01, 100]]);
   });
 
   it("does not modify the underlying orderbooks", () => {

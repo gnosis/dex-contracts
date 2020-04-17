@@ -1,4 +1,4 @@
-import {Fraction} from "./fraction";
+import { Fraction } from "./fraction";
 import BN from "bn.js";
 
 export class Offer {
@@ -14,20 +14,12 @@ export class Offer {
     this.price = price;
   }
 
-  toJSON() {
-    return {price: this.price, volume: this.volume};
-  }
-
   clone() {
     return new Offer(this.price.clone(), this.volume.clone());
   }
 
-  serialize(): object {
-    return { price: this.price.serialize(), volume: this.volume.serialize() };
-  }
-
-  static deserialize(o: any): Offer {
-    return new Offer(Fraction.deserialize(o.price), Fraction.deserialize(o.volume));
+  static fromJSON(o: any): Offer {
+    return new Offer(Fraction.fromJSON(o.price), Fraction.fromJSON(o.volume));
   }
 }
 
@@ -50,37 +42,45 @@ export class Orderbook {
     this.bids = new Map();
   }
 
-  static serializeOffers(offers: Map<number, Offer>): object {
+  getOffers() {
+    const asks = Array.from(this.asks.values());
+    const bids = Array.from(this.bids.values());
+    asks.sort(sortOffersAscending);
+    bids.sort(sortOffersDescending);
+    return { bids, asks };
+  }
+
+  static offersToJSON(offers: Map<number, Offer>): object {
     const o: any = {};
-    offers.forEach((value, key) => { o[key] = value.serialize(); });
+    offers.forEach((value, key) => { o[key] = value; });
     return o;
   }
 
-  static deserializeOffers(o: any): Map<number, Offer> {
+  private static offersFromJSON(o: any): Map<number, Offer> {
     const offers = new Map();
     for (let [key, value] of Object.entries(o)) {
-      offers.set(key, Offer.deserialize(value));
+      offers.set(key, Offer.fromJSON(value));
     }
     return offers;
   }
 
-  serialize(): object {
+  toJSON() {
     return {
       baseToken: this.baseToken,
       quoteToken: this.quoteToken,
-      remainingFractionAfterFee: this.remainingFractionAfterFee.serialize(),
-      asks: Orderbook.serializeOffers(this.asks),
-      bids: Orderbook.serializeOffers(this.bids)
+      remainingFractionAfterFee: this.remainingFractionAfterFee,
+      asks: Orderbook.offersToJSON(this.asks),
+      bids: Orderbook.offersToJSON(this.bids)
     };
   }
 
-  static deserialize(o: any): Orderbook {
+  static fromJSON(o: any): Orderbook {
     const result = new Orderbook("", "");
     result.baseToken = o.baseToken;
     result.quoteToken = o.quoteToken;
-    result.remainingFractionAfterFee = Fraction.deserialize(o.remainingFractionAfterFee);
-    result.asks = Orderbook.deserializeOffers(o.asks);
-    result.bids = Orderbook.deserializeOffers(o.bids);
+    result.remainingFractionAfterFee = Fraction.fromJSON(o.remainingFractionAfterFee);
+    result.asks = Orderbook.offersFromJSON(o.asks);
+    result.bids = Orderbook.offersFromJSON(o.bids);
     return result;
   }
 
@@ -104,14 +104,6 @@ export class Orderbook {
       ask.volume.mul(this.remainingFractionAfterFee)
     );
     addOffer(offer, this.asks);
-  }
-
-  toJSON() {
-    const asks = Array.from(this.asks.values());
-    const bids = Array.from(this.bids.values());
-    asks.sort(sortOffersAscending);
-    bids.sort(sortOffersDescending);
-    return {bids, asks};
   }
 
   /**
