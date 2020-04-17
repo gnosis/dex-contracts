@@ -206,13 +206,19 @@ contract("BatchExchange", async (accounts) => {
       const batchExchange = await setupGenericStableX()
       const currentBatch = (await batchExchange.getCurrentBatchId()).toNumber()
       const ids = (
-        await batchExchange.placeValidFromOrders.call([0, 1], [1, 0], [currentBatch, currentBatch], [3, 4], [10, 11], [20, 21], {
-          from: user_1,
-        })
+        await sendTxAndGetReturnValue(
+          batchExchange.placeValidFromOrders,
+          [0, 1],
+          [1, 0],
+          [currentBatch, currentBatch],
+          [3, 4],
+          [10, 11],
+          [20, 21],
+          {
+            from: user_1,
+          }
+        )
       ).map((x) => x.toNumber())
-      await batchExchange.placeValidFromOrders([0, 1], [1, 0], [currentBatch, currentBatch], [3, 4], [10, 11], [20, 21], {
-        from: user_1,
-      })
 
       // sanity check the IDs returned from the call before testing the orders with particular IDs
       assert.deepEqual(ids, [0, 1])
