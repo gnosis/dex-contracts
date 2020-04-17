@@ -144,7 +144,7 @@ contract BatchExchangeViewer {
                 }
                 if (elementCount >= maxPageSize) {
                     // We are at capacity, return
-                    return (elements, hasNextPage, nextPageUser, nextPageUserOffset);
+                    return (elements, true, nextPageUser, nextPageUserOffset);
                 }
             }
         }

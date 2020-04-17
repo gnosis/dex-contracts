@@ -221,6 +221,35 @@ contract("BatchExchangeViewer", (accounts) => {
     })
   })
 
+  describe("getFilteredOrdersPaginated", () => [
+    it("hasNextPage if pageSize is reached (regression)", async () => {
+      const batchId = await batchExchange.getCurrentBatchId()
+      await batchExchange.placeValidFromOrders(
+        Array(3).fill(0), //buyToken
+        Array(3).fill(1), //sellToken
+        Array(3).fill(batchId), //validFrom
+        Array(3).fill(batchId), //validTo
+        Array(3).fill(0), //buyAmounts
+        Array(3).fill(0) //sellAmounts
+      )
+      await batchExchange.placeValidFromOrders(
+        Array(6).fill(1), //buyToken
+        Array(6).fill(2), //sellToken
+        Array(6).fill(batchId), //validFrom
+        Array(6).fill(batchId), //validTo
+        Array(6).fill(0), //buyAmounts
+        Array(6).fill(0) //sellAmounts
+      )
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+
+      // We are querying two subpages which contain 6 elements in total, but due to our
+      // page size constraint only return 5. Thus we should have a nextPage.
+      const result = await viewer.getFilteredOrdersPaginated([batchId, batchId, batchId], [1, 2], zero_address, 0, 5)
+      assert.equal(decodeOrdersBN(result.elements).length, 5)
+      assert.equal(result.hasNextPage, true)
+    }),
+  ])
+
   describe("getEncodedOrdersPaginated", async () => {
     it("returns empty bytes when no users", async () => {
       const batchExchange = await setupGenericStableX()
