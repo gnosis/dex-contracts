@@ -57,34 +57,20 @@ export class Orderbook {
     return { bids, asks };
   }
 
-  static offersToJSON(offers: Map<number, Offer>): object {
-    const o: any = {};
-    offers.forEach((value, key) => { o[key] = value; });
-    return o;
-  }
-
-  private static offersFromJSON(o: any): Map<number, Offer> {
-    const offers = new Map();
-    for (let [key, value] of Object.entries(o)) {
-      offers.set(key, Offer.fromJSON(value));
-    }
-    return offers;
-  }
-
   toJSON() {
     return {
       baseToken: this.baseToken,
       quoteToken: this.quoteToken,
       remainingFractionAfterFee: this.remainingFractionAfterFee,
-      asks: Orderbook.offersToJSON(this.asks),
-      bids: Orderbook.offersToJSON(this.bids)
+      asks: offersToJSON(this.asks),
+      bids: offersToJSON(this.bids)
     };
   }
 
   static fromJSON(o: any): Orderbook {
     const result = new Orderbook(o.baseToken, o.quoteToken, { remainingFractionAfterFee: Fraction.fromJSON(o.remainingFractionAfterFee) });
-    result.asks = Orderbook.offersFromJSON(o.asks);
-    result.bids = Orderbook.offersFromJSON(o.bids);
+    result.asks = offersFromJSON(o.asks);
+    result.bids = offersFromJSON(o.bids);
     return result;
   }
 
@@ -448,4 +434,19 @@ function invertPricePoints(
       ];
     })
   );
+}
+
+
+function offersFromJSON(o: any): Map<number, Offer> {
+  const offers = new Map();
+  for (let [key, value] of Object.entries(o)) {
+    offers.set(key, Offer.fromJSON(value));
+  }
+  return offers;
+}
+
+function offersToJSON(offers: Map<number, Offer>): object {
+  const o: any = {};
+  offers.forEach((value, key) => { o[key] = value; });
+  return o;
 }
