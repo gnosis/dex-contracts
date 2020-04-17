@@ -41,9 +41,11 @@ export class Orderbook {
   ) {
     this.baseToken = baseToken;
     this.quoteToken = quoteToken;
-    this.remainingFractionAfterFee = options.fee ?
-      new Fraction(1, 1).sub(options.fee) :
-      options.remainingFractionAfterFee;
+    if (options.fee != undefined) {
+      this.remainingFractionAfterFee = new Fraction(1, 1).sub(options.fee);
+    } else {
+      this.remainingFractionAfterFee = options.remainingFractionAfterFee;
+    }
     this.asks = new Map();
     this.bids = new Map();
   }
