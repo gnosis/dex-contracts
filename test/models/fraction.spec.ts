@@ -1,6 +1,6 @@
-import {Fraction} from "../../src/fraction";
+import { Fraction } from "../../src/fraction";
 import BN from "bn.js";
-import {assert} from "chai";
+import { assert } from "chai";
 import "mocha";
 
 const tenPow18 = new BN(10).pow(new BN(18));
@@ -185,7 +185,7 @@ describe("Fraction", () => {
           expected: new Fraction(2, 1)
         }
       ];
-      for (const {number, expected} of testCases)
+      for (const { number, expected } of testCases)
         assert(
           Fraction.fromNumber(number)
             .sub(expected)
@@ -246,6 +246,15 @@ describe("Fraction", () => {
       const clone = original.clone();
       clone.mul(new Fraction(1, 2));
       assert.equal(JSON.stringify(original), serialized);
+    });
+  });
+
+  describe("fromJSON", () => {
+    it("works", () => {
+      const original = new Fraction(10, 1);
+      const serialized = JSON.stringify(original);
+      const deserialized = Fraction.fromJSON(JSON.parse(serialized));
+      assert.equal(JSON.stringify(original), JSON.stringify(deserialized));
     });
   });
 });

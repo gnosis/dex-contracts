@@ -1,4 +1,4 @@
-import {Fraction} from "./fraction";
+import { Fraction } from "./fraction";
 import BN from "bn.js";
 
 export class Offer {
@@ -14,14 +14,17 @@ export class Offer {
     this.price = price;
   }
 
-  toJSON() {
-    return {price: this.price, volume: this.volume};
-  }
-
   clone() {
     return new Offer(this.price.clone(), this.volume.clone());
   }
+
+  static fromJSON(o: any): Offer {
+    return new Offer(Fraction.fromJSON(o.price), Fraction.fromJSON(o.volume));
+  }
 }
+
+type Fee = { fee: Fraction };
+type RemainingFractionAfterFee = { remainingFractionAfterFee: Fraction }
 
 export class Orderbook {
   readonly baseToken: string;
@@ -33,13 +36,42 @@ export class Orderbook {
   constructor(
     baseToken: string,
     quoteToken: string,
-    fee = new Fraction(1, 1000)
+    options: Fee | RemainingFractionAfterFee = { fee: new Fraction(1, 1000) },
   ) {
     this.baseToken = baseToken;
     this.quoteToken = quoteToken;
-    this.remainingFractionAfterFee = new Fraction(1, 1).sub(fee);
+    if ("fee" in options) {
+      this.remainingFractionAfterFee = new Fraction(1, 1).sub(options.fee);
+    } else {
+      this.remainingFractionAfterFee = options.remainingFractionAfterFee;
+    }
     this.asks = new Map();
     this.bids = new Map();
+  }
+
+  getOffers() {
+    const asks = Array.from(this.asks.values());
+    const bids = Array.from(this.bids.values());
+    asks.sort(sortOffersAscending);
+    bids.sort(sortOffersDescending);
+    return { bids, asks };
+  }
+
+  toJSON() {
+    return {
+      baseToken: this.baseToken,
+      quoteToken: this.quoteToken,
+      remainingFractionAfterFee: this.remainingFractionAfterFee,
+      asks: offersToJSON(this.asks),
+      bids: offersToJSON(this.bids)
+    };
+  }
+
+  static fromJSON(o: any): Orderbook {
+    const result = new Orderbook(o.baseToken, o.quoteToken, { remainingFractionAfterFee: Fraction.fromJSON(o.remainingFractionAfterFee) });
+    result.asks = offersFromJSON(o.asks);
+    result.bids = offersFromJSON(o.bids);
+    return result;
   }
 
   pair() {
@@ -64,20 +96,12 @@ export class Orderbook {
     addOffer(offer, this.asks);
   }
 
-  toJSON() {
-    const asks = Array.from(this.asks.values());
-    const bids = Array.from(this.bids.values());
-    asks.sort(sortOffersAscending);
-    bids.sort(sortOffersDescending);
-    return {bids, asks};
-  }
-
   /**
    * @returns the inverse of the current order book (e.g. ETH/DAI becomes DAI/ETH)
    * by switching bids/asks and recomputing price/volume to the new reference token.
    */
   inverted() {
-    const result = new Orderbook(this.quoteToken, this.baseToken, this.fee());
+    const result = new Orderbook(this.quoteToken, this.baseToken, { fee: this.fee() });
     result.bids = invertPricePoints(this.asks, this.remainingFractionAfterFee);
     result.asks = invertPricePoints(
       this.bids,
@@ -213,7 +237,7 @@ export class Orderbook {
     const result = new Orderbook(
       this.baseToken,
       orderbook.quoteToken,
-      this.fee()
+      { fee: this.fee() }
     );
 
     // Create a copy here so original orders stay untouched
@@ -262,7 +286,7 @@ export class Orderbook {
   }
 
   clone() {
-    const result = new Orderbook(this.baseToken, this.quoteToken, this.fee());
+    const result = new Orderbook(this.baseToken, this.quoteToken, { fee: this.fee() });
     this.bids.forEach((o) => addOffer(o, result.bids));
     this.asks.forEach((o) => addOffer(o, result.asks));
     return result;
@@ -410,4 +434,19 @@ function invertPricePoints(
       ];
     })
   );
+}
+
+
+function offersFromJSON(o: any): Map<number, Offer> {
+  const offers = new Map();
+  for (let [key, value] of Object.entries(o)) {
+    offers.set(key, Offer.fromJSON(value));
+  }
+  return offers;
+}
+
+function offersToJSON(offers: Map<number, Offer>): object {
+  const o: any = {};
+  offers.forEach((value, key) => { o[key] = value; });
+  return o;
 }
