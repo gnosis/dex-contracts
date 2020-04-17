@@ -16,7 +16,7 @@ if (!privateKey && !mnemonic) {
 
 // Solc
 let solcUseDocker = process.env.SOLC_USE_DOCKER === "true" || false
-let solcVersion = "<0.5.11"
+let solcVersion = "<0.5.7"
 
 // Gas price
 const gasPriceGWei = process.env.GAS_PRICE_GWEI || DEFAULT_GAS_PRICE_GWEI
@@ -34,7 +34,6 @@ const urlDevelopment = process.env.GANACHE_HOST || "localhost"
 const infuraKey = process.env.INFURA_KEY || "9408f47dedf04716a03ef994182cf150"
 
 const { gas: gasLog } = require("minimist")(process.argv.slice(2), { alias: { gas: "g" } })
-const { grep: grep } = require("minimist")(process.argv.slice(2))
 
 module.exports = {
   ...truffleConfig({
@@ -59,7 +58,6 @@ module.exports = {
       gasPrice: 20,
       showTimeSpent: true,
     },
-    grep,
   },
   test_file_extension_regexp: /.*\.js$/,
   plugins: ["truffle-plugin-verify", "solidity-coverage"],
