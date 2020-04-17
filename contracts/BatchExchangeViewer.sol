@@ -117,8 +117,8 @@ contract BatchExchangeViewer {
         nextPageUserOffset = previousPageUserOffset;
         hasNextPage = true;
         uint256 gasLeftBeforePage = gasleft();
-        // Continue while more pages exist or we used more than 1/2 of remaining gas in previous page
-        while (hasNextPage && 2 * gasleft() > gasLeftBeforePage) {
+        // Continue while more pages exist or we still have 3/5 (60%) of remaining gas from previous page
+        while (hasNextPage && 5 * gasleft() > 3 * gasLeftBeforePage) {
             gasLeftBeforePage = gasleft();
             bytes memory unfiltered = getEncodedOrdersPaginatedWithTokenFilter(
                 tokenFilter,
