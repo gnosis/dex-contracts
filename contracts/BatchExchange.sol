@@ -197,10 +197,13 @@ contract BatchExchange is EpochTokenLocker {
      *
      * Emits an {OrderPlacement} event with all relevant order details.
      */
-    function placeOrder(uint16 buyToken, uint16 sellToken, uint32 validUntil, uint128 buyAmount, uint128 sellAmount)
-        public
-        returns (uint256)
-    {
+    function placeOrder(
+        uint16 buyToken,
+        uint16 sellToken,
+        uint32 validUntil,
+        uint128 buyAmount,
+        uint128 sellAmount
+    ) public returns (uint256) {
         return placeOrderInternal(buyToken, sellToken, getCurrentBatchId(), validUntil, buyAmount, sellAmount);
     }
 
@@ -424,11 +427,11 @@ contract BatchExchange is EpochTokenLocker {
      * @param pageSize uint determining the count of elements to be viewed
      * @return encoded bytes representing all orders
      */
-    function getEncodedUserOrdersPaginated(address user, uint16 offset, uint16 pageSize)
-        public
-        view
-        returns (bytes memory elements)
-    {
+    function getEncodedUserOrdersPaginated(
+        address user,
+        uint16 offset,
+        uint16 pageSize
+    ) public view returns (bytes memory elements) {
         for (uint16 i = offset; i < Math.min(orders[user].length, offset + pageSize); i++) {
             elements = elements.concat(
                 encodeAuctionElement(user, getBalance(user, tokenIdToAddressMap(orders[user][i].sellToken)), orders[user][i])
@@ -475,11 +478,11 @@ contract BatchExchange is EpochTokenLocker {
      * @param pageSize uint determining the count of orders to be returned per page
      * @return encoded bytes representing a page of orders ordered by (user, index)
      */
-    function getEncodedUsersPaginated(address previousPageUser, uint16 previousPageUserOffset, uint16 pageSize)
-        public
-        view
-        returns (bytes memory elements)
-    {
+    function getEncodedUsersPaginated(
+        address previousPageUser,
+        uint16 previousPageUserOffset,
+        uint16 pageSize
+    ) public view returns (bytes memory elements) {
         if (allUsers.size() == 0) {
             return elements;
         }
@@ -607,7 +610,11 @@ contract BatchExchange is EpochTokenLocker {
      * @param orderId index of order in list of owner's orders
      * @param executedAmount proportion of order's requested sellAmount that was filled.
      */
-    function updateRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
+    function updateRemainingOrder(
+        address owner,
+        uint16 orderId,
+        uint128 executedAmount
+    ) private {
         if (isOrderWithLimitedAmount(orders[owner][orderId])) {
             orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.add(executedAmount).toUint128();
         }
@@ -618,7 +625,11 @@ contract BatchExchange is EpochTokenLocker {
      * @param orderId index of order in list of owner's orders
      * @param executedAmount proportion of order's requested sellAmount that was filled.
      */
-    function revertRemainingOrder(address owner, uint16 orderId, uint128 executedAmount) private {
+    function revertRemainingOrder(
+        address owner,
+        uint16 orderId,
+        uint128 executedAmount
+    ) private {
         if (isOrderWithLimitedAmount(orders[owner][orderId])) {
             orders[owner][orderId].usedAmount = orders[owner][orderId].usedAmount.sub(executedAmount).toUint128();
         }
@@ -747,11 +758,11 @@ contract BatchExchange is EpochTokenLocker {
      * in order to minimize rounding errors, the order of operations is switched
      *                = ((executedBuyAmount * buyTokenPrice) / (FEE_DENOMINATOR - 1)) * FEE_DENOMINATOR) / sellTokenPrice
      */
-    function getExecutedSellAmount(uint128 executedBuyAmount, uint128 buyTokenPrice, uint128 sellTokenPrice)
-        private
-        pure
-        returns (uint128)
-    {
+    function getExecutedSellAmount(
+        uint128 executedBuyAmount,
+        uint128 buyTokenPrice,
+        uint128 sellTokenPrice
+    ) private pure returns (uint128) {
         /* solium-disable indentation */
         return
             uint256(executedBuyAmount)
@@ -817,11 +828,11 @@ contract BatchExchange is EpochTokenLocker {
      * @param order a sell order
      * @return byte encoded, packed, concatenation of relevant order information
      */
-    function encodeAuctionElement(address user, uint256 sellTokenBalance, Order memory order)
-        private
-        pure
-        returns (bytes memory element)
-    {
+    function encodeAuctionElement(
+        address user,
+        uint256 sellTokenBalance,
+        Order memory order
+    ) private pure returns (bytes memory element) {
         element = abi.encodePacked(user);
         element = element.concat(abi.encodePacked(sellTokenBalance));
         element = element.concat(abi.encodePacked(order.buyToken));

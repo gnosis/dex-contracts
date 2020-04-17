@@ -78,7 +78,11 @@ contract EpochTokenLocker {
      *
      * Emits an {WithdrawRequest} event with relevent request information.
      */
-    function requestFutureWithdraw(address token, uint256 amount, uint32 batchId) public {
+    function requestFutureWithdraw(
+        address token,
+        uint256 amount,
+        uint32 batchId
+    ) public {
         // First process pendingWithdraw (if any), as otherwise balances might increase for currentBatchId - 1
         if (hasValidWithdrawRequest(msg.sender, token)) {
             withdraw(msg.sender, token);
@@ -194,14 +198,22 @@ contract EpochTokenLocker {
      * by setting lastCreditBatchId to the current batchId and allow only withdraws in batches
      * with a higher batchId.
      */
-    function addBalanceAndBlockWithdrawForThisBatch(address user, address token, uint256 amount) internal {
+    function addBalanceAndBlockWithdrawForThisBatch(
+        address user,
+        address token,
+        uint256 amount
+    ) internal {
         if (hasValidWithdrawRequest(user, token)) {
             lastCreditBatchId[user][token] = getCurrentBatchId();
         }
         addBalance(user, token, amount);
     }
 
-    function addBalance(address user, address token, uint256 amount) internal {
+    function addBalance(
+        address user,
+        address token,
+        uint256 amount
+    ) internal {
         updateDepositsBalance(user, token);
         balanceStates[user][token].balance = balanceStates[user][token].balance.add(amount);
     }
@@ -211,7 +223,11 @@ contract EpochTokenLocker {
      * For the substraction the current withdrawRequests are considered and they are effectively reducing
      * the available balance.
      */
-    function subtractBalance(address user, address token, uint256 amount) internal {
+    function subtractBalance(
+        address user,
+        address token,
+        uint256 amount
+    ) internal {
         require(amount <= getBalance(user, token), "Amount exceeds user's balance.");
         subtractBalanceUnchecked(user, token, amount);
     }
@@ -229,7 +245,11 @@ contract EpochTokenLocker {
      * the last submission. In this situation, during the unwinding of the previous orders,
      * the check `amount <= getBalance(user, token)` would fail and the reversion would be blocked.
      */
-    function subtractBalanceUnchecked(address user, address token, uint256 amount) internal {
+    function subtractBalanceUnchecked(
+        address user,
+        address token,
+        uint256 amount
+    ) internal {
         updateDepositsBalance(user, token);
         balanceStates[user][token].balance = balanceStates[user][token].balance.sub(amount);
     }

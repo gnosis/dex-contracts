@@ -44,7 +44,16 @@ contract BatchExchangeViewer {
         address previousPageUser,
         uint16 previousPageUserOffset,
         uint16 maxPageSize
-    ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
+    )
+        public
+        view
+        returns (
+            bytes memory elements,
+            bool hasNextPage,
+            address nextPageUser,
+            uint16 nextPageUserOffset
+        )
+    {
         uint32 batch = batchExchange.getCurrentBatchId();
         return
             getFilteredOrdersPaginated(
@@ -78,7 +87,16 @@ contract BatchExchangeViewer {
         address previousPageUser,
         uint16 previousPageUserOffset,
         uint16 maxPageSize
-    ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
+    )
+        public
+        view
+        returns (
+            bytes memory elements,
+            bool hasNextPage,
+            address nextPageUser,
+            uint16 nextPageUserOffset
+        )
+    {
         uint32 batch = batchExchange.getCurrentBatchId();
         return
             getFilteredOrdersPaginated(
@@ -110,7 +128,16 @@ contract BatchExchangeViewer {
         address previousPageUser,
         uint16 previousPageUserOffset,
         uint16 maxPageSize
-    ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
+    )
+        public
+        view
+        returns (
+            bytes memory elements,
+            bool hasNextPage,
+            address nextPageUser,
+            uint16 nextPageUserOffset
+        )
+    {
         elements = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
         uint256 elementCount = 0;
         nextPageUser = previousPageUser;
@@ -159,11 +186,11 @@ contract BatchExchangeViewer {
      * @param pageSize uint determining the count of orders to be returned per page
      * @return encoded bytes representing a page of orders ordered by (user, index)
      */
-    function getEncodedOrdersPaginated(address previousPageUser, uint16 previousPageUserOffset, uint256 pageSize)
-        public
-        view
-        returns (bytes memory)
-    {
+    function getEncodedOrdersPaginated(
+        address previousPageUser,
+        uint16 previousPageUserOffset,
+        uint256 pageSize
+    ) public view returns (bytes memory) {
         bytes memory elements = new bytes(pageSize * AUCTION_ELEMENT_WIDTH);
         bytes memory users = batchExchange.getUsersPaginated(previousPageUser, uint16(pageSize));
         uint16 currentOffset = previousPageUserOffset;
@@ -190,7 +217,11 @@ contract BatchExchangeViewer {
         return elements;
     }
 
-    function matchesTokenFilter(uint16 buyToken, uint16 sellToken, uint16[] memory filter) public pure returns (bool) {
+    function matchesTokenFilter(
+        uint16 buyToken,
+        uint16 sellToken,
+        uint16[] memory filter
+    ) public pure returns (bool) {
         // An empty filter is interpreted as "select all"
         if (filter.length == 0) {
             return true;
@@ -281,7 +312,11 @@ contract BatchExchangeViewer {
         }
     }
 
-    function copyInPlace(bytes memory source, bytes memory destination, uint256 offset) public pure {
+    function copyInPlace(
+        bytes memory source,
+        bytes memory destination,
+        uint256 offset
+    ) public pure {
         for (uint256 i = 0; i < source.length; i++) {
             destination[offset + i] = source[i];
         }
