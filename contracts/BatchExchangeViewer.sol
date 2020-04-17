@@ -112,8 +112,7 @@ contract BatchExchangeViewer {
         uint16 maxPageSize
     ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
         elements = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
-        bytes memory unfiltered = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
-        uint256 elementCount = 0;
+        setLength(elements, 0);
         nextPageUser = previousPageUser;
         nextPageUserOffset = previousPageUserOffset;
         hasNextPage = true;
@@ -121,20 +120,20 @@ contract BatchExchangeViewer {
         // Continue while more pages exist or we used more than 1/2 of remaining gas in previous page
         while (hasNextPage && 2 * gasleft() > gasLeftBeforePage) {
             gasLeftBeforePage = gasleft();
-            uint256 unfilteredLength = getEncodedOrdersPaginatedWithTokenFilterBuffered(
+            bytes memory unfiltered = getEncodedOrdersPaginatedWithTokenFilter(
                 tokenFilter,
                 nextPageUser,
                 nextPageUserOffset,
-                unfiltered
+                maxPageSize
             );
-            hasNextPage = unfilteredLength / AUCTION_ELEMENT_WIDTH == maxPageSize;
-            for (uint16 index = 0; index < unfilteredLength / AUCTION_ELEMENT_WIDTH; index++) {
+            hasNextPage = unfiltered.length / AUCTION_ELEMENT_WIDTH == maxPageSize;
+            for (uint16 index = 0; index < unfiltered.length / AUCTION_ELEMENT_WIDTH; index++) {
                 // make sure we don't overflow index * AUCTION_ELEMENT_WIDTH
                 bytes memory element = unfiltered.slice(uint256(index) * AUCTION_ELEMENT_WIDTH, AUCTION_ELEMENT_WIDTH);
                 element = updateSellTokenBalanceForBatchId(element, batchIds[2]);
                 if (batchIds[0] >= getValidFrom(element) && batchIds[1] <= getValidUntil(element)) {
-                    copyInPlace(element, elements, elementCount * AUCTION_ELEMENT_WIDTH);
-                    elementCount += 1;
+                    setLength(elements, elements.length + AUCTION_ELEMENT_WIDTH);
+                    copyInPlace(element, elements, elements.length - AUCTION_ELEMENT_WIDTH);
                 }
                 // Update pagination info
                 address user = getUser(element);
@@ -144,13 +143,12 @@ contract BatchExchangeViewer {
                     nextPageUserOffset = 1;
                     nextPageUser = user;
                 }
-                if (elementCount >= maxPageSize) {
+                if (elements.length >= maxPageSize * AUCTION_ELEMENT_WIDTH) {
                     // We are at capacity, return
                     return (elements, hasNextPage, nextPageUser, nextPageUserOffset);
                 }
             }
         }
-        setLength(elements, elementCount * AUCTION_ELEMENT_WIDTH);
         return (elements, hasNextPage, nextPageUser, nextPageUserOffset);
     }
 
@@ -176,9 +174,13 @@ contract BatchExchangeViewer {
         uint256 pageSize
     ) public view returns (bytes memory) {
         bytes memory elements = new bytes(pageSize * AUCTION_ELEMENT_WIDTH);
-        uint256 elementsLength = getEncodedOrdersPaginatedWithTokenFilterBuffered(
-
-        setLength(elements, orderIndex * AUCTION_ELEMENT_WIDTH);
+        uint256 orderCount = getEncodedOrdersPaginatedWithTokenFilterBuffered(
+            tokenFilter,
+            previousPageUser,
+            previousPageUserOffset,
+            elements
+        );
+        setLength(elements, orderCount * AUCTION_ELEMENT_WIDTH);
         return elements;
     }
 
@@ -188,6 +190,7 @@ contract BatchExchangeViewer {
         uint16 previousPageUserOffset,
         bytes memory elements
     ) public view returns (uint256) {
+        uint256 pageSize = elements.length / AUCTION_ELEMENT_WIDTH;
         bytes memory users = batchExchange.getUsersPaginated(previousPageUser, uint16(pageSize));
         uint16 currentOffset = previousPageUserOffset;
         address currentUser = previousPageUser;
