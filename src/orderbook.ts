@@ -23,9 +23,8 @@ export class Offer {
   }
 }
 
-type OrderbookOptions =
-  { fee: Fraction } |
-  { fee: undefined, remainingFractionAfterFee: Fraction }
+type Fee = { fee: Fraction };
+type RemainingFractionAfterFee = { remainingFractionAfterFee: Fraction }
 
 export class Orderbook {
   readonly baseToken: string;
@@ -37,11 +36,11 @@ export class Orderbook {
   constructor(
     baseToken: string,
     quoteToken: string,
-    options: OrderbookOptions = { fee: new Fraction(1, 1000) },
+    options: Fee | RemainingFractionAfterFee = { fee: new Fraction(1, 1000) },
   ) {
     this.baseToken = baseToken;
     this.quoteToken = quoteToken;
-    if (options.fee != undefined) {
+    if ("fee" in options) {
       this.remainingFractionAfterFee = new Fraction(1, 1).sub(options.fee);
     } else {
       this.remainingFractionAfterFee = options.remainingFractionAfterFee;
@@ -83,7 +82,7 @@ export class Orderbook {
   }
 
   static fromJSON(o: any): Orderbook {
-    const result = new Orderbook(o.baseToken, o.quoteToken, { fee: undefined, remainingFractionAfterFee: Fraction.fromJSON(o.remainingFractionAfterFee) });
+    const result = new Orderbook(o.baseToken, o.quoteToken, { remainingFractionAfterFee: Fraction.fromJSON(o.remainingFractionAfterFee) });
     result.asks = Orderbook.offersFromJSON(o.asks);
     result.bids = Orderbook.offersFromJSON(o.bids);
     return result;
