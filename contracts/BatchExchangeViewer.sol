@@ -144,6 +144,9 @@ contract BatchExchangeViewer {
                 }
                 if (elementCount >= maxPageSize) {
                     // We are at capacity, return
+                    // Note, that we might indicate a nextPage although we exactly made it to the end.
+                    // However, since the inner call to fetch unfiltered orders might also indicate a next
+                    // page even though it is right at the end, this cannot really be avoided.
                     return (elements, true, nextPageUser, nextPageUserOffset);
                 }
             }
