@@ -112,6 +112,7 @@ contract BatchExchangeViewer {
         uint16 maxPageSize
     ) public view returns (bytes memory elements, bool hasNextPage, address nextPageUser, uint16 nextPageUserOffset) {
         elements = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
+        bytes memory unfiltered = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
         uint256 elementCount = 0;
         nextPageUser = previousPageUser;
         nextPageUserOffset = previousPageUserOffset;
@@ -120,14 +121,14 @@ contract BatchExchangeViewer {
         // Continue while more pages exist or we used more than 1/2 of remaining gas in previous page
         while (hasNextPage && 2 * gasleft() > gasLeftBeforePage) {
             gasLeftBeforePage = gasleft();
-            bytes memory unfiltered = getEncodedOrdersPaginatedWithTokenFilter(
+            uint256 unfilteredLength = getEncodedOrdersPaginatedWithTokenFilterBuffered(
                 tokenFilter,
                 nextPageUser,
                 nextPageUserOffset,
-                maxPageSize
+                unfiltered
             );
-            hasNextPage = unfiltered.length / AUCTION_ELEMENT_WIDTH == maxPageSize;
-            for (uint16 index = 0; index < unfiltered.length / AUCTION_ELEMENT_WIDTH; index++) {
+            hasNextPage = unfilteredLength / AUCTION_ELEMENT_WIDTH == maxPageSize;
+            for (uint16 index = 0; index < unfilteredLength / AUCTION_ELEMENT_WIDTH; index++) {
                 // make sure we don't overflow index * AUCTION_ELEMENT_WIDTH
                 bytes memory element = unfiltered.slice(uint256(index) * AUCTION_ELEMENT_WIDTH, AUCTION_ELEMENT_WIDTH);
                 element = updateSellTokenBalanceForBatchId(element, batchIds[2]);
@@ -175,6 +176,18 @@ contract BatchExchangeViewer {
         uint256 pageSize
     ) public view returns (bytes memory) {
         bytes memory elements = new bytes(pageSize * AUCTION_ELEMENT_WIDTH);
+        uint256 elementsLength = getEncodedOrdersPaginatedWithTokenFilterBuffered(
+
+        setLength(elements, orderIndex * AUCTION_ELEMENT_WIDTH);
+        return elements;
+    }
+
+    function getEncodedOrdersPaginatedWithTokenFilterBuffered(
+        uint16[] memory tokenFilter,
+        address previousPageUser,
+        uint16 previousPageUserOffset,
+        bytes memory elements
+    ) public view returns (uint256) {
         bytes memory users = batchExchange.getUsersPaginated(previousPageUser, uint16(pageSize));
         uint16 currentOffset = previousPageUserOffset;
         address currentUser = previousPageUser;
@@ -201,8 +214,7 @@ contract BatchExchangeViewer {
                 }
             }
         }
-        setLength(elements, orderIndex * AUCTION_ELEMENT_WIDTH);
-        return elements;
+        return orderIndex;
     }
 
     function matchesTokenFilter(uint16 buyToken, uint16 sellToken, uint16[] memory filter) public pure returns (bool) {
