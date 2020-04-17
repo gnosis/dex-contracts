@@ -205,15 +205,11 @@ contract("BatchExchange", async (accounts) => {
     it("places multiple orders with sepcified validFrom", async () => {
       const batchExchange = await setupGenericStableX()
       const currentBatch = (await batchExchange.getCurrentBatchId()).toNumber()
-      const ids = (await batchExchange.placeValidFromOrders.call(
-        [0, 1],
-        [1, 0],
-        [currentBatch, currentBatch],
-        [3, 4],
-        [10, 11],
-        [20, 21],
-        { from: user_1 }
-      )).map((x) => x.toNumber())
+      const ids = (
+        await batchExchange.placeValidFromOrders.call([0, 1], [1, 0], [currentBatch, currentBatch], [3, 4], [10, 11], [20, 21], {
+          from: user_1,
+        })
+      ).map((x) => x.toNumber())
       await batchExchange.placeValidFromOrders([0, 1], [1, 0], [currentBatch, currentBatch], [3, 4], [10, 11], [20, 21], {
         from: user_1,
       })
