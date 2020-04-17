@@ -6,15 +6,27 @@ import "../EpochTokenLocker.sol";
 
 
 contract EpochTokenLockerTestInterface is EpochTokenLocker {
-    function addBalanceTest(address user, address token, uint256 amount) public {
+    function addBalanceTest(
+        address user,
+        address token,
+        uint256 amount
+    ) public {
         super.addBalance(user, token, amount);
     }
 
-    function addBalanceAndBlockWithdrawForThisBatchTest(address user, address token, uint256 amount) public {
+    function addBalanceAndBlockWithdrawForThisBatchTest(
+        address user,
+        address token,
+        uint256 amount
+    ) public {
         super.addBalanceAndBlockWithdrawForThisBatch(user, token, amount);
     }
 
-    function subtractBalanceTest(address user, address token, uint256 amount) public {
+    function subtractBalanceTest(
+        address user,
+        address token,
+        uint256 amount
+    ) public {
         super.subtractBalance(user, token, amount);
     }
 }
