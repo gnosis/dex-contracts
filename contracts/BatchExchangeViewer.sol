@@ -130,8 +130,8 @@ contract BatchExchangeViewer {
             for (uint16 index = 0; index < unfiltered.length / AUCTION_ELEMENT_WIDTH; index++) {
                 // make sure we don't overflow index * AUCTION_ELEMENT_WIDTH
                 bytes memory element = unfiltered.slice(uint256(index) * AUCTION_ELEMENT_WIDTH, AUCTION_ELEMENT_WIDTH);
-                element = updateSellTokenBalanceForBatchId(element, batchIds[2]);
                 if (batchIds[0] >= getValidFrom(element) && batchIds[1] <= getValidUntil(element)) {
+                    element = updateSellTokenBalanceForBatchId(element, batchIds[2]);
                     copyInPlace(element, elements, elementCount * AUCTION_ELEMENT_WIDTH);
                     elementCount += 1;
                 }
