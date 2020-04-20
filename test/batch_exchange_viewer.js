@@ -5,7 +5,7 @@ const MockContract = artifacts.require("MockContract")
 const BN = require("bn.js")
 const truffleAssert = require("truffle-assertions")
 
-const { decodeOrdersBN } = require("../src/encoding")
+const { decodeOrdersBN, decodeIndexedOrdersBN } = require("../src/encoding")
 const { closeAuction } = require("../scripts/utilities.js")
 const { setupGenericStableX } = require("./stablex_utils")
 
@@ -38,7 +38,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       await batchExchange.requestWithdraw(token_2.address, 50)
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeOrdersBN(await viewer.getOpenOrderBook([]))
+      const result = decodeIndexedOrdersBN(await viewer.getOpenOrderBook([]))
       assert.equal(result[0].sellTokenBalance.toNumber(), 50)
     })
     it("does not count already matured deposits twice", async () => {
@@ -53,7 +53,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       await closeAuction(batchExchange)
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeOrdersBN(await viewer.getOpenOrderBook([]))
+      const result = decodeIndexedOrdersBN(await viewer.getOpenOrderBook([]))
       assert.equal(result[0].sellTokenBalance.toNumber(), 50)
     })
     it("can be queried without pagination", async () => {
@@ -76,7 +76,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       )
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeOrdersBN(await viewer.getOpenOrderBook([]))
+      const result = decodeIndexedOrdersBN(await viewer.getOpenOrderBook([]))
       assert.equal(result.filter((e) => e.validFrom == batchId).length, 10)
     })
     it("can be queried with pagination", async () => {
@@ -100,7 +100,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = await viewer.getOpenOrderBookPaginated([], zero_address, 0, 5)
-      assert.equal(decodeOrdersBN(result.elements).filter((e) => e.validFrom == batchId).length, 5)
+      assert.equal(decodeIndexedOrdersBN(result.elements).filter((e) => e.validFrom == batchId).length, 5)
       assert.equal(result.nextPageUser, accounts[0])
       assert.equal(result.nextPageUserOffset, 15)
     })
@@ -123,8 +123,11 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
         Array(5).fill(0) //sellAmounts
       )
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeOrdersBN(await viewer.getOpenOrderBook([token_1.address, token_2.address]))
-      assert.equal(result.filter((e) => e.validFrom == batchId).length, 5)
+      const result = decodeIndexedOrdersBN(await viewer.getOpenOrderBook([token_1.address, token_2.address]))
+      assert.deepEqual(
+        result.map((e) => e.orderId),
+        [3, 4, 5, 6, 7]
+      )
     })
   })
 
@@ -140,7 +143,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       await batchExchange.requestWithdraw(token_2.address, 50)
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeOrdersBN(await viewer.getFinalizedOrderBook([]))
+      const result = decodeIndexedOrdersBN(await viewer.getFinalizedOrderBook([]))
       assert.equal(result[0].sellTokenBalance.toNumber(), 0)
     })
     it("can be queried without pagination", async () => {
@@ -166,7 +169,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       await closeAuction(batchExchange)
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeOrdersBN(await viewer.getFinalizedOrderBook([]))
+      const result = decodeIndexedOrdersBN(await viewer.getFinalizedOrderBook([]))
       assert.equal(result.filter((e) => e.validFrom == batchId).length, 10)
     })
     it("can be queried with pagination", async () => {
@@ -193,7 +196,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = await viewer.getFinalizedOrderBookPaginated([], zero_address, 0, 5)
-      assert.equal(decodeOrdersBN(result.elements).filter((e) => e.validFrom == batchId).length, 5)
+      assert.equal(decodeIndexedOrdersBN(result.elements).filter((e) => e.validFrom == batchId).length, 5)
       assert.equal(result.nextPageUser, accounts[0])
       assert.equal(result.nextPageUserOffset, 15)
     })
@@ -220,10 +223,42 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       await closeAuction(batchExchange)
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
-      const result = decodeOrdersBN(await viewer.getFinalizedOrderBook([token_1.address, token_2.address]))
-      assert.equal(result.filter((e) => e.validFrom == batchId).length, 5)
+      const result = decodeIndexedOrdersBN(await viewer.getFinalizedOrderBook([token_1.address, token_2.address]))
+      assert.deepEqual(
+        result.map((e) => e.orderId),
+        [3, 4, 5, 6, 7]
+      )
     })
   })
+
+  describe("getFilteredOrdersPaginated", () => [
+    it("hasNextPage if pageSize is reached (regression)", async () => {
+      const batchId = await batchExchange.getCurrentBatchId()
+      await batchExchange.placeValidFromOrders(
+        Array(3).fill(0), //buyToken
+        Array(3).fill(1), //sellToken
+        Array(3).fill(batchId), //validFrom
+        Array(3).fill(batchId), //validTo
+        Array(3).fill(0), //buyAmounts
+        Array(3).fill(0) //sellAmounts
+      )
+      await batchExchange.placeValidFromOrders(
+        Array(6).fill(1), //buyToken
+        Array(6).fill(2), //sellToken
+        Array(6).fill(batchId), //validFrom
+        Array(6).fill(batchId), //validTo
+        Array(6).fill(0), //buyAmounts
+        Array(6).fill(0) //sellAmounts
+      )
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+
+      // We are querying two subpages which contain 6 elements in total, but due to our
+      // page size constraint only return 5. Thus we should have a nextPage.
+      const result = await viewer.getFilteredOrdersPaginated([batchId, batchId, batchId], [1, 2], zero_address, 0, 5)
+      assert.equal(decodeIndexedOrdersBN(result.elements).length, 5)
+      assert.equal(result.hasNextPage, true)
+    }),
+  ])
 
   describe("getEncodedOrdersPaginated", async () => {
     it("returns empty bytes when no users", async () => {
@@ -344,7 +379,18 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       const result = decodeOrdersBN(await viewer.getEncodedOrdersPaginatedWithTokenFilter([0, 2], zero_address, 0, 10))
       // Filtered orders still show up as 0s to preserve order indices
       assert.equal(result.length, 1)
-      assert.equal(result[0].user, zero_address)
+      assert.equal(result[0].validFrom, 0)
+      assert.equal(result[0].validUntil, 0)
+    })
+
+    it("Allows filtered paginating while filtering (regression test)", async () => {
+      const batchId = await batchExchange.getCurrentBatchId()
+      await batchExchange.placeOrder(0, 1, batchId, 200, 300)
+      await batchExchange.placeOrder(2, 1, batchId, 200, 300)
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+      const result = await viewer.getFilteredOrdersPaginated([batchId, batchId, batchId], [1, 2], accounts[0], 0, 1)
+      assert.equal(decodeIndexedOrdersBN(result.elements).length, 1)
     })
   })
 })
