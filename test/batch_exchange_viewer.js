@@ -255,7 +255,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       // We are querying two subpages which contain 6 elements in total, but due to our
       // page size constraint only return 5. Thus we should have a nextPage.
       const result = await viewer.getFilteredOrdersPaginated([batchId, batchId, batchId], [1, 2], zero_address, 0, 5)
-      assert.equal(decodeOrdersBN(result.elements).length, 5)
+      assert.equal(decodeIndexedOrdersBN(result.elements).length, 5)
       assert.equal(result.hasNextPage, true)
     }),
   ])
@@ -390,7 +390,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
       const result = await viewer.getFilteredOrdersPaginated([batchId, batchId, batchId], [1, 2], accounts[0], 0, 1)
-      assert.equal(decodeOrdersBN(result.elements).length, 1)
+      assert.equal(decodeIndexedOrdersBN(result.elements).length, 1)
     })
   })
 })
