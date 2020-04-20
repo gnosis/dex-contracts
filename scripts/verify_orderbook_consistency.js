@@ -13,7 +13,7 @@ async function sleep(ms) {
 
 async function getLastBlockInBatchBefore(web3, instance, batchId) {
   let block = await web3.eth.getBlockNumber()
-  while (parseInt(await instance.contract.methods.getCurrentBatchId().call(block)) == batchId) {
+  while (parseInt(await instance.contract.methods.getCurrentBatchId().call(block)) >= batchId) {
     block--
   }
   return block
@@ -44,13 +44,15 @@ async function getOrdersFromExchange(exchange, targetBlock, targetBatch) {
 }
 
 module.exports = async () => {
-  try {
-    const instance = await BatchExchange.deployed()
-    const viewer = await BatchExchangeViewer.deployed()
+  const instance = await BatchExchange.deployed()
+  const viewer = await BatchExchangeViewer.deployed()
 
-    for (;;) {
+  for (;;) {
+    try {
       const batchId = (await instance.getCurrentBatchId()).toNumber()
       if (batchId > mostRecentBatch) {
+        // Wait some time to avoid reorg inconsistency
+        await sleep(30000)
         const lastBlockInPreviousBatch = await getLastBlockInBatchBefore(web3, instance, batchId)
         const firstBlockInNewBatch = lastBlockInPreviousBatch + 1
         console.log(`Start verification for batch ${batchId} with blocks ${lastBlockInPreviousBatch}/${firstBlockInNewBatch}`)
@@ -70,9 +72,9 @@ module.exports = async () => {
         console.log(`Verification succeeded for batch ${batchId}`)
         mostRecentBatch = batchId
       }
-      sleep(10000)
+      await sleep(10000)
+    } catch (error) {
+      console.error(error)
     }
-  } catch (error) {
-    console.error(error)
   }
 }
