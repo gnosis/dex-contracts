@@ -184,7 +184,6 @@ contract BatchExchangeViewer {
                         elements,
                         elements.length - INDEXED_AUCTION_ELEMENT_WIDTH + AUCTION_ELEMENT_WIDTH
                     );
-                    elementCount += 1;
                 }
                 if (elements.length >= maxPageSize * INDEXED_AUCTION_ELEMENT_WIDTH) {
                     // We are at capacity, return
