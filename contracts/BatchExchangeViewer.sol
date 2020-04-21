@@ -146,9 +146,9 @@ contract BatchExchangeViewer {
             uint16 nextPageUserOffset
         )
     {
-        elements = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
+        elements = new bytes(uint256(maxPageSize) * INDEXED_AUCTION_ELEMENT_WIDTH);
         setLength(elements, 0);
-        bytes memory unfiltered = new bytes(maxPageSize * AUCTION_ELEMENT_WIDTH);
+        bytes memory unfiltered = new bytes(uint256(maxPageSize) * AUCTION_ELEMENT_WIDTH);
         nextPageUser = previousPageUser;
         nextPageUserOffset = previousPageUserOffset;
         hasNextPage = true;
