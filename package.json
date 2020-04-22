@@ -101,7 +101,7 @@
     "minimist": "^1.2.5",
     "mocha": "^7.1.1",
     "node-fetch": "^2.6.0",
-    "openzeppelin-solidity": "^2.5.0",
+    "openzeppelin-solidity": "^3.0.0",
     "prettier": "^2.0.5",
     "prettier-plugin-solidity": "^1.0.0-alpha.48",
     "rimraf": "^3.0.2",
