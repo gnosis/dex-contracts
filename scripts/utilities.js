@@ -234,6 +234,33 @@ async function getBatchId(batchExchange) {
   return batchId.toNumber()
 }
 
+const WORD_DATA_LENGTH = 64
+const BALANCESTATES_STORAGE_SLOT = "0x0"
+/**
+ * Retrieves user's token balance as stored in the "balance" entry of the private exchange mapping balanceStates
+ * Value is directly read from storage relying on Solidity's layout of storage variables
+ * See https://solidity.readthedocs.io/en/develop/internals/layout_in_storage.html
+ * @param {string} userAddress address of the user
+ * @param {string} tokenAddress address of the token
+ * @param {string} batchExchangeAddress address of the batch exchange
+ * @param {Object} web3Provider provider of Ethereum JavaScript API
+ * @return {BN} balance of the token for the given user as stored in balanceStates[userAddress][tokenAddress].balance
+ */
+async function getBalanceState(userAddress, tokenAddress, batchExchangeAddress, web3Provider = web3) {
+  const userBalancestatesStorageSlot = web3Provider.utils.soliditySha3(
+    { type: "bytes32", value: web3Provider.utils.padLeft(userAddress, WORD_DATA_LENGTH) },
+    { type: "bytes32", value: web3Provider.utils.padLeft(BALANCESTATES_STORAGE_SLOT, WORD_DATA_LENGTH) }
+  )
+
+  const targetStorageSlot = web3Provider.utils.soliditySha3(
+    { type: "bytes32", value: web3Provider.utils.padLeft(tokenAddress, WORD_DATA_LENGTH) },
+    { type: "bytes32", value: web3Provider.utils.padLeft(userBalancestatesStorageSlot, WORD_DATA_LENGTH) }
+  )
+
+  const storageAtSlot = await web3Provider.eth.getStorageAt(batchExchangeAddress, targetStorageSlot)
+  return web3Provider.utils.toBN(storageAtSlot)
+}
+
 async function submitSolution({ name, batchId, solution, solverAddress, batchExchange }) {
   console.log(`Submit "${name}":
   - Objective value: ${solution.objectiveValue}
@@ -295,6 +322,7 @@ module.exports = {
   setAllowances,
   mintOwl,
   deleteOrders,
+  getBalanceState,
   submitSolution,
   getBatchId,
   createMintableToken,
