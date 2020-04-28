@@ -280,11 +280,11 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
         [0, 1],
         zero_address,
         0,
-        2,
+        2
       )
       const orders = decodeIndexedOrdersBN(result.elements)
       assert.equal(orders.length, 1, `unexpected second order ${JSON.stringify(orders[1])}`)
-    })
+    }),
   ])
 
   describe("getEncodedOrdersPaginated", async () => {
