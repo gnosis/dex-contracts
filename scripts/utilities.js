@@ -261,6 +261,28 @@ async function getBalanceState(userAddress, tokenAddress, batchExchangeAddress, 
   return web3Provider.utils.toBN(storageAtSlot)
 }
 
+/**
+ * Computes amount of a token that a user can immediately withdraw from the exchange
+ * @param {string} userAddress address of the user
+ * @param {string} tokenAddress address of the token
+ * @param {Object} batchExchange object representing the batch exchange smart contract
+ * @param {Object} web3Provider provider of Ethereum JavaScript API
+ * @return {BN} amount of token that the user would receive by calling batchExchange.withdraw
+ */
+async function getWithdrawableAmount(userAddress, tokenAddress, batchExchange, web3Provider = web3) {
+  const [balanceState, pendingDeposit, pendingWithdrawal, lastCreditBatchId, batchId] = await Promise.all([
+    getBalanceState(userAddress, tokenAddress, batchExchange.address, web3Provider),
+    batchExchange.getPendingDeposit(userAddress, tokenAddress),
+    batchExchange.getPendingWithdraw(userAddress, tokenAddress),
+    batchExchange.lastCreditBatchId(userAddress, tokenAddress),
+    batchExchange.getCurrentBatchId(),
+  ])
+  if (pendingWithdrawal[1].gte(batchId) || lastCreditBatchId.gte(batchId)) return new BN(0)
+  let balance = balanceState
+  if (pendingDeposit[1] > 0 && pendingDeposit[1] < batchId) balance = balance.add(pendingDeposit[0])
+  return BN.min(balance, pendingWithdrawal[0])
+}
+
 async function submitSolution({ name, batchId, solution, solverAddress, batchExchange }) {
   console.log(`Submit "${name}":
   - Objective value: ${solution.objectiveValue}
@@ -323,6 +345,7 @@ module.exports = {
   mintOwl,
   deleteOrders,
   getBalanceState,
+  getWithdrawableAmount,
   submitSolution,
   getBatchId,
   createMintableToken,
