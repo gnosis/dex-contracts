@@ -409,6 +409,12 @@ contract BatchExchangeViewer {
                 target,
                 offset + ADDRESS_WIDTH
             );
+        } else {
+            // NOTE: Ensure we write 0-s to the target memory location as we are
+            // reusing buffer and want to avoid stale data being left behind.
+            for (uint256 i = ADDRESS_WIDTH; i < AUCTION_ELEMENT_WIDTH; i++) {
+                target[i] = 0;
+            }
         }
     }
 }

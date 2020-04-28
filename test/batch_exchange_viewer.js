@@ -259,7 +259,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       assert.equal(result.hasNextPage, true)
     }),
 
-    it.only("zeros the unfilted order page buffer for filtered tokens", async () => {
+    it("zeros the unfilted order page buffer for filtered tokens", async () => {
       const batchId = await batchExchange.getCurrentBatchId()
       await batchExchange.placeValidFromOrders(
         Array(3).fill(0), //buyToken
