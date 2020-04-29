@@ -263,6 +263,8 @@ async function getBalanceState(userAddress, tokenAddress, batchExchangeAddress, 
 
 /**
  * Computes amount of a token that a user can immediately withdraw from the exchange
+ * It not only checks whether a withdrawal is pending, but also considers the balance available to the user,
+ * pending deposits, and whether there were recent trades that would make withdrawing fail.
  * @param {string} userAddress address of the user
  * @param {string} tokenAddress address of the token
  * @param {Object} batchExchange object representing the batch exchange smart contract
