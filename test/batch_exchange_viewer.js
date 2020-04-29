@@ -259,7 +259,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       assert.equal(result.hasNextPage, true)
     }),
 
-    it.only("zeros the unfilted order page buffer for filtered tokens", async () => {
+    it("zeros the unfilted order page buffer for filtered tokens", async () => {
       const batchId = await batchExchange.getCurrentBatchId()
       const nextBatchId = batchId.addn(1)
       await batchExchange.placeValidFromOrders(
@@ -277,13 +277,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       // 0-ed when an order was filtered by token ID then the following request
       // would return 3 orders (the third one having duplicate data of first two
       // orders).
-      const result = await viewer.getFilteredOrdersPaginated(
-        [batchId, nextBatchId, nextBatchId],
-        [0, 1],
-        zero_address,
-        0,
-        3
-      )
+      const result = await viewer.getFilteredOrdersPaginated([batchId, nextBatchId, nextBatchId], [0, 1], zero_address, 0, 3)
       const orders = decodeIndexedOrdersBN(result.elements)
       assert.equal(orders.length, 2, `unexpected third order ${JSON.stringify(orders[2])}`)
     }),
