@@ -279,14 +279,15 @@ async function getWithdrawableAmount(userAddress, tokenAddress, batchExchange, w
     batchExchange.lastCreditBatchId(userAddress, tokenAddress),
     batchExchange.getCurrentBatchId(),
   ])
-  if (pendingWithdrawal[1].gte(batchId) || lastCreditBatchId.gte(batchId)) {
-    return new BN(0)
-  }
   let balance = balanceState
   if (pendingDeposit[1] > 0 && pendingDeposit[1] < batchId) {
     balance = balance.add(pendingDeposit[0])
   }
-  return BN.min(balance, pendingWithdrawal[0])
+  if (pendingWithdrawal[1].gte(batchId) || lastCreditBatchId.gte(batchId)) {
+    return new BN(0)
+  } else {
+    return BN.min(balance, pendingWithdrawal[0])
+  }
 }
 
 async function submitSolution({ name, batchId, solution, solverAddress, batchExchange }) {
