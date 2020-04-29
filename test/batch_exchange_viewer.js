@@ -258,6 +258,33 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       assert.equal(decodeIndexedOrdersBN(result.elements).length, 5)
       assert.equal(result.hasNextPage, true)
     }),
+
+    it("zeros the unfilted order page buffer for filtered tokens", async () => {
+      const batchId = await batchExchange.getCurrentBatchId()
+      await batchExchange.placeValidFromOrders(
+        Array(3).fill(0), //buyToken
+        [1, 1, 2], //sellToken
+        Array(3).fill(batchId), //validFrom
+        [batchId.addn(1), batchId, batchId.addn(1)], //validTo
+        [0, 1, 2], //buyAmounts
+        Array(3).fill(0) //sellAmounts
+      )
+      const viewer = await BatchExchangeViewer.new(batchExchange.address)
+
+      // We want to make sure that the order with token ID 2 that should be
+      // filtered indeed is. If the unfiltered order buffer was not getting 0-ed
+      // when an order was filtered by token ID then the following request would
+      // return 2 orders (the second one having duplicate data of first order).
+      const result = await viewer.getFilteredOrdersPaginated(
+        [batchId, batchId.addn(1), batchId.addn(1)],
+        [0, 1],
+        zero_address,
+        0,
+        2
+      )
+      const orders = decodeIndexedOrdersBN(result.elements)
+      assert.equal(orders.length, 1, `unexpected second order ${JSON.stringify(orders[1])}`)
+    }),
   ])
 
   describe("getEncodedOrdersPaginated", async () => {
