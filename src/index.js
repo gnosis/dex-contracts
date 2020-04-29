@@ -13,5 +13,5 @@ module.exports = {
   ...require("../build/common/src/orderbook.js"),
   ...require("./encoding.js"),
   ...require("./onchain_reading.js"),
-  ...require("./batch_exchange_utils.js"),
+  ...require("../build/common/src/batch_exchange_utils.js"),
 }
