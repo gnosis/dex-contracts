@@ -3,7 +3,7 @@ const MockContract = artifacts.require("MockContract")
 const BN = require("bn.js")
 
 const { closeAuction } = require("../scripts/utilities.js")
-const { getBalanceState, getWithdrawableAmount } = require("../build/src/batch_exchange_utils.js")
+const { getBalanceState, getWithdrawableAmount } = require("../build/common/src/batch_exchange_utils.js")
 
 const { setupGenericStableX } = require("./stablex_utils")
 
