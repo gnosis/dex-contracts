@@ -1,6 +1,7 @@
 const BN = require("bn.js")
 const { waitForNSeconds } = require("../build/common/test/utilities.js")
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
+const WORD_DATA_LENGTH = 64
 
 const getArgumentsHelper = function () {
   const args = process.argv.slice(4)
@@ -234,8 +235,6 @@ async function getBatchId(batchExchange) {
   return batchId.toNumber()
 }
 
-const WORD_DATA_LENGTH = 64
-const BALANCESTATES_STORAGE_SLOT = "0x0"
 /**
  * Retrieves user's token balance as stored in the "balance" entry of the private exchange mapping balanceStates
  * Value is directly read from storage relying on Solidity's layout of storage variables
@@ -247,6 +246,8 @@ const BALANCESTATES_STORAGE_SLOT = "0x0"
  * @return {BN} balance of the token for the given user as stored in balanceStates[userAddress][tokenAddress].balance
  */
 async function getBalanceState(userAddress, tokenAddress, batchExchangeAddress, web3Provider = web3) {
+  const BALANCESTATES_STORAGE_SLOT = "0x0"
+
   const userBalancestatesStorageSlot = web3Provider.utils.soliditySha3(
     { type: "bytes32", value: web3Provider.utils.padLeft(userAddress, WORD_DATA_LENGTH) },
     { type: "bytes32", value: web3Provider.utils.padLeft(BALANCESTATES_STORAGE_SLOT, WORD_DATA_LENGTH) }
