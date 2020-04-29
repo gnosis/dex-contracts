@@ -20,13 +20,13 @@
   "BatchExchangeViewer": {
     "1": {
       "links": {},
-      "address": "0x02d2cA010848f508607EA2C2b30DCF29A64d94E2",
-      "transactionHash": "0x81b5217a7e0d57e539e4341f6e4efca2d14c06d8ade1ae63170cfeb48f19674c"
+      "address": "0x1175AFf51996ADBE45a1c330c0B999D104016ba9",
+      "transactionHash": "0xcb463e9a83412f1426d742ef953b22f400fec2801baaa3e0f9ece616778e2a06"
     },
     "4": {
       "links": {},
-      "address": "0x6003e5cbFeEc43be54d57eC589148EC88E8a9306",
-      "transactionHash": "0xad85fc35de9fcc806f2a9b2ba29dd5fc9fab62511f5faed05516f1b8bb704169"
+      "address": "0xbbd5BcC28bD6a1454bca6d4f6Ad0FbCEaAf7BAaA",
+      "transactionHash": "0x894c4fbb27cd407701092a4a22a7cb4c8f86b826c4f4e66ec75426e51e584337"
     }
   },
   "Migrations": {
