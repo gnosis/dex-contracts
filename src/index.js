@@ -7,8 +7,8 @@
  */
 
 module.exports = {
-  BatchExchange: require("../build/contracts/BatchExchange.json"),
-  BatchExchangeViewer: require("../build/contracts/BatchExchangeViewer.json"),
+  BatchExchangeArtifact: require("../build/contracts/BatchExchange.json"),
+  BatchExchangeViewerArtifact: require("../build/contracts/BatchExchangeViewer.json"),
   ...require("../build/common/src/fraction.js"),
   ...require("../build/common/src/orderbook.js"),
   ...require("./encoding.js"),
