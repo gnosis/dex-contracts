@@ -14,7 +14,7 @@
     "test": "truffle test {build/common/,}test/*js && yarn run test-ts",
     "test-stablex": "yarn run test-js test/stablex/*",
     "test-js": "truffle test",
-    "test-ts": "mocha -r ts-node/register test/models/*.spec.ts",
+    "test-ts": "mocha -r ts-node/register 'test/models/**/*spec.ts'",
     "coverage": "truffle run coverage --network coverage --file \"{build/common/,}test/*js\"",
     "networks-extract": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/extract_network_info.js",
     "networks-inject": "CONF_FILE=$(pwd)'/migration_conf.js'  node node_modules/@gnosis.pm/util-contracts/src/inject_network_info.js",
