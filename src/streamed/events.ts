@@ -16,14 +16,16 @@ type Event<
  * This type definition allows the TypeScript compiler to determine the type of
  * the `returnValues` property based on `event` property checks. For example:
  * ```
- * const eventData: AnyEvent<BatchExchange> // = ...
- * switch (eventData.event) {
- * case "TokenListing":
- *   x.returnValues.token = "..." // OK
+ * const eventData: AnyEvent<BatchExchange> = ...
+ * case "Token":                              // ERR: 2678: Type '"Token"' is not comparable to type
+ *                                            // '"OrderPlacement" | "TokenListing" | ...'
+ *   break
+ * case "OrderPlacement":
+ *   eventData.returnValues.buyToken = "asdf" // OK
  *   break
  * case "Withdraw":
- *   x.returnValues.buyToken = "asdf" // Error: 2339: Property 'buyToken' does not exist on type
- *                                    // '{ user: string; token: string; amount: string; 0: string; 1: string; 2: string; }'.
+ *   eventData.returnValues.buyToken = "asdf" // ERR: 2339: Property 'buyToken' does not exist on type
+ *                                            // '{ user: string; token: string; amount: string; ... }'.
  *   break
  * }
  * ```
