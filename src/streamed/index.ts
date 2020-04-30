@@ -13,12 +13,10 @@
  * @packageDocumentation
  */
 
-import assert from 'assert'
-import Web3 from 'web3'
-import { TransactionReceipt } from 'web3-core'
-import { EventData } from 'web3-eth-contract'
-import { BatchExchange, BatchExchangeArtifact } from '../..'
-import { AccountState } from './state'
+import Web3 from "web3"
+import { TransactionReceipt } from "web3-core"
+import { BatchExchange, BatchExchangeArtifact } from "../.."
+import { AccountState } from "./state"
 
 /**
  * Configuration options for the streamed orderbook.
@@ -138,7 +136,7 @@ export class StreamedOrderbook {
       this.options.logger?.debug(`fetching page ${fromBlock}-${toBlock}`)
 
       const events = await this.contract.getPastEvents(
-        'allEvents',
+        "allEvents",
         { fromBlock, toBlock },
       )
 
