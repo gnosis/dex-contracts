@@ -81,6 +81,7 @@
     "@openeth/truffle-typings": "^0.0.5",
     "@truffle/contract": "^4.2.2",
     "@types/chai": "^4.2.11",
+    "@typescript-eslint/eslint-plugin": "^2.30.0",
     "axios": "^0.19.2",
     "bignumber.js": "^9.0.0",
     "chai": "^4.2.0",
