@@ -15,6 +15,7 @@
 
 import Web3 from "web3"
 import { TransactionReceipt } from "web3-core"
+import { EventData } from "web3-eth-contract"
 import { BatchExchange, BatchExchangeArtifact } from "../.."
 import { AuctionState } from "./state"
 
@@ -38,6 +39,18 @@ export interface OrderbookOptions {
    * so this parameter should be set accordingly.
    */
   blockPageSize: number;
+
+    /**
+   * Sets the number of block confirmations required for an event to be
+   * considered confirmed and not be subject to re-orgs.
+   */
+  blockConfirmations: number;
+
+  /**
+   * Sets the polling interval used for querying latest events and updating the
+   * current account state.
+   */
+  pollInterval: number;
 
   /**
    * Enable strict checking that performs additional integrity checks.
@@ -65,6 +78,8 @@ export interface OrderbookOptions {
  */
 export const DEFAULT_ORDERBOOK_OPTIONS: OrderbookOptions = {
   blockPageSize: 10000,
+  blockConfirmations: 6,
+  pollInterval: 10000,
   strict: false,
 }
 
@@ -79,6 +94,10 @@ export const BATCH_DURATION = 300
  */
 export class StreamedOrderbook {
   private readonly state: AuctionState;
+
+  private updateTimeout?: NodeJS.Timeout;
+  private updateError?: Error;
+  private pendingEvents: EventData[] = [];
 
   private constructor(
     private readonly web3: Web3,
@@ -112,7 +131,31 @@ export class StreamedOrderbook {
     )
 
     await orderbook.applyPastEvents()
+
+    if (options.endBlock === undefined) {
+      await orderbook.applyNewEvents()
+      orderbook.scheduleUpdate()
+    }
+
     return orderbook
+  }
+
+  /**
+   * Stops the orderbook so that it no longer performs any updates.
+   *
+   * @throws
+   * Throws any error that may have occurred when updating and applying new
+   * events to the account state.
+   */
+  public stop(): void {
+    if (this.updateError) {
+      throw this.updateError
+    }
+
+    if (this.updateTimeout) {
+      clearTimeout(this.updateTimeout)
+      this.updateTimeout = undefined
+    }
   }
 
   /**
@@ -133,15 +176,76 @@ export class StreamedOrderbook {
         fromBlock + this.options.blockPageSize - 1,
         endBlock,
       )
-      this.options.logger?.debug(`fetching page ${fromBlock}-${toBlock}`)
 
+      this.options.logger?.debug(`fetching page ${fromBlock}-${toBlock}`)
       const events = await this.contract.getPastEvents(
         "allEvents",
         { fromBlock, toBlock },
       )
 
+      this.options.logger?.debug(`applying ${events.length} past events`)
       this.state.applyEvents(events)
     }
+  }
+
+  /**
+   * Apply new confirmed events to the account state and store the remaining
+   * events that are subject to reorgs into the `pendingEvents` array.
+   *
+   * @remarks
+   * If there is an error retrieving the latest events from the node, then the
+   * account state remains unmodified. This allows the updating orderbook to be
+   * more fault-tolerant and deal with nodes being temporarily down and some
+   * intermittent errors.
+   *
+   * @throws
+   * Throws if there was an error applying the newly confirmed events.
+   */
+  private async applyNewEvents(): Promise<void> {
+    const fromBlock = this.state.nextBlock
+
+    let confirmedEvents: EventData[]
+    let pendingEvents: EventData[]
+    try {
+      this.options.logger?.debug(`fetching new events from ${fromBlock}-latest`)
+      const events = await this.contract.getPastEvents("allEvents", { fromBlock })
+
+      const latestBlock = await this.web3.eth.getBlockNumber()
+      const confirmedBlock = latestBlock - this.options.blockConfirmations
+      const confirmedEventCount = events.findIndex(ev => ev.blockNumber <= confirmedBlock)
+
+      confirmedEvents = events.splice(0, confirmedEventCount)
+      pendingEvents = events
+    } catch (err) {
+      this.options.logger?.warn(`error retrieving new events: ${err}`)
+      return
+    }
+
+    if (confirmedEvents.length > 0) {
+      this.options.logger?.debug(`applying ${confirmedEvents.length} confirmed events`)
+      this.state.applyEvents(confirmedEvents)
+    }
+    this.pendingEvents = pendingEvents
+  }
+
+  /**
+   * Schedule an orderbook update.
+   */
+  private scheduleUpdate(): void {
+    this.updateTimeout = setTimeout(
+      async () => {
+        try {
+          await this.applyNewEvents()
+          if (this.updateTimeout) {
+            this.scheduleUpdate()
+          }
+        } catch (err) {
+          this.options.logger?.error(`error applying new events: ${err}`)
+          this.updateError = err
+        }
+      },
+      this.options.pollInterval,
+    )
   }
 }
 
