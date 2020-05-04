@@ -15,13 +15,14 @@ contract("BatchExchange utils", async (accounts) => {
       const erc20 = await MockContract.new()
       await erc20.givenAnyReturnBool(true)
 
+      // amount is hex 100 to catch possible zero padding issues in the function
       await batchExchange.deposit(erc20.address, 0x100)
       await closeAuction(batchExchange)
       // force balance update by creating new deposit
       await batchExchange.deposit(erc20.address, 0)
 
       const balance = await getBalanceState(accounts[0], erc20.address, batchExchange.address, web3)
-      assert.equal(balance.toString(16), "100")
+      assert.equal(balance.toNumber(), 0x100)
     })
   })
 
