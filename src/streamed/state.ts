@@ -333,56 +333,42 @@ export class AuctionState {
   /**
    * Applies a trade event to the auction state.
    */
-  private applyTrade({
-    owner,
-    orderId,
-    sellToken,
-    buyToken,
-    executedSellAmount,
-    executedBuyAmount,
-  }: Event<BatchExchange, "Trade">) {
+  private applyTrade(trade: Event<BatchExchange, "Trade">) {
     this.updateBalance(
-      owner,
-      parseInt(sellToken),
-      amount => amount - BigInt(executedSellAmount),
+      trade.owner,
+      parseInt(trade.sellToken),
+      amount => amount - BigInt(trade.executedSellAmount),
     )
     this.updateOrderRemainingAmount(
-      owner,
-      parseInt(orderId),
-      amount => amount - BigInt(executedSellAmount),
+      trade.owner,
+      parseInt(trade.orderId),
+      amount => amount - BigInt(trade.executedSellAmount),
     )
     this.updateBalance(
-      owner,
-      parseInt(buyToken),
-      amount => amount + BigInt(executedBuyAmount),
+      trade.owner,
+      parseInt(trade.buyToken),
+      amount => amount + BigInt(trade.executedBuyAmount),
     )
   }
 
   /**
    * Applies a trade reversion event to the auction state.
    */
-  private applyTradeReversion({
-    owner,
-    orderId,
-    sellToken,
-    buyToken,
-    executedSellAmount,
-    executedBuyAmount,
-  }: Event<BatchExchange, "TradeReversion">) {
+  private applyTradeReversion(trade: Event<BatchExchange, "TradeReversion">) {
     this.updateBalance(
-      owner,
-      parseInt(sellToken),
-      amount => amount + BigInt(executedSellAmount),
+      trade.owner,
+      parseInt(trade.sellToken),
+      amount => amount + BigInt(trade.executedSellAmount),
     )
     this.updateOrderRemainingAmount(
-      owner,
-      parseInt(orderId),
-      amount => amount + BigInt(executedSellAmount),
+      trade.owner,
+      parseInt(trade.orderId),
+      amount => amount + BigInt(trade.executedSellAmount),
     )
     this.updateBalance(
-      owner,
-      parseInt(buyToken),
-      amount => amount - BigInt(executedBuyAmount),
+      trade.owner,
+      parseInt(trade.buyToken),
+      amount => amount - BigInt(trade.executedBuyAmount),
     )
   }
 
