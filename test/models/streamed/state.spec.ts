@@ -341,7 +341,7 @@ describe("Account State", () => {
         event(1, "Deposit", {
           user: addr(1),
           token: addr(1),
-          amount: "100000",
+          amount: "200000",
           batchId: "1",
         }, 4),
         event(1, "OrderPlacement", {
