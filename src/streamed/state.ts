@@ -279,19 +279,11 @@ export class AuctionState {
 
   /**
    * Applies an emulated solution reversion event.
-   *
-   * @throws
-   * In strict mode, throws if the account balances are left in an invalid state
-   * while applying a solution. See `applySolutionSubmission` documentation for
-   * more details.
    */
   private applySolutionReversion(
     { submitter, burntFees }: Event<BatchExchange, "SolutionSubmission">,
   ) {
     this.updateBalance(submitter, 0, amount => amount - BigInt(burntFees))
-    if (this.options.strict) {
-      assertAccountBalancesAreValid(this.accounts.entries())
-    }
   }
 
   /**
@@ -308,7 +300,11 @@ export class AuctionState {
   ) {
     this.updateBalance(submitter, 0, amount => amount + BigInt(burntFees))
     if (this.options.strict) {
-      assertAccountBalancesAreValid(this.accounts.entries())
+      for (const [user, { balances }] of this.accounts.entries()) {
+        for (const [token, balance] of balances.entries()) {
+          assert(balance >= BigInt(0), `user ${user} token ${token} is negative`)
+        }
+      }
     }
   }
 
@@ -544,18 +540,5 @@ function assertEventsAreAfterBlockAndOrdered(block: number, events: EventData[])
     )
     blockNumber = ev.blockNumber
     logIndex = ev.logIndex
-  }
-}
-
-/**
- * Asserts that all account balances are positive.
- *
- * @throws If an account balance is negative.
- */
-function assertAccountBalancesAreValid(accounts: Iterable<[Address, Account]>) {
-  for (const [user, { balances }] of accounts) {
-    for (const [token, balance] of balances.entries()) {
-      assert(balance >= BigInt(0), `user ${user} token ${token} is negative`)
-    }
   }
 }
