@@ -1,6 +1,6 @@
 import BN from "bn.js";
 
-import {closeAuction} from "./utilities";
+import {closeAuction, applyBalances} from "./utilities";
 import {getBalanceState, getWithdrawableAmount} from "../src/balance_reader";
 import {
   BatchExchangeInstance,
@@ -20,9 +20,7 @@ contract("BatchExchange utils", async (accounts) => {
 
       // amount is hex 100 to catch possible zero padding issues in the function
       await batchExchange.deposit(erc20.address, 0x100);
-      await closeAuction(batchExchange);
-      // force balance update by creating new deposit
-      await batchExchange.deposit(erc20.address, 0);
+      await applyBalances(accounts[0], batchExchange, [erc20.address]);
 
       const balance = await getBalanceState(
         accounts[0],
@@ -46,16 +44,7 @@ contract("BatchExchange utils", async (accounts) => {
       const batchExchange = await BatchExchange.new(1, erc20.address);
       await closeAuction(batchExchange);
       await batchExchange.deposit(erc20.address, startingAmount);
-      await closeAuction(batchExchange);
-      // force balance update with an empty withdraw
-      await batchExchange.withdraw(accounts[0], erc20.address);
-      // state of the contract after the execution of this function:
-      // balanceState[accounts[0]][erc20.address] =
-      // {
-      //   balance: startingAmount,
-      //   pendingDeposits: null,
-      //   pendingWithdraws: null,
-      // }
+      await applyBalances(accounts[0], batchExchange, [erc20.address]);
       return [batchExchange, erc20];
     };
 
