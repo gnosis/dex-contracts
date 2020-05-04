@@ -94,7 +94,7 @@ export async function getWithdrawableAmount(
     batchExchange.getCurrentBatchId(),
   ]);
   let balance = balanceState;
-  if (pendingDeposit[1].gt(new BN(0)) && pendingDeposit[1].lt(batchId)) {
+  if (pendingDeposit[1].lt(batchId)) {
     balance = balance.add(pendingDeposit[0]);
   }
   if (pendingWithdrawal[1].gte(batchId) || lastCreditBatchId.gte(batchId)) {
