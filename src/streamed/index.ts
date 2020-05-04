@@ -14,9 +14,9 @@
  */
 
 import Web3 from "web3"
-import { TransactionReceipt } from "web3-core"
-import { EventData } from "web3-eth-contract"
+import { BlockNumber, TransactionReceipt } from "web3-core"
 import { BatchExchange, BatchExchangeArtifact } from "../.."
+import { AnyEvent } from "./events"
 import { AuctionState } from "./state"
 
 /**
@@ -87,7 +87,7 @@ export const BATCH_DURATION = 300
  */
 export class StreamedOrderbook {
   private readonly state: AuctionState;
-  private pendingEvents: EventData[] = [];
+  private pendingEvents: AnyEvent<BatchExchange>[] = [];
 
   private invalidState?: InvalidAuctionStateError;
 
@@ -150,10 +150,7 @@ export class StreamedOrderbook {
       )
 
       this.options.logger?.debug(`fetching page ${fromBlock}-${toBlock}`)
-      const events = await this.contract.getPastEvents(
-        "allEvents",
-        { fromBlock, toBlock },
-      )
+      const events = await this.getPastEvents({ fromBlock, toBlock })
 
       this.options.logger?.debug(`applying ${events.length} past events`)
       this.state.applyEvents(events)
@@ -179,7 +176,7 @@ export class StreamedOrderbook {
 
     const fromBlock = this.state.nextBlock
     this.options.logger?.debug(`fetching new events from ${fromBlock}-latest`)
-    const events = await this.contract.getPastEvents("allEvents", { fromBlock, toBlock: "latest" })
+    const events = await this.getPastEvents({ fromBlock })
 
     const latestBlock = await this.web3.eth.getBlockNumber()
     const confirmedBlock = latestBlock - this.options.blockConfirmations
@@ -191,7 +188,7 @@ export class StreamedOrderbook {
     if (confirmedEvents.length > 0) {
       this.options.logger?.debug(`applying ${confirmedEvents.length} confirmed events until block ${confirmedBlock}`)
       try {
-        this.state.applyEvents(confirmedEvents)
+        this.state.applyEvents(confirmedEvents as any)
       } catch (err) {
         this.invalidState = new InvalidAuctionStateError(confirmedBlock, err)
         this.options.logger?.error(this.invalidState.message)
@@ -199,6 +196,16 @@ export class StreamedOrderbook {
       }
     }
     this.pendingEvents = pendingEvents
+  }
+
+  private async getPastEvents(
+    options: { fromBlock: BlockNumber, toBlock?: BlockNumber },
+  ): Promise<AnyEvent<BatchExchange>[]> {
+    const events = await this.contract.getPastEvents("allEvents", {
+      toBlock: "latest",
+      ...options,
+    })
+    return events as AnyEvent<BatchExchange>[]
   }
 }
 
