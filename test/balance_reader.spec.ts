@@ -2,10 +2,6 @@ import BN from "bn.js";
 
 import {closeAuction, applyBalances} from "./utilities";
 import {getBalanceState, getWithdrawableAmount} from "../src/balance_reader";
-import {
-  BatchExchangeInstance,
-  MockContractInstance,
-} from "../types/truffle-typings";
 
 const MockContract = artifacts.require("MockContract");
 const BatchExchange = artifacts.require("BatchExchange");
@@ -35,21 +31,14 @@ contract("BatchExchange utils", async (accounts) => {
   describe("getWithdrawableAmount()", async () => {
     const startingAmount = new BN("100");
 
-    const setup = async function (): Promise<[
-      BatchExchangeInstance,
-      MockContractInstance
-    ]> {
+    it("returns zero for future withdraw request", async () => {
       const erc20 = await MockContract.new();
       await erc20.givenAnyReturnBool(true);
       const batchExchange = await BatchExchange.new(1, erc20.address);
       await closeAuction(batchExchange);
       await batchExchange.deposit(erc20.address, startingAmount);
       await applyBalances(accounts[0], batchExchange, [erc20.address]);
-      return [batchExchange, erc20];
-    };
 
-    it("returns zero for future withdraw request", async () => {
-      const [batchExchange, erc20] = await setup();
       const futureBatchId = 2 ** 32 - 1;
       await batchExchange.requestFutureWithdraw(
         erc20.address,
@@ -65,7 +54,13 @@ contract("BatchExchange utils", async (accounts) => {
       assert.equal(withdrawableAmount.toString(), "0");
     });
     it("returns amount when withdraw was already requested", async () => {
-      const [batchExchange, erc20] = await setup();
+      const erc20 = await MockContract.new();
+      await erc20.givenAnyReturnBool(true);
+      const batchExchange = await BatchExchange.new(1, erc20.address);
+      await closeAuction(batchExchange);
+      await batchExchange.deposit(erc20.address, startingAmount);
+      await applyBalances(accounts[0], batchExchange, [erc20.address]);
+
       await batchExchange.requestWithdraw(erc20.address, startingAmount);
       await closeAuction(batchExchange);
       const withdrawableAmount = await getWithdrawableAmount(
@@ -85,7 +80,13 @@ contract("BatchExchange utils", async (accounts) => {
       );
     });
     it("returns entire balance when withdraw of more than available was requested", async () => {
-      const [batchExchange, erc20] = await setup();
+      const erc20 = await MockContract.new();
+      await erc20.givenAnyReturnBool(true);
+      const batchExchange = await BatchExchange.new(1, erc20.address);
+      await closeAuction(batchExchange);
+      await batchExchange.deposit(erc20.address, startingAmount);
+      await applyBalances(accounts[0], batchExchange, [erc20.address]);
+
       await batchExchange.requestWithdraw(
         erc20.address,
         startingAmount.addn(1)
@@ -108,7 +109,13 @@ contract("BatchExchange utils", async (accounts) => {
       );
     });
     it("ignores deposits if funds are not yet available", async () => {
-      const [batchExchange, erc20] = await setup();
+      const erc20 = await MockContract.new();
+      await erc20.givenAnyReturnBool(true);
+      const batchExchange = await BatchExchange.new(1, erc20.address);
+      await closeAuction(batchExchange);
+      await batchExchange.deposit(erc20.address, startingAmount);
+      await applyBalances(accounts[0], batchExchange, [erc20.address]);
+
       const newAmount = new BN("200");
       const fullBalance = newAmount.add(startingAmount);
       await batchExchange.requestWithdraw(erc20.address, fullBalance);
@@ -131,7 +138,13 @@ contract("BatchExchange utils", async (accounts) => {
       );
     });
     it("considers deposits if funds are available", async () => {
-      const [batchExchange, erc20] = await setup();
+      const erc20 = await MockContract.new();
+      await erc20.givenAnyReturnBool(true);
+      const batchExchange = await BatchExchange.new(1, erc20.address);
+      await closeAuction(batchExchange);
+      await batchExchange.deposit(erc20.address, startingAmount);
+      await applyBalances(accounts[0], batchExchange, [erc20.address]);
+
       const newAmount = new BN("200");
       const fullBalance = newAmount.add(startingAmount);
       await batchExchange.requestWithdraw(erc20.address, fullBalance);
