@@ -37,7 +37,7 @@ function addr(lowerBits: number): string {
 
 describe("Account State", () => {
   describe("applyEventsUntilBatch", () => {
-    it("Updates the batch ID", async () => {
+    it("Updates the batch ID", () => {
       const state = auctionState()
       state.applyEvents([
         event(0, "TokenListing", { id: "0", token: addr(1) }),
@@ -45,7 +45,7 @@ describe("Account State", () => {
       expect(state.nextBlock).to.equal(1)
     })
 
-    it("Throws when past block is applied", async () => {
+    it("Throws when past block is applied", () => {
       const state = auctionState()
       state.applyEvents([
         event(10, "TokenListing", { id: "0", token: addr(1) }),
@@ -55,7 +55,7 @@ describe("Account State", () => {
       ])).to.throw()
     })
 
-    it("Throws when events are out of order", async () => {
+    it("Throws when events are out of order", () => {
       const state = auctionState()
       expect(() => state.applyEvents([
         event(2, "TokenListing", { id: "0", token: addr(1) }),
@@ -65,7 +65,7 @@ describe("Account State", () => {
   })
 
   describe("OrderPlacement > OrderCancellation > OrderDeletion", () => {
-    it("Sets the order valid until to null", async () => {
+    it("Adds a new user orders", () => {
       const state = auctionState()
       state.applyEvents([
         event(1, "TokenListing", { id: "0", token: addr(0) }, 1),
@@ -82,13 +82,44 @@ describe("Account State", () => {
         }, 3),
       ])
       expect(state.toJSON().accounts[addr(3)].orders[0].remainingAmount).to.equal("100000")
+    })
 
+    it("Sets the order valid until to null", () => {
+      const state = auctionState()
       state.applyEvents([
+        event(1, "TokenListing", { id: "0", token: addr(0) }, 1),
+        event(1, "TokenListing", { id: "1", token: addr(1) }, 2),
+        event(1, "OrderPlacement", {
+          owner: addr(3),
+          index: "0",
+          buyToken: "0",
+          sellToken: "1",
+          validFrom: "2",
+          validUntil: "99999",
+          priceNumerator: "100000",
+          priceDenominator: "100000",
+        }, 3),
         event(3, "OrderCancellation", { owner: addr(3), id: "0" }),
       ])
       expect(state.toJSON().accounts[addr(3)].orders[0].validUntil).to.be.null
+    })
 
+    it("Completely clears values for deleted orders", () => {
+      const state = auctionState()
       state.applyEvents([
+        event(1, "TokenListing", { id: "0", token: addr(0) }, 1),
+        event(1, "TokenListing", { id: "1", token: addr(1) }, 2),
+        event(1, "OrderPlacement", {
+          owner: addr(3),
+          index: "0",
+          buyToken: "0",
+          sellToken: "1",
+          validFrom: "2",
+          validUntil: "99999",
+          priceNumerator: "100000",
+          priceDenominator: "100000",
+        }, 3),
+        event(3, "OrderCancellation", { owner: addr(3), id: "0" }),
         event(6, "OrderDeletion", { owner: addr(3), id: "0" }),
       ])
       expect(state.toJSON().accounts[addr(3)].orders[0]).to.deep.equal({
@@ -102,7 +133,7 @@ describe("Account State", () => {
       })
     })
 
-    it("throws for nonexistent order", async () => {
+    it("Throws for nonexistent order", () => {
       const state = auctionState()
       expect(() => state.applyEvents([
         event(0, "OrderCancellation", { owner: addr(3), id: "0" }),
@@ -115,7 +146,7 @@ describe("Account State", () => {
   })
 
   describe("Deposit", () => {
-    it("Adds a user balance and updates it if already existing", async () => {
+    it("Adds a user balance and updates it if already existing", () => {
       const state = auctionState()
       state.applyEvents([
         event(0, "Deposit", {
@@ -140,7 +171,7 @@ describe("Account State", () => {
   })
 
   describe("WithdrawalRequest > Withdraw", () => {
-    it("Updates balance on withdraw", async () => {
+    it("Adds a pending withdraw to the user", () => {
       const state = auctionState()
       state.applyEvents([
         event(0, "Deposit", {
@@ -160,8 +191,23 @@ describe("Account State", () => {
         batchId: 1,
         amount: "100000",
       })
+    })
 
+    it("Updates balance on withdraw", () => {
+      const state = auctionState()
       state.applyEvents([
+        event(0, "Deposit", {
+          user: addr(1),
+          token: addr(0),
+          amount: "100000",
+          batchId: "1",
+        }),
+        event(1, "WithdrawRequest", {
+          user: addr(1),
+          token: addr(0),
+          amount: "100000",
+          batchId: "1",
+        }),
         event(2, "Withdraw", {
           user: addr(1),
           token: addr(0),
@@ -172,7 +218,7 @@ describe("Account State", () => {
       expect(state.toJSON().accounts[addr(1)].pendingWithdrawals[addr(0)]).to.be.undefined
     })
 
-    it("Always works when withdrawing 0", async () => {
+    it("Always works when withdrawing 0", () => {
       const state = auctionState()
       state.applyEvents([
         event(1, "Withdraw", {
@@ -183,7 +229,7 @@ describe("Account State", () => {
       ])
     })
 
-    it("Throws when there is not enough balance", async () => {
+    it("Throws when there is not enough balance", () => {
       const state = auctionState()
       expect(() => state.applyEvents([
         event(1, "WithdrawRequest", {
