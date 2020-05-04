@@ -165,12 +165,13 @@ export class AuctionState {
    * number) are applied.
    *
    */
-  public applyEvents(events: EventData[]) {
+  public applyEvents(events: EventData[]): void {
     if (this.options.strict) {
       assertEventsAreAfterBlockAndOrdered(this.lastBlock, events)
     }
     this.lastBlock = events[events.length - 1]?.blockNumber ?? this.lastBlock
 
+    /* eslint-disable no-case-declarations */
     for (const ev of events) {
       const data = ev.returnValues
       switch (ev.event) {
@@ -188,7 +189,7 @@ export class AuctionState {
         this.deleteOrder(data.owner, parseInt(data.id))
         break
       case "OrderPlacement":
-        this.addOrder(data.owner, {
+        const orderId = this.addOrder(data.owner, {
           buyToken: parseInt(data.buyToken),
           sellToken: parseInt(data.sellToken),
           validFrom: parseInt(data.validFrom),
@@ -197,9 +198,14 @@ export class AuctionState {
           priceDenominator: BigInt(data.priceDenominator),
           remainingAmount: BigInt(data.priceDenominator),
         })
+        if (this.options.strict) {
+          assert(
+            orderId == parseInt(data.index),
+            `user ${data.user} order ${data.index} added as the ${orderId}th order`,
+          )
+        }
         break
       case "SolutionSubmission":
-        /* eslint-disable no-case-declarations */
         const submitter = data.submitter
         const burntFees = BigInt(data.burntFees)
         this.updateBalance(submitter, 0, amount => amount + burntFees)
@@ -274,6 +280,7 @@ export class AuctionState {
         throw new UnhandledEventError(ev)
       }
     }
+    /* eslint-enable no-case-declarations */
 
     if (this.options.strict) {
       assertAccountsAreValid(this.lastBlock, this.accounts.entries())
@@ -405,7 +412,7 @@ export class AuctionState {
     user: Address,
     orderId: number,
     update: (amount: bigint) => bigint,
-  ) {
+  ): void {
     const order = this.order(user, orderId)
     if (
       order.priceNumerator !== UNLIMITED_ORDER_AMOUNT &&
