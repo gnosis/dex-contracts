@@ -480,7 +480,7 @@ function assertAccountsAreValid(blockNumber: number, accounts: Iterable<[Address
     for (const [token, balance] of balances.entries()) {
       assert(
         balance >= BigInt(0),
-        `user ${user} token ${token} is negative at block ${blockNumber}`,
+        `user ${user} token ${token} balance is negative at block ${blockNumber}`,
       )
     }
 
@@ -488,7 +488,7 @@ function assertAccountsAreValid(blockNumber: number, accounts: Iterable<[Address
       const order = orders[id]
       assert(
         order.remainingAmount >= BigInt(0),
-        `user ${user} order ${id} is negative at block ${blockNumber}`,
+        `user ${user} order ${id} remaining amount is negative at block ${blockNumber}`,
       )
     }
   }

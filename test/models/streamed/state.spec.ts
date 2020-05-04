@@ -170,6 +170,237 @@ describe("Account State", () => {
     })
   })
 
+  describe("Trade > SolutionSubmission > TradeReversion > SolutionReversion", () => {
+    it("Updates balances and order amounts for solutions", () => {
+      const state = auctionState()
+      state.applyEvents([
+        event(1, "TokenListing", { id: "0", token: addr(0) }, 1),
+        event(1, "TokenListing", { id: "1", token: addr(1) }, 2),
+        event(1, "Deposit", {
+          user: addr(0),
+          token: addr(0),
+          amount: "100000",
+          batchId: "1",
+        }, 3),
+        event(1, "Deposit", {
+          user: addr(1),
+          token: addr(1),
+          amount: "100000",
+          batchId: "1",
+        }, 4),
+        event(1, "OrderPlacement", {
+          owner: addr(0),
+          index: "0",
+          buyToken: "1",
+          sellToken: "0",
+          validFrom: "2",
+          validUntil: "2",
+          priceNumerator: "100000",
+          priceDenominator: "100000",
+        }, 5),
+        event(1, "OrderPlacement", {
+          owner: addr(1),
+          index: "0",
+          buyToken: "0",
+          sellToken: "1",
+          validFrom: "2",
+          validUntil: "2",
+          priceNumerator: "100000",
+          priceDenominator: "100000",
+        }, 6),
+        event(2, "Trade", {
+          owner: addr(0),
+          orderId: "0",
+          buyToken: "1",
+          sellToken: "0",
+          executedBuyAmount: "50000",
+          executedSellAmount: "50000",
+        }, 1),
+        event(2, "Trade", {
+          owner: addr(1),
+          orderId: "0",
+          buyToken: "0",
+          sellToken: "1",
+          executedBuyAmount: "50000",
+          executedSellAmount: "50000",
+        }, 2),
+        event(2, "SolutionSubmission", {
+          submitter: addr(2),
+          burntFees: "10000",
+          utility: "unused",
+          disregardedUtility: "unused",
+          lastAuctionBurntFees: "unsued",
+          prices: ["unsued"],
+          tokenIdsForPrice: ["unsued"],
+        }, 3),
+      ])
+      expect(state.toJSON().accounts[addr(0)].balances[addr(0)]).to.equal("50000")
+      expect(state.toJSON().accounts[addr(0)].balances[addr(1)]).to.equal("50000")
+      expect(state.toJSON().accounts[addr(1)].balances[addr(0)]).to.equal("50000")
+      expect(state.toJSON().accounts[addr(1)].balances[addr(1)]).to.equal("50000")
+      expect(state.toJSON().accounts[addr(2)].balances[addr(0)]).to.equal("10000")
+    })
+
+    it("Reverts trades and solution", () => {
+      const state = auctionState()
+      state.applyEvents([
+        event(1, "TokenListing", { id: "0", token: addr(0) }, 1),
+        event(1, "TokenListing", { id: "1", token: addr(1) }, 2),
+        event(1, "Deposit", {
+          user: addr(0),
+          token: addr(0),
+          amount: "100000",
+          batchId: "1",
+        }, 3),
+        event(1, "Deposit", {
+          user: addr(1),
+          token: addr(1),
+          amount: "100000",
+          batchId: "1",
+        }, 4),
+        event(1, "OrderPlacement", {
+          owner: addr(0),
+          index: "0",
+          buyToken: "1",
+          sellToken: "0",
+          validFrom: "2",
+          validUntil: "2",
+          priceNumerator: "100000",
+          priceDenominator: "100000",
+        }, 5),
+        event(1, "OrderPlacement", {
+          owner: addr(1),
+          index: "0",
+          buyToken: "0",
+          sellToken: "1",
+          validFrom: "2",
+          validUntil: "2",
+          priceNumerator: "100000",
+          priceDenominator: "100000",
+        }, 6),
+        event(2, "Trade", {
+          owner: addr(0),
+          orderId: "0",
+          buyToken: "1",
+          sellToken: "0",
+          executedBuyAmount: "50000",
+          executedSellAmount: "50000",
+        }, 1),
+        event(2, "Trade", {
+          owner: addr(1),
+          orderId: "0",
+          buyToken: "0",
+          sellToken: "1",
+          executedBuyAmount: "50000",
+          executedSellAmount: "50000",
+        }, 2),
+        event(2, "SolutionSubmission", {
+          submitter: addr(2),
+          burntFees: "10000",
+          utility: "unused",
+          disregardedUtility: "unused",
+          lastAuctionBurntFees: "unsued",
+          prices: ["unsued"],
+          tokenIdsForPrice: ["unsued"],
+        }, 3),
+        event(3, "TradeReversion", {
+          owner: addr(0),
+          orderId: "0",
+          buyToken: "1",
+          sellToken: "0",
+          executedBuyAmount: "50000",
+          executedSellAmount: "50000",
+        }, 1),
+        event(3, "TradeReversion", {
+          owner: addr(1),
+          orderId: "0",
+          buyToken: "0",
+          sellToken: "1",
+          executedBuyAmount: "50000",
+          executedSellAmount: "50000",
+        }, 2),
+      ])
+      expect(state.toJSON().accounts[addr(0)].balances[addr(0)]).to.equal("100000")
+      expect(state.toJSON().accounts[addr(0)].balances[addr(1)]).to.equal("0")
+      expect(state.toJSON().accounts[addr(1)].balances[addr(0)]).to.equal("0")
+      expect(state.toJSON().accounts[addr(1)].balances[addr(1)]).to.equal("100000")
+      expect(state.toJSON().accounts[addr(2)].balances[addr(0)]).to.equal("0")
+    })
+
+    it("Throws if trades overdraw orders", () => {
+      const state = auctionState()
+      expect(() => state.applyEvents([
+        event(1, "TokenListing", { id: "0", token: addr(0) }, 1),
+        event(1, "TokenListing", { id: "1", token: addr(1) }, 2),
+        event(1, "Deposit", {
+          user: addr(0),
+          token: addr(0),
+          amount: "100000",
+          batchId: "1",
+        }, 3),
+        event(1, "Deposit", {
+          user: addr(1),
+          token: addr(1),
+          amount: "100000",
+          batchId: "1",
+        }, 4),
+        event(1, "OrderPlacement", {
+          owner: addr(0),
+          index: "0",
+          buyToken: "1",
+          sellToken: "0",
+          validFrom: "2",
+          validUntil: "2",
+          priceNumerator: "100000",
+          priceDenominator: "100000",
+        }, 5),
+        event(2, "Trade", {
+          owner: addr(0),
+          orderId: "0",
+          buyToken: "1",
+          sellToken: "0",
+          executedBuyAmount: "200000",
+          executedSellAmount: "200000",
+        }),
+      ])).to.throw()
+    })
+
+    it("Throws if solutions overdraw user balances", () => {
+      const state = auctionState()
+      expect(() => state.applyEvents([
+        event(1, "TokenListing", { id: "0", token: addr(0) }, 1),
+        event(1, "TokenListing", { id: "1", token: addr(1) }, 2),
+        event(1, "OrderPlacement", {
+          owner: addr(0),
+          index: "0",
+          buyToken: "1",
+          sellToken: "0",
+          validFrom: "2",
+          validUntil: "2",
+          priceNumerator: "100000",
+          priceDenominator: "100000",
+        }, 5),
+        event(2, "Trade", {
+          owner: addr(0),
+          orderId: "0",
+          buyToken: "1",
+          sellToken: "0",
+          executedBuyAmount: "100000",
+          executedSellAmount: "100000",
+        }, 1),
+        event(2, "SolutionSubmission", {
+          submitter: addr(2),
+          burntFees: "10000",
+          utility: "unused",
+          disregardedUtility: "unused",
+          lastAuctionBurntFees: "unsued",
+          prices: ["unsued"],
+          tokenIdsForPrice: ["unsued"],
+        }, 2),
+      ])).to.throw()
+    })
+  })
+
   describe("WithdrawalRequest > Withdraw", () => {
     it("Adds a pending withdraw to the user", () => {
       const state = auctionState()
