@@ -1,17 +1,19 @@
 module.exports = {
+  parser: "@typescript-eslint/parser",
   env: {
     browser: true,
     commonjs: true,
-    es6: true,
+    es2020: true,
   },
   extends: "eslint:recommended",
   parserOptions: {
     ecmaFeatures: {
       jsx: true,
     },
-    ecmaVersion: 2018,
+    ecmaVersion: 2015,
+    sourceType: "module",
   },
-  plugins: ["react"],
+  plugins: ["react", "@typescript-eslint"],
   rules: {
     indent: ["error", 2],
     "linebreak-style": ["error", "unix"],
@@ -19,6 +21,9 @@ module.exports = {
     semi: ["error", "never"],
     "prefer-const": ["error"],
     "no-var": ["error"],
+
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": ["error"],
   },
   globals: {
     artifacts: false,
