@@ -1,19 +1,18 @@
 const MockContract = artifacts.require("MockContract")
+const BatchExchange = artifacts.require("BatchExchange")
 
 const BN = require("bn.js")
 
 const { closeAuction } = require("../scripts/utilities.js")
 const { getBalanceState, getWithdrawableAmount } = require("../build/common/src/batch_exchange_utils.js")
 
-const { setupGenericStableX } = require("./stablex_utils")
-
 contract("BatchExchange utils", async (accounts) => {
   describe("getBalanceState()", async () => {
     it("retrieves balance as in storage", async () => {
-      const batchExchange = await setupGenericStableX()
-      await closeAuction(batchExchange)
       const erc20 = await MockContract.new()
       await erc20.givenAnyReturnBool(true)
+      const batchExchange = await BatchExchange.new(1, erc20.address)
+      await closeAuction(batchExchange)
 
       // amount is hex 100 to catch possible zero padding issues in the function
       await batchExchange.deposit(erc20.address, 0x100)
@@ -30,10 +29,10 @@ contract("BatchExchange utils", async (accounts) => {
     const startingAmount = new BN("100")
 
     const setup = async function () {
-      const batchExchange = await setupGenericStableX()
-      await closeAuction(batchExchange)
       const erc20 = await MockContract.new()
       await erc20.givenAnyReturnBool(true)
+      const batchExchange = await BatchExchange.new(1, erc20.address)
+      await closeAuction(batchExchange)
       await batchExchange.deposit(erc20.address, startingAmount)
       await closeAuction(batchExchange)
       // force balance update with an empty withdraw
