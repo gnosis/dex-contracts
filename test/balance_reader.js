@@ -4,7 +4,7 @@ const BatchExchange = artifacts.require("BatchExchange")
 const BN = require("bn.js")
 
 const { closeAuction } = require("../scripts/utilities.js")
-const { getBalanceState, getWithdrawableAmount } = require("../build/common/src/batch_exchange_utils.js")
+const { getBalanceState, getWithdrawableAmount } = require("../build/common/src/balance_reader.js")
 
 contract("BatchExchange utils", async (accounts) => {
   describe("getBalanceState()", async () => {
