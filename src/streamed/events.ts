@@ -43,20 +43,3 @@ export type EventDiscriminant<
   event: T,
   returnValues: EventValues<C["events"][T]>,
 } : never
-
-/*
-import { BatchExchange } from "../.."
-export function tester() {
-  const eventData: AnyEvent<BatchExchange> = {} as any
-  switch (eventData.event) {
-  case "Token":
-    break
-  case "OrderPlacement":
-    eventData.returnValues.buyToken = "asdf"
-    break
-  case "Withdraw":
-    eventData.returnValues.buyToken = "asdf"
-    break
-  }
-}
-*/
