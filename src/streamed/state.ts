@@ -290,7 +290,7 @@ export class AuctionState {
   ) {
     this.updateBalance(submitter, 0, amount => amount - BigInt(burntFees))
     if (this.options.strict) {
-      assertAccountBalancesAreValid(this.lastBlock, this.accounts.entries())
+      assertAccountBalancesAreValid(this.accounts.entries())
     }
   }
 
@@ -308,7 +308,7 @@ export class AuctionState {
   ) {
     this.updateBalance(submitter, 0, amount => amount + BigInt(burntFees))
     if (this.options.strict) {
-      assertAccountBalancesAreValid(this.lastBlock, this.accounts.entries())
+      assertAccountBalancesAreValid(this.accounts.entries())
     }
   }
 
@@ -566,10 +566,7 @@ function assertEventsAreAfterBlockAndOrdered(block: number, events: EventData[])
  *
  * @throws If an account balance is negative.
  */
-function assertAccountBalancesAreValid(
-  blockNumber: number,
-  accounts: Iterable<[Address, Account]>,
-) {
+function assertAccountBalancesAreValid(accounts: Iterable<[Address, Account]>) {
   for (const [user, { balances }] of accounts) {
     for (const [token, balance] of balances.entries()) {
       assert(balance >= BigInt(0), `user ${user} token ${token} is negative`)
