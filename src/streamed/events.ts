@@ -4,7 +4,7 @@ import { ContractEvent } from "../../build/types/types"
 /**
  * Event type specified by name.
  */
-type Event<
+export type Event<
   C extends Contract,
   T extends Exclude<keyof C["events"], "allEvents">,
 > = EventMetadata & EventDiscriminant<C, T>
@@ -17,6 +17,7 @@ type Event<
  * the `returnValues` property based on `event` property checks. For example:
  * ```
  * const eventData: AnyEvent<BatchExchange> = ...
+ * switch (eventData.event) {
  * case "Token":                              // ERR: 2678: Type '"Token"' is not comparable to type
  *                                            // '"OrderPlacement" | "TokenListing" | ...'
  *   break
@@ -30,14 +31,32 @@ type Event<
  * }
  * ```
  */
-type AnyEvent<C extends Contract> = EventMetadata & EventDiscriminant<C, Exclude<keyof C["events"], "allEvents">>
+export type AnyEvent<C extends Contract> = EventMetadata & EventDiscriminant<C, Exclude<keyof C["events"], "allEvents">>
 
-type EventMetadata = Omit<EventData, "event" | "returnValues">
-type EventValues<T> = T extends ContractEvent<infer U> ? U : never
-type EventDiscriminant<
+export type EventMetadata = Omit<EventData, "event" | "returnValues">
+export type EventName<C extends Contract> = Exclude<keyof C["events"], "allEvents">
+export type EventValues<T> = T extends ContractEvent<infer U> ? U : never
+export type EventDiscriminant<
   C extends Contract,
-  T extends Exclude<keyof C["events"], "allEvents">,
-> = T extends any ? {
+  T extends EventName<C>,
+> = T extends {} ? {
   event: T,
   returnValues: EventValues<C["events"][T]>,
 } : never
+
+/*
+import { BatchExchange } from "../.."
+export function tester() {
+  const eventData: AnyEvent<BatchExchange> = {} as any
+  switch (eventData.event) {
+  case "Token":
+    break
+  case "OrderPlacement":
+    eventData.returnValues.buyToken = "asdf"
+    break
+  case "Withdraw":
+    eventData.returnValues.buyToken = "asdf"
+    break
+  }
+}
+*/

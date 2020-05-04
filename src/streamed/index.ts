@@ -16,7 +16,7 @@
 import Web3 from "web3"
 import { TransactionReceipt } from "web3-core"
 import { BatchExchange, BatchExchangeArtifact } from "../.."
-import { AccountState } from "./state"
+import { AuctionState } from "./state"
 
 /**
  * Configuration options for the streamed orderbook.
@@ -78,7 +78,7 @@ export const BATCH_DURATION = 300
  * account state.
  */
 export class StreamedOrderbook {
-  private readonly state: AccountState;
+  private readonly state: AuctionState;
 
   private constructor(
     private readonly web3: Web3,
@@ -86,7 +86,7 @@ export class StreamedOrderbook {
     private readonly startBlock: number,
     private readonly options: OrderbookOptions,
   ) {
-    this.state = new AccountState(options)
+    this.state = new AuctionState(options)
   }
 
   /**
