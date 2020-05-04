@@ -1,5 +1,8 @@
 import BN from "bn.js";
-import {BatchExchangeViewer} from "../build/types/BatchExchangeViewer";
+import { BatchExchangeViewer } from "../build/types/BatchExchangeViewer";
+
+export { BatchExchange } from "../build/types/BatchExchange";
+export { BatchExchangeViewer } from "../build/types/BatchExchangeViewer";
 export * from "./orderbook";
 export * from "./fraction";
 
@@ -54,7 +57,8 @@ export interface ContractArtifact {
   userdoc: any;
 }
 
-export declare const BatchExchange: ContractArtifact;
+export declare const BatchExchangeArtifact: ContractArtifact;
+export declare const BatchExchangeViewerArtifact: ContractArtifact;
 
 export interface Order {
   user: string;
