@@ -77,7 +77,7 @@ describe("Account State", () => {
       const state = auctionState()
       expect(() => state.applyEvents([
         event(1, "TokenListing", { id: "0", token: addr(0) }),
-        event(1, "TokenListing", { id: "0", token: addr(0) }),
+        event(2, "TokenListing", { id: "0", token: addr(0) }),
       ])).to.throw()
     })
 
