@@ -179,7 +179,7 @@ export class StreamedOrderbook {
 
     const fromBlock = this.state.nextBlock
     this.options.logger?.debug(`fetching new events from ${fromBlock}-latest`)
-    const events = await this.contract.getPastEvents("allEvents", { fromBlock })
+    const events = await this.contract.getPastEvents("allEvents", { fromBlock, toBlock: "latest" })
 
     const latestBlock = await this.web3.eth.getBlockNumber()
     const confirmedBlock = latestBlock - this.options.blockConfirmations
