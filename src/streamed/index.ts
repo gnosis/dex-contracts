@@ -15,6 +15,7 @@
 
 import Web3 from "web3"
 import { TransactionReceipt } from "web3-core"
+import { EventData } from "web3-eth-contract"
 import { BatchExchange, BatchExchangeArtifact } from "../.."
 import { AuctionState } from "./state"
 
@@ -38,6 +39,12 @@ export interface OrderbookOptions {
    * so this parameter should be set accordingly.
    */
   blockPageSize: number;
+
+    /**
+   * Sets the number of block confirmations required for an event to be
+   * considered confirmed and not be subject to re-orgs.
+   */
+  blockConfirmations: number;
 
   /**
    * Enable strict checking that performs additional integrity checks.
@@ -65,6 +72,7 @@ export interface OrderbookOptions {
  */
 export const DEFAULT_ORDERBOOK_OPTIONS: OrderbookOptions = {
   blockPageSize: 10000,
+  blockConfirmations: 6,
   strict: false,
 }
 
@@ -79,6 +87,9 @@ export const BATCH_DURATION = 300
  */
 export class StreamedOrderbook {
   private readonly state: AuctionState;
+  private pendingEvents: EventData[] = [];
+
+  private invalidState?: InvalidAuctionStateError;
 
   private constructor(
     private readonly web3: Web3,
@@ -112,6 +123,10 @@ export class StreamedOrderbook {
     )
 
     await orderbook.applyPastEvents()
+    if (orderbook.options.endBlock === undefined) {
+      await orderbook.update()
+    }
+
     return orderbook
   }
 
@@ -120,8 +135,8 @@ export class StreamedOrderbook {
    * events with multiple queries to retrieve each block page at a time.
    */
   private async applyPastEvents(): Promise<void> {
-    const endBlock = this.options.endBlock ||
-      await this.web3.eth.getBlockNumber()
+    const endBlock = this.options.endBlock ??
+      (await this.web3.eth.getBlockNumber() - this.options.blockConfirmations)
 
     for (
       let fromBlock = this.startBlock;
@@ -133,15 +148,70 @@ export class StreamedOrderbook {
         fromBlock + this.options.blockPageSize - 1,
         endBlock,
       )
-      this.options.logger?.debug(`fetching page ${fromBlock}-${toBlock}`)
 
+      this.options.logger?.debug(`fetching page ${fromBlock}-${toBlock}`)
       const events = await this.contract.getPastEvents(
         "allEvents",
         { fromBlock, toBlock },
       )
 
+      this.options.logger?.debug(`applying ${events.length} past events`)
       this.state.applyEvents(events)
     }
+  }
+
+  /**
+   * Apply new confirmed events to the account state and store the remaining
+   * events that are subject to reorgs into the `pendingEvents` array.
+   *
+   * @remarks
+   * If there is an error retrieving the latest events from the node, then the
+   * account state remains unmodified. This allows the updating orderbook to be
+   * more fault-tolerant and deal with nodes being temporarily down and some
+   * intermittent errors. However, if an error applying confirmed events occur,
+   * then the streamed orderbook becomes invalid and can no longer apply new
+   * events as the actual auction state is unknown.
+   */
+  public async update(): Promise<void> {
+    if (this.invalidState) {
+      throw this.invalidState
+    }
+
+    const fromBlock = this.state.nextBlock
+    this.options.logger?.debug(`fetching new events from ${fromBlock}-latest`)
+    const events = await this.contract.getPastEvents("allEvents", { fromBlock, toBlock: "latest" })
+
+    const latestBlock = await this.web3.eth.getBlockNumber()
+    const confirmedBlock = latestBlock - this.options.blockConfirmations
+    const confirmedEventCount = events.findIndex(ev => ev.blockNumber > confirmedBlock)
+
+    const confirmedEvents = events.splice(0, confirmedEventCount)
+    const pendingEvents = events
+
+    if (confirmedEvents.length > 0) {
+      this.options.logger?.debug(`applying ${confirmedEvents.length} confirmed events until block ${confirmedBlock}`)
+      try {
+        this.state.applyEvents(confirmedEvents)
+      } catch (err) {
+        this.invalidState = new InvalidAuctionStateError(confirmedBlock, err)
+        this.options.logger?.error(this.invalidState.message)
+        throw this.invalidState
+      }
+    }
+    this.pendingEvents = pendingEvents
+  }
+}
+
+/**
+ * An error that is thrown on when the auction state is invalid and can no
+ * longer be updated.
+ */
+export class InvalidAuctionStateError extends Error {
+  constructor(
+    public readonly block: number,
+    public readonly inner: Error,
+  ) {
+    super(`invalid auction state at block ${block}: ${inner.message}`)
   }
 }
 
