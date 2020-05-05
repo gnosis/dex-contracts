@@ -24,11 +24,18 @@ describe("Streamed Orderbook", () => {
       const url = ETHEREUM_NODE_URL || `https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`
       const web3 = new Web3(url)
 
-      await StreamedOrderbook.init(web3, {
-        endBlock: ORDERBOOK_END_BLOCK ? parseInt(ORDERBOOK_END_BLOCK) : undefined,
+      const endBlock = ORDERBOOK_END_BLOCK ?
+        parseInt(ORDERBOOK_END_BLOCK) :
+        9400146 // await web3.eth.getBlockNumber()
+
+      const orderbook = await StreamedOrderbook.init(web3, {
+        endBlock,
         strict: true,
         logger: console,
       })
+      const orders = orderbook.getOpenOrders()
+
+      console.log(orders)
     }).timeout(0)
   })
 })

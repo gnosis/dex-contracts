@@ -75,34 +75,26 @@ export interface ContractArtifact {
 export declare const BatchExchangeArtifact: ContractArtifact
 export declare const BatchExchangeViewerArtifact: ContractArtifact
 
-export interface Order {
+export interface Order<T = string> {
   user: string;
-  sellTokenBalance: string;
-  buyToken: string;
-  sellToken: string;
-  validFrom: string;
-  validUntil: string;
-  priceNumerator: string;
-  priceDenominator: string;
-  remainingAmount: string;
-}
-
-export interface OrderBN {
-  user: string;
-  sellTokenBalance: BN;
+  sellTokenBalance: T;
   buyToken: number;
   sellToken: number;
   validFrom: number;
   validUntil: number;
-  priceNumerator: BN;
-  priceDenominator: BN;
-  remainingAmount: BN;
+  priceNumerator: T;
+  priceDenominator: T;
+  remainingAmount: T;
 }
 
-export declare function decodeOrders(bytes: string): Order[];
-export declare function decodeOrdersBN(bytes: string): OrderBN[];
+export interface IndexedOrder<T> extends Order<T> {
+  orderId: number;
+}
+
+export declare function decodeOrders(bytes: string): Order<string>[];
+export declare function decodeOrdersBN(bytes: string): Order<BN>[];
 
 export declare function getOpenOrdersPaginated(
   contract: BatchExchangeViewer,
   pageSize: number
-): AsyncIterable<OrderBN[]>;
+): AsyncIterable<IndexedOrder<BN>[]>;

@@ -16,7 +16,7 @@
 import Web3 from "web3"
 import { BlockNumber, TransactionReceipt } from "web3-core"
 import { AbiItem } from "web3-utils"
-import { BatchExchange, BatchExchangeArtifact } from "../.."
+import { BatchExchange, BatchExchangeArtifact, IndexedOrder } from ".."
 import { AnyEvent } from "./events"
 import { AuctionState } from "./state"
 
@@ -78,15 +78,11 @@ export const DEFAULT_ORDERBOOK_OPTIONS: OrderbookOptions = {
 }
 
 /**
- * The duration in seconds of a batch.
- */
-export const BATCH_DURATION = 300
-
-/**
  * The streamed orderbook that manages incoming events, and applies them to the
  * account state.
  */
 export class StreamedOrderbook {
+  private batch = -1;
   private readonly state: AuctionState;
   private pendingEvents: AnyEvent<BatchExchange>[] = [];
 
@@ -111,7 +107,7 @@ export class StreamedOrderbook {
    * @param web3 - The web3 provider to use.
    * @param options - Optional settings for tweaking the streamed orderbook.
    */
-  static async init(
+  public static async init(
     web3: Web3,
     options: Partial<OrderbookOptions> = {},
   ): Promise<StreamedOrderbook> {
@@ -129,6 +125,13 @@ export class StreamedOrderbook {
     }
 
     return orderbook
+  }
+
+  /**
+   * Retrieves the current open orders in the orderbook.
+   */
+  public getOpenOrders(): IndexedOrder<bigint>[] {
+    return this.state.getOrders(this.batch)
   }
 
   /**
@@ -156,6 +159,7 @@ export class StreamedOrderbook {
       this.options.logger?.debug(`applying ${events.length} past events`)
       this.state.applyEvents(events)
     }
+    this.batch = parseInt(await this.contract.methods.getCurrentBatchId().call())
   }
 
   /**
