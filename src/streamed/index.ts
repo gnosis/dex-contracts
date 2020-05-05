@@ -183,7 +183,7 @@ export class StreamedOrderbook {
 
     const latestBlock = await this.web3.eth.getBlockNumber()
     const confirmedBlock = latestBlock - this.options.blockConfirmations
-    const confirmedEventCount = events.findIndex(ev => ev.blockNumber <= confirmedBlock)
+    const confirmedEventCount = events.findIndex(ev => ev.blockNumber > confirmedBlock)
 
     const confirmedEvents = events.splice(0, confirmedEventCount)
     const pendingEvents = events
