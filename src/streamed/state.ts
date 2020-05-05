@@ -157,9 +157,9 @@ export class AuctionState {
    * @param batch - The batch to get the orders for.
    */
   public getOrders(batch: number): IndexedOrder<bigint>[] {
-    const orders: IndexedOrder<bigint>[] = []
+    let orders: IndexedOrder<bigint>[] = []
     for (const [user, account] of this.accounts.entries()) {
-      orders.concat(account.orders
+      orders = orders.concat(account.orders
         .map((order, orderId) => ({
           ...order,
           user,

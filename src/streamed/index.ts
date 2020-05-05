@@ -15,8 +15,9 @@
 
 import Web3 from "web3"
 import { BlockNumber, TransactionReceipt } from "web3-core"
+import { Contract } from "web3-eth-contract"
 import { AbiItem } from "web3-utils"
-import { BatchExchange, BatchExchangeArtifact, IndexedOrder } from ".."
+import { BatchExchange, BatchExchangeArtifact, ContractArtifact, IndexedOrder } from ".."
 import { AnyEvent } from "./events"
 import { AuctionState } from "./state"
 
@@ -82,8 +83,8 @@ export const DEFAULT_ORDERBOOK_OPTIONS: OrderbookOptions = {
  * account state.
  */
 export class StreamedOrderbook {
-  private batch = -1;
   private readonly state: AuctionState;
+  private batch = -1;
   private pendingEvents: AnyEvent<BatchExchange>[] = [];
 
   private invalidState?: InvalidAuctionStateError;
@@ -111,7 +112,7 @@ export class StreamedOrderbook {
     web3: Web3,
     options: Partial<OrderbookOptions> = {},
   ): Promise<StreamedOrderbook> {
-    const [contract, tx] = await batchExchangeDeployment(web3)
+    const [contract, tx] = await deployment<BatchExchange>(web3, BatchExchangeArtifact)
     const orderbook = new StreamedOrderbook(
       web3,
       contract,
@@ -159,7 +160,7 @@ export class StreamedOrderbook {
       this.options.logger?.debug(`applying ${events.length} past events`)
       this.state.applyEvents(events)
     }
-    this.batch = parseInt(await this.contract.methods.getCurrentBatchId().call())
+    this.batch = await this.getBatchId(endBlock)
   }
 
   /**
@@ -185,8 +186,9 @@ export class StreamedOrderbook {
 
     const latestBlock = await this.web3.eth.getBlockNumber()
     const confirmedBlock = latestBlock - this.options.blockConfirmations
-    const confirmedEventCount = events.findIndex(ev => ev.blockNumber > confirmedBlock)
+    const batch = await this.getBatchId(confirmedBlock)
 
+    const confirmedEventCount = events.findIndex(ev => ev.blockNumber > confirmedBlock)
     const confirmedEvents = events.splice(0, confirmedEventCount)
     const pendingEvents = events
 
@@ -200,9 +202,13 @@ export class StreamedOrderbook {
         throw this.invalidState
       }
     }
+    this.batch = batch
     this.pendingEvents = pendingEvents
   }
 
+  /**
+   * Retrieves past events for the contract.
+   */
   private async getPastEvents(
     options: { fromBlock: BlockNumber; toBlock?: BlockNumber },
   ): Promise<AnyEvent<BatchExchange>[]> {
@@ -211,6 +217,15 @@ export class StreamedOrderbook {
       ...options,
     })
     return events as AnyEvent<BatchExchange>[]
+  }
+
+  private async getBatchId(blockNumber: BlockNumber): Promise<number> {
+    const BATCH_DURATION = 300
+
+    const block = await this.web3.eth.getBlock(blockNumber)
+    const batch = ~~(Number(block.timestamp) / BATCH_DURATION)
+
+    return batch
   }
 }
 
@@ -234,9 +249,10 @@ export class InvalidAuctionStateError extends Error {
  * @throws If the contract is not deployed on the network the web3 provider is
  * connected to.
  */
-async function batchExchangeDeployment(web3: Web3): Promise<[BatchExchange, TransactionReceipt]> {
-  const { abi, networks } = BatchExchangeArtifact
-
+export async function deployment<C extends Contract>(
+  web3: Web3,
+  { abi, networks }: ContractArtifact,
+): Promise<[C, TransactionReceipt]> {
   const chainId = await web3.eth.getChainId()
   const network = networks[chainId]
   if (!networks) {
@@ -246,5 +262,5 @@ async function batchExchangeDeployment(web3: Web3): Promise<[BatchExchange, Tran
   const tx = await web3.eth.getTransactionReceipt(network.transactionHash)
   const contract = new web3.eth.Contract(abi as AbiItem[], network.address)
 
-  return [contract, tx]
+  return [contract as C, tx]
 }
