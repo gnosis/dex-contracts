@@ -240,7 +240,7 @@ export class StreamedOrderbook {
             this.scheduleUpdate()
           }
         } catch (err) {
-          this.options.logger?.error(`error applying new events: ${err}`)
+          this.options.logger?.error(`error applying new events up to block ${this.state.nextBlock - 1}: ${err}`)
           this.updateError = err
         }
       },
