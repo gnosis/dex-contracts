@@ -832,6 +832,11 @@ assign-symbols@^1.0.0:
   resolved "https://registry.yarnpkg.com/assign-symbols/-/assign-symbols-1.0.0.tgz#59667f41fadd4f20ccbc2bb96b8d4f7f78ec0367"
   integrity sha1-WWZ/QfrdTyDMvCu5a41Pf3jsA2c=
 
+ast-parents@0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/ast-parents/-/ast-parents-0.0.1.tgz#508fd0f05d0c48775d9eccda2e174423261e8dd3"
+  integrity sha1-UI/Q8F0MSHddnszaLhdEIyYejdM=
+
 astral-regex@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/astral-regex/-/astral-regex-1.0.0.tgz#6c8c3fb827dd43ee3918f27b82782ab7658a6fd9"
@@ -7458,13 +7463,15 @@ solhint-plugin-prettier@0.0.4:
   dependencies:
     prettier-linter-helpers "^1.0.0"
 
-solhint@^2.3.1:
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/solhint/-/solhint-2.3.1.tgz#6fee8fc2635112bf5812f7cba8359c14e9d9a491"
-  integrity sha512-wP/G+Dqj8LNWlCI9Mt6XiQRWQfZwv1rkZe/V+HKtip5SAZJVvp144PdH28KE45ZvR99Hhrp/Mujt74fSmXsFiw==
+solhint@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/solhint/-/solhint-3.0.0.tgz#78e185e84fb7da7d5394ddf1fda7c01cb987519d"
+  integrity sha512-z6JBNrtWZ51g/tkuZGc0ywQVskRqIGjXppR4g30bjPgOrxSBWJp3qX2pcI9+FbSI3uu1RqqbZ89CeURkZUF+RA==
   dependencies:
+    "@solidity-parser/parser" "^0.6.0"
     ajv "^6.6.1"
     antlr4 "4.7.1"
+    ast-parents "0.0.1"
     chalk "^2.4.2"
     commander "2.18.0"
     cosmiconfig "^5.0.7"
