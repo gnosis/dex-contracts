@@ -59,7 +59,7 @@ describe("Account State", () => {
       const state = auctionState()
       expect(() => state.applyEvents([
         event(2, "TokenListing", { id: "0", token: addr(1) }),
-        event(1, "TokenListing", { id: "0", token: addr(1) }),
+        event(1, "TokenListing", { id: "1", token: addr(1) }),
       ])).to.throw()
     })
   })
@@ -78,6 +78,13 @@ describe("Account State", () => {
       expect(() => state.applyEvents([
         event(1, "TokenListing", { id: "0", token: addr(0) }),
         event(1, "TokenListing", { id: "0", token: addr(0) }),
+      ])).to.throw()
+    })
+
+    it("Throws if a token is skipped", () => {
+      const state = auctionState()
+      expect(() => state.applyEvents([
+        event(1, "TokenListing", { id: "1", token: addr(0) }),
       ])).to.throw()
     })
   })
