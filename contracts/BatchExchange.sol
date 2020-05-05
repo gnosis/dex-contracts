@@ -4,7 +4,7 @@ import "./EpochTokenLocker.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOnlySet.sol";
 import "@gnosis.pm/owl-token/contracts/TokenOWL.sol";
-import "openzeppelin-solidity/contracts/utils/SafeCast.sol";
+import "@openzeppelin/contracts/utils/SafeCast.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
 

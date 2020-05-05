@@ -1,6 +1,6 @@
 pragma solidity ^0.5.0;
 
-import "openzeppelin-solidity/contracts/drafts/SignedSafeMath.sol";
+import "@openzeppelin/contracts/drafts/SignedSafeMath.sol";
 
 
 /** @title Token Conservation
