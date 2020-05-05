@@ -52,9 +52,7 @@ const getOrdersPaginated = async (contract, pageSize, blockNumber) => {
   let lastPageSize = pageSize
   while (lastPageSize == pageSize) {
     const page = decodeOrdersBN(
-      await contract.methods
-        .getEncodedUsersPaginated(currentUser, currentOffSet, pageSize)
-        .call({}, blockNumber)
+      await contract.methods.getEncodedUsersPaginated(currentUser, currentOffSet, pageSize).call({}, blockNumber)
     )
     orders = orders.concat(page)
     for (const index in page) {

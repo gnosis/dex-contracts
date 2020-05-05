@@ -219,11 +219,19 @@ export class StreamedOrderbook {
     return events as AnyEvent<BatchExchange>[]
   }
 
+  /**
+   * Retrieves the batch ID at a given block number.
+   *
+   * @remarks
+   * The batch ID is locally calculated from the block header timestamp as it is
+   * more reliable than executing an `eth_call` to calculate the batch ID on the
+   * EVM since an archive node is required for sufficiently old blocks.
+   */
   private async getBatchId(blockNumber: BlockNumber): Promise<number> {
     const BATCH_DURATION = 300
 
     const block = await this.web3.eth.getBlock(blockNumber)
-    const batch = ~~(Number(block.timestamp) / BATCH_DURATION)
+    const batch = Math.floor(Number(block.timestamp) / BATCH_DURATION)
 
     return batch
   }
@@ -243,8 +251,8 @@ export class InvalidAuctionStateError extends Error {
 }
 
 /**
- * Create a `BatchExchange` contract instance, returning both the web3 contract
- * object as well as the transaction receipt for the contract deployment.
+ * Get a contract deployment, returning both the web3 contract object as well as
+ * the transaction receipt for the contract deployment.
  *
  * @throws If the contract is not deployed on the network the web3 provider is
  * connected to.
