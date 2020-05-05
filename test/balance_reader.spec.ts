@@ -53,6 +53,7 @@ contract("BatchExchange utils", async (accounts) => {
       );
       assert.equal(withdrawableAmount.toString(), "0");
     });
+
     it("returns amount when withdraw was already requested", async () => {
       const erc20 = await MockContract.new();
       await erc20.givenAnyReturnBool(true);
@@ -79,6 +80,7 @@ contract("BatchExchange utils", async (accounts) => {
         transcript.logs[0].args.amount.toString()
       );
     });
+
     it("returns entire balance when withdraw of more than available was requested", async () => {
       const erc20 = await MockContract.new();
       await erc20.givenAnyReturnBool(true);
@@ -108,6 +110,7 @@ contract("BatchExchange utils", async (accounts) => {
         transcript.logs[0].args.amount.toString()
       );
     });
+
     it("ignores deposits if funds are not yet available", async () => {
       const erc20 = await MockContract.new();
       await erc20.givenAnyReturnBool(true);
@@ -137,6 +140,7 @@ contract("BatchExchange utils", async (accounts) => {
         transcript.logs[0].args.amount.toString()
       );
     });
+
     it("considers deposits if funds are available", async () => {
       const erc20 = await MockContract.new();
       await erc20.givenAnyReturnBool(true);
@@ -166,6 +170,7 @@ contract("BatchExchange utils", async (accounts) => {
         transcript.logs[0].args.amount.toString()
       );
     });
+
     // untested case: lastCreditBatchId != 0
   });
 });
