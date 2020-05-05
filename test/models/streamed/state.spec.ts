@@ -64,6 +64,24 @@ describe("Account State", () => {
     })
   })
 
+  describe("TokenListing", () => {
+    it("Adds a new token", () => {
+      const state = auctionState()
+      state.applyEvents([
+        event(1, "TokenListing", { id: "0", token: addr(0) }),
+      ])
+      expect(state.toJSON().tokens[0]).to.equal(addr(0))
+    })
+
+    it("Throws if the same token is listed twice", () => {
+      const state = auctionState()
+      expect(() => state.applyEvents([
+        event(1, "TokenListing", { id: "0", token: addr(0) }),
+        event(1, "TokenListing", { id: "0", token: addr(0) }),
+      ])).to.throw()
+    })
+  })
+
   describe("OrderPlacement > OrderCancellation > OrderDeletion", () => {
     it("Adds a new user orders", () => {
       const state = auctionState()
