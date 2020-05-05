@@ -189,7 +189,7 @@ export class StreamedOrderbook {
     const pendingEvents = events
 
     if (confirmedEvents.length > 0) {
-      this.options.logger?.debug(`applying ${confirmedEvents.length} confirmed events`)
+      this.options.logger?.debug(`applying ${confirmedEvents.length} confirmed events until block ${confirmedBlock}`)
       try {
         this.state.applyEvents(confirmedEvents)
       } catch (err) {
