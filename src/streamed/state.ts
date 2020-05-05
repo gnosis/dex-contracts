@@ -302,7 +302,7 @@ export class AuctionState {
     if (this.options.strict) {
       for (const [user, { balances }] of this.accounts.entries()) {
         for (const [token, balance] of balances.entries()) {
-          assert(balance >= BigInt(0), `user ${user} token ${token} is negative`)
+          assert(balance >= BigInt(0), `user ${user} token ${token} balance is negative`)
         }
       }
     }
@@ -506,7 +506,7 @@ export class AuctionState {
       if (this.options.strict) {
         assert(
           order.remainingAmount >= BigInt(0),
-          `user ${user} order ${orderId} is negative`,
+          `user ${user} order ${orderId} remaining amount is negative`,
         )
       }
     }
