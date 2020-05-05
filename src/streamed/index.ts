@@ -163,8 +163,8 @@ export class StreamedOrderbook {
    * events with multiple queries to retrieve each block page at a time.
    */
   private async applyPastEvents(): Promise<void> {
-    const endBlock = this.options.endBlock ||
-      await this.web3.eth.getBlockNumber()
+    const endBlock = this.options.endBlock ??
+      (await this.web3.eth.getBlockNumber() - this.options.blockConfirmations)
 
     for (
       let fromBlock = this.startBlock;
