@@ -149,7 +149,7 @@ export class StreamedOrderbook {
         endBlock,
       )
 
-      this.options.logger?.debug(`fetching page ${fromBlock}-${toBlock}`)
+      this.options.logger?.debug(`fetching past events from ${fromBlock}-${toBlock}`)
       const events = await this.getPastEvents({ fromBlock, toBlock })
 
       this.options.logger?.debug(`applying ${events.length} past events`)
@@ -188,7 +188,7 @@ export class StreamedOrderbook {
     if (confirmedEvents.length > 0) {
       this.options.logger?.debug(`applying ${confirmedEvents.length} confirmed events until block ${confirmedBlock}`)
       try {
-        this.state.applyEvents(confirmedEvents as any)
+        this.state.applyEvents(confirmedEvents)
       } catch (err) {
         this.invalidState = new InvalidAuctionStateError(confirmedBlock, err)
         this.options.logger?.error(this.invalidState.message)
