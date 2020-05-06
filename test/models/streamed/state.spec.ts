@@ -531,4 +531,100 @@ describe("Account State", () => {
       ])).to.throw()
     })
   })
+
+  describe("copy", () => {
+    it("Does not modify the orginal state.", () => {
+      const state = auctionState()
+      state.applyEvents([
+        event(1, "TokenListing", { id: "0", token: addr(0) }),
+        event(2, "Deposit", {
+          user: addr(0),
+          token: addr(0),
+          amount: "100000",
+          batchId: "1",
+        }),
+        event(3, "OrderPlacement", {
+          owner: addr(0),
+          index: "0",
+          buyToken: "0",
+          sellToken: "0",
+          validFrom: "0",
+          validUntil: "9999",
+          priceNumerator: "100000",
+          priceDenominator: "100000",
+        }),
+        event(4, "SolutionSubmission", {
+          submitter: addr(0),
+          burntFees: "10000",
+          utility: "unused",
+          disregardedUtility: "unused",
+          lastAuctionBurntFees: "unsued",
+          prices: ["unsued"],
+          tokenIdsForPrice: ["unsued"],
+        }),
+        event(5, "WithdrawRequest", {
+          user: addr(0),
+          token: addr(0),
+          amount: "100000",
+          batchId: "1",
+        }),
+      ])
+      const original = state.toJSON()
+
+      const copy = state.copy()
+      copy.applyEvents([
+        // add a new token
+        event(10, "TokenListing", { id: "1", token: addr(1) }),
+        // add new balance
+        event(11, "Deposit", {
+          user: addr(0),
+          token: addr(0),
+          amount: "100000",
+          batchId: "1",
+        }),
+        // modify existing balance, clear existing pending withdrawal
+        event(12, "Withdraw", {
+          user: addr(0),
+          token: addr(0),
+          amount: "100000",
+        }),
+        // add new pending withdrawal
+        event(13, "WithdrawRequest", {
+          user: addr(0),
+          token: addr(0),
+          amount: "1000000",
+          batchId: "42",
+        }),
+        // modify existing order
+        event(14, "OrderCancellation", {
+          owner: addr(0),
+          id: "0",
+        }),
+        // add new order
+        event(15, "OrderPlacement", {
+          owner: addr(0),
+          index: "1",
+          buyToken: "0",
+          sellToken: "0",
+          validFrom: "0",
+          validUntil: "9999",
+          priceNumerator: "100000",
+          priceDenominator: "100000",
+        }),
+        // modify last solution, add new user
+        event(16, "SolutionSubmission", {
+          submitter: addr(1),
+          burntFees: "10000",
+          utility: "unused",
+          disregardedUtility: "unused",
+          lastAuctionBurntFees: "unsued",
+          prices: ["unsued"],
+          tokenIdsForPrice: ["unsued"],
+        }),
+      ])
+      const after = state.toJSON()
+
+      expect(original).to.deep.equal(after)
+    })
+  })
 })
