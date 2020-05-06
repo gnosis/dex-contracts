@@ -116,12 +116,7 @@ const addTokens = async function ({ tokenAddresses, account, batchExchange, owl 
   // Set OWL allowance if necessary
   const allowanceOfOWL = await owl.allowance.call(account, batchExchange.address)
   if (totalFees.gt(allowanceOfOWL)) {
-    await setAllowance({
-      token: owl,
-      account,
-      amount: totalFees,
-      batchExchange,
-    })
+    await setAllowance({ token: owl, account, amount: totalFees, batchExchange })
   }
 
   // List all tokens (if not listed previously)
@@ -228,9 +223,7 @@ async function deleteOrders({ orderIds, accounts, batchExchange }) {
   for (let i = 0; i < orderIds.length; i++) {
     const orderId = orderIds[i]
     const account = accounts[i]
-    const cancelReceipt = await batchExchange.cancelOrders([orderId], {
-      from: account,
-    })
+    const cancelReceipt = await batchExchange.cancelOrders([orderId], { from: account })
     const events = cancelReceipt.logs.map((log) => log.event).join(", ")
     console.log("Canceled/Deleted order %s for user %s. Emitted events: %s", orderId.toString(10), account, events)
   }

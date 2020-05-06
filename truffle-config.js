@@ -34,9 +34,7 @@ const urlDevelopment = process.env.GANACHE_HOST || "localhost"
 // network key
 const infuraKey = process.env.INFURA_KEY || "9408f47dedf04716a03ef994182cf150"
 
-const { gas: gasLog } = minimist(process.argv.slice(2), {
-  alias: { gas: "g" },
-})
+const { gas: gasLog } = minimist(process.argv.slice(2), { alias: { gas: "g" } })
 const { grep: grep } = minimist(process.argv.slice(2))
 
 module.exports = {

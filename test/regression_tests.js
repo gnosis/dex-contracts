@@ -61,9 +61,7 @@ contract("BatchExchange", async (accounts) => {
       const tokenAddress = await batchExchange.tokenIdToAddressMap.call(firstOrder.sellToken)
       const attackerAddress = accounts[firstOrder.user]
 
-      await batchExchange.requestWithdraw(tokenAddress, firstOrder.sellAmount, {
-        from: attackerAddress,
-      })
+      await batchExchange.requestWithdraw(tokenAddress, firstOrder.sellAmount, { from: attackerAddress })
       await closeAuction(batchExchange)
       // Ensure withdraw is claimable.
       assert(await batchExchange.hasValidWithdrawRequest.call(attackerAddress, tokenAddress), true)

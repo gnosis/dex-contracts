@@ -16,9 +16,7 @@ contract("BatchExchange", async (accounts) => {
       await makeDeposits(batchExchange, accounts, tradeExample.deposits)
       for (const order of tradeExample.orders) {
         const tokenAddress = await batchExchange.tokenIdToAddressMap.call(order.buyToken)
-        await batchExchange.requestWithdraw(tokenAddress, order.buyAmount, {
-          from: accounts[order.user],
-        })
+        await batchExchange.requestWithdraw(tokenAddress, order.buyAmount, { from: accounts[order.user] })
       }
       await closeAuction(batchExchange)
 

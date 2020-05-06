@@ -296,15 +296,9 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
 
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_1,
-      })
-      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, {
-        from: user_1,
-      })
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_2,
-      })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_2 })
 
       const firstPage = decodeOrdersBN(await viewer.getEncodedOrdersPaginated(zero_address, 0, 1))
       assert.equal(
@@ -368,15 +362,9 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
 
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_1,
-      })
-      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, {
-        from: user_1,
-      })
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_2,
-      })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_2 })
 
       const page = decodeOrdersBN(await viewer.getEncodedOrdersPaginated(user_1, 1, 2))
       assert.equal(page[0].user, user_1.toLowerCase())
@@ -387,15 +375,9 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       const viewer = await BatchExchangeViewer.new(batchExchange.address)
 
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_1,
-      })
-      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, {
-        from: user_2,
-      })
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_3,
-      })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_2 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_3 })
 
       const page = decodeOrdersBN(await viewer.getEncodedOrdersPaginated(zero_address, 0, 5))
       assert.equal(page.length, 3)

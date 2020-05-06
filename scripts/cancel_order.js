@@ -18,9 +18,7 @@ module.exports = async (callback) => {
   try {
     const accounts = await web3.eth.getAccounts()
     const instance = await BatchExchange.deployed()
-    await instance.cancelOrders(argv.orderIds, {
-      from: accounts[argv.accountId],
-    })
+    await instance.cancelOrders(argv.orderIds, { from: accounts[argv.accountId] })
 
     console.log(`Successfully cancelled order with ID ${argv.orderIds}`)
     callback()

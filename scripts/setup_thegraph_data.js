@@ -54,12 +54,7 @@ module.exports = async function (callback) {
 
     // List the tokens in the exchange
     const tokenAddresses = [token1Instance.address]
-    const [token1] = await addTokens({
-      tokenAddresses,
-      account: user1Address,
-      batchExchange,
-      owl,
-    })
+    const [token1] = await addTokens({ tokenAddresses, account: user1Address, batchExchange, owl })
 
     // Mint tokens for every user
     await mintTokens({
@@ -77,9 +72,7 @@ module.exports = async function (callback) {
 
     // Request withdraw
     console.log("Request withdraw for user %s, token %s (%d)", user1Address, token1.address, token1.id)
-    await batchExchange.requestWithdraw(token1.address, 5, {
-      from: user1Address,
-    })
+    await batchExchange.requestWithdraw(token1.address, 5, { from: user1Address })
 
     // Close the auction
     console.log("Close auction so we can withdraw the tokens")
@@ -87,9 +80,7 @@ module.exports = async function (callback) {
 
     // Withdraw tokens
     console.log("Withdraw for user %s, token %s (%d)", user1Address, token1.address, token1.id)
-    await batchExchange.withdraw(user1Address, token1.address, {
-      from: user1Address,
-    })
+    await batchExchange.withdraw(user1Address, token1.address, { from: user1Address })
 
     // Submit solution
     await submitSolution({
@@ -110,13 +101,7 @@ module.exports = async function (callback) {
 
     // Create a new order with validity only for next batch
     batchId = await getBatchId(batchExchange)
-    const newOrder = {
-      sellToken: 0,
-      buyToken: token1.id,
-      sellAmount: toETH(10),
-      buyAmount: toETH(10),
-      user: 0,
-    }
+    const newOrder = { sellToken: 0, buyToken: token1.id, sellAmount: toETH(10), buyAmount: toETH(10), user: 0 }
     console.log("Place new order: %s", JSON.stringify(newOrder))
     orderIds = await placeOrders(batchExchange, [user1Address], [newOrder], batchId + 1)
     console.log("Placed order with id: ", orderIds.toString(10))

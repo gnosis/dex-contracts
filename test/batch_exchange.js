@@ -33,20 +33,8 @@ const smallTradeData = {
     { amount: feeAdded(tenThousand), token: 1, user: 1 },
   ],
   orders: [
-    {
-      sellToken: 0,
-      buyToken: 1,
-      sellAmount: feeAdded(tenThousand),
-      buyAmount: fiveThousand,
-      user: 0,
-    },
-    {
-      sellToken: 1,
-      buyToken: 0,
-      sellAmount: feeAdded(tenThousand),
-      buyAmount: fiveThousand,
-      user: 1,
-    },
+    { sellToken: 0, buyToken: 1, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 0 },
+    { sellToken: 1, buyToken: 0, sellAmount: feeAdded(tenThousand), buyAmount: fiveThousand, user: 1 },
   ],
 }
 
@@ -172,9 +160,7 @@ contract("BatchExchange", async (accounts) => {
       const batchExchange = await setupGenericStableX()
 
       const currentStateIndex = await batchExchange.getCurrentBatchId()
-      const id = await batchExchange.placeOrder.call(0, 1, 3, 10, 20, {
-        from: user_1,
-      })
+      const id = await batchExchange.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
       await batchExchange.placeOrder(0, 1, 3, 10, 20, { from: user_1 })
       const orderResult = await batchExchange.orders.call(user_1, id)
       assert.equal(orderResult.priceDenominator.toNumber(), 20, "priceDenominator was stored incorrectly")
@@ -262,14 +248,10 @@ contract("BatchExchange", async (accounts) => {
     it("invalidates valid order as of next batch", async () => {
       const batchExchange = await setupGenericStableX()
 
-      const id = await batchExchange.placeOrder.call(0, 1, 3, 10, 20, {
-        from: user_1,
-      })
+      const id = await batchExchange.placeOrder.call(0, 1, 3, 10, 20, { from: user_1 })
       const currentStateIndex = (await batchExchange.getCurrentBatchId()).toNumber()
 
-      await batchExchange.placeOrder(0, 1, currentStateIndex + 3, 10, 20, {
-        from: user_1,
-      })
+      await batchExchange.placeOrder(0, 1, currentStateIndex + 3, 10, 20, { from: user_1 })
       await closeAuction(batchExchange)
 
       await batchExchange.cancelOrders([id], { from: user_1 })
@@ -793,9 +775,7 @@ contract("BatchExchange", async (accounts) => {
       // Ensure all user have sufficient feeToken
       for (const account of accounts) {
         await owlProxy.transfer(account, sufficientAmount, { from: user_1 })
-        await owlProxy.approve(batchExchange.address, sufficientAmount, {
-          from: account,
-        })
+        await owlProxy.approve(batchExchange.address, sufficientAmount, { from: account })
       }
 
       // First Auction
@@ -1397,9 +1377,7 @@ contract("BatchExchange", async (accounts) => {
       const buyToken = await batchExchange.tokenIdToAddressMap.call(basicTrade.orders[0].buyToken)
 
       // relevant user places withdraw request:
-      await batchExchange.requestWithdraw(buyToken, 100, {
-        from: relevantUser,
-      })
+      await batchExchange.requestWithdraw(buyToken, 100, { from: relevantUser })
 
       await closeAuction(batchExchange)
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
@@ -1798,12 +1776,8 @@ contract("BatchExchange", async (accounts) => {
       const batchExchange = await setupGenericStableX()
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
 
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: accounts[0],
-      })
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: accounts[1],
-      })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[0] })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[1] })
 
       assert.equal(account_one_and_two, (await batchExchange.getUsersPaginated(zero_address, 2)).toString())
       assert.equal(null, await batchExchange.getUsersPaginated(accounts[1], 2))
@@ -1812,15 +1786,9 @@ contract("BatchExchange", async (accounts) => {
       const batchExchange = await setupGenericStableX()
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
 
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: accounts[0],
-      })
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: accounts[1],
-      })
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: accounts[2],
-      })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[0] })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[1] })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: accounts[2] })
 
       assert.equal(account_one_and_two, (await batchExchange.getUsersPaginated(zero_address, 2)).toString())
       assert.equal(accounts[2].toString().toLowerCase(), (await batchExchange.getUsersPaginated(accounts[1], 2)).toString())
@@ -2002,15 +1970,9 @@ contract("BatchExchange", async (accounts) => {
     it("returns three orders one per page", async () => {
       const batchExchange = await setupGenericStableX(3)
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_1,
-      })
-      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, {
-        from: user_1,
-      })
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_2,
-      })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_2 })
 
       const firstPage = decodeOrdersBN(await batchExchange.getEncodedUsersPaginated(zero_address, 0, 1))
       assert.equal(
@@ -2072,15 +2034,9 @@ contract("BatchExchange", async (accounts) => {
     it("returns three orders when page size is overlapping users", async () => {
       const batchExchange = await setupGenericStableX(3)
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_1,
-      })
-      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, {
-        from: user_1,
-      })
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_2,
-      })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_2 })
 
       const page = decodeOrdersBN(await batchExchange.getEncodedUsersPaginated(user_1, 1, 2))
       assert.equal(page[0].user, user_1.toLowerCase())
@@ -2089,15 +2045,9 @@ contract("BatchExchange", async (accounts) => {
     it("returns three orders from three users with larger page size", async () => {
       const batchExchange = await setupGenericStableX(3)
       const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_1,
-      })
-      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, {
-        from: user_2,
-      })
-      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, {
-        from: user_3,
-      })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_1 })
+      await batchExchange.placeOrder(1, 2, batchId + 10, 100, 100, { from: user_2 })
+      await batchExchange.placeOrder(0, 1, batchId + 10, 100, 100, { from: user_3 })
 
       const page = decodeOrdersBN(await batchExchange.getEncodedUsersPaginated(zero_address, 0, 5))
       assert.equal(page.length, 3)

@@ -45,9 +45,7 @@ module.exports = async function (callback) {
         } else {
           await tokens[token].mint(accounts[account], amount)
         }
-        await tokens[token].approve(instance.address, amount, {
-          from: accounts[account],
-        })
+        await tokens[token].approve(instance.address, amount, { from: accounts[account] })
       }
     }
 
