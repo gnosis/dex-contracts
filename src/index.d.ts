@@ -1,10 +1,10 @@
-import BN from "bn.js";
-import { BatchExchangeViewer } from "../build/types/BatchExchangeViewer";
+import BN from "bn.js"
+import { BatchExchangeViewer } from "../build/types/BatchExchangeViewer"
 
-export { BatchExchange } from "../build/types/BatchExchange";
-export { BatchExchangeViewer } from "../build/types/BatchExchangeViewer";
-export * from "./orderbook";
-export * from "./fraction";
+export { BatchExchange } from "../build/types/BatchExchange"
+export { BatchExchangeViewer } from "../build/types/BatchExchangeViewer"
+export * from "./orderbook"
+export * from "./fraction"
 
 export interface ContractAbiEntry {
   type: string;
@@ -42,8 +42,10 @@ export interface ContractArtifact {
   deployedSourceMap: string;
   source: string;
   sourcePath: string;
-  ast: any[];
-  legacyAST: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ast: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  legacyAST: any;
   compiler: {
     name: string;
     version: string;
@@ -53,12 +55,25 @@ export interface ContractArtifact {
   };
   schemaVersion: string;
   updatedAt: string;
-  devdoc: any;
-  userdoc: any;
+  devdoc: {
+    details: string;
+    methods: {
+      [key: string]: {
+        details: string;
+      };
+    };
+  };
+  userdoc: {
+    methods: {
+      [key: string]: {
+        details: string;
+      };
+    };
+  };
 }
 
-export declare const BatchExchangeArtifact: ContractArtifact;
-export declare const BatchExchangeViewerArtifact: ContractArtifact;
+export declare const BatchExchangeArtifact: ContractArtifact
+export declare const BatchExchangeViewerArtifact: ContractArtifact
 
 export interface Order {
   user: string;

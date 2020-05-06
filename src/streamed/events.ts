@@ -40,6 +40,6 @@ export type EventDiscriminant<
   C extends Contract,
   T extends EventName<C>,
 > = T extends {} ? {
-  event: T,
-  returnValues: Event<C, T>,
+  event: T;
+  returnValues: EventValues<C["events"][T]>;
 } : never

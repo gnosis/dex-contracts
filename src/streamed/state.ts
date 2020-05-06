@@ -26,12 +26,12 @@ interface Account {
    * Pending withdrawal amounts are not included in this balance although they
    * affect the available balance of the account.
    */
-  balances: Map<Address, bigint>,
+  balances: Map<Address, bigint>;
 
   /**
    * Mapping from a token address to a pending withdrawal.
    */
-  pendingWithdrawals: Map<Address, PendingWithdrawal>,
+  pendingWithdrawals: Map<Address, PendingWithdrawal>;
 
   /**
    * All user orders including valid, invalid, cancelled and deleted orders.
@@ -40,7 +40,7 @@ interface Account {
    * Since user order IDs increase by 1 for each new order, an order can be
    * retrieved by ID for an account with `account.orders[orderId]`.
    */
-  orders: Order[],
+  orders: Order[];
 }
 
 /**
@@ -52,25 +52,25 @@ interface PendingWithdrawal {
    * longer included in the account's available balance and up to the amount can
    * be withdrawn by the user.
    */
-  batchId: number,
+  batchId: number;
 
   /**
    * The requested withdrawal amount.
    */
-  amount: bigint,
+  amount: bigint;
 }
 
 /**
  * Internal representation of an order.
  */
 interface Order {
-  buyToken: TokenId,
-  sellToken: TokenId,
-  validFrom: number,
-  validUntil: number | null,
-  priceNumerator: bigint,
-  priceDenominator: bigint,
-  remainingAmount: bigint,
+  buyToken: TokenId;
+  sellToken: TokenId;
+  validFrom: number;
+  validUntil: number | null;
+  priceNumerator: bigint;
+  priceDenominator: bigint;
+  remainingAmount: bigint;
 }
 
 /**
@@ -82,29 +82,29 @@ const UNLIMITED_ORDER_AMOUNT = BigInt(2 ** 128) - BigInt(1)
  * JSON representation of the account state.
  */
 export interface AuctionStateJson {
-  tokens: { [key: string]: string },
+  tokens: { [key: string]: string };
   accounts: {
     [key: string]: {
-      balances: { [key: string]: string },
-      pendingWithdrawals: { [key: string]: { batchId: number, amount: string } },
+      balances: { [key: string]: string };
+      pendingWithdrawals: { [key: string]: { batchId: number; amount: string } };
       orders: {
-        buyToken: TokenId,
-        sellToken: TokenId,
-        validFrom: number,
-        validUntil: number | null,
-        priceNumerator: string,
-        priceDenominator: string,
-        remainingAmount: string,
-      }[],
-    }
-  },
+        buyToken: TokenId;
+        sellToken: TokenId;
+        validFrom: number;
+        validUntil: number | null;
+        priceNumerator: string;
+        priceDenominator: string;
+        remainingAmount: string;
+      }[];
+    };
+  };
 }
 
 /**
  * Manage the exchange's auction state by incrementally applying events.
  */
 export class AuctionState {
-  private lastBlock: number = -1;
+  private lastBlock = -1;
 
   private readonly tokens: Map<TokenId, Address> = new Map();
   private readonly accounts: Map<Address, Account> = new Map();
@@ -222,14 +222,14 @@ export class AuctionState {
    */
   private applyDeposit(
     { user, token, amount: depositAmount }: Event<BatchExchange, "Deposit">,
-  ) {
+  ): void {
     this.updateBalance(user, token, amount => amount + BigInt(depositAmount))
   }
 
   /**
    * Applies an order cancellation event to the auction state.
    */
-  private applyOrderCancellation({ owner, id }: Event<BatchExchange, "OrderCancellation">) {
+  private applyOrderCancellation({ owner, id }: Event<BatchExchange, "OrderCancellation">): void {
     // TODO(nlordell): We need to pre-fetch the batch ID based on the block
     // number for this event to be able to accurately set this value.
     this.order(owner, parseInt(id)).validUntil = null
@@ -238,7 +238,7 @@ export class AuctionState {
   /**
    * Applies an order deletion event to the auction state.
    */
-  private applyOrderDeletion({ owner, id }: Event<BatchExchange, "OrderDeletion">) {
+  private applyOrderDeletion({ owner, id }: Event<BatchExchange, "OrderDeletion">): void {
     const order = this.order(owner, parseInt(id))
     order.buyToken = 0
     order.sellToken = 0
@@ -256,7 +256,7 @@ export class AuctionState {
    * In strict mode, throws if the order ID from the event does not match the
    * expected order ID based on the number of previously placed orders.
    */
-  private applyOrderPlacement(order: Event<BatchExchange, "OrderPlacement">) {
+  private applyOrderPlacement(order: Event<BatchExchange, "OrderPlacement">): void {
     const userOrders = this.account(order.owner).orders
     const orderId = userOrders.length
     if (this.options.strict) {
@@ -282,7 +282,7 @@ export class AuctionState {
    */
   private applySolutionReversion(
     { submitter, burntFees }: Event<BatchExchange, "SolutionSubmission">,
-  ) {
+  ): void {
     this.updateBalance(submitter, 0, amount => amount - BigInt(burntFees))
   }
 
@@ -297,7 +297,7 @@ export class AuctionState {
    */
   private applySolutionSubmission(
     { submitter, burntFees }: Event<BatchExchange, "SolutionSubmission">,
-  ) {
+  ): void {
     this.updateBalance(submitter, 0, amount => amount + BigInt(burntFees))
     if (this.options.strict) {
       for (const [user, { balances }] of this.accounts.entries()) {
@@ -315,7 +315,7 @@ export class AuctionState {
    * In strict mode, throws either if the token has already been listed or if
    * it was listed out of order.
    */
-  private applyTokenListing({ id, token }: Event<BatchExchange, "TokenListing">) {
+  private applyTokenListing({ id, token }: Event<BatchExchange, "TokenListing">): void {
     const tokenId = parseInt(id)
     if (this.options.strict) {
       assert(
@@ -330,7 +330,7 @@ export class AuctionState {
   /**
    * Applies a trade event to the auction state.
    */
-  private applyTrade(trade: Event<BatchExchange, "Trade">) {
+  private applyTrade(trade: Event<BatchExchange, "Trade">): void {
     this.updateBalance(
       trade.owner,
       parseInt(trade.sellToken),
@@ -351,7 +351,7 @@ export class AuctionState {
   /**
    * Applies a trade reversion event to the auction state.
    */
-  private applyTradeReversion(trade: Event<BatchExchange, "TradeReversion">) {
+  private applyTradeReversion(trade: Event<BatchExchange, "TradeReversion">): void {
     this.updateBalance(
       trade.owner,
       parseInt(trade.sellToken),
@@ -378,7 +378,7 @@ export class AuctionState {
    */
   private applyWithdraw(
     { user, token, amount: withdrawAmount }: Event<BatchExchange, "Withdraw">,
-  ) {
+  ): void {
     const tokenAddr = this.tokenAddr(token)
     const newBalance = this.updateBalance(
       user, token, amount => amount - BigInt(withdrawAmount),
@@ -403,7 +403,7 @@ export class AuctionState {
    */
   private applyWithdrawRequest(
     { user, token, batchId, amount }: Event<BatchExchange, "WithdrawRequest">,
-  ) {
+  ): void {
     const tokenAddr = this.tokenAddr(token)
     const batch = parseInt(batchId)
 
@@ -439,7 +439,7 @@ export class AuctionState {
     } else {
       const tokenAddr = this.tokens.get(token)
       assert(tokenAddr, `missing token ${token}`)
-      return tokenAddr!
+      return tokenAddr as Address
     }
   }
 

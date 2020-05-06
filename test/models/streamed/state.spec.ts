@@ -19,16 +19,18 @@ function event<
   block: number,
   name: K,
   data:  Named<EventValues<V>>,
-  index: number = 0,
+  index = 0,
 ): AnyEvent<BatchExchange> {
   // NOTE: Cast to `any` as there are missing event data properties that the
   // account state doesn't care about.
   return {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...{} as any,
     event: name,
     blockNumber: block,
     returnValues: data,
     logIndex: index || 0,
-  } as any
+  }
 }
 
 function addr(lowerBits: number): string {
