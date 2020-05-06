@@ -82,7 +82,7 @@ const UNLIMITED_ORDER_AMOUNT = BigInt(2 ** 128) - BigInt(1)
  * JSON representation of the account state.
  */
 export interface AuctionStateJson {
-  tokens: string[],
+  tokens: { [key: string]: string },
   accounts: {
     [key: string]: {
       balances: { [key: string]: string },
@@ -106,7 +106,7 @@ export interface AuctionStateJson {
 export class AuctionState {
   private lastBlock: number = -1;
 
-  private readonly tokens: Address[] = [];
+  private readonly tokens: Map<TokenId, Address> = new Map();
   private readonly accounts: Map<Address, Account> = new Map();
   private lastSolution?: Event<BatchExchange, "SolutionSubmission">;
 
@@ -131,7 +131,7 @@ export class AuctionState {
     }
 
     return {
-      tokens: this.tokens.slice(0),
+      tokens: map2obj(this.tokens, addr => addr),
       accounts: map2obj(this.accounts, account => ({
         balances: map2obj(account.balances, balance => balance.toString()),
         pendingWithdrawals: map2obj(
@@ -316,14 +316,15 @@ export class AuctionState {
    * it was listed out of order.
    */
   private applyTokenListing({ id, token }: Event<BatchExchange, "TokenListing">) {
+    const tokenId = parseInt(id)
     if (this.options.strict) {
       assert(
-        this.tokens.length === parseInt(id),
-        `token ${token} with ID ${id} added as token ${this.tokens.length}`,
+        this.tokens.get(tokenId) === undefined,
+        `token ${tokenId} has already been listed`,
       )
     }
 
-    this.tokens.push(token)
+    this.tokens.set(parseInt(id), token)
   }
 
   /**
@@ -436,9 +437,9 @@ export class AuctionState {
       )
       return token
     } else {
-      const tokenAddr = this.tokens[token]
-      assert(tokenAddr !== undefined, `missing token ${token}`)
-      return tokenAddr
+      const tokenAddr = this.tokens.get(token)
+      assert(tokenAddr, `missing token ${token}`)
+      return tokenAddr!
     }
   }
 
