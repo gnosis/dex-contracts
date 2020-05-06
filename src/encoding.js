@@ -6,20 +6,21 @@
  * solidity ABI limitations.
  */
 
-const assert = require("assert")
-const BN = require("bn.js")
+const assert = require("assert");
+const BN = require("bn.js");
 
 class OrderBuffer {
   constructor(bytes) {
-    this.bytes = bytes
-    this.index = 2 // skip '0x'
+    this.bytes = bytes;
+    this.index = 2; // skip '0x'
 
-    this.readBytes = (size) => this.bytes.slice(this.index, (this.index += size * 2))
+    this.readBytes = (size) =>
+      this.bytes.slice(this.index, (this.index += size * 2));
 
-    this.decodeAddr = () => `0x${this.readBytes(20)}`
-    this.decodeInt = (size) => new BN(this.readBytes(size / 8), 16).toString()
+    this.decodeAddr = () => `0x${this.readBytes(20)}`;
+    this.decodeInt = (size) => new BN(this.readBytes(size / 8), 16).toString();
 
-    return this
+    return this;
   }
 }
 
@@ -34,29 +35,32 @@ function decodeOrder(bytes) {
     priceNumerator: bytes.decodeInt(128),
     priceDenominator: bytes.decodeInt(128),
     remainingAmount: bytes.decodeInt(128),
-  }
+  };
 }
 
 function decodeIndexedOrder(bytes) {
   return {
     ...decodeOrder(bytes),
     orderId: bytes.decodeInt(16),
-  }
+  };
 }
 
 function decodeOrdersInternal(bytes, decodeFunction, width) {
   if (bytes === null || bytes === undefined || bytes.length === 0) {
-    return []
+    return [];
   }
-  assert(typeof bytes === "string" || bytes instanceof String, "bytes parameter must be a string")
-  assert((bytes.length - 2) % width === 0, "malformed bytes")
+  assert(
+    typeof bytes === "string" || bytes instanceof String,
+    "bytes parameter must be a string",
+  );
+  assert((bytes.length - 2) % width === 0, "malformed bytes");
 
-  const buffer = new OrderBuffer(bytes)
-  const result = []
+  const buffer = new OrderBuffer(bytes);
+  const result = [];
   while (buffer.index < buffer.bytes.length) {
-    result.push(decodeFunction(buffer))
+    result.push(decodeFunction(buffer));
   }
-  return result
+  return result;
 }
 
 /**
@@ -67,7 +71,7 @@ function decodeOrdersInternal(bytes, decodeFunction, width) {
  * @return {Object[]} The decoded array of orders
  */
 function decodeOrders(bytes) {
-  return decodeOrdersInternal(bytes, decodeOrder, 112)
+  return decodeOrdersInternal(bytes, decodeOrder, 112);
 }
 
 function decodeOrdersBN(bytes) {
@@ -81,7 +85,7 @@ function decodeOrdersBN(bytes) {
     priceNumerator: new BN(e.priceNumerator),
     priceDenominator: new BN(e.priceDenominator),
     remainingAmount: new BN(e.remainingAmount),
-  }))
+  }));
 }
 
 /**
@@ -92,7 +96,7 @@ function decodeOrdersBN(bytes) {
  * @return {Object[]} The decoded array of orders and their orderIds
  */
 function decodeIndexedOrders(bytes) {
-  return decodeOrdersInternal(bytes, decodeIndexedOrder, 114)
+  return decodeOrdersInternal(bytes, decodeIndexedOrder, 114);
 }
 
 function decodeIndexedOrdersBN(bytes) {
@@ -107,7 +111,7 @@ function decodeIndexedOrdersBN(bytes) {
     priceNumerator: new BN(e.priceNumerator),
     priceDenominator: new BN(e.priceDenominator),
     remainingAmount: new BN(e.remainingAmount),
-  }))
+  }));
 }
 
 module.exports = {
@@ -115,4 +119,4 @@ module.exports = {
   decodeOrdersBN,
   decodeIndexedOrders,
   decodeIndexedOrdersBN,
-}
+};

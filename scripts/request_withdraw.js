@@ -1,5 +1,5 @@
-const BatchExchange = artifacts.require("BatchExchange")
-const zero_address = 0x0
+const BatchExchange = artifacts.require("BatchExchange");
+const zero_address = 0x0;
 const argv = require("yargs")
   .option("accountId", {
     describe: "Withdrawers's account index",
@@ -12,27 +12,31 @@ const argv = require("yargs")
   })
   .demand(["accountId", "tokenId", "amount"])
   .help(false)
-  .version(false).argv
+  .version(false).argv;
 
 module.exports = async (callback) => {
   try {
-    const amount = web3.utils.toWei(String(argv.amount))
+    const amount = web3.utils.toWei(String(argv.amount));
 
-    const instance = await BatchExchange.deployed()
-    const accounts = await web3.eth.getAccounts()
-    const withdrawer = accounts[argv.accountId]
+    const instance = await BatchExchange.deployed();
+    const accounts = await web3.eth.getAccounts();
+    const withdrawer = accounts[argv.accountId];
 
-    const token_address = await instance.tokenIdToAddressMap.call(argv.tokenId)
+    const token_address = await instance.tokenIdToAddressMap.call(argv.tokenId);
     if (token_address == zero_address) {
-      callback(`Error: No token registered at index ${argv.tokenId}`)
+      callback(`Error: No token registered at index ${argv.tokenId}`);
     }
 
-    await instance.requestWithdraw(token_address, amount, { from: withdrawer })
-    const claimable_at = (await instance.getPendingWithdraw(withdrawer, token_address))[1]
+    await instance.requestWithdraw(token_address, amount, { from: withdrawer });
+    const claimable_at = (
+      await instance.getPendingWithdraw(withdrawer, token_address)
+    )[1];
 
-    console.log(`Withdraw Request successful. Can be claimed in batch ${claimable_at}`)
-    callback()
+    console.log(
+      `Withdraw Request successful. Can be claimed in batch ${claimable_at}`,
+    );
+    callback();
   } catch (error) {
-    callback(error)
+    callback(error);
   }
-}
+};

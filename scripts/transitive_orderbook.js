@@ -1,9 +1,13 @@
-const BatchExchangeViewer = artifacts.require("BatchExchangeViewer")
-const { getOpenOrdersPaginated } = require("../src/onchain_reading.js")
-const BN = require("bn.js")
+const BatchExchangeViewer = artifacts.require("BatchExchangeViewer");
+const { getOpenOrdersPaginated } = require("../src/onchain_reading.js");
+const BN = require("bn.js");
 
-const { Orderbook, Offer, transitiveOrderbook } = require("../build/common/orderbook.js")
-const { Fraction } = require("../build/common/fraction.js")
+const {
+  Orderbook,
+  Offer,
+  transitiveOrderbook,
+} = require("../build/common/orderbook.js");
+const { Fraction } = require("../build/common/fraction.js");
 
 const argv = require("yargs")
   .option("sellToken", {
@@ -24,45 +28,60 @@ const argv = require("yargs")
     describe: "The page  size for the function getOrdersPaginated",
   })
   .demand(["sellToken", "buyToken", "sellAmount"])
-  .version(false).argv
+  .version(false).argv;
 
 const addItemToOrderbooks = function (orderbooks, item) {
-  let orderbook = new Orderbook(item.sellToken, item.buyToken)
+  let orderbook = new Orderbook(item.sellToken, item.buyToken);
   if (!orderbooks.has(orderbook.pair())) {
-    orderbooks.set(orderbook.pair(), orderbook)
+    orderbooks.set(orderbook.pair(), orderbook);
   }
-  orderbook = orderbooks.get(orderbook.pair())
-  const price = new Fraction(item.priceNumerator, item.priceDenominator)
-  const volume = new Fraction(item.remainingAmount.gt(item.sellTokenBalance) ? item.sellTokenBalance : item.remainingAmount, 1)
+  orderbook = orderbooks.get(orderbook.pair());
+  const price = new Fraction(item.priceNumerator, item.priceDenominator);
+  const volume = new Fraction(
+    item.remainingAmount.gt(item.sellTokenBalance)
+      ? item.sellTokenBalance
+      : item.remainingAmount,
+    1,
+  );
   // Smaller orders cannot be matched anyways
   if (volume.gt(new Fraction(10000, 1))) {
-    orderbook.addAsk(new Offer(price, volume))
+    orderbook.addAsk(new Offer(price, volume));
   }
-}
+};
 
 const getAllOrderbooks = async function (instance, pageSize) {
-  const orderbooks = new Map()
-  for await (const page of getOpenOrdersPaginated(instance.contract, pageSize)) {
-    console.log("Fetched Page")
+  const orderbooks = new Map();
+  for await (const page of getOpenOrdersPaginated(
+    instance.contract,
+    pageSize,
+  )) {
+    console.log("Fetched Page");
     page.forEach((item) => {
-      addItemToOrderbooks(orderbooks, item)
-    })
+      addItemToOrderbooks(orderbooks, item);
+    });
   }
-  return orderbooks
-}
+  return orderbooks;
+};
 
 module.exports = async (callback) => {
   try {
-    const sellAmount = new BN(argv.sellAmount)
-    const instance = await BatchExchangeViewer.deployed()
-    const orderbooks = await getAllOrderbooks(instance, argv.pageSize)
-    const transitive_book = transitiveOrderbook(orderbooks, argv.sellToken, argv.buyToken, parseInt(argv.hops))
-    const price = transitive_book.priceToSellBaseToken(sellAmount)
+    const sellAmount = new BN(argv.sellAmount);
+    const instance = await BatchExchangeViewer.deployed();
+    const orderbooks = await getAllOrderbooks(instance, argv.pageSize);
+    const transitive_book = transitiveOrderbook(
+      orderbooks,
+      argv.sellToken,
+      argv.buyToken,
+      parseInt(argv.hops),
+    );
+    const price = transitive_book.priceToSellBaseToken(sellAmount);
     console.log(
-      `Suggested price to sell ${argv.sellAmount} of token ${argv.sellToken} for token ${argv.buyToken} is: ${price.toNumber()}`
-    )
-    callback()
+      `Suggested price to sell ${argv.sellAmount} of token ${
+        argv.sellToken
+      } for token ${argv.buyToken} is: ${price.toNumber()}`,
+    );
+    callback();
   } catch (error) {
-    callback(error)
+    callback(error);
   }
-}
+};
