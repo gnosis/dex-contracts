@@ -51,3 +51,28 @@ export const sendTxAndGetReturnValue = async function (
   await method(...args);
   return result;
 };
+
+/**
+ * Finalizes user's pending deposits by updating user's balances for all input tokens.
+ * It assumes no withdrawals have been requested.
+ * State of the contract after the execution of this function for tokenAddress:
+ * balanceState[userAddress][tokenAddress] =
+ * {
+ *   balance: pendingDepositAmount,
+ *   pendingDeposits: null,
+ *   pendingWithdraws: null,
+ * }
+ * @param userAddress address of the user who deposited
+ * @param epochTokenLocker instance of the epoch token locker to which the user deposited
+ * @param tokenAddresses list of token addresses for which a deposit is pending
+ */
+export const applyBalances = async function (
+  userAddress: string,
+  epochTokenLocker: EpochTokenLockerInstance,
+  tokenAddresses: string[]
+) {
+  await closeAuction(epochTokenLocker);
+  for (const tokenAddress of tokenAddresses) {
+    await epochTokenLocker.withdraw(userAddress, tokenAddress);
+  }
+};
