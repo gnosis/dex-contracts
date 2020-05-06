@@ -206,8 +206,8 @@ export class StreamedOrderbook {
     }
 
     const confirmedEventCount = events.findIndex(ev => ev.blockNumber > confirmedBlock)
-    const confirmedEvents = events.splice(0, confirmedEventCount)
-    const latestEvents = events
+    const confirmedEvents = events.slice(0, confirmedEventCount)
+    const latestEvents = events.slice(confirmedEventCount)
 
     this.options.logger?.debug(`applying ${confirmedEvents.length} confirmed events until block ${confirmedBlock}`)
     try {
@@ -221,6 +221,11 @@ export class StreamedOrderbook {
     this.latestState = undefined
     this.options.logger?.debug(`reapplying ${latestEvents.length} latest events until block ${latestBlock}`)
     if (latestEvents.length > 0) {
+      // NOTE: Errors applying latest state are not considered fatal as we can
+      // still recover from them (since the confirmed state is still valid). If
+      // applying the latest events fails, just make sure that the `latestEvent`
+      // property is not set, so that the query methods fall back to using the
+      // confirmed state.
       const newLatestState = this.confirmedState.copy()
       newLatestState.applyEvents(latestEvents)
       this.latestState = newLatestState
@@ -262,6 +267,8 @@ export class StreamedOrderbook {
   /**
    * Helper method to check for an unrecoverable invalid state in the current
    * streamed orderbook.
+   *
+   * @throws If the streamed orderbook is in an invalid state.
    */
   private throwOnInvalidState(): void {
     if (this.invalidState) {

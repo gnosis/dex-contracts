@@ -28,9 +28,7 @@ describe("Streamed Orderbook", () => {
         "ETHEREUM_NODE_URL or INFURA_PROJECT_ID environment variable is required",
       )
       const url = ETHEREUM_NODE_URL || `https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`
-      const endBlock = ORDERBOOK_END_BLOCK ?
-        parseInt(ORDERBOOK_END_BLOCK) :
-        undefined
+      const endBlock = ORDERBOOK_END_BLOCK ? parseInt(ORDERBOOK_END_BLOCK) : undefined
 
       const web3 = new Web3(url)
       const [viewer] = await deployment<BatchExchangeViewer>(web3, BatchExchangeViewerArtifact)
