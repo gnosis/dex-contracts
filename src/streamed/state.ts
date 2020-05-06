@@ -396,8 +396,8 @@ export class AuctionState {
    * Applies a withdraw request event to the auction state.
    *
    * @throws
-   * In strict mode, throws if the withdraw request is placed in the over top of
-   * and existing unapplied request.
+   * In strict mode, throws if the withdraw request is placed over top of an
+   * existing unapplied request.
    */
   private applyWithdrawRequest(
     { user, token, batchId, amount }: Event<BatchExchange, "WithdrawRequest">,
