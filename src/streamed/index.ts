@@ -16,6 +16,7 @@
 import Web3 from "web3"
 import { TransactionReceipt } from "web3-core"
 import { EventData } from "web3-eth-contract"
+import { AbiItem } from "web3-utils"
 import { BatchExchange, BatchExchangeArtifact } from "../.."
 import { AuctionState } from "./state"
 
@@ -60,10 +61,10 @@ export interface OrderbookOptions {
    * Set the logger to be used by the streamed orderbook module.
    */
   logger?: {
-    debug: (...args: any) => void;
-    log: (...args: any) => void;
-    warn: (...args: any) => void;
-    error: (...args: any) => void;
+    debug: (...args: {}[]) => void;
+    log: (...args: {}[]) => void;
+    warn: (...args: {}[]) => void;
+    error: (...args: {}[]) => void;
   };
 }
 
@@ -232,7 +233,7 @@ async function batchExchangeDeployment(web3: Web3): Promise<[BatchExchange, Tran
   }
 
   const tx = await web3.eth.getTransactionReceipt(network.transactionHash)
-  const contract = new web3.eth.Contract(abi as any, network.address)
+  const contract = new web3.eth.Contract(abi as AbiItem[], network.address)
 
   return [contract, tx]
 }

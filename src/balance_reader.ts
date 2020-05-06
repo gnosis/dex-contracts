@@ -1,8 +1,8 @@
-import BN from "bn.js";
-import Web3 from "web3";
-import {BatchExchangeInstance} from "../types/truffle-typings";
+import BN from "bn.js"
+import Web3 from "web3"
+import {BatchExchangeInstance} from "../types/truffle-typings"
 
-const WORD_DATA_LENGTH = 64;
+const WORD_DATA_LENGTH = 64
 
 /**
  * Retrieves user's token balance as stored in the "balance" entry of the private exchange mapping balanceStates
@@ -22,7 +22,7 @@ export async function getBalanceState(
 ): Promise<BN> {
   // TODO when Truffle depends on web3-utils version ^1.2.5:
   // use soliditySha3Raw instead of soliditySha3 and remove type coercion
-  const BALANCESTATES_STORAGE_SLOT = "0x0";
+  const BALANCESTATES_STORAGE_SLOT = "0x0"
 
   const userBalancestatesStorageSlot = web3Provider.utils.soliditySha3(
     {
@@ -36,7 +36,7 @@ export async function getBalanceState(
         WORD_DATA_LENGTH
       ),
     }
-  ) as string;
+  ) as string
 
   const targetStorageSlot = web3Provider.utils.soliditySha3(
     {
@@ -50,13 +50,13 @@ export async function getBalanceState(
         WORD_DATA_LENGTH
       ),
     }
-  ) as string;
+  ) as string
 
   const storageAtSlot = await web3Provider.eth.getStorageAt(
     batchExchangeAddress,
     targetStorageSlot
-  );
-  return web3Provider.utils.toBN(storageAtSlot);
+  )
+  return web3Provider.utils.toBN(storageAtSlot)
 }
 
 /**
@@ -92,14 +92,14 @@ export async function getWithdrawableAmount(
     batchExchange.getPendingWithdraw(userAddress, tokenAddress),
     batchExchange.lastCreditBatchId(userAddress, tokenAddress),
     batchExchange.getCurrentBatchId(),
-  ]);
-  let balance = balanceState;
+  ])
+  let balance = balanceState
   if (pendingDeposit[1].lt(batchId)) {
-    balance = balance.add(pendingDeposit[0]);
+    balance = balance.add(pendingDeposit[0])
   }
   if (pendingWithdrawal[1].gte(batchId) || lastCreditBatchId.gte(batchId)) {
-    return new BN(0);
+    return new BN(0)
   } else {
-    return BN.min(balance, pendingWithdrawal[0]);
+    return BN.min(balance, pendingWithdrawal[0])
   }
 }

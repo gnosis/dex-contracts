@@ -1,10 +1,12 @@
-import BN from "bn.js";
-import {toETH, feeAdded, feeSubtracted, ERROR_EPSILON} from "../math";
-import {generateTestCase} from "./generate";
+import BN from "bn.js"
+import { toETH, feeAdded, feeSubtracted, ERROR_EPSILON } from "../math"
+import { generateTestCase } from "./generate"
 
-const ZERO = new BN(0);
+export * from "./generate"
 
-const basicTrade = generateTestCase({
+const ZERO = new BN(0)
+
+export const basicTrade = generateTestCase({
   name: "Basic Trade",
   orders: [
     {
@@ -34,9 +36,9 @@ const basicTrade = generateTestCase({
       buyVolumes: [toETH(9), feeSubtracted(toETH(18))],
     },
   ],
-});
+})
 
-const advancedTrade = generateTestCase({
+export const advancedTrade = generateTestCase({
   name: "Advanced Trade",
   orders: [
     {
@@ -113,9 +115,9 @@ const advancedTrade = generateTestCase({
       ],
     },
   ],
-});
+})
 
-const biggieSmallTrade = generateTestCase({
+export const biggieSmallTrade = generateTestCase({
   name: "Biggie Small",
   orders: [
     {
@@ -140,9 +142,9 @@ const biggieSmallTrade = generateTestCase({
       buyVolumes: [1, 184].map(toETH),
     },
   ],
-});
+})
 
-const basicRingTrade = generateTestCase({
+export const basicRingTrade = generateTestCase({
   name: "Basic Ring",
   orders: [
     {
@@ -178,10 +180,10 @@ const basicRingTrade = generateTestCase({
       ],
     },
   ],
-});
+})
 
-const n = 30;
-const largeRing30 = generateTestCase({
+const n = 30
+export const largeRing30 = generateTestCase({
   name: "Longest Ring Trade",
   orders: Array.from(Array(n).keys())
     .map((i) => ({
@@ -338,9 +340,9 @@ const largeRing30 = generateTestCase({
       ].concat(Array(30).fill(new BN(0))),
     },
   ],
-});
+})
 
-const shortRingBetterTrade = generateTestCase({
+export const shortRingBetterTrade = generateTestCase({
   orders: [
     // ring trade orders
     {
@@ -398,10 +400,10 @@ const shortRingBetterTrade = generateTestCase({
       buyVolumes: [ZERO, ZERO, ZERO, toETH(1), toETH(184)],
     },
   ],
-});
+})
 
-const maxUint128 = new BN(2).pow(new BN(128)).sub(new BN(1));
-const exampleOrderWithUnlimitedAmount = generateTestCase(
+const maxUint128 = new BN(2).pow(new BN(128)).sub(new BN(1))
+export const exampleOrderWithUnlimitedAmount = generateTestCase(
   {
     deposits: [
       {amount: feeAdded(toETH(10)), token: 0, user: 0},
@@ -443,11 +445,11 @@ const exampleOrderWithUnlimitedAmount = generateTestCase(
   },
   false,
   false
-);
+)
 
-const fiveThousand = new BN("5000");
-const tenThousand = new BN("10000");
-const tooSmallSellAmountTrade = generateTestCase(
+const fiveThousand = new BN("5000")
+const tenThousand = new BN("10000")
+export const tooSmallSellAmountTrade = generateTestCase(
   {
     deposits: [
       {amount: feeAdded(tenThousand), token: 0, user: 0},
@@ -479,9 +481,9 @@ const tooSmallSellAmountTrade = generateTestCase(
   },
   false,
   true
-);
+)
 
-const tooSmallBuyAmountTrade = generateTestCase(
+export const tooSmallBuyAmountTrade = generateTestCase(
   {
     deposits: [
       {amount: feeAdded(tenThousand), token: 0, user: 0},
@@ -513,11 +515,11 @@ const tooSmallBuyAmountTrade = generateTestCase(
   },
   false,
   true
-);
+)
 
-const fiftyThousand = new BN("50000");
-const hundredThousand = new BN("100000");
-const smallExample = generateTestCase({
+const fiftyThousand = new BN("50000")
+const hundredThousand = new BN("100000")
+export const smallExample = generateTestCase({
   deposits: [
     {amount: feeAdded(hundredThousand), token: 0, user: 0},
     {amount: new BN(190), token: 1, user: 1},
@@ -561,9 +563,9 @@ const smallExample = generateTestCase({
       buyVolumes: [100000, 99900, 99810, 99711].map((val) => new BN(val)),
     },
   ],
-});
+})
 
-const stableXExample = generateTestCase({
+export const stableXExample = generateTestCase({
   deposits: [
     {amount: toETH(3000), token: 0, user: 0},
     {amount: toETH(3000), token: 1, user: 0},
@@ -591,9 +593,9 @@ const stableXExample = generateTestCase({
       buyVolumes: [toETH(999), new BN("1996000999999999998010")],
     },
   ],
-});
+})
 
-const marginalTrade = generateTestCase({
+export const marginalTrade = generateTestCase({
   name: "Marginal Trade",
   orders: [
     {
@@ -637,9 +639,9 @@ const marginalTrade = generateTestCase({
       buyVolumes: [ZERO, ZERO, toETH(100000), feeSubtracted(toETH(200000))],
     },
   ],
-});
+})
 
-const utilityOverflow = generateTestCase({
+export const utilityOverflow = generateTestCase({
   deposits: [
     {amount: toETH(10), token: 0, user: 0},
     {amount: toETH(1), token: 1, user: 1},
@@ -683,23 +685,4 @@ const utilityOverflow = generateTestCase({
       ].map((val) => new BN(val)),
     },
   ],
-});
-
-module.exports = Object.assign(
-  {
-    basicTrade,
-    advancedTrade,
-    biggieSmallTrade,
-    basicRingTrade,
-    shortRingBetterTrade,
-    tooSmallBuyAmountTrade,
-    tooSmallSellAmountTrade,
-    smallExample,
-    stableXExample,
-    marginalTrade,
-    utilityOverflow,
-    exampleOrderWithUnlimitedAmount,
-    largeRing30,
-  },
-  require("./generate")
-);
+})

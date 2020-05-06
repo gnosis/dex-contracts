@@ -1,4 +1,4 @@
-import BN from "bn.js";
+import BN from "bn.js"
 
 export interface Order {
   buyToken: number;
@@ -76,4 +76,13 @@ export interface TestCase {
   deposits: Deposit[];
   orders: Order[];
   solutions: ComputedSolution[];
+}
+
+export interface SolutionSubmission {
+  objectiveValue: BN;
+  owners: string[];
+  touchedorderIds: number[];
+  volumes: BN[];
+  prices: BN[];
+  tokenIdsForPrice: number[];
 }
