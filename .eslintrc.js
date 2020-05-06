@@ -19,11 +19,7 @@ module.exports = {
   },
   plugins: ["@typescript-eslint", "prettier"],
   rules: {
-    indent: ["error", 2, { SwitchCase: 1 }],
-    "linebreak-style": ["error", "unix"],
     "no-console": "error",
-    quotes: ["error", "double"],
-    semi: ["error", "never"],
 
     "@typescript-eslint/camelcase": "off",
     "@typescript-eslint/no-use-before-define": "off",
