@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import BN from "bn.js"
 import { assert } from "chai"
 import "mocha"
@@ -47,7 +49,7 @@ describe("Streamed Orderbook", () => {
       const queriedOrders = await getOpenOrders(viewer, 300, endBlock)
 
       console.debug("==> comparing orderbooks...")
-      function toDiffableOrders<T>(orders: IndexedOrder<T>[]) {
+      function toDiffableOrders<T>(orders: IndexedOrder<T>[]): Record<string, IndexedOrder<T>> {
         return orders.slice(0, 10).reduce((obj, order) => {
           const user = order.user.toLowerCase()
           obj[`${user}-${order.orderId}`] = { ...order, user }
