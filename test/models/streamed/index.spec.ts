@@ -28,15 +28,15 @@ describe("Streamed Orderbook", () => {
         "ETHEREUM_NODE_URL or INFURA_PROJECT_ID environment variable is required",
       )
       const url = ETHEREUM_NODE_URL || `https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`
+      const endBlock = ORDERBOOK_END_BLOCK ? parseInt(ORDERBOOK_END_BLOCK) : undefined
+
       const web3 = new Web3(url)
       const [viewer] = await deployment<BatchExchangeViewer>(web3, BatchExchangeViewerArtifact)
 
-      const endBlock = ORDERBOOK_END_BLOCK ?
-        parseInt(ORDERBOOK_END_BLOCK) :
-        await web3.eth.getBlockNumber()
-
       console.debug("==> building streamed orderbook...")
       const orderbook = await StreamedOrderbook.init(web3, { endBlock, strict: true })
+      const targetBlock = endBlock ?? await orderbook.update()
+
       const streamedOrders = orderbook.getOpenOrders().map(order => ({
         ...order,
         sellTokenBalance: new BN(order.sellTokenBalance.toString()),
@@ -46,7 +46,7 @@ describe("Streamed Orderbook", () => {
       }))
 
       console.debug("==> querying onchain orderbook...")
-      const queriedOrders = await getOpenOrders(viewer, 300, endBlock)
+      const queriedOrders = await getOpenOrders(viewer, 300, targetBlock)
 
       console.debug("==> comparing orderbooks...")
       function toDiffableOrders<T>(orders: IndexedOrder<T>[]): Record<string, IndexedOrder<T>> {

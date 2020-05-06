@@ -83,9 +83,10 @@ export const DEFAULT_ORDERBOOK_OPTIONS: OrderbookOptions = {
  * account state.
  */
 export class StreamedOrderbook {
-  private readonly state: AuctionState;
   private batch = -1;
-  private pendingEvents: AnyEvent<BatchExchange>[] = [];
+
+  private readonly confirmedState: AuctionState;
+  private latestState?: AuctionState;
 
   private invalidState?: InvalidAuctionStateError;
 
@@ -95,7 +96,7 @@ export class StreamedOrderbook {
     private readonly startBlock: number,
     private readonly options: OrderbookOptions,
   ) {
-    this.state = new AuctionState(options)
+    this.confirmedState = new AuctionState(options)
   }
 
   /**
@@ -132,7 +133,10 @@ export class StreamedOrderbook {
    * Retrieves the current open orders in the orderbook.
    */
   public getOpenOrders(): IndexedOrder<bigint>[] {
-    return this.state.getOrders(this.batch)
+    this.throwOnInvalidState()
+
+    const state = this.latestState ?? this.confirmedState
+    return state.getOrders(this.batch)
   }
 
   /**
@@ -158,7 +162,7 @@ export class StreamedOrderbook {
       const events = await this.getPastEvents({ fromBlock, toBlock })
 
       this.options.logger?.debug(`applying ${events.length} past events`)
-      this.state.applyEvents(events)
+      this.confirmedState.applyEvents(events)
     }
     this.batch = await this.getBatchId(endBlock)
   }
@@ -166,6 +170,9 @@ export class StreamedOrderbook {
   /**
    * Apply new confirmed events to the account state and store the remaining
    * events that are subject to reorgs into the `pendingEvents` array.
+   *
+   * @returns The block number up until which the streamed orderbook is up to
+   * date
    *
    * @remarks
    * If there is an error retrieving the latest events from the node, then the
@@ -175,35 +182,57 @@ export class StreamedOrderbook {
    * then the streamed orderbook becomes invalid and can no longer apply new
    * events as the actual auction state is unknown.
    */
-  public async update(): Promise<void> {
-    if (this.invalidState) {
-      throw this.invalidState
-    }
+  public async update(): Promise<number> {
+    this.throwOnInvalidState()
 
-    const fromBlock = this.state.nextBlock
+    const fromBlock = this.confirmedState.nextBlock
     this.options.logger?.debug(`fetching new events from ${fromBlock}-latest`)
     const events = await this.getPastEvents({ fromBlock })
 
-    const latestBlock = await this.web3.eth.getBlockNumber()
+    // NOTE: If the web3 instance is connected to nodes behind a load balancer,
+    // it is possible that the events were queried on a node that includes an
+    // additional block to the node that handled the query to the latest block
+    // number, so use the max of `latestEvents.last().blockNumber` and the
+    // queried latest block number.
+    const latestBlock = Math.max(
+      await this.web3.eth.getBlockNumber(),
+      events[events.length - 1]?.blockNumber ?? 0,
+    )
     const confirmedBlock = latestBlock - this.options.blockConfirmations
-    const batch = await this.getBatchId(confirmedBlock)
 
-    const confirmedEventCount = events.findIndex(ev => ev.blockNumber > confirmedBlock)
-    const confirmedEvents = events.splice(0, confirmedEventCount)
-    const pendingEvents = events
-
-    if (confirmedEvents.length > 0) {
-      this.options.logger?.debug(`applying ${confirmedEvents.length} confirmed events until block ${confirmedBlock}`)
-      try {
-        this.state.applyEvents(confirmedEvents)
-      } catch (err) {
-        this.invalidState = new InvalidAuctionStateError(confirmedBlock, err)
-        this.options.logger?.error(this.invalidState.message)
-        throw this.invalidState
-      }
+    this.batch = await this.getBatchId(latestBlock)
+    if (events.length === 0) {
+      return latestBlock
     }
-    this.batch = batch
-    this.pendingEvents = pendingEvents
+
+    const firstLatestEvent = events.findIndex(ev => ev.blockNumber > confirmedBlock)
+    const confirmedEventCount = firstLatestEvent !== -1 ? firstLatestEvent : events.length
+    const confirmedEvents = events.slice(0, confirmedEventCount)
+    const latestEvents = events.slice(confirmedEventCount)
+
+    this.options.logger?.debug(`applying ${confirmedEvents.length} confirmed events until block ${confirmedBlock}`)
+    try {
+      this.confirmedState.applyEvents(confirmedEvents)
+    } catch (err) {
+      this.invalidState = new InvalidAuctionStateError(confirmedBlock, err)
+      this.options.logger?.error(this.invalidState.message)
+      throw this.invalidState
+    }
+
+    this.latestState = undefined
+    this.options.logger?.debug(`reapplying ${latestEvents.length} latest events until block ${latestBlock}`)
+    if (latestEvents.length > 0) {
+      // NOTE: Errors applying latest state are not considered fatal as we can
+      // still recover from them (since the confirmed state is still valid). If
+      // applying the latest events fails, just make sure that the `latestEvent`
+      // property is not set, so that the query methods fall back to using the
+      // confirmed state.
+      const newLatestState = this.confirmedState.copy()
+      newLatestState.applyEvents(latestEvents)
+      this.latestState = newLatestState
+    }
+
+    return latestBlock
   }
 
   /**
@@ -231,9 +260,24 @@ export class StreamedOrderbook {
     const BATCH_DURATION = 300
 
     const block = await this.web3.eth.getBlock(blockNumber)
-    const batch = Math.floor(Number(block.timestamp) / BATCH_DURATION)
+    // NOTE: Pending or future blocks return null when queried, so approximate
+    // with system time
+    const timestamp = block?.timestamp ?? Date.now()
+    const batch = Math.floor(Number(timestamp) / BATCH_DURATION)
 
     return batch
+  }
+
+  /**
+   * Helper method to check for an unrecoverable invalid state in the current
+   * streamed orderbook.
+   *
+   * @throws If the streamed orderbook is in an invalid state.
+   */
+  private throwOnInvalidState(): void {
+    if (this.invalidState) {
+      throw this.invalidState
+    }
   }
 }
 

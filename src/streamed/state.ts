@@ -115,6 +115,26 @@ export class AuctionState {
   ) {}
 
   /**
+   * Creates a copy of the auction state that can apply events independently
+   * without modifying the original state.
+   */
+  public copy(): AuctionState {
+    const clone = new AuctionState(this.options)
+    clone.lastBlock = this.lastBlock
+    clone.tokens.push(...this.tokens)
+    for (const [user, account] of this.accounts.entries()) {
+      clone.accounts.set(user, {
+        balances: new Map(account.balances),
+        pendingWithdrawals: new Map(account.pendingWithdrawals),
+        orders: account.orders.map(order => ({ ...order })),
+      })
+    }
+    clone.lastSolution = this.lastSolution
+
+    return clone
+  }
+
+  /**
    * Create an object representation of the current account state for JSON
    * serialization.
    */
