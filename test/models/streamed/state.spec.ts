@@ -1,5 +1,5 @@
 import { expect } from "chai"
-import { BatchExchange } from "../../../src"
+import { BatchExchange } from "../../.."
 import { DEFAULT_ORDERBOOK_OPTIONS } from "../../../src/streamed"
 import { AuctionState } from "../../../src/streamed/state"
 import { AnyEvent, EventName, EventValues } from "../../../src/streamed/events"

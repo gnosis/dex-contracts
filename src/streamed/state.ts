@@ -1,6 +1,6 @@
 import assert from "assert"
 import { EventData } from "web3-eth-contract"
-import { BatchExchange } from "../.."
+import { BatchExchange, IndexedOrder } from ".."
 import { OrderbookOptions } from "."
 import { AnyEvent, Event } from "./events"
 
@@ -152,6 +152,52 @@ export class AuctionState {
   }
 
   /**
+   * Gets the current auction state in the standard order list format.
+   *
+   * @param batch - The batch to get the orders for.
+   */
+  public getOrders(batch: number): IndexedOrder<bigint>[] {
+    let orders: IndexedOrder<bigint>[] = []
+    for (const [user, account] of this.accounts.entries()) {
+      orders = orders.concat(account.orders
+        .map((order, orderId) => ({
+          ...order,
+          user,
+          sellTokenBalance: this.getEffectiveBalance(batch, user, order.sellToken),
+          orderId,
+          validUntil: order.validUntil ?? 0,
+        }))
+        .filter(order => order.validFrom <= batch && batch <= order.validUntil)
+      )
+    }
+
+    return orders
+  }
+
+  /**
+   * Retrieves a users effective balance for the specified token at a given
+   * batch.
+   *
+   * @param batch - The batch to get the balance for.
+   * @param user - The user account to retrieve the balance for.
+   * @param token - The token ID or address to retrieve the balance for.
+   */
+  private getEffectiveBalance(batch: number, user: Address, token: Address | TokenId): bigint {
+    const tokenAddr = this.tokenAddr(token)
+    const account = this.accounts.get(user)
+    if (account === undefined) {
+      return BigInt(0)
+    }
+
+    const balance = account.balances.get(tokenAddr) ?? BigInt(0)
+    const withdrawal = account.pendingWithdrawals.get(tokenAddr)
+    const withdrawalAmount = withdrawal && withdrawal.batchId <= batch ?
+      withdrawal.amount : BigInt(0)
+
+    return balance > withdrawalAmount ? balance - withdrawalAmount : BigInt(0)
+  }
+
+  /**
    * Retrieves block number the account state is accepting events for.
    */
   public get nextBlock(): number {
@@ -165,7 +211,6 @@ export class AuctionState {
    * This method expects that once events have been applied up until a certain
    * block number, then no new events for that block number (or an earlier block
    * number) are applied.
-   *
    */
   public applyEvents(events: AnyEvent<BatchExchange>[]): void {
     if (this.options.strict) {

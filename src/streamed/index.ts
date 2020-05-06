@@ -15,8 +15,9 @@
 
 import Web3 from "web3"
 import { BlockNumber, TransactionReceipt } from "web3-core"
+import { Contract } from "web3-eth-contract"
 import { AbiItem } from "web3-utils"
-import { BatchExchange, BatchExchangeArtifact } from "../.."
+import { BatchExchange, BatchExchangeArtifact, ContractArtifact, IndexedOrder } from ".."
 import { AnyEvent } from "./events"
 import { AuctionState } from "./state"
 
@@ -78,16 +79,12 @@ export const DEFAULT_ORDERBOOK_OPTIONS: OrderbookOptions = {
 }
 
 /**
- * The duration in seconds of a batch.
- */
-export const BATCH_DURATION = 300
-
-/**
  * The streamed orderbook that manages incoming events, and applies them to the
  * account state.
  */
 export class StreamedOrderbook {
   private readonly state: AuctionState;
+  private batch = -1;
   private pendingEvents: AnyEvent<BatchExchange>[] = [];
 
   private invalidState?: InvalidAuctionStateError;
@@ -111,11 +108,11 @@ export class StreamedOrderbook {
    * @param web3 - The web3 provider to use.
    * @param options - Optional settings for tweaking the streamed orderbook.
    */
-  static async init(
+  public static async init(
     web3: Web3,
     options: Partial<OrderbookOptions> = {},
   ): Promise<StreamedOrderbook> {
-    const [contract, tx] = await batchExchangeDeployment(web3)
+    const [contract, tx] = await deployment<BatchExchange>(web3, BatchExchangeArtifact)
     const orderbook = new StreamedOrderbook(
       web3,
       contract,
@@ -129,6 +126,13 @@ export class StreamedOrderbook {
     }
 
     return orderbook
+  }
+
+  /**
+   * Retrieves the current open orders in the orderbook.
+   */
+  public getOpenOrders(): IndexedOrder<bigint>[] {
+    return this.state.getOrders(this.batch)
   }
 
   /**
@@ -156,6 +160,7 @@ export class StreamedOrderbook {
       this.options.logger?.debug(`applying ${events.length} past events`)
       this.state.applyEvents(events)
     }
+    this.batch = await this.getBatchId(endBlock)
   }
 
   /**
@@ -181,8 +186,9 @@ export class StreamedOrderbook {
 
     const latestBlock = await this.web3.eth.getBlockNumber()
     const confirmedBlock = latestBlock - this.options.blockConfirmations
-    const confirmedEventCount = events.findIndex(ev => ev.blockNumber > confirmedBlock)
+    const batch = await this.getBatchId(confirmedBlock)
 
+    const confirmedEventCount = events.findIndex(ev => ev.blockNumber > confirmedBlock)
     const confirmedEvents = events.splice(0, confirmedEventCount)
     const pendingEvents = events
 
@@ -196,9 +202,13 @@ export class StreamedOrderbook {
         throw this.invalidState
       }
     }
+    this.batch = batch
     this.pendingEvents = pendingEvents
   }
 
+  /**
+   * Retrieves past events for the contract.
+   */
   private async getPastEvents(
     options: { fromBlock: BlockNumber; toBlock?: BlockNumber },
   ): Promise<AnyEvent<BatchExchange>[]> {
@@ -207,6 +217,23 @@ export class StreamedOrderbook {
       ...options,
     })
     return events as AnyEvent<BatchExchange>[]
+  }
+
+  /**
+   * Retrieves the batch ID at a given block number.
+   *
+   * @remarks
+   * The batch ID is locally calculated from the block header timestamp as it is
+   * more reliable than executing an `eth_call` to calculate the batch ID on the
+   * EVM since an archive node is required for sufficiently old blocks.
+   */
+  private async getBatchId(blockNumber: BlockNumber): Promise<number> {
+    const BATCH_DURATION = 300
+
+    const block = await this.web3.eth.getBlock(blockNumber)
+    const batch = Math.floor(Number(block.timestamp) / BATCH_DURATION)
+
+    return batch
   }
 }
 
@@ -224,15 +251,16 @@ export class InvalidAuctionStateError extends Error {
 }
 
 /**
- * Create a `BatchExchange` contract instance, returning both the web3 contract
- * object as well as the transaction receipt for the contract deployment.
+ * Get a contract deployment, returning both the web3 contract object as well as
+ * the transaction receipt for the contract deployment.
  *
  * @throws If the contract is not deployed on the network the web3 provider is
  * connected to.
  */
-async function batchExchangeDeployment(web3: Web3): Promise<[BatchExchange, TransactionReceipt]> {
-  const { abi, networks } = BatchExchangeArtifact
-
+export async function deployment<C extends Contract>(
+  web3: Web3,
+  { abi, networks }: ContractArtifact,
+): Promise<[C, TransactionReceipt]> {
   const chainId = await web3.eth.getChainId()
   const network = networks[chainId]
   if (!networks) {
@@ -242,5 +270,5 @@ async function batchExchangeDeployment(web3: Web3): Promise<[BatchExchange, Tran
   const tx = await web3.eth.getTransactionReceipt(network.transactionHash)
   const contract = new web3.eth.Contract(abi as AbiItem[], network.address)
 
-  return [contract, tx]
+  return [contract as C, tx]
 }

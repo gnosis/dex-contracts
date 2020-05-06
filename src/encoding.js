@@ -18,6 +18,7 @@ class OrderBuffer {
 
     this.decodeAddr = () => `0x${this.readBytes(20)}`
     this.decodeInt = (size) => new BN(this.readBytes(size / 8), 16).toString()
+    this.decodeNumber = (size) => parseInt(this.readBytes(size / 8), 16)
 
     return this
   }
@@ -27,10 +28,10 @@ function decodeOrder(bytes) {
   return {
     user: bytes.decodeAddr(),
     sellTokenBalance: bytes.decodeInt(256),
-    buyToken: bytes.decodeInt(16),
-    sellToken: bytes.decodeInt(16),
-    validFrom: bytes.decodeInt(32),
-    validUntil: bytes.decodeInt(32),
+    buyToken: bytes.decodeNumber(16),
+    sellToken: bytes.decodeNumber(16),
+    validFrom: bytes.decodeNumber(32),
+    validUntil: bytes.decodeNumber(32),
     priceNumerator: bytes.decodeInt(128),
     priceDenominator: bytes.decodeInt(128),
     remainingAmount: bytes.decodeInt(128),
@@ -40,7 +41,7 @@ function decodeOrder(bytes) {
 function decodeIndexedOrder(bytes) {
   return {
     ...decodeOrder(bytes),
-    orderId: bytes.decodeInt(16),
+    orderId: bytes.decodeNumber(16),
   }
 }
 
@@ -72,12 +73,8 @@ function decodeOrders(bytes) {
 
 function decodeOrdersBN(bytes) {
   return decodeOrders(bytes).map((e) => ({
-    user: e.user,
+    ...e,
     sellTokenBalance: new BN(e.sellTokenBalance),
-    buyToken: parseInt(e.buyToken),
-    sellToken: parseInt(e.sellToken),
-    validFrom: parseInt(e.validFrom),
-    validUntil: parseInt(e.validUntil),
     priceNumerator: new BN(e.priceNumerator),
     priceDenominator: new BN(e.priceDenominator),
     remainingAmount: new BN(e.remainingAmount),
@@ -97,13 +94,8 @@ function decodeIndexedOrders(bytes) {
 
 function decodeIndexedOrdersBN(bytes) {
   return decodeIndexedOrders(bytes).map((e) => ({
-    user: e.user,
-    orderId: parseInt(e.orderId),
+    ...e,
     sellTokenBalance: new BN(e.sellTokenBalance),
-    buyToken: parseInt(e.buyToken),
-    sellToken: parseInt(e.sellToken),
-    validFrom: parseInt(e.validFrom),
-    validUntil: parseInt(e.validUntil),
     priceNumerator: new BN(e.priceNumerator),
     priceDenominator: new BN(e.priceDenominator),
     remainingAmount: new BN(e.remainingAmount),
