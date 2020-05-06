@@ -33,7 +33,7 @@
     "tsc:esm": "rimraf build/esm && tsc -m es6 -t esnext --outDir build/esm",
     "ts-check": "tsc --esModuleInterop --noEmit src/index.d.ts",
     "ts-contracts": "yarn ts-contracts:web3 && yarn ts-contracts:truffle",
-    "ts-contracts:truffle": "typechain --target trufflehotfix --outDir types/truffle-typings \"build/contracts/*.json\"",
+    "ts-contracts:truffle": "typechain --target trufflehotfix --outDir build/truffle-typings \"build/contracts/*.json\"",
     "ts-contracts:web3": "typechain --target web3-v1 --outDir build/types \"build/contracts/{BatchExchange,BatchExchangeViewer}.json\"",
     "ganache": "ganache-cli -h 0.0.0.0 --gasLimit 8e6 --deterministic"
   },
