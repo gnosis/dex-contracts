@@ -22,7 +22,7 @@
     "networks-reset": "mkdir -p build/contracts && truffle networks --clean && yarn run networks-inject",
     "verify-stablex": "truffle run verify BatchExchange",
     "lint": "yarn run lint:solidity && yarn run lint:ts",
-    "lint:solidity": "solhint \"contracts/**/*.sol\" && prettier --check 'contracts/**/*.sol'",
+    "lint:solidity": "solhint \"contracts/**/*.sol\"",
     "lint:ts": "eslint . --ext .js,.ts",
     "prepack": "yarn run build",
     "prettier": "yarn run prettier:solidity && yarn run prettier:ts",
