@@ -135,6 +135,24 @@ describe("Account State", () => {
       })
     })
 
+    it("Throws for mismatched order IDs", () => {
+      const state = auctionState()
+      expect(() => state.applyEvents([
+        event(1, "TokenListing", { id: "0", token: addr(0) }, 1),
+        event(1, "TokenListing", { id: "1", token: addr(1) }, 2),
+        event(1, "OrderPlacement", {
+          owner: addr(3),
+          index: "1",
+          buyToken: "0",
+          sellToken: "1",
+          validFrom: "2",
+          validUntil: "99999",
+          priceNumerator: "100000",
+          priceDenominator: "100000",
+        }, 3),
+      ])).to.throw()
+    })
+
     it("Throws for nonexistent order", () => {
       const state = auctionState()
       expect(() => state.applyEvents([
@@ -148,7 +166,7 @@ describe("Account State", () => {
   })
 
   describe("Deposit", () => {
-    it("Adds a user balance and updates it if already existing", () => {
+    it("Adds a user balance for a new user/token pair", () => {
       const state = auctionState()
       state.applyEvents([
         event(0, "Deposit", {
@@ -159,8 +177,17 @@ describe("Account State", () => {
         }),
       ])
       expect(state.toJSON().accounts[addr(1)].balances[addr(0)]).to.equal("100000")
+    })
 
+    it("Updates a balance for an existing user/token pair", () => {
+      const state = auctionState()
       state.applyEvents([
+        event(0, "Deposit", {
+          user: addr(1),
+          token: addr(0),
+          amount: "100000",
+          batchId: "1",
+        }),
         event(1, "Deposit", {
           user: addr(1),
           token: addr(0),

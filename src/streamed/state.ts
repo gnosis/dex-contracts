@@ -1,6 +1,8 @@
 import assert from "assert"
 import { EventData } from "web3-eth-contract"
+import { BatchExchange } from "../.."
 import { OrderbookOptions } from "."
+import { AnyEvent, Event } from "./events"
 
 /**
  * An ethereum address.
@@ -106,7 +108,7 @@ export class AuctionState {
 
   private readonly tokens: Map<TokenId, Address> = new Map();
   private readonly accounts: Map<Address, Account> = new Map();
-  private lastSolution?: { submitter: Address; burntFees: bigint };
+  private lastSolution?: Event<BatchExchange, "SolutionSubmission">;
 
   constructor(
     private readonly options: OrderbookOptions,
@@ -165,135 +167,258 @@ export class AuctionState {
    * number) are applied.
    *
    */
-  public applyEvents(events: EventData[]): void {
+  public applyEvents(events: AnyEvent<BatchExchange>[]): void {
     if (this.options.strict) {
       assertEventsAreAfterBlockAndOrdered(this.lastBlock, events)
     }
     this.lastBlock = events[events.length - 1]?.blockNumber ?? this.lastBlock
 
-    /* eslint-disable no-case-declarations */
     for (const ev of events) {
-      const data = ev.returnValues
       switch (ev.event) {
       case "Deposit":
-        this.updateBalance(
-          data.user,
-          data.token,
-          amount => amount + BigInt(data.amount),
-        )
+        this.applyDeposit(ev.returnValues)
         break
       case "OrderCancellation":
-        this.order(data.owner, parseInt(data.id)).validUntil = null
+        this.applyOrderCancellation(ev.returnValues)
         break
       case "OrderDeletion":
-        this.deleteOrder(data.owner, parseInt(data.id))
+        this.applyOrderDeletion(ev.returnValues)
         break
       case "OrderPlacement":
-        const orderId = this.addOrder(data.owner, {
-          buyToken: parseInt(data.buyToken),
-          sellToken: parseInt(data.sellToken),
-          validFrom: parseInt(data.validFrom),
-          validUntil: parseInt(data.validUntil),
-          priceNumerator: BigInt(data.priceNumerator),
-          priceDenominator: BigInt(data.priceDenominator),
-          remainingAmount: BigInt(data.priceDenominator),
-        })
-        if (this.options.strict) {
-          assert(
-            orderId == parseInt(data.index),
-            `user ${data.user} order ${data.index} added as the ${orderId}th order`,
-          )
-        }
+        this.applyOrderPlacement(ev.returnValues)
         break
       case "SolutionSubmission":
-        const submitter = data.submitter
-        const burntFees = BigInt(data.burntFees)
-        this.updateBalance(submitter, 0, amount => amount + burntFees)
-        this.lastSolution = { submitter, burntFees }
+        this.applySolutionSubmission(ev.returnValues)
+        this.lastSolution = ev.returnValues
         break
       case "TokenListing":
-        this.addToken(parseInt(data.id), data.token)
+        this.applyTokenListing(ev.returnValues)
         break
       case "Trade":
         this.lastSolution = undefined
-        this.updateBalance(
-          data.owner,
-          parseInt(data.sellToken),
-          amount => amount - BigInt(data.executedSellAmount),
-        )
-        this.updateOrderRemainingAmount(
-          data.owner,
-          parseInt(data.orderId),
-          amount => amount - BigInt(data.executedSellAmount),
-        )
-        this.updateBalance(
-          data.owner,
-          parseInt(data.buyToken),
-          amount => amount + BigInt(data.executedBuyAmount),
-        )
+        this.applyTrade(ev.returnValues)
         break
       case "TradeReversion":
         if (this.lastSolution !== undefined) {
-          const { submitter, burntFees } = this.lastSolution
-          this.updateBalance(submitter, 0, amount => amount - burntFees)
+          this.applySolutionReversion(this.lastSolution)
           this.lastSolution = undefined
         }
-        this.updateBalance(
-          data.owner,
-          parseInt(data.sellToken),
-          amount => amount + BigInt(data.executedSellAmount),
-        )
-        this.updateOrderRemainingAmount(
-          data.owner,
-          parseInt(data.orderId),
-          amount => amount + BigInt(data.executedSellAmount),
-        )
-        this.updateBalance(
-          data.owner,
-          parseInt(data.buyToken),
-          amount => amount - BigInt(data.executedBuyAmount),
-        )
+        this.applyTradeReversion(ev.returnValues)
         break
       case "WithdrawRequest":
-        this.setPendingWithdrawal(
-          data.user,
-          data.token,
-          parseInt(data.batchId),
-          BigInt(data.amount),
-        )
+        this.applyWithdrawRequest(ev.returnValues)
         break
       case "Withdraw":
-        const newBalance = this.updateBalance(
-          data.user,
-          data.token,
-          amount => amount - BigInt(data.amount),
-        )
-        if (this.options.strict) {
-          assert(
-            newBalance >= BigInt(0),
-            `overdrew user ${data.user} token ${data.token} balance`,
-          )
-        }
-        this.clearPendingWithdrawal(data.user, data.token)
+        this.applyWithdraw(ev.returnValues)
         break
       default:
         throw new UnhandledEventError(ev)
       }
     }
-    /* eslint-enable no-case-declarations */
+  }
 
+  /**
+   * Applies a deposit event to the auction state.
+   */
+  private applyDeposit(
+    { user, token, amount: depositAmount }: Event<BatchExchange, "Deposit">,
+  ): void {
+    this.updateBalance(user, token, amount => amount + BigInt(depositAmount))
+  }
+
+  /**
+   * Applies an order cancellation event to the auction state.
+   */
+  private applyOrderCancellation({ owner, id }: Event<BatchExchange, "OrderCancellation">): void {
+    // TODO(nlordell): We need to pre-fetch the batch ID based on the block
+    // number for this event to be able to accurately set this value.
+    this.order(owner, parseInt(id)).validUntil = null
+  }
+
+  /**
+   * Applies an order deletion event to the auction state.
+   */
+  private applyOrderDeletion({ owner, id }: Event<BatchExchange, "OrderDeletion">): void {
+    const order = this.order(owner, parseInt(id))
+    order.buyToken = 0
+    order.sellToken = 0
+    order.validFrom = 0
+    order.validUntil = 0
+    order.priceNumerator = BigInt(0)
+    order.priceDenominator = BigInt(0)
+    order.remainingAmount = BigInt(0)
+  }
+
+  /**
+   * Applies an order placement event to the auction state.
+   *
+   * @throws
+   * In strict mode, throws if the order ID from the event does not match the
+   * expected order ID based on the number of previously placed orders.
+   */
+  private applyOrderPlacement(order: Event<BatchExchange, "OrderPlacement">): void {
+    const userOrders = this.account(order.owner).orders
+    const orderId = userOrders.length
     if (this.options.strict) {
-      assertAccountsAreValid(this.lastBlock, this.accounts.entries())
+      assert(
+        orderId == parseInt(order.index),
+        `user ${order.owner} order ${order.index} added as the ${orderId}th order`,
+      )
+    }
+
+    userOrders.push({
+      buyToken: parseInt(order.buyToken),
+      sellToken: parseInt(order.sellToken),
+      validFrom: parseInt(order.validFrom),
+      validUntil: parseInt(order.validUntil),
+      priceNumerator: BigInt(order.priceNumerator),
+      priceDenominator: BigInt(order.priceDenominator),
+      remainingAmount: BigInt(order.priceDenominator),
+    })
+  }
+
+  /**
+   * Applies an emulated solution reversion event.
+   */
+  private applySolutionReversion(
+    { submitter, burntFees }: Event<BatchExchange, "SolutionSubmission">,
+  ): void {
+    this.updateBalance(submitter, 0, amount => amount - BigInt(burntFees))
+  }
+
+  /**
+   * Applies a solution submission event to the auction state.
+   *
+   * @throws
+   * In strict mode, throws if the account balances are left in an invalid state
+   * while applying a solution. This check has to be done after applying all
+   * trades, as a user balance can temporarily go below 0 when a solution is
+   * being applied.
+   */
+  private applySolutionSubmission(
+    { submitter, burntFees }: Event<BatchExchange, "SolutionSubmission">,
+  ): void {
+    this.updateBalance(submitter, 0, amount => amount + BigInt(burntFees))
+    if (this.options.strict) {
+      for (const [user, { balances }] of this.accounts.entries()) {
+        for (const [token, balance] of balances.entries()) {
+          assert(balance >= BigInt(0), `user ${user} token ${token} balance is negative`)
+        }
+      }
     }
   }
 
   /**
-   * Adds a token to the account state.
+   * Applies a token listing event and adds a token to the account state.
    *
-   * @throws If a token with the same ID has already been added.
+   * @throws
+   * In strict mode, throws either if the token has already been listed or if
+   * it was listed out of order.
    */
-  private addToken(id: TokenId, addr: Address): void {
-    this.tokens.set(id, addr)
+  private applyTokenListing({ id, token }: Event<BatchExchange, "TokenListing">): void {
+    const tokenId = parseInt(id)
+    if (this.options.strict) {
+      assert(
+        this.tokens.get(tokenId) === undefined,
+        `token ${tokenId} has already been listed`,
+      )
+    }
+
+    this.tokens.set(parseInt(id), token)
+  }
+
+  /**
+   * Applies a trade event to the auction state.
+   */
+  private applyTrade(trade: Event<BatchExchange, "Trade">): void {
+    this.updateBalance(
+      trade.owner,
+      parseInt(trade.sellToken),
+      amount => amount - BigInt(trade.executedSellAmount),
+    )
+    this.updateOrderRemainingAmount(
+      trade.owner,
+      parseInt(trade.orderId),
+      amount => amount - BigInt(trade.executedSellAmount),
+    )
+    this.updateBalance(
+      trade.owner,
+      parseInt(trade.buyToken),
+      amount => amount + BigInt(trade.executedBuyAmount),
+    )
+  }
+
+  /**
+   * Applies a trade reversion event to the auction state.
+   */
+  private applyTradeReversion(trade: Event<BatchExchange, "TradeReversion">): void {
+    this.updateBalance(
+      trade.owner,
+      parseInt(trade.sellToken),
+      amount => amount + BigInt(trade.executedSellAmount),
+    )
+    this.updateOrderRemainingAmount(
+      trade.owner,
+      parseInt(trade.orderId),
+      amount => amount + BigInt(trade.executedSellAmount),
+    )
+    this.updateBalance(
+      trade.owner,
+      parseInt(trade.buyToken),
+      amount => amount - BigInt(trade.executedBuyAmount),
+    )
+  }
+
+  /**
+   * Applies a withdraw event to the auction state.
+   *
+   * @throws
+   * In strict mode, throws if the withdrawing user's balance would be overdrawn
+   * as a result of this event.
+   */
+  private applyWithdraw(
+    { user, token, amount: withdrawAmount }: Event<BatchExchange, "Withdraw">,
+  ): void {
+    const tokenAddr = this.tokenAddr(token)
+    const newBalance = this.updateBalance(
+      user, token, amount => amount - BigInt(withdrawAmount),
+    )
+
+    if (this.options.strict) {
+      assert(
+        newBalance >= BigInt(0),
+        `overdrew user ${user} token ${token} balance`,
+      )
+    }
+
+    this.account(user).pendingWithdrawals.delete(tokenAddr)
+  }
+
+  /**
+   * Applies a withdraw request event to the auction state.
+   *
+   * @throws
+   * In strict mode, throws if the withdraw request is placed over top of an
+   * existing unapplied request.
+   */
+  private applyWithdrawRequest(
+    { user, token, batchId, amount }: Event<BatchExchange, "WithdrawRequest">,
+  ): void {
+    const tokenAddr = this.tokenAddr(token)
+    const batch = parseInt(batchId)
+
+    if (this.options.strict) {
+      const existingBatch = this.account(user).pendingWithdrawals.get(tokenAddr)?.batchId
+      assert(
+        existingBatch === undefined || existingBatch === batch,
+        `pending withdrawal for user ${user} modified from batch ${existingBatch} to ${batchId}`,
+      )
+    }
+
+    this.account(user).pendingWithdrawals.set(tokenAddr, {
+      batchId: batch,
+      amount: BigInt(amount),
+    })
   }
 
   /**
@@ -352,46 +477,6 @@ export class AuctionState {
   }
 
   /**
-   * Sets a pending withdrawal for a user for the specified token and amount.
-   */
-  private setPendingWithdrawal(
-    user: Address,
-    token: TokenId | Address,
-    batchId: number,
-    amount: bigint,
-  ): void {
-    const tokenAddr = this.tokenAddr(token)
-    if (this.options.strict) {
-      const existingBatch = this.account(user).pendingWithdrawals.get(tokenAddr)?.batchId
-      assert(
-        existingBatch === undefined || existingBatch === batchId,
-        `pending withdrawal for user ${user} modified from batch ${existingBatch} to ${batchId}`,
-      )
-    }
-    this.account(user).pendingWithdrawals.set(tokenAddr, { batchId, amount })
-  }
-
-  /**
-   * Clears a pending withdrawal.
-   */
-  private clearPendingWithdrawal(
-    user: Address,
-    token: TokenId | Address,
-  ): void {
-    const tokenAddr = this.tokenAddr(token)
-    this.account(user).pendingWithdrawals.delete(tokenAddr)
-  }
-
-  /**
-   * Adds a user order and returns the order ID of the newly created order.
-   */
-  private addOrder(user: Address, order: Order): number {
-    const userOrders = this.account(user).orders
-    userOrders.push(order)
-    return userOrders.length - 1
-  }
-
-  /**
    * Retrieves an existing user order by user address and order ID.
    *
    * @throws If the order does not exist.
@@ -419,23 +504,13 @@ export class AuctionState {
       order.priceDenominator !== UNLIMITED_ORDER_AMOUNT
     ) {
       order.remainingAmount = update(order.remainingAmount)
+      if (this.options.strict) {
+        assert(
+          order.remainingAmount >= BigInt(0),
+          `user ${user} order ${orderId} remaining amount is negative`,
+        )
+      }
     }
-  }
-
-  /**
-   * Sets a user's order to all 0's.
-   *
-   * @throws If the order does not exist.
-   */
-  private deleteOrder(user: Address, orderId: number): void {
-    const order = this.order(user, orderId)
-    order.buyToken = 0
-    order.sellToken = 0
-    order.validFrom = 0
-    order.validUntil = 0
-    order.priceNumerator = BigInt(0)
-    order.priceDenominator = BigInt(0)
-    order.remainingAmount = BigInt(0)
   }
 }
 
@@ -466,30 +541,5 @@ function assertEventsAreAfterBlockAndOrdered(block: number, events: EventData[])
     )
     blockNumber = ev.blockNumber
     logIndex = ev.logIndex
-  }
-}
-
-/**
- * Asserts that all accounts are valid by ensuring that all token balances and
- * order remaining amounts are positive
- *
- * @throws If an account has an invalid amount.
- */
-function assertAccountsAreValid(blockNumber: number, accounts: Iterable<[Address, Account]>): void {
-  for (const [user, { balances, orders }] of accounts) {
-    for (const [token, balance] of balances.entries()) {
-      assert(
-        balance >= BigInt(0),
-        `user ${user} token ${token} balance is negative at block ${blockNumber}`,
-      )
-    }
-
-    for (let id = 0; id < orders.length; id++) {
-      const order = orders[id]
-      assert(
-        order.remainingAmount >= BigInt(0),
-        `user ${user} order ${id} remaining amount is negative at block ${blockNumber}`,
-      )
-    }
   }
 }

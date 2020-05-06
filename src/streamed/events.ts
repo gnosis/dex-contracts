@@ -2,12 +2,12 @@ import { Contract, EventData } from "web3-eth-contract"
 import { ContractEvent } from "../../build/types/types"
 
 /**
- * Event type specified by name.
+ * Event data type specified by name.
  */
 export type Event<
   C extends Contract,
   T extends Exclude<keyof C["events"], "allEvents">,
-> = EventMetadata & EventDiscriminant<C, T>
+> = EventValues<C["events"][T]>
 
 /**
  * Concrete event type with known properties based on the event name.
