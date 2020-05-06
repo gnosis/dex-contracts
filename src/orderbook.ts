@@ -62,7 +62,7 @@ export class Orderbook {
     return { bids, asks };
   }
 
-  toJSON(): OrderbookJson {
+  toJSON(): OrderbookToJson {
     return {
       baseToken: this.baseToken,
       quoteToken: this.quoteToken,
@@ -73,9 +73,7 @@ export class Orderbook {
   }
 
   static fromJSON(o: OrderbookJson): Orderbook {
-    const remainingFractionAfterFee = o.remainingFractionAfterFee instanceof Fraction ?
-      o.remainingFractionAfterFee :
-      Fraction.fromJSON(o.remainingFractionAfterFee);
+    const remainingFractionAfterFee = Fraction.fromJSON(o.remainingFractionAfterFee);
     const result = new Orderbook(o.baseToken, o.quoteToken, { remainingFractionAfterFee })
     result.asks = offersFromJSON(o.asks);
     result.bids = offersFromJSON(o.bids);
@@ -301,12 +299,20 @@ export class Orderbook {
   }
 }
 
+export interface OrderbookToJson {
+  baseToken: string;
+  quoteToken: string;
+  remainingFractionAfterFee: Fraction;
+  asks: Record<string, Offer>;
+  bids: Record<string, Offer>;
+}
+
 export interface OrderbookJson {
   baseToken: string;
   quoteToken: string;
-  remainingFractionAfterFee: Fraction | FractionJson;
-  asks: Record<string, Offer | OfferJson>;
-  bids: Record<string, Offer | OfferJson>;
+  remainingFractionAfterFee: FractionJson;
+  asks: Record<string, OfferJson>;
+  bids: Record<string, OfferJson>;
 }
 
 /**
@@ -452,17 +458,16 @@ function invertPricePoints(
   );
 }
 
-function offersFromJSON(o: Record<string, Offer | OfferJson>): Map<number, Offer> {
+function offersFromJSON(o: Record<string, OfferJson>): Map<number, Offer> {
   const offers = new Map()
   for (const [key, value] of Object.entries(o)) {
-    const offer = value instanceof Offer ? value : Offer.fromJSON(value)
-    offers.set(key, offer)
+    offers.set(key, Offer.fromJSON(value))
   }
   return offers
 }
 
-function offersToJSON(offers: Map<number, Offer>): Record<string, Offer | OfferJson> {
-  const o: Record<string, Offer | OfferJson> = {}
+function offersToJSON(offers: Map<number, Offer>): Record<string, Offer> {
+  const o: Record<string, Offer> = {}
   offers.forEach((value, key) => { o[key] = value })
   return o
 }
