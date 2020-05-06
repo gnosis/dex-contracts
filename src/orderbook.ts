@@ -1,4 +1,4 @@
-import { Fraction } from "./fraction";
+import { Fraction, FractionJson } from "./fraction";
 import BN from "bn.js";
 
 export class Offer {
@@ -18,9 +18,14 @@ export class Offer {
     return new Offer(this.price.clone(), this.volume.clone());
   }
 
-  static fromJSON(o: any): Offer {
-    return new Offer(Fraction.fromJSON(o.price), Fraction.fromJSON(o.volume));
+  static fromJSON(o: OfferJson): Offer {
+    return new Offer(Fraction.fromJSON(o.price), Fraction.fromJSON(o.volume))
   }
+}
+
+export interface OfferJson {
+  price: FractionJson;
+  volume: FractionJson;
 }
 
 type Fee = { fee: Fraction };
@@ -57,7 +62,7 @@ export class Orderbook {
     return { bids, asks };
   }
 
-  toJSON() {
+  toJSON(): OrderbookToJson {
     return {
       baseToken: this.baseToken,
       quoteToken: this.quoteToken,
@@ -67,8 +72,9 @@ export class Orderbook {
     };
   }
 
-  static fromJSON(o: any): Orderbook {
-    const result = new Orderbook(o.baseToken, o.quoteToken, { remainingFractionAfterFee: Fraction.fromJSON(o.remainingFractionAfterFee) });
+  static fromJSON(o: OrderbookJson): Orderbook {
+    const remainingFractionAfterFee = Fraction.fromJSON(o.remainingFractionAfterFee);
+    const result = new Orderbook(o.baseToken, o.quoteToken, { remainingFractionAfterFee })
     result.asks = offersFromJSON(o.asks);
     result.bids = offersFromJSON(o.bids);
     return result;
@@ -293,6 +299,22 @@ export class Orderbook {
   }
 }
 
+export interface OrderbookToJson {
+  baseToken: string;
+  quoteToken: string;
+  remainingFractionAfterFee: Fraction;
+  asks: Record<string, Offer>;
+  bids: Record<string, Offer>;
+}
+
+export interface OrderbookJson {
+  baseToken: string;
+  quoteToken: string;
+  remainingFractionAfterFee: FractionJson;
+  asks: Record<string, OfferJson>;
+  bids: Record<string, OfferJson>;
+}
+
 /**
  * Given a list of direct orderbooks this method returns the transitive orderbook
  * between two tokens by computing the transitive closure via a certain number of "hops".
@@ -436,17 +458,16 @@ function invertPricePoints(
   );
 }
 
-
-function offersFromJSON(o: any): Map<number, Offer> {
-  const offers = new Map();
-  for (let [key, value] of Object.entries(o)) {
-    offers.set(key, Offer.fromJSON(value));
+function offersFromJSON(o: Record<string, OfferJson>): Map<number, Offer> {
+  const offers = new Map()
+  for (const [key, value] of Object.entries(o)) {
+    offers.set(key, Offer.fromJSON(value))
   }
-  return offers;
+  return offers
 }
 
-function offersToJSON(offers: Map<number, Offer>): object {
-  const o: any = {};
-  offers.forEach((value, key) => { o[key] = value; });
-  return o;
+function offersToJSON(offers: Map<number, Offer>): Record<string, Offer> {
+  const o: Record<string, Offer> = {}
+  offers.forEach((value, key) => { o[key] = value })
+  return o
 }
