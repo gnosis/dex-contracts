@@ -260,7 +260,10 @@ export class StreamedOrderbook {
     const BATCH_DURATION = 300
 
     const block = await this.web3.eth.getBlock(blockNumber)
-    const batch = Math.floor(Number(block.timestamp) / BATCH_DURATION)
+    // NOTE: Pending or future blocks return null when queried, so approximate
+    // with system time
+    const timestamp = block?.timestamp ?? Date.now()
+    const batch = Math.floor(Number(timestamp) / BATCH_DURATION)
 
     return batch
   }
