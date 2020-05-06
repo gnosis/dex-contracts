@@ -1,4 +1,4 @@
-const { sendTxAndGetReturnValue } = require("../build/common/test/utilities");
+const { sendTxAndGetReturnValue } = require("../build/common/test/utilities")
 
 /**
  * @typedef Deposit
@@ -14,26 +14,23 @@ const { sendTxAndGetReturnValue } = require("../build/common/test/utilities");
  * @param {number} maxTokens - Maximum number of tokens (a contract contructor parameter)
  * @returns {}
  */
-const setupGenericStableX = async function (
-  numTokens = 2,
-  maxTokens = 2 ** 16 - 1,
-) {
-  const MockContract = artifacts.require("MockContract");
-  const BatchExchange = artifacts.require("BatchExchange");
+const setupGenericStableX = async function (numTokens = 2, maxTokens = 2 ** 16 - 1) {
+  const MockContract = artifacts.require("MockContract")
+  const BatchExchange = artifacts.require("BatchExchange")
 
-  const feeToken = await MockContract.new();
-  await feeToken.givenAnyReturnBool(true);
+  const feeToken = await MockContract.new()
+  await feeToken.givenAnyReturnBool(true)
 
-  const instance = await BatchExchange.new(maxTokens, feeToken.address);
-  const tokens = [feeToken];
+  const instance = await BatchExchange.new(maxTokens, feeToken.address)
+  const tokens = [feeToken]
   for (let i = 0; i < numTokens - 1; i++) {
-    const token = await MockContract.new();
-    await instance.addToken(token.address);
-    await token.givenAnyReturnBool(true);
-    tokens.push(token);
+    const token = await MockContract.new()
+    await instance.addToken(token.address)
+    await token.givenAnyReturnBool(true)
+    tokens.push(token)
   }
-  return instance;
-};
+  return instance
+}
 
 /**
  * Makes deposit transactions from a list of Deposit Objects
@@ -42,21 +39,12 @@ const setupGenericStableX = async function (
  * @param {Deposit[]} depositList an array of Deposit Objects
  * @param {number} sufficiencyFactor factor of deposit amount to be deposited (default: 1)
  */
-const makeDeposits = async function (
-  contract,
-  accounts,
-  depositList,
-  sufficiencyFactor = 1,
-) {
+const makeDeposits = async function (contract, accounts, depositList, sufficiencyFactor = 1) {
   for (const deposit of depositList) {
-    const tokenAddress = await contract.tokenIdToAddressMap.call(deposit.token);
-    await contract.deposit(
-      tokenAddress,
-      deposit.amount.muln(sufficiencyFactor),
-      { from: accounts[deposit.user] },
-    );
+    const tokenAddress = await contract.tokenIdToAddressMap.call(deposit.token)
+    await contract.deposit(tokenAddress, deposit.amount.muln(sufficiencyFactor), { from: accounts[deposit.user] })
   }
-};
+}
 
 /**
  * Makes placeOrder transactions from a list of Order Objects
@@ -65,13 +53,8 @@ const makeDeposits = async function (
  * @param {Order[]} - an array of Order Objects
  * @returns {BN[]}
  */
-const placeOrders = async function (
-  contract,
-  accounts,
-  orderList,
-  auctionIndex,
-) {
-  const orderIds = [];
+const placeOrders = async function (contract, accounts, orderList, auctionIndex) {
+  const orderIds = []
   for (const order of orderList) {
     orderIds.push(
       await sendTxAndGetReturnValue(
@@ -81,15 +64,15 @@ const placeOrders = async function (
         auctionIndex,
         order.buyAmount,
         order.sellAmount,
-        { from: accounts[order.user] },
-      ),
-    );
+        { from: accounts[order.user] }
+      )
+    )
   }
-  return orderIds;
-};
+  return orderIds
+}
 
 module.exports = {
   setupGenericStableX,
   makeDeposits,
   placeOrders,
-};
+}

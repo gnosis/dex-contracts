@@ -12,5 +12,13 @@ module.exports = {
         printWidth: 129,
       },
     },
+    {
+      files: "*.js",
+      options: {
+        printWidth: 129,
+        semi: false,
+        trailingComma: "es5",
+      },
+    },
   ],
-};
+}

@@ -41,4 +41,4 @@ module.exports = {
     },
   ],
   ignorePatterns: ["build/", "coverage/", "node_modules/"],
-};
+}
