@@ -15,8 +15,8 @@ if (!privateKey && !mnemonic) {
 }
 
 // Solc
-let solcUseDocker = process.env.SOLC_USE_DOCKER === "true" || false
-let solcVersion = "<0.5.11"
+const solcUseDocker = process.env.SOLC_USE_DOCKER === "true" || false
+const solcVersion = "<0.5.11"
 
 // Gas price
 const gasPriceGWei = process.env.GAS_PRICE_GWEI || DEFAULT_GAS_PRICE_GWEI
@@ -26,7 +26,7 @@ const gas = process.env.GAS_LIMIT || DEFAULT_GAS_LIMIT
 
 // Allow to add an additional network (useful for docker-compose setups)
 //  i.e. NETWORK='{ "name": "docker", "networkId": "99999", "url": "http://rpc:8545", "gas": "6700000", "gasPrice": "25000000000"  }'
-let additionalNetwork = process.env.NETWORK ? JSON.parse(process.env.NETWORK) : null
+const additionalNetwork = process.env.NETWORK ? JSON.parse(process.env.NETWORK) : null
 
 const urlDevelopment = process.env.GANACHE_HOST || "localhost"
 

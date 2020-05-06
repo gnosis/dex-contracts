@@ -1,6 +1,3 @@
 build
-contracts
-.*
 node_modules
-truffle-config.js
 coverage

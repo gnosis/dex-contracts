@@ -1,11 +1,15 @@
 module.exports = {
   parser: "@typescript-eslint/parser",
   env: {
-    browser: true,
+    node: true,
     commonjs: true,
     es2020: true,
   },
-  extends: "eslint:recommended",
+  extends: [
+    "eslint:recommended",
+    // "plugin:@typescript-eslint/eslint-recommended",
+    // "plugin:@typescript-eslint/recommended",
+  ],
   parserOptions: {
     ecmaFeatures: {
       jsx: true,
