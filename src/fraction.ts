@@ -158,9 +158,14 @@ export class Fraction {
     return new Fraction(this.numerator.clone(), this.denominator.clone());
   }
 
-  static fromJSON(o: any): Fraction {
+  static fromJSON(o: FractionJson): Fraction {
     const numerator = new BN(o.numerator, "hex");
     const denominator = new BN(o.denominator, "hex");
     return new Fraction(numerator, denominator);
   }
+}
+
+export interface FractionJson {
+  numerator: string;
+  denominator: string;
 }
