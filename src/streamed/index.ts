@@ -205,7 +205,8 @@ export class StreamedOrderbook {
       return latestBlock
     }
 
-    const confirmedEventCount = events.findIndex(ev => ev.blockNumber > confirmedBlock)
+    const firstLatestEvent = events.findIndex(ev => ev.blockNumber > confirmedBlock)
+    const confirmedEventCount = firstLatestEvent !== -1 ? firstLatestEvent : events.length
     const confirmedEvents = events.slice(0, confirmedEventCount)
     const latestEvents = events.slice(confirmedEventCount)
 
