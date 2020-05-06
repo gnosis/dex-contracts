@@ -312,13 +312,14 @@ export class AuctionState {
    * Applies a token listing event and adds a token to the account state.
    *
    * @throws
-   * In strict mode, throws if the token has already been listed.
+   * In strict mode, throws either if the token has already been listed or if
+   * it was listed out of order.
    */
   private applyTokenListing({ id, token }: Event<BatchExchange, "TokenListing">) {
     if (this.options.strict) {
       assert(
         this.tokens.length === parseInt(id),
-        `token ${token} with ID ${id} added as the ${this.tokens.length} token`,
+        `token ${token} with ID ${id} added as token ${this.tokens.length}`,
       )
     }
 
