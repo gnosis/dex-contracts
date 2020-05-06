@@ -1,7 +1,7 @@
 import BN from "bn.js"
 
-import {closeAuction, applyBalances} from "./utilities"
-import {getBalanceState, getWithdrawableAmount} from "../src/balance_reader"
+import { closeAuction, applyBalances } from "./utilities"
+import { getBalanceState, getWithdrawableAmount } from "../src/balance_reader"
 
 const MockContract = artifacts.require("MockContract")
 const BatchExchange = artifacts.require("BatchExchange")
@@ -18,12 +18,7 @@ contract("BatchExchange utils", async (accounts) => {
       await batchExchange.deposit(erc20.address, 0x100)
       await applyBalances(accounts[0], batchExchange, [erc20.address])
 
-      const balance = await getBalanceState(
-        accounts[0],
-        erc20.address,
-        batchExchange.address,
-        web3
-      )
+      const balance = await getBalanceState(accounts[0], erc20.address, batchExchange.address, web3)
       assert.equal(balance.toNumber(), 0x100)
     })
   })
@@ -40,17 +35,8 @@ contract("BatchExchange utils", async (accounts) => {
       await applyBalances(accounts[0], batchExchange, [erc20.address])
 
       const futureBatchId = 2 ** 32 - 1
-      await batchExchange.requestFutureWithdraw(
-        erc20.address,
-        startingAmount,
-        futureBatchId
-      )
-      const withdrawableAmount = await getWithdrawableAmount(
-        accounts[0],
-        erc20.address,
-        batchExchange,
-        web3
-      )
+      await batchExchange.requestFutureWithdraw(erc20.address, startingAmount, futureBatchId)
+      const withdrawableAmount = await getWithdrawableAmount(accounts[0], erc20.address, batchExchange, web3)
       assert.equal(withdrawableAmount.toString(), "0")
     })
 
@@ -64,21 +50,10 @@ contract("BatchExchange utils", async (accounts) => {
 
       await batchExchange.requestWithdraw(erc20.address, startingAmount)
       await closeAuction(batchExchange)
-      const withdrawableAmount = await getWithdrawableAmount(
-        accounts[0],
-        erc20.address,
-        batchExchange,
-        web3
-      )
+      const withdrawableAmount = await getWithdrawableAmount(accounts[0], erc20.address, batchExchange, web3)
       assert.equal(withdrawableAmount.toString(), startingAmount.toString())
-      const transcript = await batchExchange.withdraw(
-        accounts[0],
-        erc20.address
-      )
-      assert.equal(
-        withdrawableAmount.toString(),
-        transcript.logs[0].args.amount.toString()
-      )
+      const transcript = await batchExchange.withdraw(accounts[0], erc20.address)
+      assert.equal(withdrawableAmount.toString(), transcript.logs[0].args.amount.toString())
     })
 
     it("returns entire balance when withdraw of more than available was requested", async () => {
@@ -89,26 +64,12 @@ contract("BatchExchange utils", async (accounts) => {
       await batchExchange.deposit(erc20.address, startingAmount)
       await applyBalances(accounts[0], batchExchange, [erc20.address])
 
-      await batchExchange.requestWithdraw(
-        erc20.address,
-        startingAmount.addn(1)
-      )
+      await batchExchange.requestWithdraw(erc20.address, startingAmount.addn(1))
       await closeAuction(batchExchange)
-      const withdrawableAmount = await getWithdrawableAmount(
-        accounts[0],
-        erc20.address,
-        batchExchange,
-        web3
-      )
+      const withdrawableAmount = await getWithdrawableAmount(accounts[0], erc20.address, batchExchange, web3)
       assert.equal(withdrawableAmount.toString(), startingAmount.toString())
-      const transcript = await batchExchange.withdraw(
-        accounts[0],
-        erc20.address
-      )
-      assert.equal(
-        withdrawableAmount.toString(),
-        transcript.logs[0].args.amount.toString()
-      )
+      const transcript = await batchExchange.withdraw(accounts[0], erc20.address)
+      assert.equal(withdrawableAmount.toString(), transcript.logs[0].args.amount.toString())
     })
 
     it("ignores deposits if funds are not yet available", async () => {
@@ -124,21 +85,10 @@ contract("BatchExchange utils", async (accounts) => {
       await batchExchange.requestWithdraw(erc20.address, fullBalance)
       await closeAuction(batchExchange)
       await batchExchange.deposit(erc20.address, newAmount)
-      const withdrawableAmount = await getWithdrawableAmount(
-        accounts[0],
-        erc20.address,
-        batchExchange,
-        web3
-      )
+      const withdrawableAmount = await getWithdrawableAmount(accounts[0], erc20.address, batchExchange, web3)
       assert.equal(withdrawableAmount.toString(), startingAmount.toString())
-      const transcript = await batchExchange.withdraw(
-        accounts[0],
-        erc20.address
-      )
-      assert.equal(
-        withdrawableAmount.toString(),
-        transcript.logs[0].args.amount.toString()
-      )
+      const transcript = await batchExchange.withdraw(accounts[0], erc20.address)
+      assert.equal(withdrawableAmount.toString(), transcript.logs[0].args.amount.toString())
     })
 
     it("considers deposits if funds are available", async () => {
@@ -154,21 +104,10 @@ contract("BatchExchange utils", async (accounts) => {
       await batchExchange.requestWithdraw(erc20.address, fullBalance)
       await batchExchange.deposit(erc20.address, newAmount)
       await closeAuction(batchExchange)
-      const withdrawableAmount = await getWithdrawableAmount(
-        accounts[0],
-        erc20.address,
-        batchExchange,
-        web3
-      )
+      const withdrawableAmount = await getWithdrawableAmount(accounts[0], erc20.address, batchExchange, web3)
       assert.equal(withdrawableAmount.toString(), fullBalance.toString())
-      const transcript = await batchExchange.withdraw(
-        accounts[0],
-        erc20.address
-      )
-      assert.equal(
-        withdrawableAmount.toString(),
-        transcript.logs[0].args.amount.toString()
-      )
+      const transcript = await batchExchange.withdraw(accounts[0], erc20.address)
+      assert.equal(withdrawableAmount.toString(), transcript.logs[0].args.amount.toString())
     })
 
     // untested case: lastCreditBatchId != 0

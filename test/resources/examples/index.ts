@@ -93,14 +93,7 @@ export const advancedTrade = generateTestCase({
     {
       name: "Match 2 Pairs",
       prices: [1, 2].map(toETH),
-      buyVolumes: [
-        toETH(10),
-        feeSubtracted(toETH(20)),
-        toETH(10),
-        feeSubtracted(toETH(20)),
-        ZERO,
-        ZERO,
-      ],
+      buyVolumes: [toETH(10), feeSubtracted(toETH(20)), toETH(10), feeSubtracted(toETH(20)), ZERO, ZERO],
     },
     {
       name: "Match 3 Pairs",
@@ -173,11 +166,7 @@ export const basicRingTrade = generateTestCase({
     {
       name: "Ring Around the Rosie",
       prices: [1, 1, 1].map(toETH),
-      buyVolumes: [
-        feeSubtracted(toETH(1), 1),
-        feeSubtracted(toETH(1), 2),
-        feeSubtracted(toETH(1), 3),
-      ],
+      buyVolumes: [feeSubtracted(toETH(1), 1), feeSubtracted(toETH(1), 2), feeSubtracted(toETH(1), 3)],
     },
   ],
 })
@@ -386,13 +375,7 @@ export const shortRingBetterTrade = generateTestCase({
     {
       name: "Ring Trade Solution",
       prices: [1, 1, 1].map(toETH),
-      buyVolumes: [
-        feeSubtracted(toETH(1), 1),
-        feeSubtracted(toETH(1), 2),
-        feeSubtracted(toETH(1), 3),
-        ZERO,
-        ZERO,
-      ],
+      buyVolumes: [feeSubtracted(toETH(1), 1), feeSubtracted(toETH(1), 2), feeSubtracted(toETH(1), 3), ZERO, ZERO],
     },
     {
       name: "Biggie Small Trade",
@@ -406,8 +389,8 @@ const maxUint128 = new BN(2).pow(new BN(128)).sub(new BN(1))
 export const exampleOrderWithUnlimitedAmount = generateTestCase(
   {
     deposits: [
-      {amount: feeAdded(toETH(10)), token: 0, user: 0},
-      {amount: feeAdded(toETH(10)), token: 1, user: 1},
+      { amount: feeAdded(toETH(10)), token: 0, user: 0 },
+      { amount: feeAdded(toETH(10)), token: 1, user: 1 },
     ],
     orders: [
       {
@@ -452,8 +435,8 @@ const tenThousand = new BN("10000")
 export const tooSmallSellAmountTrade = generateTestCase(
   {
     deposits: [
-      {amount: feeAdded(tenThousand), token: 0, user: 0},
-      {amount: feeAdded(tenThousand), token: 1, user: 1},
+      { amount: feeAdded(tenThousand), token: 0, user: 0 },
+      { amount: feeAdded(tenThousand), token: 1, user: 1 },
     ],
     orders: [
       {
@@ -486,8 +469,8 @@ export const tooSmallSellAmountTrade = generateTestCase(
 export const tooSmallBuyAmountTrade = generateTestCase(
   {
     deposits: [
-      {amount: feeAdded(tenThousand), token: 0, user: 0},
-      {amount: feeAdded(tenThousand), token: 1, user: 1},
+      { amount: feeAdded(tenThousand), token: 0, user: 0 },
+      { amount: feeAdded(tenThousand), token: 1, user: 1 },
     ],
     orders: [
       {
@@ -521,10 +504,10 @@ const fiftyThousand = new BN("50000")
 const hundredThousand = new BN("100000")
 export const smallExample = generateTestCase({
   deposits: [
-    {amount: feeAdded(hundredThousand), token: 0, user: 0},
-    {amount: new BN(190), token: 1, user: 1},
-    {amount: new BN(9), token: 0, user: 1},
-    {amount: feeAdded(hundredThousand), token: 1, user: 2},
+    { amount: feeAdded(hundredThousand), token: 0, user: 0 },
+    { amount: new BN(190), token: 1, user: 1 },
+    { amount: new BN(9), token: 0, user: 1 },
+    { amount: feeAdded(hundredThousand), token: 1, user: 2 },
   ],
   orders: [
     {
@@ -567,8 +550,8 @@ export const smallExample = generateTestCase({
 
 export const stableXExample = generateTestCase({
   deposits: [
-    {amount: toETH(3000), token: 0, user: 0},
-    {amount: toETH(3000), token: 1, user: 0},
+    { amount: toETH(3000), token: 0, user: 0 },
+    { amount: toETH(3000), token: 1, user: 0 },
   ],
   orders: [
     {
@@ -643,9 +626,9 @@ export const marginalTrade = generateTestCase({
 
 export const utilityOverflow = generateTestCase({
   deposits: [
-    {amount: toETH(10), token: 0, user: 0},
-    {amount: toETH(1), token: 1, user: 1},
-    {amount: toETH(100), token: 2, user: 2},
+    { amount: toETH(10), token: 0, user: 0 },
+    { amount: toETH(1), token: 1, user: 1 },
+    { amount: toETH(100), token: 2, user: 2 },
   ],
   orders: [
     {
@@ -673,16 +656,8 @@ export const utilityOverflow = generateTestCase({
   solutions: [
     {
       name: "Utility Overflow",
-      prices: [
-        "1000000000000000000",
-        "998999900119977150048",
-        "10000000000198528574",
-      ].map((val) => new BN(val)),
-      buyVolumes: [
-        "1998999800099984",
-        "99800080039994614733",
-        "998000900199892164",
-      ].map((val) => new BN(val)),
+      prices: ["1000000000000000000", "998999900119977150048", "10000000000198528574"].map((val) => new BN(val)),
+      buyVolumes: ["1998999800099984", "99800080039994614733", "998000900199892164"].map((val) => new BN(val)),
     },
   ],
 })

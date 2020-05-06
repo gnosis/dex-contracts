@@ -91,10 +91,7 @@ describe("Fraction", () => {
     })
 
     it("can divide large fractions with remainder", () => {
-      const f1 = new Fraction(
-        new BN(6).mul(tenPow18).add(new BN(10).pow(new BN(16))),
-        tenPow18
-      )
+      const f1 = new Fraction(new BN(6).mul(tenPow18).add(new BN(10).pow(new BN(16))), tenPow18)
       const f2 = new Fraction(new BN(2).mul(tenPow18), tenPow18)
 
       assert.equal(f1.div(f2).toNumber(), 3.005)
@@ -103,10 +100,7 @@ describe("Fraction", () => {
 
   describe("sub", () => {
     it("computes the difference between 2 fractions with result close to 0", () => {
-      const f1 = new Fraction(
-        tenPow18.add(new BN(10).pow(new BN(10))),
-        tenPow18
-      )
+      const f1 = new Fraction(tenPow18.add(new BN(10).pow(new BN(10))), tenPow18)
       const f2 = new Fraction(tenPow18, tenPow18)
 
       assert.equal(f1.sub(f2).toNumber(), 0.00000001)
@@ -116,19 +110,13 @@ describe("Fraction", () => {
       const f1 = new Fraction(tenPow18, 1)
       const f2 = new Fraction(tenPow18, tenPow18)
 
-      assert.equal(
-        f1.sub(f2).toBN().toString(),
-        tenPow18.sub(new BN(1)).toString()
-      )
+      assert.equal(f1.sub(f2).toBN().toString(), tenPow18.sub(new BN(1)).toString())
     })
   })
 
   describe("add", () => {
     it("computes the sum of two fractions", () => {
-      const f1 = new Fraction(
-        tenPow18.add(new BN(10).pow(new BN(10))),
-        tenPow18
-      )
+      const f1 = new Fraction(tenPow18.add(new BN(10).pow(new BN(10))), tenPow18)
       const f2 = new Fraction(tenPow18, tenPow18)
 
       assert.equal(f1.sub(f2).toNumber(), 0.00000001)
@@ -138,10 +126,7 @@ describe("Fraction", () => {
   describe("toNumber", () => {
     it("Can serialize large coprime Fractions", () => {
       // Using two prime number ~10**18
-      const f = new Fraction(
-        new BN("1000000000000000003", 10),
-        new BN("1000000000000000009", 10)
-      )
+      const f = new Fraction(new BN("1000000000000000003", 10), new BN("1000000000000000009", 10))
       assert.equal(f.toNumber(), 1)
     })
 
@@ -178,19 +163,14 @@ describe("Fraction", () => {
       const testCases = [
         {
           number: 0.5,
-          expected: new Fraction(1, 2)
+          expected: new Fraction(1, 2),
         },
         {
           number: 2,
-          expected: new Fraction(2, 1)
-        }
+          expected: new Fraction(2, 1),
+        },
       ]
-      for (const { number, expected } of testCases)
-        assert(
-          Fraction.fromNumber(number)
-            .sub(expected)
-            .isZero()
-        )
+      for (const { number, expected } of testCases) assert(Fraction.fromNumber(number).sub(expected).isZero())
     })
 
     it("fails on bad input", () => {
@@ -222,19 +202,8 @@ describe("Fraction", () => {
     })
 
     it("has toNumber as its right inverse", () => {
-      const testCases = [
-        1 / 3,
-        1.0,
-        1.1,
-        1000000000000000000,
-        0,
-        -0,
-        Number.MAX_VALUE,
-        1 + Number.EPSILON,
-        2 ** -1022
-      ]
-      for (const number of testCases)
-        assert.equal(Fraction.fromNumber(number).toNumber(), number)
+      const testCases = [1 / 3, 1.0, 1.1, 1000000000000000000, 0, -0, Number.MAX_VALUE, 1 + Number.EPSILON, 2 ** -1022]
+      for (const number of testCases) assert.equal(Fraction.fromNumber(number).toNumber(), number)
     })
   })
 

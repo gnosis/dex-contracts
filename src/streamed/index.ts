@@ -29,7 +29,7 @@ export interface OrderbookOptions {
    * testing the streamed orderbook and ensuring that it is producing a correct
    * account state for a known block.
    */
-  endBlock?: number;
+  endBlock?: number
 
   /**
    * Set the block page size used to query past events.
@@ -39,13 +39,13 @@ export interface OrderbookOptions {
    * returned by a single call to retrieve past logs (10,000 for Infura)
    * so this parameter should be set accordingly.
    */
-  blockPageSize: number;
+  blockPageSize: number
 
-    /**
+  /**
    * Sets the number of block confirmations required for an event to be
    * considered confirmed and not be subject to re-orgs.
    */
-  blockConfirmations: number;
+  blockConfirmations: number
 
   /**
    * Enable strict checking that performs additional integrity checks.
@@ -55,17 +55,17 @@ export interface OrderbookOptions {
    * they are disabled by default, but can help diagnose issues and bugs in the
    * streamed orderbook.
    */
-  strict: boolean;
+  strict: boolean
 
   /**
    * Set the logger to be used by the streamed orderbook module.
    */
   logger?: {
-    debug: (...args: {}[]) => void;
-    log: (...args: {}[]) => void;
-    warn: (...args: {}[]) => void;
-    error: (...args: {}[]) => void;
-  };
+    debug: (...args: {}[]) => void
+    log: (...args: {}[]) => void
+    warn: (...args: {}[]) => void
+    error: (...args: {}[]) => void
+  }
 }
 
 /**
@@ -87,16 +87,16 @@ export const BATCH_DURATION = 300
  * account state.
  */
 export class StreamedOrderbook {
-  private readonly state: AuctionState;
-  private pendingEvents: EventData[] = [];
+  private readonly state: AuctionState
+  private pendingEvents: EventData[] = []
 
-  private invalidState?: InvalidAuctionStateError;
+  private invalidState?: InvalidAuctionStateError
 
   private constructor(
     private readonly web3: Web3,
     private readonly contract: BatchExchange,
     private readonly startBlock: number,
-    private readonly options: OrderbookOptions,
+    private readonly options: OrderbookOptions
   ) {
     this.state = new AuctionState(options)
   }
@@ -111,17 +111,12 @@ export class StreamedOrderbook {
    * @param web3 - The web3 provider to use.
    * @param options - Optional settings for tweaking the streamed orderbook.
    */
-  static async init(
-    web3: Web3,
-    options: Partial<OrderbookOptions> = {},
-  ): Promise<StreamedOrderbook> {
+  static async init(web3: Web3, options: Partial<OrderbookOptions> = {}): Promise<StreamedOrderbook> {
     const [contract, tx] = await batchExchangeDeployment(web3)
-    const orderbook = new StreamedOrderbook(
-      web3,
-      contract,
-      tx.blockNumber,
-      { ...DEFAULT_ORDERBOOK_OPTIONS, ...options },
-    )
+    const orderbook = new StreamedOrderbook(web3, contract, tx.blockNumber, {
+      ...DEFAULT_ORDERBOOK_OPTIONS,
+      ...options,
+    })
 
     await orderbook.applyPastEvents()
     if (orderbook.options.endBlock === undefined) {
@@ -136,25 +131,14 @@ export class StreamedOrderbook {
    * events with multiple queries to retrieve each block page at a time.
    */
   private async applyPastEvents(): Promise<void> {
-    const endBlock = this.options.endBlock ??
-      (await this.web3.eth.getBlockNumber() - this.options.blockConfirmations)
+    const endBlock = this.options.endBlock ?? (await this.web3.eth.getBlockNumber()) - this.options.blockConfirmations
 
-    for (
-      let fromBlock = this.startBlock;
-      fromBlock < endBlock;
-      fromBlock += this.options.blockPageSize
-    ) {
+    for (let fromBlock = this.startBlock; fromBlock < endBlock; fromBlock += this.options.blockPageSize) {
       // NOTE: `getPastEvents` block range is inclusive.
-      const toBlock = Math.min(
-        fromBlock + this.options.blockPageSize - 1,
-        endBlock,
-      )
+      const toBlock = Math.min(fromBlock + this.options.blockPageSize - 1, endBlock)
 
       this.options.logger?.debug(`fetching page ${fromBlock}-${toBlock}`)
-      const events = await this.contract.getPastEvents(
-        "allEvents",
-        { fromBlock, toBlock },
-      )
+      const events = await this.contract.getPastEvents("allEvents", { fromBlock, toBlock })
 
       this.options.logger?.debug(`applying ${events.length} past events`)
       this.state.applyEvents(events)
@@ -184,7 +168,7 @@ export class StreamedOrderbook {
 
     const latestBlock = await this.web3.eth.getBlockNumber()
     const confirmedBlock = latestBlock - this.options.blockConfirmations
-    const confirmedEventCount = events.findIndex(ev => ev.blockNumber > confirmedBlock)
+    const confirmedEventCount = events.findIndex((ev) => ev.blockNumber > confirmedBlock)
 
     const confirmedEvents = events.splice(0, confirmedEventCount)
     const pendingEvents = events
@@ -208,10 +192,7 @@ export class StreamedOrderbook {
  * longer be updated.
  */
 export class InvalidAuctionStateError extends Error {
-  constructor(
-    public readonly block: number,
-    public readonly inner: Error,
-  ) {
+  constructor(public readonly block: number, public readonly inner: Error) {
     super(`invalid auction state at block ${block}: ${inner.message}`)
   }
 }

@@ -3,11 +3,7 @@ import { Fraction } from "../../src/fraction"
 import { assert } from "chai"
 import "mocha"
 
-function assertOffers(
-  orderbook: Orderbook,
-  bids: [number, number][],
-  asks: [number, number][],
-): void {
+function assertOffers(orderbook: Orderbook, bids: [number, number][], asks: [number, number][]): void {
   const offers = orderbook.getOffers()
   assert.equal(offers.bids.length, bids.length, "bids length does not match")
   assert.equal(offers.asks.length, asks.length, "asks length does not match")
@@ -35,7 +31,18 @@ describe("Orderbook", () => {
     assert.equal(orderbook.baseToken, "USDC")
     assert.equal(orderbook.quoteToken, "DAI")
 
-    assertOffers(orderbook, [[0.99, 70], [0.9, 80]], [[1.01, 300], [1.1, 100], [1.2, 200]])
+    assertOffers(
+      orderbook,
+      [
+        [0.99, 70],
+        [0.9, 80],
+      ],
+      [
+        [1.01, 300],
+        [1.1, 100],
+        [1.2, 200],
+      ]
+    )
   })
 
   describe("inverted", () => {
@@ -57,12 +64,34 @@ describe("Orderbook", () => {
       // Original didn't change
       assert.equal(orderbook.baseToken, "USDC")
       assert.equal(orderbook.quoteToken, "DAI")
-      assertOffers(orderbook, [[0.5, 50], [0.25, 100]], [[1, 200], [2, 100], [4, 300]])
+      assertOffers(
+        orderbook,
+        [
+          [0.5, 50],
+          [0.25, 100],
+        ],
+        [
+          [1, 200],
+          [2, 100],
+          [4, 300],
+        ]
+      )
 
       // Check inverse
       assert.equal(inverse.baseToken, "DAI")
       assert.equal(inverse.quoteToken, "USDC")
-      assertOffers(inverse, [[1, 200], [0.5, 200], [0.25, 1200]], [[2, 25], [4, 25]])
+      assertOffers(
+        inverse,
+        [
+          [1, 200],
+          [0.5, 200],
+          [0.25, 1200],
+        ],
+        [
+          [2, 25],
+          [4, 25],
+        ]
+      )
     })
 
     it("does not mutate original orderbook", () => {
@@ -92,7 +121,19 @@ describe("Orderbook", () => {
 
       first_orderbook.add(second_orderbook)
 
-      assertOffers(first_orderbook, [[0.99, 80], [0.95, 70], [0.9, 100]], [[1.1, 110], [1.2, 150], [1.3, 200]])
+      assertOffers(
+        first_orderbook,
+        [
+          [0.99, 80],
+          [0.95, 70],
+          [0.9, 100],
+        ],
+        [
+          [1.1, 110],
+          [1.2, 150],
+          [1.3, 200],
+        ]
+      )
     })
 
     it("cannot add orderbooks for different token pairs", () => {
@@ -123,7 +164,8 @@ describe("Orderbook", () => {
       const closure = first_orderbook.transitiveClosure(second_orderbook)
 
       assert.equal(closure.pair(), "ETH/USDC")
-      assertOffers(closure,
+      assertOffers(
+        closure,
         // with 1 DAI remaining to be matched from the second best eth_dai bid (190 DAI).
         // The remainder of the second best eth_dai bid (189 DAI) gets matched with the second
         // best dai_usdc bid (200 DAI), leaving 11 DAI for the worst eth_dai bid (270 DAI).
@@ -168,10 +210,7 @@ describe("Orderbook", () => {
       first_orderbook.transitiveClosure(second_orderbook)
 
       assert.equal(JSON.stringify(first_orderbook), first_serialized_original)
-      assert.equal(
-        JSON.stringify(second_orderbook),
-        second_serialized_original
-      )
+      assert.equal(JSON.stringify(second_orderbook), second_serialized_original)
     })
   })
 
@@ -233,10 +272,7 @@ describe("Orderbook", () => {
       orderbook.addAsk(new Offer(new Fraction(101, 1), 2))
       orderbook.addAsk(new Offer(new Fraction(105, 1), 1))
 
-      assert.equal(
-        JSON.stringify(orderbook.reduced().getOffers()),
-        JSON.stringify(orderbook.getOffers())
-      )
+      assert.equal(JSON.stringify(orderbook.reduced().getOffers()), JSON.stringify(orderbook.getOffers()))
     })
 
     it("reduces partially overlapping orderbooks", () => {
@@ -284,26 +320,20 @@ describe("Orderbook", () => {
       assertOffers(orderbook, [[99, 99]], [[200 / 0.99, 198]])
 
       const inverted = orderbook.inverted()
-      assertOffers(inverted,
+      assertOffers(
+        inverted,
         // Inverse of 200 without fees is 0.005 becomes 0.00495 with fee
         [[0.00495, 39600]],
         // Inverse of 11 without fees is 0.01 becomes 0.0101... with fee
-        [[0.01 / 0.99, 9900]])
+        [[0.01 / 0.99, 9900]]
+      )
     })
 
     it("Doesn't count fee twice when adding orderbooks", () => {
-      const first_orderbook = new Orderbook(
-        "USDC",
-        "DAI",
-        { fee: new Fraction(1, 100) }
-      )
+      const first_orderbook = new Orderbook("USDC", "DAI", { fee: new Fraction(1, 100) })
       first_orderbook.addBid(new Offer(new Fraction(100, 1), 100))
 
-      const second_orderbook = new Orderbook(
-        "USDC",
-        "DAI",
-        { fee: new Fraction(1, 100) }
-      )
+      const second_orderbook = new Orderbook("USDC", "DAI", { fee: new Fraction(1, 100) })
       second_orderbook.addBid(new Offer(new Fraction(100, 1), 100))
       first_orderbook.add(second_orderbook)
 
@@ -320,18 +350,10 @@ describe("Orderbook", () => {
     })
 
     it("multiplies fee when building transitive closure", () => {
-      const first_orderbook = new Orderbook(
-        "USDC",
-        "DAI",
-        { fee: new Fraction(1, 100) }
-      )
+      const first_orderbook = new Orderbook("USDC", "DAI", { fee: new Fraction(1, 100) })
       first_orderbook.addBid(new Offer(new Fraction(1, 1), 100))
 
-      const second_orderbook = new Orderbook(
-        "DAI",
-        "TUSD",
-        { fee: new Fraction(1, 100) }
-      )
+      const second_orderbook = new Orderbook("DAI", "TUSD", { fee: new Fraction(1, 100) })
       second_orderbook.addBid(new Offer(new Fraction(1, 1), 100))
 
       const closure = first_orderbook.transitiveClosure(second_orderbook)
@@ -374,12 +396,7 @@ describe("transitiveOrderbook", () => {
     const orderbook = new Orderbook("DAI", "USDC", { fee: new Fraction(0, 1) })
     orderbook.addAsk(new Offer(new Fraction(1, 1), 100))
 
-    const transitive = transitiveOrderbook(
-      new Map([[orderbook.pair(), orderbook]]),
-      "DAI",
-      "USDC",
-      0
-    )
+    const transitive = transitiveOrderbook(new Map([[orderbook.pair(), orderbook]]), "DAI", "USDC", 0)
 
     assert.equal(JSON.stringify(orderbook.getOffers()), JSON.stringify(transitive.getOffers()))
   })
@@ -405,7 +422,14 @@ describe("transitiveOrderbook", () => {
       1
     )
 
-    assertOffers(transitive, [], [[0.01, 100], [0.0125, 80]])
+    assertOffers(
+      transitive,
+      [],
+      [
+        [0.01, 100],
+        [0.0125, 80],
+      ]
+    )
   })
 
   it("computes transitive orderbook with 2 hop", () => {
@@ -433,7 +457,14 @@ describe("transitiveOrderbook", () => {
       2
     )
 
-    assertOffers(transitive, [], [[0.01, 100], [0.0125, 80]])
+    assertOffers(
+      transitive,
+      [],
+      [
+        [0.01, 100],
+        [0.0125, 80],
+      ]
+    )
   })
 
   it("computes transitive orderbook from bids and asks", () => {

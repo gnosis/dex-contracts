@@ -10,13 +10,7 @@
 export function flat(arr: any[], depth = 1): any[] {
   // implementation taken from
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat#Alternative
-  return depth > 0
-    ? arr.reduce(
-      (acc, val) =>
-        acc.concat(Array.isArray(val) ? flat(val, depth - 1) : val),
-      []
-    )
-    : arr.slice()
+  return depth > 0 ? arr.reduce((acc, val) => acc.concat(Array.isArray(val) ? flat(val, depth - 1) : val), []) : arr.slice()
 }
 
 /**

@@ -1,6 +1,6 @@
 import BN from "bn.js"
 import Web3 from "web3"
-import {BatchExchangeInstance} from "../types/truffle-typings"
+import { BatchExchangeInstance } from "../types/truffle-typings"
 
 const WORD_DATA_LENGTH = 64
 
@@ -31,10 +31,7 @@ export async function getBalanceState(
     },
     {
       type: "bytes32",
-      value: web3Provider.utils.padLeft(
-        BALANCESTATES_STORAGE_SLOT,
-        WORD_DATA_LENGTH
-      ),
+      value: web3Provider.utils.padLeft(BALANCESTATES_STORAGE_SLOT, WORD_DATA_LENGTH),
     }
   ) as string
 
@@ -45,17 +42,11 @@ export async function getBalanceState(
     },
     {
       type: "bytes32",
-      value: web3Provider.utils.padLeft(
-        userBalancestatesStorageSlot,
-        WORD_DATA_LENGTH
-      ),
+      value: web3Provider.utils.padLeft(userBalancestatesStorageSlot, WORD_DATA_LENGTH),
     }
   ) as string
 
-  const storageAtSlot = await web3Provider.eth.getStorageAt(
-    batchExchangeAddress,
-    targetStorageSlot
-  )
+  const storageAtSlot = await web3Provider.eth.getStorageAt(batchExchangeAddress, targetStorageSlot)
   return web3Provider.utils.toBN(storageAtSlot)
 }
 
@@ -75,19 +66,8 @@ export async function getWithdrawableAmount(
   batchExchange: BatchExchangeInstance,
   web3Provider: Web3 = web3
 ): Promise<BN> {
-  const [
-    balanceState,
-    pendingDeposit,
-    pendingWithdrawal,
-    lastCreditBatchId,
-    batchId,
-  ] = await Promise.all([
-    getBalanceState(
-      userAddress,
-      tokenAddress,
-      batchExchange.address,
-      web3Provider
-    ),
+  const [balanceState, pendingDeposit, pendingWithdrawal, lastCreditBatchId, batchId] = await Promise.all([
+    getBalanceState(userAddress, tokenAddress, batchExchange.address, web3Provider),
     batchExchange.getPendingDeposit(userAddress, tokenAddress),
     batchExchange.getPendingWithdraw(userAddress, tokenAddress),
     batchExchange.lastCreditBatchId(userAddress, tokenAddress),

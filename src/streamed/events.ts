@@ -4,10 +4,8 @@ import { ContractEvent } from "../../build/types/types"
 /**
  * Event type specified by name.
  */
-export type Event<
-  C extends Contract,
-  T extends Exclude<keyof C["events"], "allEvents">,
-> = EventMetadata & EventDiscriminant<C, T>
+export type Event<C extends Contract, T extends Exclude<keyof C["events"], "allEvents">> = EventMetadata &
+  EventDiscriminant<C, T>
 
 /**
  * Concrete event type with known properties based on the event name.
@@ -36,10 +34,9 @@ export type AnyEvent<C extends Contract> = EventMetadata & EventDiscriminant<C, 
 export type EventMetadata = Omit<EventData, "event" | "returnValues">
 export type EventName<C extends Contract> = Exclude<keyof C["events"], "allEvents">
 export type EventValues<T> = T extends ContractEvent<infer U> ? U : never
-export type EventDiscriminant<
-  C extends Contract,
-  T extends EventName<C>,
-> = T extends {} ? {
-  event: T;
-  returnValues: EventValues<C["events"][T]>;
-} : never
+export type EventDiscriminant<C extends Contract, T extends EventName<C>> = T extends {}
+  ? {
+      event: T
+      returnValues: EventValues<C["events"][T]>
+    }
+  : never

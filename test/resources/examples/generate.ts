@@ -1,19 +1,9 @@
 /* eslint-disable indent */
 import assert from "assert"
 import BN from "bn.js"
-import {
-  getExecutedSellAmount,
-  solutionObjectiveValueComputation,
-} from "../math.js"
-import {flat, dedupe} from "../array-shims.js"
-import {
-  TestCase,
-  TestCaseInput,
-  ObjectiveValueComputation,
-  ComputedSolution,
-  ComputedOrder,
-  SolutionSubmission,
-} from "./model"
+import { getExecutedSellAmount, solutionObjectiveValueComputation } from "../math.js"
+import { flat, dedupe } from "../array-shims.js"
+import { TestCase, TestCaseInput, ObjectiveValueComputation, ComputedSolution, ComputedOrder, SolutionSubmission } from "./model"
 
 /**
  * Generates a test case to be used for unit and e2e testing with the contract
@@ -23,17 +13,12 @@ import {
  * @param strict Throw when solution is determined to be invalid
  * @return The test case
  */
-export function generateTestCase(
-  input: TestCaseInput,
-  strict = true,
-  debug = false
-): TestCase {
-  const {name, orders, solutions} = input
+export function generateTestCase(input: TestCaseInput, strict = true, debug = false): TestCase {
+  const { name, orders, solutions } = input
 
   return {
     name,
-    numTokens:
-      Math.max(...flat(orders.map((o) => [o.buyToken, o.sellToken]))) + 1,
+    numTokens: Math.max(...flat(orders.map((o) => [o.buyToken, o.sellToken]))) + 1,
     deposits:
       input.deposits ||
       orders.map((order) => ({
@@ -46,18 +31,10 @@ export function generateTestCase(
       (solution): ComputedSolution => {
         let objectiveValue: ObjectiveValueComputation
         try {
-          objectiveValue = solutionObjectiveValueComputation(
-            orders,
-            solution,
-            strict
-          )
+          objectiveValue = solutionObjectiveValueComputation(orders, solution, strict)
         } catch (err) {
           if (strict && debug) {
-            const invalidObjectiveValue = solutionObjectiveValueComputation(
-              orders,
-              solution,
-              false
-            )
+            const invalidObjectiveValue = solutionObjectiveValueComputation(orders, solution, false)
             debugObjectiveValueComputation(invalidObjectiveValue)
           }
           throw err
@@ -71,11 +48,7 @@ export function generateTestCase(
                   idx: i,
                   user: o.user,
                   buy: solution.buyVolumes[i],
-                  sell: getExecutedSellAmount(
-                    solution.buyVolumes[i],
-                    solution.prices[o.buyToken],
-                    solution.prices[o.sellToken]
-                  ),
+                  sell: getExecutedSellAmount(solution.buyVolumes[i], solution.prices[o.buyToken], solution.prices[o.sellToken]),
                   utility: objectiveValue.utilities[i],
                   disregardedUtility: objectiveValue.disregardedUtilities[i],
                 }
@@ -83,13 +56,7 @@ export function generateTestCase(
           .filter((o): o is ComputedOrder => !!o)
         return {
           name: solution.name,
-          tokens: dedupe(
-            flat(
-              touchedOrders
-                .map((o) => orders[o.idx])
-                .map((o) => [o.buyToken, o.sellToken])
-            )
-          )
+          tokens: dedupe(flat(touchedOrders.map((o) => orders[o.idx]).map((o) => [o.buyToken, o.sellToken])))
             .sort((a, b) => a - b)
             .map((i) => ({
               id: i,
@@ -114,19 +81,9 @@ export function generateTestCase(
  * @param [orderIds] The optional order indices for display, defaults to [0...]
  * @param [accounts] The optional accounts for display, defaults to [1...]
  */
-export function debugTestCase(
-  testCase: TestCase,
-  orderIds: number[],
-  accounts: string[]
-): void {
-  assert(
-    orderIds === undefined || Array.isArray(orderIds),
-    "orderIds is not an array"
-  )
-  assert(
-    accounts === undefined || Array.isArray(accounts),
-    "accounts is not an array"
-  )
+export function debugTestCase(testCase: TestCase, orderIds: number[], accounts: string[]): void {
+  assert(orderIds === undefined || Array.isArray(orderIds), "orderIds is not an array")
+  assert(accounts === undefined || Array.isArray(accounts), "accounts is not an array")
 
   const userCount = Math.max(...testCase.orders.map((o) => o.user)) + 1
   orderIds = orderIds || testCase.orders.map((_, i) => i)
@@ -140,34 +97,18 @@ export function debugTestCase(
       return accounts
     })()
 
-  assert(
-    testCase.orders.length === orderIds.length,
-    "missing orders in orderIds"
-  )
+  assert(testCase.orders.length === orderIds.length, "missing orders in orderIds")
   assert(userCount <= accounts.length, "missing users in accounts")
 
-  orderIds.forEach((o, i) =>
-    assert(BN.isBN(o) || Number.isInteger(o), `invalid order id at index ${i}`)
-  )
-  accounts.forEach((a, i) =>
-    assert(typeof a === "string", `invalid account at index ${i}`)
-  )
+  orderIds.forEach((o, i) => assert(BN.isBN(o) || Number.isInteger(o), `invalid order id at index ${i}`))
+  accounts.forEach((a, i) => assert(typeof a === "string", `invalid account at index ${i}`))
 
-  const usernames = accounts.map((a) =>
-    a.length > 8 ? `${a.substr(0, 5)}…${a.substr(a.length - 3)}` : a
-  )
+  const usernames = accounts.map((a) => (a.length > 8 ? `${a.substr(0, 5)}…${a.substr(a.length - 3)}` : a))
 
   formatHeader("Orders")
   formatTable([
     ["Id", "User", "Buy Token", "Buy Amount", "Sell Token", "Sell Amount"],
-    ...testCase.orders.map((o, i) => [
-      orderIds[i],
-      usernames[o.user],
-      o.buyToken,
-      o.buyAmount,
-      o.sellToken,
-      o.sellAmount,
-    ]),
+    ...testCase.orders.map((o, i) => [orderIds[i], usernames[o.user], o.buyToken, o.buyAmount, o.sellToken, o.sellAmount]),
   ])
   formatHeader("Solutions")
   for (const solution of testCase.solutions) {
@@ -177,31 +118,12 @@ export function debugTestCase(
       ...solution.tokens.map((t) => ["", t.id, t.price, t.conservation]),
     ])
     formatTable([
-      [
-        "   Executed Orders:          ",
-        "Id",
-        "User",
-        "Buy Amount",
-        "Sell Amount",
-        "Utility",
-        "Disregarded Utility",
-      ],
-      ...solution.orders.map((o) => [
-        "",
-        orderIds[o.idx],
-        usernames[o.user],
-        o.buy,
-        o.sell,
-        o.utility,
-        o.disregardedUtility,
-      ]),
+      ["   Executed Orders:          ", "Id", "User", "Buy Amount", "Sell Amount", "Utility", "Disregarded Utility"],
+      ...solution.orders.map((o) => ["", orderIds[o.idx], usernames[o.user], o.buy, o.sell, o.utility, o.disregardedUtility]),
     ])
     formatTable([
       ["   Total Utility:", solution.totalUtility],
-      [
-        "   Total Disregarded Utility:",
-        solution.objectiveValueComputation.totalDisregardedUtility,
-      ],
+      ["   Total Disregarded Utility:", solution.objectiveValueComputation.totalDisregardedUtility],
       ["   Burnt Fees:", solution.burntFees],
       ["   Objective Value:", solution.objectiveValue],
     ])
@@ -241,18 +163,9 @@ export function solutionSubmissionParams(
  * Prints debug information for an objective value compuation.
  * @param {ObjectiveValueComputation} testCase The test case
  */
-export function debugObjectiveValueComputation(
-  objectiveValue: ObjectiveValueComputation
-): void {
+export function debugObjectiveValueComputation(objectiveValue: ObjectiveValueComputation): void {
   formatHeader("Executed Amounts")
-  formatTable([
-    ["Order", "Buy", "Sell"],
-    ...objectiveValue.orderExecutedAmounts.map(({buy, sell}, i) => [
-      i,
-      buy,
-      sell,
-    ]),
-  ])
+  formatTable([["Order", "Buy", "Sell"], ...objectiveValue.orderExecutedAmounts.map(({ buy, sell }, i) => [i, buy, sell])])
   formatHeader("Token Conservation")
   formatTable([
     ["Order\\Token", ...objectiveValue.tokenConservation.map((_, i) => i)],
@@ -265,21 +178,10 @@ export function debugObjectiveValueComputation(
     ["Utility", ...objectiveValue.utilities, objectiveValue.totalUtility],
     [
       "Disregarded Utility",
-      ...[
-        ...objectiveValue.disregardedUtilities,
-        objectiveValue.totalDisregardedUtility,
-      ].map((du) => du.neg()),
+      ...[...objectiveValue.disregardedUtilities, objectiveValue.totalDisregardedUtility].map((du) => du.neg()),
     ],
-    [
-      "Burnt Fees",
-      ...objectiveValue.utilities.map(() => ""),
-      objectiveValue.burntFees,
-    ],
-    [
-      "Result",
-      ...objectiveValue.utilities.map(() => ""),
-      objectiveValue.result,
-    ],
+    ["Burnt Fees", ...objectiveValue.utilities.map(() => ""), objectiveValue.burntFees],
+    ["Result", ...objectiveValue.utilities.map(() => ""), objectiveValue.result],
   ])
 }
 
@@ -290,10 +192,7 @@ const formatHeader = (header: string): void => console.log(`=== ${header} ===`)
 const formatSubHeader = (header: string): void => console.log(` - ${header}`)
 
 export function formatTable(table: any[][]): void {
-  const [width, height] = [
-    Math.max(...table.map((r) => r.length)),
-    table.length,
-  ]
+  const [width, height] = [Math.max(...table.map((r) => r.length)), table.length]
   const getCell = (i: any, j: any): string => {
     const cell = i < height ? table[i][j] : undefined
     return cell === undefined ? "" : cell === null ? "<NULL>" : `${cell}`
@@ -301,17 +200,11 @@ export function formatTable(table: any[][]): void {
 
   const columnWidths = []
   for (let j = 0; j < width; j++) {
-    columnWidths.push(
-      Math.max(...table.map((_, i) => getCell(i, j).length)) + 1
-    )
+    columnWidths.push(Math.max(...table.map((_, i) => getCell(i, j).length)) + 1)
   }
 
   for (let i = 0; i < height; i++) {
-    const line = columnWidths
-      .map((cw, j) =>
-        j === 0 ? getCell(i, j).padEnd(cw) : getCell(i, j).padStart(cw)
-      )
-      .join(" ")
+    const line = columnWidths.map((cw, j) => (j === 0 ? getCell(i, j).padEnd(cw) : getCell(i, j).padStart(cw))).join(" ")
     console.log(line)
   }
 }

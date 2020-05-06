@@ -30,37 +30,17 @@ contract("TokenConservation", async () => {
   describe("checkPriceOrdering()", () => {
     it("returns false when unordered", async () => {
       const tokenConservation = await TokenConservationWrapper.new()
-      assert.equal(
-        await tokenConservation.checkPriceOrdering([1, 0]),
-        false,
-        "Failed on [1, 0]"
-      )
-      assert.equal(
-        await tokenConservation.checkPriceOrdering([1, 3, 2]),
-        false,
-        "Failed on [1, 3, 2]"
-      )
+      assert.equal(await tokenConservation.checkPriceOrdering([1, 0]), false, "Failed on [1, 0]")
+      assert.equal(await tokenConservation.checkPriceOrdering([1, 3, 2]), false, "Failed on [1, 3, 2]")
     })
     it("returns false when not unique", async () => {
       const tokenConservation = await TokenConservationWrapper.new()
-      assert.equal(
-        await tokenConservation.checkPriceOrdering([1, 1]),
-        false,
-        "Failed on [1, 1]"
-      )
+      assert.equal(await tokenConservation.checkPriceOrdering([1, 1]), false, "Failed on [1, 1]")
     })
     it("returns true when ordered", async () => {
       const tokenConservation = await TokenConservationWrapper.new()
-      assert.equal(
-        await tokenConservation.checkPriceOrdering([0, 1]),
-        true,
-        "Failed on [0, 1]"
-      )
-      assert.equal(
-        await tokenConservation.checkPriceOrdering([1, 2, 3]),
-        true,
-        "Failed on [1, 2, 3]"
-      )
+      assert.equal(await tokenConservation.checkPriceOrdering([0, 1]), true, "Failed on [0, 1]")
+      assert.equal(await tokenConservation.checkPriceOrdering([1, 2, 3]), true, "Failed on [1, 2, 3]")
     })
   })
   describe("updateTokenConservation()", () => {
@@ -88,14 +68,7 @@ contract("TokenConservation", async () => {
       assert.deepEqual(updatedArray, expectedArray)
 
       const secondUpdatedArray = (
-        await tokenConservation.updateTokenConservationTest(
-          testArray,
-          2,
-          3,
-          tokenIdsForPrice,
-          1,
-          2
-        )
+        await tokenConservation.updateTokenConservationTest(testArray, 2, 3, tokenIdsForPrice, 1, 2)
       ).map((a: BN) => a.toNumber())
       assert.deepEqual([0, 0, -1, 2], secondUpdatedArray)
     })
@@ -111,14 +84,7 @@ contract("TokenConservation", async () => {
       const sellAmount = 3
 
       await truffleAssert.reverts(
-        tokenConservation.updateTokenConservationTest(
-          testArray,
-          buyToken,
-          sellToken,
-          tokenIdsForPrice,
-          buyAmount,
-          sellAmount
-        )
+        tokenConservation.updateTokenConservationTest(testArray, buyToken, sellToken, tokenIdsForPrice, buyAmount, sellAmount)
         // Error message would be: "Price not provided for token", but coverage tool will not recognize
       )
     })

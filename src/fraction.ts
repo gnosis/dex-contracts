@@ -4,8 +4,8 @@ const MAX_FLOAT_WIDTH = 1024
 const MAX_FLOAT_PRECISION = 52
 
 export class Fraction {
-  private numerator: BN;
-  private denominator: BN;
+  private numerator: BN
+  private denominator: BN
 
   constructor(numerator: BN | number, denominator: BN | number) {
     this.numerator = new BN(numerator)
@@ -43,10 +43,7 @@ export class Fraction {
   }
 
   mul(other: Fraction): Fraction {
-    return new Fraction(
-      this.numerator.mul(other.numerator),
-      this.denominator.mul(other.denominator)
-    )
+    return new Fraction(this.numerator.mul(other.numerator), this.denominator.mul(other.denominator))
   }
 
   div(other: Fraction): Fraction {
@@ -59,9 +56,7 @@ export class Fraction {
 
   add(other: Fraction): Fraction {
     return new Fraction(
-      this.numerator
-        .mul(other.denominator)
-        .iadd(other.numerator.mul(this.denominator)),
+      this.numerator.mul(other.denominator).iadd(other.numerator.mul(this.denominator)),
       this.denominator.mul(other.denominator)
     )
   }
@@ -72,32 +67,18 @@ export class Fraction {
 
     // If ratio between numerator and denominator is larger than the maximum
     // float number precision, use integer division
-    if (
-      !denominator.isZero() &&
-      numerator.div(denominator).bitLength() > MAX_FLOAT_PRECISION
-    ) {
+    if (!denominator.isZero() && numerator.div(denominator).bitLength() > MAX_FLOAT_PRECISION) {
       numerator = numerator.div(denominator)
       denominator = new BN(1)
-    } else if (
-      !numerator.isZero() &&
-      denominator.div(numerator).bitLength() > MAX_FLOAT_PRECISION
-    ) {
+    } else if (!numerator.isZero() && denominator.div(numerator).bitLength() > MAX_FLOAT_PRECISION) {
       denominator = denominator.div(numerator)
       numerator = new BN(1)
     }
 
     // Prevent overflow by only keeping the most 1023 significant bits.
     // Since 2**1023 < Number.MAX_VALUE < 2**1024 this is safe.
-    if (
-      Math.max(
-        parseInt(numerator.toString()),
-        parseInt(denominator.toString())
-      ) === Infinity
-    ) {
-      const longestWidth = Math.max(
-        numerator.bitLength(),
-        denominator.bitLength()
-      )
+    if (Math.max(parseInt(numerator.toString()), parseInt(denominator.toString())) === Infinity) {
+      const longestWidth = Math.max(numerator.bitLength(), denominator.bitLength())
       numerator = numerator.ishrn(longestWidth - MAX_FLOAT_WIDTH + 1)
       denominator = denominator.ishrn(longestWidth - MAX_FLOAT_WIDTH + 1)
     }
@@ -121,33 +102,26 @@ export class Fraction {
     // number is 1.mantissa * 2**exponent
 
     switch (exponent) {
-    case BigInt(1024): // infinities and NaN
-      throw Error("Invalid number")
-    case BigInt(-1023):
-      if (mantissa == BigInt(0))
-      // positive and negative zero
-        return [BigInt(0), sign]
+      case BigInt(1024): // infinities and NaN
+        throw Error("Invalid number")
+      case BigInt(-1023):
+        if (mantissa == BigInt(0))
+          // positive and negative zero
+          return [BigInt(0), sign]
         // subnormal numbers
-      else throw Error("Subnormal numbers are not supported")
+        else throw Error("Subnormal numbers are not supported")
     }
 
     const mantissa_plus_one = mantissa + one
     const shifted_exponent = exponent - BigInt(52)
 
-    if (shifted_exponent >= BigInt(0))
-      return [
-        sign * mantissa_plus_one * (BigInt(1) << shifted_exponent),
-        BigInt(1),
-      ]
+    if (shifted_exponent >= BigInt(0)) return [sign * mantissa_plus_one * (BigInt(1) << shifted_exponent), BigInt(1)]
     else return [sign * mantissa_plus_one, BigInt(1) << -shifted_exponent]
   }
 
   static fromNumber(number: number): Fraction {
     const [numerator, denominator] = Fraction.numberToNumAndDen(number)
-    return new Fraction(
-      new BN(numerator.toString()),
-      new BN(denominator.toString())
-    )
+    return new Fraction(new BN(numerator.toString()), new BN(denominator.toString()))
   }
 
   toBN(): BN {
@@ -166,6 +140,6 @@ export class Fraction {
 }
 
 export interface FractionJson {
-  numerator: string;
-  denominator: string;
+  numerator: string
+  denominator: string
 }

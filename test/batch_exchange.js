@@ -183,7 +183,9 @@ contract("BatchExchange", async (accounts) => {
     it("places single order with specified validFrom", async () => {
       const batchExchange = await setupGenericStableX()
       const currentBatch = (await batchExchange.getCurrentBatchId()).toNumber()
-      const id = await batchExchange.placeValidFromOrders.call([0], [1], [currentBatch], [3], [10], [20], { from: user_1 })
+      const id = await batchExchange.placeValidFromOrders.call([0], [1], [currentBatch], [3], [10], [20], {
+        from: user_1,
+      })
 
       await batchExchange.placeValidFromOrders([0], [1], [currentBatch], [3], [10], [20], { from: user_1 })
       const orderResult = await batchExchange.orders.call(user_1, id)
@@ -353,8 +355,20 @@ contract("BatchExchange", async (accounts) => {
         { amount: toETH(100), token: 2, user: 1 },
       ]
       const orders = [
-        { sellToken: 1, buyToken: 2, sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON), buyAmount: toETH(10), user: 0 },
-        { sellToken: 2, buyToken: 1, sellAmount: toETH(10), buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON), user: 1 },
+        {
+          sellToken: 1,
+          buyToken: 2,
+          sellAmount: feeAdded(toETH(20)).add(ERROR_EPSILON),
+          buyAmount: toETH(10),
+          user: 0,
+        },
+        {
+          sellToken: 2,
+          buyToken: 1,
+          sellAmount: toETH(10),
+          buyAmount: feeSubtracted(toETH(20)).sub(ERROR_EPSILON),
+          user: 1,
+        },
       ]
       const solution = {
         prices: [1, 1, 2].map(toETH),

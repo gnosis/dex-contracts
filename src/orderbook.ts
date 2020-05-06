@@ -2,8 +2,8 @@ import { Fraction, FractionJson } from "./fraction"
 import BN from "bn.js"
 
 export class Offer {
-  price: Fraction;
-  volume: Fraction;
+  price: Fraction
+  volume: Fraction
 
   constructor(price: Fraction, volume: number | Fraction) {
     if (typeof volume == "number") {
@@ -24,25 +24,21 @@ export class Offer {
 }
 
 export interface OfferJson {
-  price: FractionJson;
-  volume: FractionJson;
+  price: FractionJson
+  volume: FractionJson
 }
 
-type Fee = { fee: Fraction };
+type Fee = { fee: Fraction }
 type RemainingFractionAfterFee = { remainingFractionAfterFee: Fraction }
 
 export class Orderbook {
-  readonly baseToken: string;
-  readonly quoteToken: string;
-  readonly remainingFractionAfterFee: Fraction;
-  private asks: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
-  private bids: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
+  readonly baseToken: string
+  readonly quoteToken: string
+  readonly remainingFractionAfterFee: Fraction
+  private asks: Map<number, Offer> // Mapping from price to cumulative offers at this point.
+  private bids: Map<number, Offer> // Mapping from price to cumulative offers at this point.
 
-  constructor(
-    baseToken: string,
-    quoteToken: string,
-    options: Fee | RemainingFractionAfterFee = { fee: new Fraction(1, 1000) },
-  ) {
+  constructor(baseToken: string, quoteToken: string, options: Fee | RemainingFractionAfterFee = { fee: new Fraction(1, 1000) }) {
     this.baseToken = baseToken
     this.quoteToken = quoteToken
     if ("fee" in options) {
@@ -68,7 +64,7 @@ export class Orderbook {
       quoteToken: this.quoteToken,
       remainingFractionAfterFee: this.remainingFractionAfterFee,
       asks: offersToJSON(this.asks),
-      bids: offersToJSON(this.bids)
+      bids: offersToJSON(this.bids),
     }
   }
 
@@ -86,19 +82,13 @@ export class Orderbook {
 
   addBid(bid: Offer): void {
     // For bids the effective price after fee becomes smaller
-    const offer = new Offer(
-      bid.price.mul(this.remainingFractionAfterFee),
-      bid.volume.mul(this.remainingFractionAfterFee)
-    )
+    const offer = new Offer(bid.price.mul(this.remainingFractionAfterFee), bid.volume.mul(this.remainingFractionAfterFee))
     addOffer(offer, this.bids)
   }
 
   addAsk(ask: Offer): void {
     // For asks the effective price after fee becomes larger
-    const offer = new Offer(
-      ask.price.div(this.remainingFractionAfterFee),
-      ask.volume.mul(this.remainingFractionAfterFee)
-    )
+    const offer = new Offer(ask.price.div(this.remainingFractionAfterFee), ask.volume.mul(this.remainingFractionAfterFee))
     addOffer(offer, this.asks)
   }
 
@@ -109,10 +99,7 @@ export class Orderbook {
   inverted(): Orderbook {
     const result = new Orderbook(this.quoteToken, this.baseToken, { fee: this.fee() })
     result.bids = invertPricePoints(this.asks, this.remainingFractionAfterFee)
-    result.asks = invertPricePoints(
-      this.bids,
-      this.remainingFractionAfterFee.inverted()
-    )
+    result.asks = invertPricePoints(this.bids, this.remainingFractionAfterFee.inverted())
 
     return result
   }
@@ -123,9 +110,7 @@ export class Orderbook {
    */
   add(orderbook: Orderbook): void {
     if (orderbook.pair() != this.pair()) {
-      throw new Error(
-        `Cannot add ${orderbook.pair()} orderbook to ${this.pair()} orderbook`
-      )
+      throw new Error(`Cannot add ${orderbook.pair()} orderbook to ${this.pair()} orderbook`)
     }
     orderbook.bids.forEach((bid) => {
       addOffer(bid, this.bids)
@@ -176,22 +161,13 @@ export class Orderbook {
 
     let best_bid = bid_iterator.next()
     let best_ask = ask_iterator.next()
-    while (
-      !(best_bid.done || best_ask.done) &&
-      !best_bid.value.price.lt(best_ask.value.price)
-    ) {
+    while (!(best_bid.done || best_ask.done) && !best_bid.value.price.lt(best_ask.value.price)) {
       // We have an overlapping bid/ask. Subtract the smaller from the larger and remove the smaller
       if (best_bid.value.volume.gt(best_ask.value.volume)) {
-        best_bid.value = new Offer(
-          best_bid.value.price,
-          best_bid.value.volume.sub(best_ask.value.volume)
-        )
+        best_bid.value = new Offer(best_bid.value.price, best_bid.value.volume.sub(best_ask.value.volume))
         best_ask = ask_iterator.next()
       } else {
-        best_ask.value = new Offer(
-          best_ask.value.price,
-          best_ask.value.volume.sub(best_bid.value.volume)
-        )
+        best_ask.value = new Offer(best_ask.value.price, best_ask.value.volume.sub(best_bid.value.volume))
         best_bid = bid_iterator.next()
         // In case the orders matched perfectly we will move ask as well
         if (best_ask.value.volume.isZero()) {
@@ -219,9 +195,7 @@ export class Orderbook {
    */
   transitiveClosure(orderbook: Orderbook): Orderbook {
     if (orderbook.baseToken != this.quoteToken) {
-      throw new Error(
-        `Cannot compute transitive closure of ${this.pair()} orderbook and ${orderbook.pair()} orderbook`
-      )
+      throw new Error(`Cannot compute transitive closure of ${this.pair()} orderbook and ${orderbook.pair()} orderbook`)
     }
 
     const ask_closure = this.transitiveAskClosure(orderbook)
@@ -230,21 +204,14 @@ export class Orderbook {
     // 1) inverting both orderbooks
     // 2) computing the transitive ask closure on the inverses
     // 3) re-inverting the result
-    const bid_closure = orderbook
-      .inverted()
-      .transitiveAskClosure(this.inverted())
-      .inverted()
+    const bid_closure = orderbook.inverted().transitiveAskClosure(this.inverted()).inverted()
 
     ask_closure.add(bid_closure)
     return ask_closure
   }
 
   private transitiveAskClosure(orderbook: Orderbook): Orderbook {
-    const result = new Orderbook(
-      this.baseToken,
-      orderbook.quoteToken,
-      { fee: this.fee() }
-    )
+    const result = new Orderbook(this.baseToken, orderbook.quoteToken, { fee: this.fee() })
 
     // Create a copy here so original orders stay untouched
     const left_asks = Array.from(this.asks.values(), (o) => o.clone())
@@ -263,18 +230,14 @@ export class Orderbook {
       const left_offer = left_next.value
       const price = left_offer.price.mul(right_offer.price)
       let volume
-      const right_offer_volume_in_left_offer_base_token = right_offer.volume.div(
-        left_offer.price
-      )
+      const right_offer_volume_in_left_offer_base_token = right_offer.volume.div(left_offer.price)
       if (left_offer.volume.gt(right_offer_volume_in_left_offer_base_token)) {
         volume = right_offer_volume_in_left_offer_base_token
         left_offer.volume = left_offer.volume.sub(volume)
         right_next = right_iterator.next()
       } else {
         volume = left_offer.volume
-        right_offer.volume = right_offer.volume.sub(
-          volume.mul(left_offer.price)
-        )
+        right_offer.volume = right_offer.volume.sub(volume.mul(left_offer.price))
         left_next = left_iterator.next()
         // In case the orders matched perfectly we will move right as well
         if (right_offer.volume.isZero()) {
@@ -300,19 +263,19 @@ export class Orderbook {
 }
 
 export interface OrderbookToJson {
-  baseToken: string;
-  quoteToken: string;
-  remainingFractionAfterFee: Fraction;
-  asks: Record<string, Offer>;
-  bids: Record<string, Offer>;
+  baseToken: string
+  quoteToken: string
+  remainingFractionAfterFee: Fraction
+  asks: Record<string, Offer>
+  bids: Record<string, Offer>
 }
 
 export interface OrderbookJson {
-  baseToken: string;
-  quoteToken: string;
-  remainingFractionAfterFee: FractionJson;
-  asks: Record<string, OfferJson>;
-  bids: Record<string, OfferJson>;
+  baseToken: string
+  quoteToken: string
+  remainingFractionAfterFee: FractionJson
+  asks: Record<string, OfferJson>
+  bids: Record<string, OfferJson>
 }
 
 /**
@@ -356,13 +319,7 @@ export function transitiveOrderbook(
     }
   })
 
-  return transitiveOrderbookRecursive(
-    complete_orderbooks,
-    base,
-    quote,
-    hops,
-    []
-  )
+  return transitiveOrderbookRecursive(complete_orderbooks, base, quote, hops, [])
 }
 
 function transitiveOrderbookRecursive(
@@ -386,18 +343,8 @@ function transitiveOrderbookRecursive(
   // Check for each orderbook that starts with same baseToken, if there exists a connecting book.
   // If yes, build transitive closure
   orderbooks.forEach((book) => {
-    if (
-      book.baseToken === base &&
-      !(book.quoteToken === quote) &&
-      !ignore.includes(book.quoteToken)
-    ) {
-      const otherBook = transitiveOrderbookRecursive(
-        orderbooks,
-        book.quoteToken,
-        quote,
-        hops - 1,
-        ignore.concat(book.baseToken)
-      )
+    if (book.baseToken === base && !(book.quoteToken === quote) && !ignore.includes(book.quoteToken)) {
+      const otherBook = transitiveOrderbookRecursive(orderbooks, book.quoteToken, quote, hops - 1, ignore.concat(book.baseToken))
       const closure = book.transitiveClosure(otherBook)
       result.add(closure)
     }
@@ -412,10 +359,7 @@ function addOffer(offer: Offer, existingOffers: Map<number, Offer>): void {
   if ((current_offer_at_price = existingOffers.get(price))) {
     current_volume_at_price = current_offer_at_price.volume
   }
-  existingOffers.set(
-    price,
-    new Offer(offer.price, offer.volume.add(current_volume_at_price))
-  )
+  existingOffers.set(price, new Offer(offer.price, offer.volume.add(current_volume_at_price)))
 }
 
 function sortOffersAscending(left: Offer, right: Offer): number {
@@ -443,19 +387,13 @@ function priceToCoverAmount(amount: Fraction, offers: Offer[]): Fraction | undef
   return undefined
 }
 
-function invertPricePoints(
-  prices: Map<number, Offer>,
-  priceAdjustmentForFee: Fraction
-): Map<number, Offer> {
+function invertPricePoints(prices: Map<number, Offer>, priceAdjustmentForFee: Fraction): Map<number, Offer> {
   return new Map(
     Array.from(prices.entries()).map(([, offer]) => {
       const inverted_price = offer.price.inverted()
       const price_before_fee = offer.price.mul(priceAdjustmentForFee)
       const inverted_volume = offer.volume.mul(price_before_fee)
-      return [
-        inverted_price.toNumber(),
-        new Offer(inverted_price, inverted_volume),
-      ]
+      return [inverted_price.toNumber(), new Offer(inverted_price, inverted_volume)]
     })
   )
 }
@@ -470,6 +408,8 @@ function offersFromJSON(o: Record<string, OfferJson>): Map<number, Offer> {
 
 function offersToJSON(offers: Map<number, Offer>): Record<string, Offer> {
   const o: Record<string, Offer> = {}
-  offers.forEach((value, key) => { o[key] = value })
+  offers.forEach((value, key) => {
+    o[key] = value
+  })
   return o
 }
