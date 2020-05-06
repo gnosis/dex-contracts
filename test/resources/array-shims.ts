@@ -6,16 +6,17 @@
  *                           struction should be flattened. Defaults to 1.
  * @return {[]} A new array with the sub-array elements concatenated to it.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function flat(arr: any[], depth = 1): any[] {
   // implementation taken from
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat#Alternative
   return depth > 0
     ? arr.reduce(
-        (acc, val) =>
-          acc.concat(Array.isArray(val) ? flat(val, depth - 1) : val),
-        []
-      )
-    : arr.slice();
+      (acc, val) =>
+        acc.concat(Array.isArray(val) ? flat(val, depth - 1) : val),
+      []
+    )
+    : arr.slice()
 }
 
 /**
@@ -23,6 +24,6 @@ export function flat(arr: any[], depth = 1): any[] {
  * @param arr The array.
  * @return A new array containing only unique elements.
  */
-export function dedupe(arr: any[]) {
-  return Array.from(new Set(arr));
+export function dedupe<T>(arr: T[]): T[] {
+  return Array.from(new Set(arr))
 }

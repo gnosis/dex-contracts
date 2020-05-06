@@ -24,12 +24,12 @@ interface Account {
    * Pending withdrawal amounts are not included in this balance although they
    * affect the available balance of the account.
    */
-  balances: Map<Address, bigint>,
+  balances: Map<Address, bigint>;
 
   /**
    * Mapping from a token address to a pending withdrawal.
    */
-  pendingWithdrawals: Map<Address, PendingWithdrawal>,
+  pendingWithdrawals: Map<Address, PendingWithdrawal>;
 
   /**
    * All user orders including valid, invalid, cancelled and deleted orders.
@@ -38,7 +38,7 @@ interface Account {
    * Since user order IDs increase by 1 for each new order, an order can be
    * retrieved by ID for an account with `account.orders[orderId]`.
    */
-  orders: Order[],
+  orders: Order[];
 }
 
 /**
@@ -50,25 +50,25 @@ interface PendingWithdrawal {
    * longer included in the account's available balance and up to the amount can
    * be withdrawn by the user.
    */
-  batchId: number,
+  batchId: number;
 
   /**
    * The requested withdrawal amount.
    */
-  amount: bigint,
+  amount: bigint;
 }
 
 /**
  * Internal representation of an order.
  */
 interface Order {
-  buyToken: TokenId,
-  sellToken: TokenId,
-  validFrom: number,
-  validUntil: number | null,
-  priceNumerator: bigint,
-  priceDenominator: bigint,
-  remainingAmount: bigint,
+  buyToken: TokenId;
+  sellToken: TokenId;
+  validFrom: number;
+  validUntil: number | null;
+  priceNumerator: bigint;
+  priceDenominator: bigint;
+  remainingAmount: bigint;
 }
 
 /**
@@ -80,33 +80,33 @@ const UNLIMITED_ORDER_AMOUNT = BigInt(2 ** 128) - BigInt(1)
  * JSON representation of the account state.
  */
 export interface AuctionStateJson {
-  tokens: { [key: string]: string },
+  tokens: { [key: string]: string };
   accounts: {
     [key: string]: {
-      balances: { [key: string]: string },
-      pendingWithdrawals: { [key: string]: { batchId: number, amount: string } },
+      balances: { [key: string]: string };
+      pendingWithdrawals: { [key: string]: { batchId: number; amount: string } };
       orders: {
-        buyToken: TokenId,
-        sellToken: TokenId,
-        validFrom: number,
-        validUntil: number | null,
-        priceNumerator: string,
-        priceDenominator: string,
-        remainingAmount: string,
-      }[],
-    }
-  },
+        buyToken: TokenId;
+        sellToken: TokenId;
+        validFrom: number;
+        validUntil: number | null;
+        priceNumerator: string;
+        priceDenominator: string;
+        remainingAmount: string;
+      }[];
+    };
+  };
 }
 
 /**
  * Manage the exchange's auction state by incrementally applying events.
  */
 export class AuctionState {
-  private lastBlock: number = -1;
+  private lastBlock = -1;
 
   private readonly tokens: Map<TokenId, Address> = new Map();
   private readonly accounts: Map<Address, Account> = new Map();
-  private lastSolution?: { submitter: Address, burntFees: bigint };
+  private lastSolution?: { submitter: Address; burntFees: bigint };
 
   constructor(
     private readonly options: OrderbookOptions,
@@ -314,7 +314,7 @@ export class AuctionState {
     } else {
       const tokenAddr = this.tokens.get(token)
       assert(tokenAddr, `missing token ${token}`)
-      return tokenAddr!
+      return tokenAddr as Address
     }
   }
 
@@ -475,7 +475,7 @@ function assertEventsAreAfterBlockAndOrdered(block: number, events: EventData[])
  *
  * @throws If an account has an invalid amount.
  */
-function assertAccountsAreValid(blockNumber: number, accounts: Iterable<[Address, Account]>) {
+function assertAccountsAreValid(blockNumber: number, accounts: Iterable<[Address, Account]>): void {
   for (const [user, { balances, orders }] of accounts) {
     for (const [token, balance] of balances.entries()) {
       assert(
