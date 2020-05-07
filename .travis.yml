@@ -11,8 +11,6 @@ before_script:
   - yarn run ganache > /dev/null &
 script:
   - yarn lint
-  - yarn solhint
-  - yarn pretty-check
   - yarn build
   - solium -d contracts/
   - yarn coverage && cat ./coverage/lcov.info | coveralls

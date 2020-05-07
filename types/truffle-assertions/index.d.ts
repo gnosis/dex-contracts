@@ -3,8 +3,8 @@
  */
 
 declare module "truffle-assertions" {
-  import "@openeth/truffle-typings"
-  import { TransactionReceipt } from "web3-core"
+  import "@openeth/truffle-typings";
+  import { TransactionReceipt } from "web3-core";
 
   class InvalidTxResultError extends Error {}
 
@@ -22,7 +22,7 @@ declare module "truffle-assertions" {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  type FilterOrObject = ((data: any) => boolean) | any
+  type FilterOrObject = ((data: any) => boolean) | any;
 
   interface TruffleAssert {
     eventEmitted: (
@@ -37,20 +37,28 @@ declare module "truffle-assertions" {
       filterOrObject?: FilterOrObject,
       message?: string,
     ) => void;
-    prettyPrintEmittedEvents: (result: TransactionResult, indentationSize: number) => void;
+    prettyPrintEmittedEvents: (
+      result: TransactionResult,
+      indentationSize: number,
+    ) => void;
     createTransactionResult: <T>(
       contract: Truffle.Contract<T>,
       transactionHash: string,
     ) => TransactionResult;
 
     passes: (asyncFn: Promise<{}>, message?: string) => void;
-    fails: (asyncFn: Promise<{}>, errorType: ErrorType, reason?: string, message?: string) => void;
+    fails: (
+      asyncFn: Promise<{}>,
+      errorType: ErrorType,
+      reason?: string,
+      message?: string,
+    ) => void;
     reverts: (asyncFn: Promise<{}>, reason?: string, message?: string) => void;
 
     ErrorType: ErrorType;
     InvalidTxResultError: InvalidTxResultError;
   }
 
-  const truffleAssert: TruffleAssert
-  export = truffleAssert
+  const truffleAssert: TruffleAssert;
+  export = truffleAssert;
 }

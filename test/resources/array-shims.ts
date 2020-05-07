@@ -12,11 +12,11 @@ export function flat(arr: any[], depth = 1): any[] {
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/flat#Alternative
   return depth > 0
     ? arr.reduce(
-      (acc, val) =>
-        acc.concat(Array.isArray(val) ? flat(val, depth - 1) : val),
-      []
-    )
-    : arr.slice()
+        (acc, val) =>
+          acc.concat(Array.isArray(val) ? flat(val, depth - 1) : val),
+        [],
+      )
+    : arr.slice();
 }
 
 /**
@@ -25,5 +25,5 @@ export function flat(arr: any[], depth = 1): any[] {
  * @return A new array containing only unique elements.
  */
 export function dedupe<T>(arr: T[]): T[] {
-  return Array.from(new Set(arr))
+  return Array.from(new Set(arr));
 }
