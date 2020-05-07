@@ -1,13 +1,13 @@
-import { Contract, EventData } from "web3-eth-contract"
-import { ContractEvent } from "../../build/types/types"
+import { Contract, EventData } from "web3-eth-contract";
+import { ContractEvent } from "../../build/types/types";
 
 /**
  * Event data type specified by name.
  */
 export type Event<
   C extends Contract,
-  T extends Exclude<keyof C["events"], "allEvents">,
-> = EventValues<C["events"][T]>
+  T extends Exclude<keyof C["events"], "allEvents">
+> = EventValues<C["events"][T]>;
 
 /**
  * Concrete event type with known properties based on the event name.
@@ -31,15 +31,21 @@ export type Event<
  * }
  * ```
  */
-export type AnyEvent<C extends Contract> = EventMetadata & EventDiscriminant<C, Exclude<keyof C["events"], "allEvents">>
+export type AnyEvent<C extends Contract> = EventMetadata &
+  EventDiscriminant<C, Exclude<keyof C["events"], "allEvents">>;
 
-export type EventMetadata = Omit<EventData, "event" | "returnValues">
-export type EventName<C extends Contract> = Exclude<keyof C["events"], "allEvents">
-export type EventValues<T> = T extends ContractEvent<infer U> ? U : never
+export type EventMetadata = Omit<EventData, "event" | "returnValues">;
+export type EventName<C extends Contract> = Exclude<
+  keyof C["events"],
+  "allEvents"
+>;
+export type EventValues<T> = T extends ContractEvent<infer U> ? U : never;
 export type EventDiscriminant<
   C extends Contract,
-  T extends EventName<C>,
-> = T extends {} ? {
-  event: T;
-  returnValues: EventValues<C["events"][T]>;
-} : never
+  T extends EventName<C>
+> = T extends {}
+  ? {
+      event: T;
+      returnValues: EventValues<C["events"][T]>;
+    }
+  : never;

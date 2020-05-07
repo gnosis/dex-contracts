@@ -4,4 +4,4 @@
 
 /// <reference types="../../build/truffle-typings/merge" />
 
-export * from "../../build/truffle-typings"
+export * from "../../build/truffle-typings";
