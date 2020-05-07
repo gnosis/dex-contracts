@@ -19,7 +19,6 @@ module.exports = {
   },
   plugins: ["@typescript-eslint", "prettier"],
   rules: {
-    "linebreak-style": ["error", "unix"],
     "no-console": "error",
 
     "@typescript-eslint/camelcase": "off",
