@@ -1,16 +1,23 @@
 module.exports = {
+  // NOTE: This is actually the default value but it is being overwritten by
+  // the solidity plugin somehow.
   bracketSpacing: true,
-  printWidth: 129,
-  semi: false,
-  trailingComma: "es5",
+  trailingComma: "all",
 
   overrides: [
     {
       files: "*.sol",
       options: {
         bracketSpacing: false,
-        explicitTypes: "always",
-        tabWidth: 4,
+        printWidth: 129,
+      },
+    },
+    {
+      files: "*.js",
+      options: {
+        printWidth: 129,
+        semi: false,
+        trailingComma: "es5",
       },
     },
   ],
