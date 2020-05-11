@@ -64,14 +64,10 @@ export interface OrderbookOptions {
   strict: boolean;
 
   /**
-   * Set the logger to be used by the streamed orderbook module.
+   * Set logging function for debug messages used by the streamed orderbook
+   * module.
    */
-  logger?: {
-    debug: (...args: {}[]) => void;
-    log: (...args: {}[]) => void;
-    warn: (...args: {}[]) => void;
-    error: (...args: {}[]) => void;
-  };
+  debug: (msg: string) => void;
 }
 
 /**
@@ -81,6 +77,9 @@ export const DEFAULT_ORDERBOOK_OPTIONS: OrderbookOptions = {
   blockPageSize: 10000,
   blockConfirmations: 6,
   strict: false,
+  debug: () => {
+    return;
+  },
 };
 
 /**
@@ -165,12 +164,10 @@ export class StreamedOrderbook {
         endBlock,
       );
 
-      this.options.logger?.debug(
-        `fetching past events from ${fromBlock}-${toBlock}`,
-      );
+      this.options.debug(`fetching past events from ${fromBlock}-${toBlock}`);
       const events = await this.getPastEvents({ fromBlock, toBlock });
 
-      this.options.logger?.debug(`applying ${events.length} past events`);
+      this.options.debug(`applying ${events.length} past events`);
       this.confirmedState.applyEvents(events);
     }
     this.batch = await this.getBatchId(endBlock);
@@ -195,7 +192,7 @@ export class StreamedOrderbook {
     this.throwOnInvalidState();
 
     const fromBlock = this.confirmedState.nextBlock;
-    this.options.logger?.debug(`fetching new events from ${fromBlock}-latest`);
+    this.options.debug(`fetching new events from ${fromBlock}-latest`);
     const events = await this.getPastEvents({ fromBlock });
 
     // NOTE: If the web3 instance is connected to nodes behind a load balancer,
@@ -222,19 +219,19 @@ export class StreamedOrderbook {
     const confirmedEvents = events.slice(0, confirmedEventCount);
     const latestEvents = events.slice(confirmedEventCount);
 
-    this.options.logger?.debug(
+    this.options.debug(
       `applying ${confirmedEvents.length} confirmed events until block ${confirmedBlock}`,
     );
     try {
       this.confirmedState.applyEvents(confirmedEvents);
     } catch (err) {
       this.invalidState = new InvalidAuctionStateError(confirmedBlock, err);
-      this.options.logger?.error(this.invalidState.message);
+      this.options.debug(this.invalidState.message);
       throw this.invalidState;
     }
 
     this.latestState = undefined;
-    this.options.logger?.debug(
+    this.options.debug(
       `reapplying ${latestEvents.length} latest events until block ${latestBlock}`,
     );
     if (latestEvents.length > 0) {
