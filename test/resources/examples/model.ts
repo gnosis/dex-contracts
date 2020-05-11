@@ -77,3 +77,12 @@ export interface TestCase {
   orders: Order[];
   solutions: ComputedSolution[];
 }
+
+export interface SolutionSubmission {
+  objectiveValue: BN;
+  owners: string[];
+  touchedorderIds: number[];
+  volumes: BN[];
+  prices: BN[];
+  tokenIdsForPrice: number[];
+}

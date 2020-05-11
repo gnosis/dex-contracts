@@ -1,5 +1,6 @@
-const TokenConservationWrapper = artifacts.require("TokenConservationWrapper");
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const truffleAssert = require("truffle-assertions");
+const TokenConservationWrapper = artifacts.require("TokenConservationWrapper");
 
 contract("TokenConservation", async () => {
   describe("checkTokenConservation()", () => {
@@ -13,7 +14,7 @@ contract("TokenConservation", async () => {
       const tokenConservation = await TokenConservationWrapper.new();
       const testArray = [0, 1];
       await truffleAssert.reverts(
-        tokenConservation.checkTokenConservationTest(testArray)
+        tokenConservation.checkTokenConservationTest(testArray),
         // Error message would be: "Token conservation does not hold", but coverage tool will not recognize
       );
     });
@@ -22,7 +23,7 @@ contract("TokenConservation", async () => {
       const testArray = [-1];
       await truffleAssert.reverts(
         tokenConservation.checkTokenConservationTest(testArray),
-        "Token conservation at 0 must be positive"
+        "Token conservation at 0 must be positive",
       );
     });
   });
@@ -32,12 +33,12 @@ contract("TokenConservation", async () => {
       assert.equal(
         await tokenConservation.checkPriceOrdering([1, 0]),
         false,
-        "Failed on [1, 0]"
+        "Failed on [1, 0]",
       );
       assert.equal(
         await tokenConservation.checkPriceOrdering([1, 3, 2]),
         false,
-        "Failed on [1, 3, 2]"
+        "Failed on [1, 3, 2]",
       );
     });
     it("returns false when not unique", async () => {
@@ -45,7 +46,7 @@ contract("TokenConservation", async () => {
       assert.equal(
         await tokenConservation.checkPriceOrdering([1, 1]),
         false,
-        "Failed on [1, 1]"
+        "Failed on [1, 1]",
       );
     });
     it("returns true when ordered", async () => {
@@ -53,12 +54,12 @@ contract("TokenConservation", async () => {
       assert.equal(
         await tokenConservation.checkPriceOrdering([0, 1]),
         true,
-        "Failed on [0, 1]"
+        "Failed on [0, 1]",
       );
       assert.equal(
         await tokenConservation.checkPriceOrdering([1, 2, 3]),
         true,
-        "Failed on [1, 2, 3]"
+        "Failed on [1, 2, 3]",
       );
     });
   });
@@ -80,9 +81,9 @@ contract("TokenConservation", async () => {
           sellToken,
           tokenIdsForPrice,
           buyAmount,
-          sellAmount
+          sellAmount,
         )
-      ).map((a) => a.toNumber());
+      ).map((a: BN) => a.toNumber());
       const expectedArray = [0, 3, -10, 0];
       assert.deepEqual(updatedArray, expectedArray);
 
@@ -93,9 +94,9 @@ contract("TokenConservation", async () => {
           3,
           tokenIdsForPrice,
           1,
-          2
+          2,
         )
-      ).map((a) => a.toNumber());
+      ).map((a: BN) => a.toNumber());
       assert.deepEqual([0, 0, -1, 2], secondUpdatedArray);
     });
     it("throws, if findPriceIndex does not find the token, as it is not supplied", async () => {
@@ -116,8 +117,8 @@ contract("TokenConservation", async () => {
           sellToken,
           tokenIdsForPrice,
           buyAmount,
-          sellAmount
-        )
+          sellAmount,
+        ),
         // Error message would be: "Price not provided for token", but coverage tool will not recognize
       );
     });

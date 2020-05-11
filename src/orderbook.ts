@@ -1,4 +1,4 @@
-import { Fraction } from "./fraction";
+import { Fraction, FractionJson } from "./fraction";
 import BN from "bn.js";
 
 export class Offer {
@@ -14,17 +14,22 @@ export class Offer {
     this.price = price;
   }
 
-  clone() {
+  clone(): Offer {
     return new Offer(this.price.clone(), this.volume.clone());
   }
 
-  static fromJSON(o: any): Offer {
+  static fromJSON(o: OfferJson): Offer {
     return new Offer(Fraction.fromJSON(o.price), Fraction.fromJSON(o.volume));
   }
 }
 
+export interface OfferJson {
+  price: FractionJson;
+  volume: FractionJson;
+}
+
 type Fee = { fee: Fraction };
-type RemainingFractionAfterFee = { remainingFractionAfterFee: Fraction }
+type RemainingFractionAfterFee = { remainingFractionAfterFee: Fraction };
 
 export class Orderbook {
   readonly baseToken: string;
@@ -49,7 +54,7 @@ export class Orderbook {
     this.bids = new Map();
   }
 
-  getOffers() {
+  getOffers(): { bids: Offer[]; asks: Offer[] } {
     const asks = Array.from(this.asks.values());
     const bids = Array.from(this.bids.values());
     asks.sort(sortOffersAscending);
@@ -57,41 +62,46 @@ export class Orderbook {
     return { bids, asks };
   }
 
-  toJSON() {
+  toJSON(): OrderbookToJson {
     return {
       baseToken: this.baseToken,
       quoteToken: this.quoteToken,
       remainingFractionAfterFee: this.remainingFractionAfterFee,
       asks: offersToJSON(this.asks),
-      bids: offersToJSON(this.bids)
+      bids: offersToJSON(this.bids),
     };
   }
 
-  static fromJSON(o: any): Orderbook {
-    const result = new Orderbook(o.baseToken, o.quoteToken, { remainingFractionAfterFee: Fraction.fromJSON(o.remainingFractionAfterFee) });
+  static fromJSON(o: OrderbookJson): Orderbook {
+    const remainingFractionAfterFee = Fraction.fromJSON(
+      o.remainingFractionAfterFee,
+    );
+    const result = new Orderbook(o.baseToken, o.quoteToken, {
+      remainingFractionAfterFee,
+    });
     result.asks = offersFromJSON(o.asks);
     result.bids = offersFromJSON(o.bids);
     return result;
   }
 
-  pair() {
+  pair(): string {
     return `${this.baseToken}/${this.quoteToken}`;
   }
 
-  addBid(bid: Offer) {
+  addBid(bid: Offer): void {
     // For bids the effective price after fee becomes smaller
     const offer = new Offer(
       bid.price.mul(this.remainingFractionAfterFee),
-      bid.volume.mul(this.remainingFractionAfterFee)
+      bid.volume.mul(this.remainingFractionAfterFee),
     );
     addOffer(offer, this.bids);
   }
 
-  addAsk(ask: Offer) {
+  addAsk(ask: Offer): void {
     // For asks the effective price after fee becomes larger
     const offer = new Offer(
       ask.price.div(this.remainingFractionAfterFee),
-      ask.volume.mul(this.remainingFractionAfterFee)
+      ask.volume.mul(this.remainingFractionAfterFee),
     );
     addOffer(offer, this.asks);
   }
@@ -100,12 +110,14 @@ export class Orderbook {
    * @returns the inverse of the current order book (e.g. ETH/DAI becomes DAI/ETH)
    * by switching bids/asks and recomputing price/volume to the new reference token.
    */
-  inverted() {
-    const result = new Orderbook(this.quoteToken, this.baseToken, { fee: this.fee() });
+  inverted(): Orderbook {
+    const result = new Orderbook(this.quoteToken, this.baseToken, {
+      fee: this.fee(),
+    });
     result.bids = invertPricePoints(this.asks, this.remainingFractionAfterFee);
     result.asks = invertPricePoints(
       this.bids,
-      this.remainingFractionAfterFee.inverted()
+      this.remainingFractionAfterFee.inverted(),
     );
 
     return result;
@@ -115,10 +127,10 @@ export class Orderbook {
    * In-place adds the given orderbook to the current one, combining all bids and asks at the same price point
    * @param orderbook the orderbook to be added to this one
    */
-  add(orderbook: Orderbook) {
+  add(orderbook: Orderbook): void {
     if (orderbook.pair() != this.pair()) {
       throw new Error(
-        `Cannot add ${orderbook.pair()} orderbook to ${this.pair()} orderbook`
+        `Cannot add ${orderbook.pair()} orderbook to ${this.pair()} orderbook`,
       );
     }
     orderbook.bids.forEach((bid) => {
@@ -133,7 +145,7 @@ export class Orderbook {
    * @param amount the amount of base tokens to be sold
    * @return the price for which there are enough bids to fill the specified amount or undefined if there is not enough liquidity
    */
-  priceToSellBaseToken(amount: number | BN) {
+  priceToSellBaseToken(amount: number | BN): Fraction | undefined {
     const bids = Array.from(this.bids.values());
     bids.sort(sortOffersDescending);
     const price_before_fee = priceToCoverAmount(new Fraction(amount, 1), bids);
@@ -145,7 +157,7 @@ export class Orderbook {
    * @param amount the amount of base tokens to be bought
    * @return the price for which there are enough asks to fill the specified amount or undefined if there is not enough liquidity
    */
-  priceToBuyBaseToken(amount: number | BN) {
+  priceToBuyBaseToken(amount: number | BN): Fraction | undefined {
     const asks = Array.from(this.asks.values());
     asks.sort(sortOffersAscending);
     const price_before_fee = priceToCoverAmount(new Fraction(amount, 1), asks);
@@ -157,7 +169,7 @@ export class Orderbook {
    * Removes any overlapping bid/asks which could be matched in the current orderbook
    * @return A new instance of the orderbook with no more overlapping orders.
    */
-  reduced() {
+  reduced(): Orderbook {
     const result = new Orderbook(this.baseToken, this.quoteToken);
 
     const bids = Array.from(this.bids.values());
@@ -178,13 +190,13 @@ export class Orderbook {
       if (best_bid.value.volume.gt(best_ask.value.volume)) {
         best_bid.value = new Offer(
           best_bid.value.price,
-          best_bid.value.volume.sub(best_ask.value.volume)
+          best_bid.value.volume.sub(best_ask.value.volume),
         );
         best_ask = ask_iterator.next();
       } else {
         best_ask.value = new Offer(
           best_ask.value.price,
-          best_ask.value.volume.sub(best_bid.value.volume)
+          best_ask.value.volume.sub(best_bid.value.volume),
         );
         best_bid = bid_iterator.next();
         // In case the orders matched perfectly we will move ask as well
@@ -211,10 +223,10 @@ export class Orderbook {
    * @param orderbook The orderbook for which the transitive closure will be computed
    * @returns A new instance of an orderbook representing the resulting closure.
    */
-  transitiveClosure(orderbook: Orderbook) {
+  transitiveClosure(orderbook: Orderbook): Orderbook {
     if (orderbook.baseToken != this.quoteToken) {
       throw new Error(
-        `Cannot compute transitive closure of ${this.pair()} orderbook and ${orderbook.pair()} orderbook`
+        `Cannot compute transitive closure of ${this.pair()} orderbook and ${orderbook.pair()} orderbook`,
       );
     }
 
@@ -233,12 +245,10 @@ export class Orderbook {
     return ask_closure;
   }
 
-  private transitiveAskClosure(orderbook: Orderbook) {
-    const result = new Orderbook(
-      this.baseToken,
-      orderbook.quoteToken,
-      { fee: this.fee() }
-    );
+  private transitiveAskClosure(orderbook: Orderbook): Orderbook {
+    const result = new Orderbook(this.baseToken, orderbook.quoteToken, {
+      fee: this.fee(),
+    });
 
     // Create a copy here so original orders stay untouched
     const left_asks = Array.from(this.asks.values(), (o) => o.clone());
@@ -258,7 +268,7 @@ export class Orderbook {
       const price = left_offer.price.mul(right_offer.price);
       let volume;
       const right_offer_volume_in_left_offer_base_token = right_offer.volume.div(
-        left_offer.price
+        left_offer.price,
       );
       if (left_offer.volume.gt(right_offer_volume_in_left_offer_base_token)) {
         volume = right_offer_volume_in_left_offer_base_token;
@@ -267,7 +277,7 @@ export class Orderbook {
       } else {
         volume = left_offer.volume;
         right_offer.volume = right_offer.volume.sub(
-          volume.mul(left_offer.price)
+          volume.mul(left_offer.price),
         );
         left_next = left_iterator.next();
         // In case the orders matched perfectly we will move right as well
@@ -281,16 +291,34 @@ export class Orderbook {
     return result;
   }
 
-  fee() {
+  fee(): Fraction {
     return new Fraction(1, 1).sub(this.remainingFractionAfterFee);
   }
 
-  clone() {
-    const result = new Orderbook(this.baseToken, this.quoteToken, { fee: this.fee() });
+  clone(): Orderbook {
+    const result = new Orderbook(this.baseToken, this.quoteToken, {
+      fee: this.fee(),
+    });
     this.bids.forEach((o) => addOffer(o, result.bids));
     this.asks.forEach((o) => addOffer(o, result.asks));
     return result;
   }
+}
+
+export interface OrderbookToJson {
+  baseToken: string;
+  quoteToken: string;
+  remainingFractionAfterFee: Fraction;
+  asks: Record<string, Offer>;
+  bids: Record<string, Offer>;
+}
+
+export interface OrderbookJson {
+  baseToken: string;
+  quoteToken: string;
+  remainingFractionAfterFee: FractionJson;
+  asks: Record<string, OfferJson>;
+  bids: Record<string, OfferJson>;
 }
 
 /**
@@ -305,8 +333,8 @@ export function transitiveOrderbook(
   direct_orderbooks: Map<string, Orderbook>,
   base: string,
   quote: string,
-  hops: number
-) {
+  hops: number,
+): Orderbook {
   const complete_orderbooks = new Map();
   direct_orderbooks.forEach((book) => {
     complete_orderbooks.set(book.pair(), book.clone());
@@ -324,10 +352,12 @@ export function transitiveOrderbook(
 
     // Only update one of the two sides
     if (pair > inverse_pair) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       complete_orderbooks.get(inverse_pair)!.add(inverse);
       complete_orderbooks.set(
         pair,
-        complete_orderbooks.get(inverse_pair)!.inverted()
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        complete_orderbooks.get(inverse_pair)!.inverted(),
       );
     }
   });
@@ -337,7 +367,7 @@ export function transitiveOrderbook(
     base,
     quote,
     hops,
-    []
+    [],
   );
 }
 
@@ -346,8 +376,8 @@ function transitiveOrderbookRecursive(
   base: string,
   quote: string,
   hops: number,
-  ignore: string[]
-) {
+  ignore: string[],
+): Orderbook {
   const result = new Orderbook(base, quote);
   // Add the direct book if it exists
   const orderbook = orderbooks.get(result.pair());
@@ -372,7 +402,7 @@ function transitiveOrderbookRecursive(
         book.quoteToken,
         quote,
         hops - 1,
-        ignore.concat(book.baseToken)
+        ignore.concat(book.baseToken),
       );
       const closure = book.transitiveClosure(otherBook);
       result.add(closure);
@@ -381,7 +411,7 @@ function transitiveOrderbookRecursive(
   return result;
 }
 
-function addOffer(offer: Offer, existingOffers: Map<number, Offer>) {
+function addOffer(offer: Offer, existingOffers: Map<number, Offer>): void {
   const price = offer.price.toNumber();
   let current_offer_at_price;
   let current_volume_at_price = new Fraction(0, 1);
@@ -390,11 +420,11 @@ function addOffer(offer: Offer, existingOffers: Map<number, Offer>) {
   }
   existingOffers.set(
     price,
-    new Offer(offer.price, offer.volume.add(current_volume_at_price))
+    new Offer(offer.price, offer.volume.add(current_volume_at_price)),
   );
 }
 
-function sortOffersAscending(left: Offer, right: Offer) {
+function sortOffersAscending(left: Offer, right: Offer): number {
   if (left.price.gt(right.price)) {
     return 1;
   } else if (left.price.lt(right.price)) {
@@ -404,11 +434,14 @@ function sortOffersAscending(left: Offer, right: Offer) {
   }
 }
 
-function sortOffersDescending(left: Offer, right: Offer) {
+function sortOffersDescending(left: Offer, right: Offer): number {
   return sortOffersAscending(left, right) * -1;
 }
 
-function priceToCoverAmount(amount: Fraction, offers: Offer[]) {
+function priceToCoverAmount(
+  amount: Fraction,
+  offers: Offer[],
+): Fraction | undefined {
   for (const offer of offers) {
     if (offer.volume.lt(amount)) {
       amount = amount.sub(offer.volume);
@@ -421,10 +454,10 @@ function priceToCoverAmount(amount: Fraction, offers: Offer[]) {
 
 function invertPricePoints(
   prices: Map<number, Offer>,
-  priceAdjustmentForFee: Fraction
-) {
+  priceAdjustmentForFee: Fraction,
+): Map<number, Offer> {
   return new Map(
-    Array.from(prices.entries()).map(([_, offer]) => {
+    Array.from(prices.entries()).map(([, offer]) => {
       const inverted_price = offer.price.inverted();
       const price_before_fee = offer.price.mul(priceAdjustmentForFee);
       const inverted_volume = offer.volume.mul(price_before_fee);
@@ -432,21 +465,22 @@ function invertPricePoints(
         inverted_price.toNumber(),
         new Offer(inverted_price, inverted_volume),
       ];
-    })
+    }),
   );
 }
 
-
-function offersFromJSON(o: any): Map<number, Offer> {
+function offersFromJSON(o: Record<string, OfferJson>): Map<number, Offer> {
   const offers = new Map();
-  for (let [key, value] of Object.entries(o)) {
+  for (const [key, value] of Object.entries(o)) {
     offers.set(key, Offer.fromJSON(value));
   }
   return offers;
 }
 
-function offersToJSON(offers: Map<number, Offer>): object {
-  const o: any = {};
-  offers.forEach((value, key) => { o[key] = value; });
+function offersToJSON(offers: Map<number, Offer>): Record<string, Offer> {
+  const o: Record<string, Offer> = {};
+  offers.forEach((value, key) => {
+    o[key] = value;
+  });
   return o;
 }

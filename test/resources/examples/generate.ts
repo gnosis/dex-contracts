@@ -5,13 +5,14 @@ import {
   getExecutedSellAmount,
   solutionObjectiveValueComputation,
 } from "../math.js";
-import {flat, dedupe} from "../array-shims.js";
+import { flat, dedupe } from "../array-shims.js";
 import {
   TestCase,
   TestCaseInput,
   ObjectiveValueComputation,
   ComputedSolution,
   ComputedOrder,
+  SolutionSubmission,
 } from "./model";
 
 /**
@@ -25,9 +26,9 @@ import {
 export function generateTestCase(
   input: TestCaseInput,
   strict = true,
-  debug = false
+  debug = false,
 ): TestCase {
-  const {name, orders, solutions} = input;
+  const { name, orders, solutions } = input;
 
   return {
     name,
@@ -48,14 +49,14 @@ export function generateTestCase(
           objectiveValue = solutionObjectiveValueComputation(
             orders,
             solution,
-            strict
+            strict,
           );
         } catch (err) {
           if (strict && debug) {
             const invalidObjectiveValue = solutionObjectiveValueComputation(
               orders,
               solution,
-              false
+              false,
             );
             debugObjectiveValueComputation(invalidObjectiveValue);
           }
@@ -73,11 +74,11 @@ export function generateTestCase(
                   sell: getExecutedSellAmount(
                     solution.buyVolumes[i],
                     solution.prices[o.buyToken],
-                    solution.prices[o.sellToken]
+                    solution.prices[o.sellToken],
                   ),
                   utility: objectiveValue.utilities[i],
                   disregardedUtility: objectiveValue.disregardedUtilities[i],
-                }
+                },
           )
           .filter((o): o is ComputedOrder => !!o);
         return {
@@ -86,8 +87,8 @@ export function generateTestCase(
             flat(
               touchedOrders
                 .map((o) => orders[o.idx])
-                .map((o) => [o.buyToken, o.sellToken])
-            )
+                .map((o) => [o.buyToken, o.sellToken]),
+            ),
           )
             .sort((a, b) => a - b)
             .map((i) => ({
@@ -102,7 +103,7 @@ export function generateTestCase(
           burntFees: objectiveValue.burntFees,
           objectiveValue: objectiveValue.result,
         };
-      }
+      },
     ),
   };
 }
@@ -116,22 +117,22 @@ export function generateTestCase(
 export function debugTestCase(
   testCase: TestCase,
   orderIds: number[],
-  accounts: string[]
-) {
+  accounts: string[],
+): void {
   assert(
     orderIds === undefined || Array.isArray(orderIds),
-    "orderIds is not an array"
+    "orderIds is not an array",
   );
   assert(
     accounts === undefined || Array.isArray(accounts),
-    "accounts is not an array"
+    "accounts is not an array",
   );
 
   const userCount = Math.max(...testCase.orders.map((o) => o.user)) + 1;
   orderIds = orderIds || testCase.orders.map((_, i) => i);
   accounts =
     accounts ||
-    (() => {
+    ((): string[] => {
       const accounts = [];
       for (let i = 0; i < userCount; i++) {
         accounts.push(`0x${i.toString(16).padStart(40, "0")}`);
@@ -141,19 +142,19 @@ export function debugTestCase(
 
   assert(
     testCase.orders.length === orderIds.length,
-    "missing orders in orderIds"
+    "missing orders in orderIds",
   );
   assert(userCount <= accounts.length, "missing users in accounts");
 
   orderIds.forEach((o, i) =>
-    assert(BN.isBN(o) || Number.isInteger(o), `invalid order id at index ${i}`)
+    assert(BN.isBN(o) || Number.isInteger(o), `invalid order id at index ${i}`),
   );
   accounts.forEach((a, i) =>
-    assert(typeof a === "string", `invalid account at index ${i}`)
+    assert(typeof a === "string", `invalid account at index ${i}`),
   );
 
   const usernames = accounts.map((a) =>
-    a.length > 8 ? `${a.substr(0, 5)}…${a.substr(a.length - 3)}` : a
+    a.length > 8 ? `${a.substr(0, 5)}…${a.substr(a.length - 3)}` : a,
   );
 
   formatHeader("Orders");
@@ -218,8 +219,8 @@ export function debugTestCase(
 export function solutionSubmissionParams(
   solution: ComputedSolution,
   accounts: string[],
-  orderIds: number[]
-) {
+  orderIds: number[],
+): SolutionSubmission {
   const orderCount = Math.max(...solution.orders.map((o) => o.idx)) + 1;
   const userCount = Math.max(...solution.orders.map((o) => o.user)) + 1;
 
@@ -241,12 +242,12 @@ export function solutionSubmissionParams(
  * @param {ObjectiveValueComputation} testCase The test case
  */
 export function debugObjectiveValueComputation(
-  objectiveValue: ObjectiveValueComputation
-) {
+  objectiveValue: ObjectiveValueComputation,
+): void {
   formatHeader("Executed Amounts");
   formatTable([
     ["Order", "Buy", "Sell"],
-    ...objectiveValue.orderExecutedAmounts.map(({buy, sell}, i) => [
+    ...objectiveValue.orderExecutedAmounts.map(({ buy, sell }, i) => [
       i,
       buy,
       sell,
@@ -282,17 +283,18 @@ export function debugObjectiveValueComputation(
   ]);
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 
-const formatHeader = (header: string) => console.log(`=== ${header} ===`);
-const formatSubHeader = (header: string) => console.log(` - ${header}`);
+const formatHeader = (header: string): void => console.log(`=== ${header} ===`);
+const formatSubHeader = (header: string): void => console.log(` - ${header}`);
 
-export function formatTable(table: any[][]) {
+export function formatTable(table: any[][]): void {
   const [width, height] = [
     Math.max(...table.map((r) => r.length)),
     table.length,
   ];
-  const getCell = (i: any, j: any) => {
+  const getCell = (i: any, j: any): string => {
     const cell = i < height ? table[i][j] : undefined;
     return cell === undefined ? "" : cell === null ? "<NULL>" : `${cell}`;
   };
@@ -300,20 +302,21 @@ export function formatTable(table: any[][]) {
   const columnWidths = [];
   for (let j = 0; j < width; j++) {
     columnWidths.push(
-      Math.max(...table.map((_, i) => getCell(i, j).length)) + 1
+      Math.max(...table.map((_, i) => getCell(i, j).length)) + 1,
     );
   }
 
   for (let i = 0; i < height; i++) {
     const line = columnWidths
       .map((cw, j) =>
-        j === 0 ? getCell(i, j).padEnd(cw) : getCell(i, j).padStart(cw)
+        j === 0 ? getCell(i, j).padEnd(cw) : getCell(i, j).padStart(cw),
       )
       .join(" ");
     console.log(line);
   }
 }
 
+/* eslint-enable @typescript-eslint/no-explicit-any */
 /* eslint-enable no-console */
 
 module.exports = {

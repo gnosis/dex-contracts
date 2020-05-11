@@ -4,8 +4,9 @@ coverage.json
 deploy/*
 node_modules/*
 build/
-types/
+
 package-lock.json
+yarn-error.log
 
 .idea/
 .vscode/

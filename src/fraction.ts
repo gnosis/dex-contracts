@@ -14,59 +14,59 @@ export class Fraction {
     this.reduce();
   }
 
-  isZero() {
+  isZero(): boolean {
     return this.numerator.isZero();
   }
 
-  gt(other: Fraction) {
+  gt(other: Fraction): boolean {
     const diff = this.sub(other);
     return diff.numerator.mul(diff.denominator).gt(new BN(0));
   }
 
-  lt(other: Fraction) {
+  lt(other: Fraction): boolean {
     const diff = this.sub(other);
     return diff.numerator.mul(diff.denominator).lt(new BN(0));
   }
 
-  reduce() {
+  reduce(): void {
     const greatest_common_divisor = this.numerator.gcd(this.denominator);
     this.numerator = this.numerator.div(greatest_common_divisor);
     this.denominator = this.denominator.div(greatest_common_divisor);
   }
 
-  inverted() {
+  inverted(): Fraction {
     return new Fraction(this.denominator, this.numerator);
   }
 
-  negated() {
+  negated(): Fraction {
     return new Fraction(this.numerator.neg(), this.denominator);
   }
 
-  mul(other: Fraction) {
+  mul(other: Fraction): Fraction {
     return new Fraction(
       this.numerator.mul(other.numerator),
-      this.denominator.mul(other.denominator)
+      this.denominator.mul(other.denominator),
     );
   }
 
-  div(other: Fraction) {
+  div(other: Fraction): Fraction {
     return this.mul(other.inverted());
   }
 
-  sub(other: Fraction) {
+  sub(other: Fraction): Fraction {
     return this.add(other.negated());
   }
 
-  add(other: Fraction) {
+  add(other: Fraction): Fraction {
     return new Fraction(
       this.numerator
         .mul(other.denominator)
         .iadd(other.numerator.mul(this.denominator)),
-      this.denominator.mul(other.denominator)
+      this.denominator.mul(other.denominator),
     );
   }
 
-  toNumber() {
+  toNumber(): number {
     let numerator = this.numerator.clone();
     let denominator = this.denominator.clone();
 
@@ -91,12 +91,12 @@ export class Fraction {
     if (
       Math.max(
         parseInt(numerator.toString()),
-        parseInt(denominator.toString())
+        parseInt(denominator.toString()),
       ) === Infinity
     ) {
       const longestWidth = Math.max(
         numerator.bitLength(),
-        denominator.bitLength()
+        denominator.bitLength(),
       );
       numerator = numerator.ishrn(longestWidth - MAX_FLOAT_WIDTH + 1);
       denominator = denominator.ishrn(longestWidth - MAX_FLOAT_WIDTH + 1);
@@ -110,7 +110,7 @@ export class Fraction {
    * @param number The Javascript number to be represented
    * @return a BigInt array with two elements: numerator and denominator
    */
-  private static numberToNumAndDen(number: number) {
+  private static numberToNumAndDen(number: number): [bigint, bigint] {
     const view = new DataView(new ArrayBuffer(8));
     view.setFloat64(0, number);
     const bits = view.getBigUint64(0);
@@ -142,25 +142,30 @@ export class Fraction {
     else return [sign * mantissa_plus_one, BigInt(1) << -shifted_exponent];
   }
 
-  static fromNumber(number: number) {
+  static fromNumber(number: number): Fraction {
     const [numerator, denominator] = Fraction.numberToNumAndDen(number);
     return new Fraction(
       new BN(numerator.toString()),
-      new BN(denominator.toString())
+      new BN(denominator.toString()),
     );
   }
 
-  toBN() {
+  toBN(): BN {
     return this.numerator.div(this.denominator);
   }
 
-  clone() {
+  clone(): Fraction {
     return new Fraction(this.numerator.clone(), this.denominator.clone());
   }
 
-  static fromJSON(o: any): Fraction {
+  static fromJSON(o: FractionJson): Fraction {
     const numerator = new BN(o.numerator, "hex");
     const denominator = new BN(o.denominator, "hex");
     return new Fraction(numerator, denominator);
   }
+}
+
+export interface FractionJson {
+  numerator: string;
+  denominator: string;
 }

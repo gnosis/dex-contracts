@@ -1,14 +1,14 @@
 import assert from "assert";
 import BN from "bn.js";
-import {flat} from "./array-shims.js";
-import {Order, Solution, ObjectiveValueComputation} from "./examples/model";
+import { flat } from "./array-shims.js";
+import { Order, Solution, ObjectiveValueComputation } from "./examples/model";
 
 /**
  * Converts the amount value to `ether` unit.
  * @param value The amount to convert
  * @return The value in `ether` as a bignum
  */
-export function toETH(value: number) {
+export function toETH(value: number): BN {
   const GWEI = 1000000000;
   return new BN(value * GWEI).mul(new BN(GWEI));
 }
@@ -61,7 +61,7 @@ export const ERROR_EPSILON = new BN(999000);
 export function getExecutedSellAmount(
   executedBuyAmount: BN,
   buyTokenPrice: BN,
-  sellTokenPrice: BN
+  sellTokenPrice: BN,
 ): BN {
   return executedBuyAmount
     .mul(buyTokenPrice)
@@ -81,21 +81,21 @@ export function getExecutedSellAmount(
 export function orderUtility(
   order: Order,
   executedBuyAmount: BN,
-  prices: BN[]
+  prices: BN[],
 ): BN {
   assert(
     prices.length > order.buyToken,
-    "order buy token not included in prices"
+    "order buy token not included in prices",
   );
   assert(
     prices.length > order.sellToken,
-    "order sell token not included in prices"
+    "order sell token not included in prices",
   );
 
   const executedSellAmount = getExecutedSellAmount(
     executedBuyAmount,
     prices[order.buyToken],
-    prices[order.sellToken]
+    prices[order.sellToken],
   );
   const execSellTimesBuy = executedSellAmount.mul(order.buyAmount);
   const roundedUtility = executedBuyAmount
@@ -119,21 +119,21 @@ export function orderUtility(
 export function orderDisregardedUtility(
   order: Order,
   executedBuyAmount: BN,
-  prices: BN[]
+  prices: BN[],
 ): BN {
   assert(
     prices.length > order.buyToken,
-    "order buy token not included in prices"
+    "order buy token not included in prices",
   );
   assert(
     prices.length > order.sellToken,
-    "order sell token not included in prices"
+    "order sell token not included in prices",
   );
 
   const executedSellAmount = getExecutedSellAmount(
     executedBuyAmount,
     prices[order.buyToken],
-    prices[order.sellToken]
+    prices[order.sellToken],
   );
   // TODO: account for balances here.
   // Contract evaluates as: MIN(sellAmount - executedSellAmount, user.balance.sellToken)
@@ -159,7 +159,7 @@ export function orderDisregardedUtility(
  */
 export function solutionObjectiveValue(
   orders: Order[],
-  solution: Solution
+  solution: Solution,
 ): BN {
   return solutionObjectiveValueComputation(orders, solution, true).result;
 }
@@ -175,18 +175,18 @@ export function solutionObjectiveValue(
 export function solutionObjectiveValueComputation(
   orders: Order[],
   solution: Solution,
-  strict = true
+  strict = true,
 ): ObjectiveValueComputation {
   const tokenCount =
     Math.max(...flat(orders.map((o) => [o.buyToken, o.sellToken]))) + 1;
 
   assert(
     orders.length === solution.buyVolumes.length,
-    "solution buy volumes do not match orders"
+    "solution buy volumes do not match orders",
   );
   assert(
     tokenCount === solution.prices.length,
-    "solution prices does not include all tokens"
+    "solution prices does not include all tokens",
   );
   assert(toETH(1).eq(solution.prices[0]), "fee token price is not 1 ether");
 
@@ -195,10 +195,10 @@ export function solutionObjectiveValueComputation(
     .filter((pair): pair is [Order, number] => !!pair);
 
   const orderExecutedAmounts = orders.map(() => {
-    return {buy: new BN(0), sell: new BN(0)};
+    return { buy: new BN(0), sell: new BN(0) };
   });
   const orderTokenConservation = orders.map(() =>
-    solution.prices.map(() => new BN(0))
+    solution.prices.map(() => new BN(0)),
   );
   const tokenConservation = solution.prices.map(() => new BN(0));
   const utilities = orders.map(() => new BN(0));
@@ -209,10 +209,10 @@ export function solutionObjectiveValueComputation(
     const sellVolume = getExecutedSellAmount(
       solution.buyVolumes[i],
       solution.prices[order.buyToken],
-      solution.prices[order.sellToken]
+      solution.prices[order.sellToken],
     );
 
-    orderExecutedAmounts[i] = {buy: buyVolume, sell: sellVolume};
+    orderExecutedAmounts[i] = { buy: buyVolume, sell: sellVolume };
 
     orderTokenConservation[i][order.buyToken].isub(buyVolume);
     orderTokenConservation[i][order.sellToken].iadd(sellVolume);
@@ -224,7 +224,7 @@ export function solutionObjectiveValueComputation(
     disregardedUtilities[i] = orderDisregardedUtility(
       order,
       solution.buyVolumes[i],
-      solution.prices
+      solution.prices,
     );
   }
 
@@ -233,7 +233,7 @@ export function solutionObjectiveValueComputation(
       orders.findIndex(
         (o, i) =>
           !solution.buyVolumes[i].isZero() &&
-          (o.buyToken === 0 || o.sellToken === 0)
+          (o.buyToken === 0 || o.sellToken === 0),
       ) !== -1;
     assert(feeTokenTouched, "fee token is not touched");
     assert(!tokenConservation[0].isNeg(), "fee token conservation is negative");
@@ -242,14 +242,14 @@ export function solutionObjectiveValueComputation(
       .forEach((conservation, i) =>
         assert(
           conservation.isZero(),
-          `token conservation not respected for token ${i + 1}`
-        )
+          `token conservation not respected for token ${i + 1}`,
+        ),
       );
     touchedOrders.forEach(([, id], i) => {
       assert(!utilities[i].isNeg(), `utility for order ${id} is negative`);
       assert(
         !disregardedUtilities[i].isNeg(),
-        `disregarded utility for order ${id} is negative`
+        `disregarded utility for order ${id} is negative`,
       );
     });
   }
@@ -257,7 +257,7 @@ export function solutionObjectiveValueComputation(
   const totalUtility = utilities.reduce((acc, du) => acc.iadd(du), toETH(0));
   const totalDisregardedUtility = disregardedUtilities.reduce(
     (acc, du) => acc.iadd(du),
-    toETH(0)
+    toETH(0),
   );
   const burntFees = tokenConservation[0].div(new BN(2));
 
@@ -265,7 +265,7 @@ export function solutionObjectiveValueComputation(
   if (strict) {
     assert(
       !result.isNeg() && !result.isZero(),
-      "objective value negative or zero"
+      "objective value negative or zero",
     );
   }
 

@@ -42,8 +42,10 @@ export interface ContractArtifact {
   deployedSourceMap: string;
   source: string;
   sourcePath: string;
-  ast: any[];
-  legacyAST: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ast: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  legacyAST: any;
   compiler: {
     name: string;
     version: string;
@@ -53,41 +55,53 @@ export interface ContractArtifact {
   };
   schemaVersion: string;
   updatedAt: string;
-  devdoc: any;
-  userdoc: any;
+  devdoc: {
+    details: string;
+    methods: {
+      [key: string]: {
+        details: string;
+      };
+    };
+  };
+  userdoc: {
+    methods: {
+      [key: string]: {
+        details: string;
+      };
+    };
+  };
 }
 
 export declare const BatchExchangeArtifact: ContractArtifact;
 export declare const BatchExchangeViewerArtifact: ContractArtifact;
 
-export interface Order {
+export interface Order<T = string> {
   user: string;
-  sellTokenBalance: string;
-  buyToken: string;
-  sellToken: string;
-  validFrom: string;
-  validUntil: string;
-  priceNumerator: string;
-  priceDenominator: string;
-  remainingAmount: string;
-}
-
-export interface OrderBN {
-  user: string;
-  sellTokenBalance: BN;
+  sellTokenBalance: T;
   buyToken: number;
   sellToken: number;
   validFrom: number;
   validUntil: number;
-  priceNumerator: BN;
-  priceDenominator: BN;
-  remainingAmount: BN;
+  priceNumerator: T;
+  priceDenominator: T;
+  remainingAmount: T;
 }
 
-export declare function decodeOrders(bytes: string): Order[];
-export declare function decodeOrdersBN(bytes: string): OrderBN[];
+export interface IndexedOrder<T> extends Order<T> {
+  orderId: number;
+}
+
+export declare function decodeOrders(bytes: string): Order<string>[];
+export declare function decodeOrdersBN(bytes: string): Order<BN>[];
 
 export declare function getOpenOrdersPaginated(
   contract: BatchExchangeViewer,
-  pageSize: number
-): AsyncIterable<OrderBN[]>;
+  pageSize: number,
+  blockNumber?: number | string,
+): AsyncIterable<IndexedOrder<BN>[]>;
+
+export declare function getOpenOrders(
+  contract: BatchExchangeViewer,
+  pageSize: number,
+  blockNumber?: number | string,
+): Promise<IndexedOrder<BN>[]>;

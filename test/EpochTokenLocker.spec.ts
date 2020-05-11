@@ -1,14 +1,12 @@
 const EpochTokenLocker = artifacts.require("EpochTokenLocker");
 const EpochTokenLockerTestInterface = artifacts.require(
-  "EpochTokenLockerTestInterface"
+  "EpochTokenLockerTestInterface",
 );
 const MockContract = artifacts.require("MockContract");
 const ERC20Interface = artifacts.require("ERC20");
 
-const truffleAssert = require("truffle-assertions");
-
-import {closeAuction} from "./utilities";
-import BN from "bn.js";
+import truffleAssert from "truffle-assertions";
+import { closeAuction } from "./utilities";
 
 contract("EpochTokenLocker", async (accounts) => {
   const [user_1, user_2] = accounts;
@@ -23,7 +21,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.deposit(ERC20.address, 100);
       const pendingDeposit = await epochTokenLocker.getPendingDeposit(
         user_1,
-        ERC20.address
+        ERC20.address,
       );
       assert.equal(pendingDeposit[0].toNumber(), 100);
       assert(pendingDeposit[1].eq(currentStateIndex));
@@ -35,7 +33,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await ERC20.givenAnyRevert();
       await truffleAssert.reverts(
         epochTokenLocker.deposit(ERC20.address, 100),
-        "SafeERC20: low-level call failed"
+        "SafeERC20: low-level call failed",
       );
     });
 
@@ -50,7 +48,7 @@ contract("EpochTokenLocker", async (accounts) => {
         (
           await epochTokenLocker.getPendingDeposit(user_1, ERC20.address)
         )[0].toNumber(),
-        200
+        200,
       );
     });
 
@@ -65,7 +63,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       const pendingDeposit = await epochTokenLocker.getPendingDeposit(
         user_1,
-        ERC20.address
+        ERC20.address,
       );
       assert.equal(pendingDeposit[0].toNumber(), 200);
       assert(pendingDeposit[1].eq(currentStateIndex));
@@ -81,7 +79,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.requestWithdraw(ERC20.address, 100);
       const pendingWithdraw = await epochTokenLocker.getPendingWithdraw(
         user_1,
-        ERC20.address
+        ERC20.address,
       );
       assert.equal(pendingWithdraw[0].toNumber(), 100);
       assert(pendingWithdraw[1].eq(currentStateIndex));
@@ -103,7 +101,7 @@ contract("EpochTokenLocker", async (accounts) => {
         (
           await ERC20.invocationCountForCalldata.call(withdrawTransfer)
         ).toNumber(),
-        1
+        1,
       );
     });
   });
@@ -120,9 +118,9 @@ contract("EpochTokenLocker", async (accounts) => {
         epochTokenLocker.requestFutureWithdraw(
           ERC20.address,
           100,
-          currentStateIndex - 1
+          currentStateIndex - 1,
         ),
-        "Request cannot be made in the past"
+        "Request cannot be made in the past",
       );
     });
     it("processes a future withdraw request", async () => {
@@ -136,11 +134,11 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.requestFutureWithdraw(
         ERC20.address,
         100,
-        currentStateIndex + 1
+        currentStateIndex + 1,
       );
       const pendingWithdraw = await epochTokenLocker.getPendingWithdraw(
         user_1,
-        ERC20.address
+        ERC20.address,
       );
       assert.equal(pendingWithdraw[0].toNumber(), 100);
       assert.equal(pendingWithdraw[1].toNumber(), currentStateIndex + 1);
@@ -156,7 +154,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await closeAuction(epochTokenLocker);
       assert.equal(
         (await epochTokenLocker.getBalance(user_1, ERC20.address)).toNumber(),
-        100
+        100,
       );
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100);
@@ -165,7 +163,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       const pendingWithdraw = await epochTokenLocker.getPendingWithdraw(
         user_1,
-        ERC20.address
+        ERC20.address,
       );
       assert.equal(pendingWithdraw[0].toNumber(), 0);
       assert.equal(pendingWithdraw[1].toNumber(), 0);
@@ -178,7 +176,7 @@ contract("EpochTokenLocker", async (accounts) => {
         (
           await ERC20.invocationCountForCalldata.call(depositTransfer)
         ).toNumber(),
-        1
+        1,
       );
     });
     it("processes a deposit, then processes a withdraw request and withdraws fails in current batchId", async () => {
@@ -190,13 +188,13 @@ contract("EpochTokenLocker", async (accounts) => {
       await closeAuction(epochTokenLocker);
       assert.equal(
         (await epochTokenLocker.getBalance(user_1, ERC20.address)).toNumber(),
-        100
+        100,
       );
 
       await epochTokenLocker.requestWithdraw(ERC20.address, 100);
       await truffleAssert.reverts(
         epochTokenLocker.withdraw(user_1, ERC20.address),
-        "withdraw was not registered previously"
+        "withdraw was not registered previously",
       );
     });
     it("processes a withdraw request and withdraws only available amounts", async () => {
@@ -219,7 +217,7 @@ contract("EpochTokenLocker", async (accounts) => {
         (
           await ERC20.invocationCountForCalldata.call(depositTransfer)
         ).toNumber(),
-        1
+        1,
       );
     });
     it("throws, if the withdraw wased, also there has been a credit for the account in this batch", async () => {
@@ -234,7 +232,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(
         user_1,
         ERC20.address,
-        100
+        100,
       );
 
       const batchId = await epochTokenLocker.getCurrentBatchId();
@@ -242,11 +240,11 @@ contract("EpochTokenLocker", async (accounts) => {
         (
           await epochTokenLocker.lastCreditBatchId(user_1, ERC20.address)
         ).toNumber(),
-        batchId.toNumber()
+        batchId.toNumber(),
       );
       await truffleAssert.reverts(
         epochTokenLocker.withdraw(user_1, ERC20.address),
-        "Withdraw not possible for token that is traded in the current auction"
+        "Withdraw not possible for token that is traded in the current auction",
       );
     });
   });
@@ -260,7 +258,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await closeAuction(epochTokenLocker);
       assert.equal(
         (await epochTokenLocker.getBalance(user_1, ERC20.address)).toNumber(),
-        100
+        100,
       );
     });
     it("returns just the balance, if there are no pending deposit from a previous time and no withdraws", async () => {
@@ -271,7 +269,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.deposit(ERC20.address, 100);
       assert.equal(
         (await epochTokenLocker.getBalance(user_1, ERC20.address)).toNumber(),
-        0
+        0,
       );
     });
     it("returns just the balance + pending deposit, if there are no withdraws", async () => {
@@ -283,7 +281,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await closeAuction(epochTokenLocker);
       assert.equal(
         (await epochTokenLocker.getBalance(user_1, ERC20.address)).toNumber(),
-        100
+        100,
       );
     });
     it("returns just the balance + pending deposit - depending withdraws", async () => {
@@ -296,7 +294,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await closeAuction(epochTokenLocker);
       assert.equal(
         (await epochTokenLocker.getBalance(user_1, ERC20.address)).toNumber(),
-        50
+        50,
       );
     });
     it("returns just the balance + pending deposit - depending withdraws and protects overflows", async () => {
@@ -309,7 +307,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await closeAuction(epochTokenLocker);
       assert.equal(
         (await epochTokenLocker.getBalance(user_1, ERC20.address)).toNumber(),
-        0
+        0,
       );
     });
     it("returns just the balance + pending deposit if withdraw was made in same batchId", async () => {
@@ -322,7 +320,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.requestWithdraw(ERC20.address, 150);
       assert.equal(
         (await epochTokenLocker.getBalance(user_1, ERC20.address)).toNumber(),
-        100
+        100,
       );
     });
   });
@@ -335,7 +333,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       assert.equal(
         (await epochTokenLocker.getBalance(user_1, ERC20.address)).toNumber(),
-        100
+        100,
       );
     });
   });
@@ -350,7 +348,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(
         user_1,
         ERC20.address,
-        100
+        100,
       );
 
       assert.equal(
@@ -358,7 +356,7 @@ contract("EpochTokenLocker", async (accounts) => {
           await epochTokenLocker.getPendingWithdraw(user_1, ERC20.address)
         )[1].toNumber(),
         currentStateIndex.toNumber(),
-        "State index updated incorrectly during to addBalanceAndBlockWithdrawForThisBatchTest"
+        "State index updated incorrectly during to addBalanceAndBlockWithdrawForThisBatchTest",
       );
     });
     it("blocks withdraws for this epoch", async () => {
@@ -374,7 +372,7 @@ contract("EpochTokenLocker", async (accounts) => {
       await epochTokenLocker.addBalanceAndBlockWithdrawForThisBatchTest(
         user_1,
         ERC20.address,
-        100
+        100,
       );
 
       const batchId = await epochTokenLocker.getCurrentBatchId();
@@ -382,7 +380,7 @@ contract("EpochTokenLocker", async (accounts) => {
         (
           await epochTokenLocker.lastCreditBatchId(user_1, ERC20.address)
         ).toNumber(),
-        batchId.toNumber()
+        batchId.toNumber(),
       );
 
       assert.equal(
@@ -390,7 +388,7 @@ contract("EpochTokenLocker", async (accounts) => {
           await epochTokenLocker.getPendingWithdraw(user_1, ERC20.address)
         )[1].toNumber(),
         currentStateIndex.toNumber(),
-        "PendingWithdrawBatchNumber not set correctly"
+        "PendingWithdrawBatchNumber not set correctly",
       );
     });
   });
@@ -404,7 +402,7 @@ contract("EpochTokenLocker", async (accounts) => {
 
       assert.equal(
         (await epochTokenLocker.getBalance(user_1, ERC20.address)).toNumber(),
-        50
+        50,
       );
     });
     it("modifies the balance by subtracting on behalf of someone else", async () => {
@@ -412,13 +410,13 @@ contract("EpochTokenLocker", async (accounts) => {
       const ERC20 = await MockContract.new();
       await ERC20.givenAnyReturnBool(true);
 
-      await epochTokenLocker.deposit(ERC20.address, 100, {from: user_2});
+      await epochTokenLocker.deposit(ERC20.address, 100, { from: user_2 });
       await closeAuction(epochTokenLocker);
       await epochTokenLocker.subtractBalanceTest(user_2, ERC20.address, 50);
 
       assert.equal(
         (await epochTokenLocker.getBalance(user_2, ERC20.address)).toNumber(),
-        50
+        50,
       );
     });
     it("throws in case of underflow", async () => {
@@ -426,7 +424,7 @@ contract("EpochTokenLocker", async (accounts) => {
       const ERC20 = await MockContract.new();
 
       await truffleAssert.reverts(
-        epochTokenLocker.subtractBalanceTest(user_1, ERC20.address, 50)
+        epochTokenLocker.subtractBalanceTest(user_1, ERC20.address, 50),
       );
     });
   });

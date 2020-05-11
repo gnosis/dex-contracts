@@ -1,5 +1,6 @@
 {
   "extends": "solhint:default",
+  "plugins": ["prettier"],
   "rules": {
     "indent": ["error", 4],
     "quotes": ["error", "double"],
@@ -10,6 +11,7 @@
     "no-simple-event-func-name": true,
     "two-lines-top-level-separator": "off",
     "separate-by-one-line-in-contract": "warn",
-    "bracket-align": "warn"
+    "bracket-align": "warn",
+    "prettier/prettier": "error"
   }
 }

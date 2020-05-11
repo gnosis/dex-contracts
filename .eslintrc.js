@@ -1,29 +1,28 @@
 module.exports = {
+  root: true,
   parser: "@typescript-eslint/parser",
   env: {
-    browser: true,
+    node: true,
     commonjs: true,
     es2020: true,
   },
-  extends: "eslint:recommended",
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended",
+    "prettier/@typescript-eslint",
+  ],
   parserOptions: {
-    ecmaFeatures: {
-      jsx: true,
-    },
-    ecmaVersion: 2015,
+    ecmaVersion: 2020,
     sourceType: "module",
   },
-  plugins: ["react", "@typescript-eslint"],
+  plugins: ["@typescript-eslint", "prettier"],
   rules: {
-    indent: ["error", 2],
-    "linebreak-style": ["error", "unix"],
-    quotes: ["error", "double"],
-    semi: ["error", "never"],
-    "prefer-const": ["error"],
-    "no-var": ["error"],
+    "no-console": "error",
 
-    "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": ["error"],
+    "@typescript-eslint/camelcase": "off",
+    "@typescript-eslint/no-use-before-define": "off",
   },
   globals: {
     artifacts: false,
@@ -31,4 +30,14 @@ module.exports = {
     assert: false,
     web3: false,
   },
+  overrides: [
+    {
+      files: ["*.js"],
+      rules: {
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-var-requires": "off",
+      },
+    },
+  ],
+  ignorePatterns: ["build/", "coverage/", "node_modules/"],
 }
