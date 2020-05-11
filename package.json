@@ -80,7 +80,7 @@
     "@gnosis.pm/solidity-data-structures": "=1.2.4",
     "@gnosis.pm/util-contracts": "^2.0.6",
     "@openeth/truffle-typings": "^0.0.5",
-    "@truffle/contract": "^4.2.2",
+    "@truffle/contract": "^4.2.4",
     "@types/chai": "^4.2.11",
     "@typescript-eslint/eslint-plugin": "^2.30.0",
     "@typescript-eslint/parser": "^2.30.0",
