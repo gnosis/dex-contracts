@@ -12,7 +12,6 @@ import { closeAuction, setupGenericStableX } from "./utilities";
 import {
   MockContractInstance,
   BatchExchangeInstance,
-  BatchExchangeContract,
 } from "../build/truffle-typings";
 
 const zero_address = "0x0000000000000000000000000000000000000000";
