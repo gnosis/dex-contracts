@@ -1,4 +1,4 @@
-const { decodeOrdersBN, decodeIndexedOrdersBN } = require("./encoding")
+const { decodeOrders, decodeIndexedOrders } = require("../build/common/src/encoding")
 
 /**
  * Returns an iterator yielding an item for each page of order in the orderbook that is currently being collected.
@@ -15,7 +15,7 @@ const getOpenOrdersPaginated = async function* (contract, pageSize, blockNumber)
     const page = await contract.methods
       .getOpenOrderBookPaginated([], nextPageUser, nextPageUserOffset, pageSize)
       .call({}, blockNumber)
-    const elements = decodeIndexedOrdersBN(page.elements)
+    const elements = decodeIndexedOrders(page.elements)
     yield elements
 
     //Update page info
@@ -51,7 +51,7 @@ const getOrdersPaginated = async (contract, pageSize, blockNumber) => {
   let currentOffSet = 0
   let lastPageSize = pageSize
   while (lastPageSize == pageSize) {
-    const page = decodeOrdersBN(
+    const page = decodeOrders(
       await contract.methods.getEncodedUsersPaginated(currentUser, currentOffSet, pageSize).call({}, blockNumber)
     )
     orders = orders.concat(page)

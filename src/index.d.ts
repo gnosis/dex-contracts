@@ -77,9 +77,6 @@ export interface ContractArtifact {
 export declare const BatchExchangeArtifact: ContractArtifact;
 export declare const BatchExchangeViewerArtifact: ContractArtifact;
 
-export declare function decodeOrders(bytes: string): Order<string>[];
-export declare function decodeOrdersBN(bytes: string): Order<BN>[];
-
 export declare function getOpenOrdersPaginated(
   contract: BatchExchangeViewer,
   pageSize: number,

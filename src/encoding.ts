@@ -5,6 +5,8 @@
  * dFusion smart contracts where manual byte encoding was needed because of
  * solidity ABI limitations.
  */
+import BN from "bn.js";
+import assert from "assert";
 
 export interface Order<T = string> {
   user: string;
@@ -22,9 +24,6 @@ export interface IndexedOrder<T> extends Order<T> {
   orderId: number;
 }
 
-const assert = require("assert");
-const BN = require("bn.js");
-
 class OrderBuffer {
   index = 2; // skip '0x'
   constructor(public bytes: string) {}
@@ -33,11 +32,11 @@ class OrderBuffer {
     this.bytes.slice(this.index, (this.index += size * 2));
 
   decodeAddr = () => `0x${this.readBytes(20)}`;
-  decodeInt = (size: number) => new BN(this.readBytes(size / 8), 16).toString();
+  decodeInt = (size: number): BN => new BN(this.readBytes(size / 8), 16);
   decodeNumber = (size: number) => parseInt(this.readBytes(size / 8), 16);
 }
 
-function decodeOrder(bytes: OrderBuffer) {
+function decodeOrder(bytes: OrderBuffer): Order<BN> {
   return {
     user: bytes.decodeAddr(),
     sellTokenBalance: bytes.decodeInt(256),
@@ -51,7 +50,7 @@ function decodeOrder(bytes: OrderBuffer) {
   };
 }
 
-function decodeIndexedOrder(bytes: OrderBuffer) {
+function decodeIndexedOrder(bytes: OrderBuffer): IndexedOrder<BN> {
   return {
     ...decodeOrder(bytes),
     orderId: bytes.decodeNumber(16),
@@ -60,9 +59,9 @@ function decodeIndexedOrder(bytes: OrderBuffer) {
 
 function decodeOrdersInternal<T>(
   bytes: string,
-  decodeFunction: (x: OrderBuffer) => Order<T> | IndexedOrder<T>,
+  decodeFunction: (x: OrderBuffer) => T,
   width: number,
-) {
+): T[] {
   if (bytes === null || bytes === undefined || bytes.length === 0) {
     return [];
   }
@@ -80,40 +79,16 @@ function decodeOrdersInternal<T>(
  * Decodes a byte-encoded variable length array of orders. This can be used to
  * decode the result of `BatchExchange.getEncodedUserOrders` and
  * `BatchExchange.getEncodedOrders`.
- * @param {string} bytes The encoded bytes in hex in the form '0x...'
- * @return {Object[]} The decoded array of orders
  */
-export function decodeOrders(bytes: string) {
-  return decodeOrdersInternal(bytes, decodeOrder, 112);
-}
-
-export function decodeOrdersBN(bytes: string) {
-  return decodeOrders(bytes).map((e) => ({
-    ...e,
-    sellTokenBalance: new BN(e.sellTokenBalance),
-    priceNumerator: new BN(e.priceNumerator),
-    priceDenominator: new BN(e.priceDenominator),
-    remainingAmount: new BN(e.remainingAmount),
-  }));
+export function decodeOrders(bytes: string): Order<BN>[] {
+  return decodeOrdersInternal<Order<BN>>(bytes, decodeOrder, 112);
 }
 
 /**
  * Decodes a byte-encoded variable length array of orders and their indices.
  * This can be used to decode the result of `BatchExchangeViewer.getOpenOrderBook` and
  * `BatchExchangeViewer.getFinalizedOrderBook`.
- * @param {string} bytes The encoded bytes in hex in the form '0x...'
- * @return {Object[]} The decoded array of orders and their orderIds
  */
-export function decodeIndexedOrders(bytes: string) {
-  return decodeOrdersInternal(bytes, decodeIndexedOrder, 114);
-}
-
-export function decodeIndexedOrdersBN(bytes: string) {
-  return decodeIndexedOrders(bytes).map((e) => ({
-    ...e,
-    sellTokenBalance: new BN(e.sellTokenBalance),
-    priceNumerator: new BN(e.priceNumerator),
-    priceDenominator: new BN(e.priceDenominator),
-    remainingAmount: new BN(e.remainingAmount),
-  }));
+export function decodeIndexedOrders(bytes: string): IndexedOrder<BN>[] {
+  return decodeOrdersInternal<IndexedOrder<BN>>(bytes, decodeIndexedOrder, 114);
 }
