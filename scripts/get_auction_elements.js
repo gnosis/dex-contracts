@@ -18,7 +18,7 @@ const argv = require("yargs")
   })
   .version(false).argv
 
-const { getOrdersPaginated } = require("../src/onchain_reading")
+const { getOrdersPaginated } = require("../build/common/src/onchain_reading")
 
 const COLORS = {
   NONE: "\x1b[0m",

@@ -7,6 +7,7 @@ export { BatchExchangeViewer } from "../build/types/BatchExchangeViewer";
 export * from "./orderbook";
 export * from "./fraction";
 export * from "./encoding";
+export * from "./onchain_reading";
 
 export interface ContractAbiEntry {
   type: string;
@@ -76,15 +77,3 @@ export interface ContractArtifact {
 
 export declare const BatchExchangeArtifact: ContractArtifact;
 export declare const BatchExchangeViewerArtifact: ContractArtifact;
-
-export declare function getOpenOrdersPaginated(
-  contract: BatchExchangeViewer,
-  pageSize: number,
-  blockNumber?: number | string,
-): AsyncIterable<IndexedOrder<BN>[]>;
-
-export declare function getOpenOrders(
-  contract: BatchExchangeViewer,
-  pageSize: number,
-  blockNumber?: number | string,
-): Promise<IndexedOrder<BN>[]>;

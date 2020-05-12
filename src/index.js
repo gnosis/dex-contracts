@@ -12,6 +12,6 @@ module.exports = {
   ...require("../build/common/src/fraction.js"),
   ...require("../build/common/src/orderbook.js"),
   ...require("../build/common/src/encoding.js"),
-  ...require("./onchain_reading.js"),
+  ...require("../build/common/src//onchain_reading.js"),
   ...require("../build/common/src/balance_reader.js"),
 }
