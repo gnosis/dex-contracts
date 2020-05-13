@@ -9,13 +9,18 @@
  * @packageDocumentation
  */
 
-import { AbiItem } from "web3-utils";
+import type { AbiItem } from "web3-utils";
+import type { BatchExchange } from "../build/types/BatchExchange";
+import type { BatchExchangeViewer } from "../build/types/BatchExchangeViewer";
 import BatchExchangeArtifact from "../build/contracts/BatchExchange.json";
 import BatchExchangeViewerArtifact from "../build/contracts/BatchExchangeViewer.json";
 
-export { BatchExchange } from "../build/types/BatchExchange";
-export { BatchExchangeViewer } from "../build/types/BatchExchangeViewer";
-export { BatchExchangeArtifact, BatchExchangeViewerArtifact };
+export {
+  BatchExchange,
+  BatchExchangeArtifact,
+  BatchExchangeViewer,
+  BatchExchangeViewerArtifact,
+};
 
 export interface ContractArtifact {
   abi: AbiItem[];
