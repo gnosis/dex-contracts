@@ -25,15 +25,17 @@ export interface IndexedOrder<T> extends Order<T> {
 }
 
 class OrderBuffer {
-  index = 2; // skip '0x'
-  constructor(public bytes: string) {}
+  private index = 2; // skip '0x'
+  constructor(private readonly bytes: string) {}
 
-  readBytes = (size: number) =>
+  readBytes = (size: number): string =>
     this.bytes.slice(this.index, (this.index += size * 2));
 
-  decodeAddr = () => `0x${this.readBytes(20)}`;
+  decodeAddr = (): string => `0x${this.readBytes(20)}`;
   decodeInt = (size: number): BN => new BN(this.readBytes(size / 8), 16);
-  decodeNumber = (size: number) => parseInt(this.readBytes(size / 8), 16);
+  decodeNumber = (size: number): number =>
+    parseInt(this.readBytes(size / 8), 16);
+  hasMoreBytes = (): boolean => this.index < this.bytes.length;
 }
 
 function decodeOrder(bytes: OrderBuffer): Order<BN> {
@@ -69,7 +71,7 @@ function decodeOrdersInternal<T>(
 
   const buffer = new OrderBuffer(bytes);
   const result = [];
-  while (buffer.index < buffer.bytes.length) {
+  while (buffer.hasMoreBytes()) {
     result.push(decodeFunction(buffer));
   }
   return result;
