@@ -176,7 +176,7 @@ export class StreamedOrderbook {
    * Apply new confirmed events to the account state and store the remaining
    * events that are subject to reorgs into the `pendingEvents` array.
    *
-   * @param toBlock optional block number until which to fetch events
+   * @param toBlock optional block number until which to fetch events, capped at latest block number.
    * @returns The block number up until which the streamed orderbook is up to
    * date
    *
@@ -207,10 +207,11 @@ export class StreamedOrderbook {
       events[events.length - 1]?.blockNumber ?? 0,
     );
     const confirmedBlock = latestBlock - this.options.blockConfirmations;
+    const endBlock = Math.min(latestBlock, toBlock ?? Number.MAX_SAFE_INTEGER);
 
-    this.batch = await this.getBatchId(toBlock ?? latestBlock);
+    this.batch = await this.getBatchId(endBlock);
     if (events.length === 0) {
-      return toBlock ?? latestBlock;
+      return endBlock;
     }
 
     const firstLatestEvent = events.findIndex(
@@ -234,9 +235,7 @@ export class StreamedOrderbook {
 
     this.latestState = undefined;
     this.options.debug(
-      `reapplying ${latestEvents.length} latest events until block ${
-        toBlock ?? latestBlock
-      }`,
+      `reapplying ${latestEvents.length} latest events until block ${endBlock}`,
     );
     if (latestEvents.length > 0) {
       // NOTE: Errors applying latest state are not considered fatal as we can
@@ -249,7 +248,7 @@ export class StreamedOrderbook {
       this.latestState = newLatestState;
     }
 
-    return toBlock ?? latestBlock;
+    return endBlock;
   }
 
   /**
