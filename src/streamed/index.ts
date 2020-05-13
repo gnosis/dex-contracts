@@ -13,9 +13,9 @@
  * @packageDocumentation
  */
 
-import Web3 from "web3";
-import { BlockNumber, TransactionReceipt } from "web3-core";
-import { Contract } from "web3-eth-contract";
+import type Web3 from "web3";
+import type { BlockNumber, TransactionReceipt } from "web3-core";
+import type { Contract } from "web3-eth-contract";
 import {
   BatchExchange,
   BatchExchangeArtifact,

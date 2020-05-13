@@ -1,5 +1,5 @@
-import { Contract, EventData } from "web3-eth-contract";
-import { ContractEvent } from "../../build/types/types";
+import type { Contract, EventData } from "web3-eth-contract";
+import type { ContractEvent } from "../../build/types/types";
 
 /**
  * Event data type specified by name.
