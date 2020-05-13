@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 
-import BN from "bn.js";
 import { assert } from "chai";
 import "mocha";
 import Web3 from "web3";
@@ -52,16 +51,18 @@ describe("Streamed Orderbook", () => {
       });
       const targetBlock = endBlock ?? (await orderbook.update());
 
-      const streamedOrders = orderbook.getOpenOrders().map((order) => ({
-        ...order,
-        sellTokenBalance: new BN(order.sellTokenBalance.toString()),
-        priceNumerator: new BN(order.priceNumerator.toString()),
-        priceDenominator: new BN(order.priceDenominator.toString()),
-        remainingAmount: new BN(order.remainingAmount.toString()),
-      }));
+      const streamedOrders = orderbook.getOpenOrders();
 
       console.debug("==> querying onchain orderbook...");
-      const queriedOrders = await getOpenOrders(viewer, 300, targetBlock);
+      const queriedOrders = (await getOpenOrders(viewer, 300, targetBlock)).map(
+        (order) => ({
+          ...order,
+          sellTokenBalance: BigInt(order.sellTokenBalance.toString()),
+          priceNumerator: BigInt(order.priceNumerator.toString()),
+          priceDenominator: BigInt(order.priceDenominator.toString()),
+          remainingAmount: BigInt(order.remainingAmount.toString()),
+        }),
+      );
 
       console.debug("==> comparing orderbooks...");
       function toDiffableOrders<T>(
