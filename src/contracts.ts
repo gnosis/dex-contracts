@@ -10,12 +10,12 @@
  */
 
 import { AbiItem } from "web3-utils";
+import BatchExchangeArtifact from "../build/contracts/BatchExchange.json";
+import BatchExchangeViewerArtifact from "../build/contracts/BatchExchangeViewer.json";
 
 export { BatchExchange } from "../build/types/BatchExchange";
 export { BatchExchangeViewer } from "../build/types/BatchExchangeViewer";
-
-export * as BatchExchangeArtifact from "../build/contracts/BatchExchange.json";
-export * as BatchExchangeViewerArtifact from "../build/contracts/BatchExchangeViewer.json";
+export { BatchExchangeArtifact, BatchExchangeViewerArtifact };
 
 export interface ContractArtifact {
   abi: AbiItem[];
