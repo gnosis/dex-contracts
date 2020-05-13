@@ -49,7 +49,7 @@ declare module "truffle-assertions" {
     passes: (asyncFn: Promise<{}>, message?: string) => void;
     fails: (
       asyncFn: Promise<{}>,
-      errorType: ErrorType,
+      errorType: string,
       reason?: string,
       message?: string,
     ) => void;
