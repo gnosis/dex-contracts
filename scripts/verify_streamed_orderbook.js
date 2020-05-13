@@ -1,4 +1,5 @@
 const assert = require("assert-diff")
+const Web3 = require("web3")
 const { StreamedOrderbook, getOpenOrders } = require("../build/common/src")
 
 const BatchExchangeViewer = artifacts.require("BatchExchangeViewer")
@@ -25,11 +26,14 @@ function toDiffableOrders(orders) {
   }, {})
 }
 
-module.exports = async () => {
+async function main() {
   const viewer = await BatchExchangeViewer.deployed()
 
   console.debug("==> initializing streamed orderbook...")
-  const orderbook = await StreamedOrderbook.init(web3, {
+  // NOTE: We need `getChainId` which is not available in the truffle provided
+  // web3 instance.
+  const web3new = new Web3(web3.currentProvider)
+  const orderbook = await StreamedOrderbook.init(web3new, {
     strict: true,
     debug: (msg) => console.debug(msg),
   })
@@ -66,4 +70,13 @@ module.exports = async () => {
   await Promise.any([updateFiber, checkFiber])
   done = true
   await Promise.all([updateFiber, checkFiber])
+}
+
+module.exports = async (callback) => {
+  try {
+    await main()
+    callback()
+  } catch (err) {
+    callback(err)
+  }
 }
