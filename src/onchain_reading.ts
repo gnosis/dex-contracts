@@ -10,9 +10,9 @@ import BN from "bn.js";
 
 /**
  * Returns an iterator yielding an item for each page of order in the orderbook that is currently being collected.
- * @param {BatchExchangeViewer} contract to query from
- * @param {number} pageSize the number of items to fetch per page
- * @param {number?} blockNumber the block number to execute the query at, defaults to "latest" if omitted
+ * @param contract to query from
+ * @param pageSize the number of items to fetch per page
+ * @param blockNumber the block number to execute the query at, defaults to "latest" if omitted
  */
 export const getOpenOrdersPaginated = async function* (
   contract: BatchExchangeViewer,
@@ -44,9 +44,9 @@ export const getOpenOrdersPaginated = async function* (
 
 /**
  * Returns open orders in the orderbook.
- * @param {BatchExchangeViewer} contract to query from
- * @param {number} pageSize the number of items to fetch per page
- * @param {number?} blockNumber the block number to execute the query at, defaults to "latest" if omitted
+ * @param contract to query from
+ * @param pageSize the number of items to fetch per page
+ * @param blockNumber the block number to execute the query at, defaults to "latest" if omitted
  */
 export const getOpenOrders = async (
   contract: BatchExchangeViewer,
@@ -66,9 +66,9 @@ export const getOpenOrders = async (
 
 /**
  * Returns all orders in the orderbook.
- * @param {BatchExchange} contract to query from
- * @param {number} pageSize the number of items to fetch per page
- * @param {number?} blockNumber the block number to execute the query at, defaults to "latest" if omitted
+ * @param contract to query from
+ * @param pageSize the number of items to fetch per page
+ * @param blockNumber the block number to execute the query at, defaults to "latest" if omitted
  */
 export const getOrdersPaginated = async (
   contract: BatchExchange,
