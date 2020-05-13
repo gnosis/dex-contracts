@@ -282,11 +282,11 @@ export class AuctionState {
           }
           this.applyTradeReversion(ev.returnValues);
           break;
-        case "WithdrawRequest":
-          this.applyWithdrawRequest(ev.returnValues);
-          break;
         case "Withdraw":
           this.applyWithdraw(ev.returnValues);
+          break;
+        case "WithdrawRequest":
+          this.applyWithdrawRequest(ev.returnValues);
           break;
         default:
           throw new UnhandledEventError(ev);
@@ -510,14 +510,10 @@ export class AuctionState {
     const tokenAddr = this.tokenAddr(token);
     const batch = parseInt(batchId);
 
-    if (this.options.strict) {
-      const existingBatch = this.account(user).pendingWithdrawals.get(tokenAddr)
-        ?.batchId;
-      assert(
-        existingBatch === undefined || existingBatch === batch,
-        `pending withdrawal for user ${user} modified from batch ${existingBatch} to ${batchId}`,
-      );
-    }
+    // TODO(nlordell): Add a `strict` mode check that verifies that a valid
+    // withdraw request can't be made over an existing one. For this, however,
+    // we need the current batch number as a future withdraw request that has
+    // not yet matured can be overwritten by another withdraw request.
 
     this.account(user).pendingWithdrawals.set(tokenAddr, {
       batchId: batch,
