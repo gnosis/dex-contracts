@@ -29,15 +29,15 @@ const send = function <T>(
  * @param seconds: time to wait
  * @param web3Provider: potentially different in contract tests and system end-to-end testing.
  */
-export const waitForNSeconds = async function (
+export async function waitForNSeconds(
   seconds: number,
   web3Provider = web3 as Web3,
 ): Promise<void> {
   await send("evm_increaseTime", [seconds], web3Provider);
   await send("evm_mine", [], web3Provider);
-};
+}
 
-export const closeAuction = async function (
+export async function closeAuction(
   instance: EpochTokenLockerInstance,
   web3Provider = web3 as Web3,
 ): Promise<void> {
@@ -45,9 +45,9 @@ export const closeAuction = async function (
     await instance.getSecondsRemainingInBatch()
   ).toNumber();
   await waitForNSeconds(time_remaining + 1, web3Provider);
-};
+}
 
-export const sendTxAndGetReturnValue = async function (
+export async function sendTxAndGetReturnValue(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   method: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,7 +56,7 @@ export const sendTxAndGetReturnValue = async function (
   const result = await method.call(...args);
   await method(...args);
   return result;
-};
+}
 
 /**
  * Finalizes user's pending deposits by updating user's balances for all input tokens.
@@ -72,7 +72,7 @@ export const sendTxAndGetReturnValue = async function (
  * @param epochTokenLocker instance of the epoch token locker to which the user deposited
  * @param tokenAddresses list of token addresses for which a deposit is pending
  */
-export const applyBalances = async function (
+export async function applyBalances(
   userAddress: string,
   epochTokenLocker: EpochTokenLockerInstance,
   tokenAddresses: string[],
@@ -81,4 +81,4 @@ export const applyBalances = async function (
   for (const tokenAddress of tokenAddresses) {
     await epochTokenLocker.withdraw(userAddress, tokenAddress);
   }
-};
+}
