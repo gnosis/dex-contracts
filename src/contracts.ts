@@ -9,8 +9,6 @@
  * @packageDocumentation
  */
 
-import { TransactionReceipt } from "web3-core";
-import { Contract } from "web3-eth-contract";
 import { AbiItem } from "web3-utils";
 
 export { BatchExchange } from "../build/types/BatchExchange";
@@ -27,27 +25,4 @@ export interface ContractArtifact {
       transactionHash: string;
     };
   };
-}
-
-/**
- * Get a contract deployment, returning both the web3 contract object as well as
- * the transaction receipt for the contract deployment.
- *
- * @throws If the contract is not deployed on the network the web3 provider is
- * connected to.
- */
-export async function deployment<C extends Contract>(
-  web3: Web3,
-  { abi, networks }: ContractArtifact,
-): Promise<[C, TransactionReceipt]> {
-  const chainId = await web3.eth.getChainId();
-  const network = networks[chainId];
-  if (!networks) {
-    throw new Error(`not deployed on network with chain ID ${chainId}`);
-  }
-
-  const tx = await web3.eth.getTransactionReceipt(network.transactionHash);
-  const contract = new web3.eth.Contract(abi, network.address);
-
-  return [contract as C, tx];
 }

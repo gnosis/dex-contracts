@@ -2,10 +2,11 @@
   "name": "@gnosis.pm/dex-contracts",
   "version": "0.2.15",
   "description": "Contracts for dFusion multi-token batch auction exchange",
-  "main": "build/commonjs/index.ts",
-  "module": "build/esm/index.js",
-  "jsnext:main": "build/esm/index.js",
+  "main": "build/common/src/index.js",
+  "types": "build/common/src/index.d.ts",
   "ts:main": "src/index.ts",
+  "module": "build/esm/src/index.js",
+  "jsnext:main": "build/esm/src/index.js",
   "directories": {
     "test": "test"
   },

@@ -12,7 +12,7 @@ import {
   StreamedOrderbook,
   deployment,
   getOpenOrders,
-} from "@src/index";
+} from "../../../src";
 
 describe("Streamed Orderbook", () => {
   describe("init", () => {
