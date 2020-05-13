@@ -16,13 +16,12 @@
 import Web3 from "web3";
 import { BlockNumber, TransactionReceipt } from "web3-core";
 import { Contract } from "web3-eth-contract";
-import { AbiItem } from "web3-utils";
 import {
   BatchExchange,
   BatchExchangeArtifact,
   ContractArtifact,
-  IndexedOrder,
-} from "..";
+} from "../contracts";
+import { IndexedOrder } from "../encoding";
 import { AnyEvent } from "./events";
 import { AuctionState } from "./state";
 
@@ -119,7 +118,7 @@ export class StreamedOrderbook {
   ): Promise<StreamedOrderbook> {
     const [contract, tx] = await deployment<BatchExchange>(
       web3,
-      BatchExchangeArtifact,
+      BatchExchangeArtifact as ContractArtifact,
     );
     const orderbook = new StreamedOrderbook(web3, contract, tx.blockNumber, {
       ...DEFAULT_ORDERBOOK_OPTIONS,
@@ -323,7 +322,7 @@ export async function deployment<C extends Contract>(
   }
 
   const tx = await web3.eth.getTransactionReceipt(network.transactionHash);
-  const contract = new web3.eth.Contract(abi as AbiItem[], network.address);
+  const contract = new web3.eth.Contract(abi, network.address);
 
   return [contract as C, tx];
 }

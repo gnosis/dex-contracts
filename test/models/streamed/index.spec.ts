@@ -7,10 +7,12 @@ import Web3 from "web3";
 import {
   BatchExchangeViewerArtifact,
   BatchExchangeViewer,
+  ContractArtifact,
   IndexedOrder,
+  StreamedOrderbook,
+  deployment,
   getOpenOrders,
-} from "../../..";
-import { StreamedOrderbook, deployment } from "../../../src/streamed";
+} from "../../../src";
 
 describe("Streamed Orderbook", () => {
   describe("init", () => {
@@ -40,7 +42,7 @@ describe("Streamed Orderbook", () => {
       const web3 = new Web3(url);
       const [viewer] = await deployment<BatchExchangeViewer>(
         web3,
-        BatchExchangeViewerArtifact,
+        BatchExchangeViewerArtifact as ContractArtifact,
       );
 
       console.debug("==> building streamed orderbook...");

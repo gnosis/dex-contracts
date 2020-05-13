@@ -1,6 +1,7 @@
 import assert from "assert";
 import { EventData } from "web3-eth-contract";
-import { BatchExchange, IndexedOrder } from "..";
+import { BatchExchange } from "../contracts";
+import { IndexedOrder } from "../encoding";
 import { OrderbookOptions } from ".";
 import { AnyEvent, Event } from "./events";
 
