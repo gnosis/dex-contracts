@@ -1,8 +1,7 @@
 import { expect } from "chai";
-import { BatchExchange } from "../../..";
-import { DEFAULT_ORDERBOOK_OPTIONS } from "../../../src/streamed";
-import { AuctionState } from "../../../src/streamed/state";
-import { AnyEvent, EventName, EventValues } from "../../../src/streamed/events";
+import { BatchExchange, DEFAULT_ORDERBOOK_OPTIONS } from "@src/index";
+import { AuctionState } from "@src/streamed/state";
+import { AnyEvent, EventName, EventValues } from "@src/streamed/events";
 
 function auctionState(): AuctionState {
   return new AuctionState({ ...DEFAULT_ORDERBOOK_OPTIONS, strict: true });

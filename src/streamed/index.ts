@@ -14,15 +14,14 @@
  */
 
 import Web3 from "web3";
-import { BlockNumber, TransactionReceipt } from "web3-core";
-import { Contract } from "web3-eth-contract";
-import { AbiItem } from "web3-utils";
+import { BlockNumber } from "web3-core";
 import {
   BatchExchange,
   BatchExchangeArtifact,
   ContractArtifact,
-  IndexedOrder,
-} from "..";
+  deployment,
+} from "../contracts";
+import { IndexedOrder } from "../encoding";
 import { AnyEvent } from "./events";
 import { AuctionState } from "./state";
 
@@ -119,7 +118,7 @@ export class StreamedOrderbook {
   ): Promise<StreamedOrderbook> {
     const [contract, tx] = await deployment<BatchExchange>(
       web3,
-      BatchExchangeArtifact,
+      BatchExchangeArtifact as ContractArtifact,
     );
     const orderbook = new StreamedOrderbook(web3, contract, tx.blockNumber, {
       ...DEFAULT_ORDERBOOK_OPTIONS,
@@ -303,27 +302,4 @@ export class InvalidAuctionStateError extends Error {
   constructor(public readonly block: number, public readonly inner: Error) {
     super(`invalid auction state at block ${block}: ${inner.message}`);
   }
-}
-
-/**
- * Get a contract deployment, returning both the web3 contract object as well as
- * the transaction receipt for the contract deployment.
- *
- * @throws If the contract is not deployed on the network the web3 provider is
- * connected to.
- */
-export async function deployment<C extends Contract>(
-  web3: Web3,
-  { abi, networks }: ContractArtifact,
-): Promise<[C, TransactionReceipt]> {
-  const chainId = await web3.eth.getChainId();
-  const network = networks[chainId];
-  if (!networks) {
-    throw new Error(`not deployed on network with chain ID ${chainId}`);
-  }
-
-  const tx = await web3.eth.getTransactionReceipt(network.transactionHash);
-  const contract = new web3.eth.Contract(abi as AbiItem[], network.address);
-
-  return [contract as C, tx];
 }
