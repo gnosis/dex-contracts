@@ -176,7 +176,7 @@ export class StreamedOrderbook {
    * Apply new confirmed events to the account state and store the remaining
    * events that are subject to reorgs into the `pendingEvents` array.
    *
-   * @param toBlock optional block number until which to fetch events, capped at latest block number.
+   * @param toBlock - Optional block number until which to fetch events, capped at latest block number.
    * @returns The block number up until which the streamed orderbook is up to
    * date
    *
