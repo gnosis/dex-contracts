@@ -239,7 +239,7 @@ export function solutionSubmissionParams(
 
 /**
  * Prints debug information for an objective value compuation.
- * @param {ObjectiveValueComputation} testCase The test case
+ * @param testCase The test case
  */
 export function debugObjectiveValueComputation(
   objectiveValue: ObjectiveValueComputation,

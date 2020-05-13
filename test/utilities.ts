@@ -88,9 +88,8 @@ export async function applyBalances(
 
 /**
  * Makes deposit transactions from a list of Deposit Objects
- * @param {number} numTokens - number of tokens to be registered on this exchange.
- * @param {number} maxTokens - Maximum number of tokens (a contract contructor parameter)
- * @returns {}
+ * @param numTokens - number of tokens to be registered on this exchange.
+ * @param maxTokens - Maximum number of tokens (a contract contructor parameter)
  */
 export const setupGenericStableX = async function (
   numTokens = 2,
