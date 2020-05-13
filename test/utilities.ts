@@ -1,6 +1,9 @@
 import Web3 from "web3";
 import { HttpProvider } from "web3-core";
-import { EpochTokenLockerInstance } from "../types/truffle-typings";
+import {
+  EpochTokenLockerInstance,
+  BatchExchangeInstance,
+} from "../types/truffle-typings";
 
 const jsonrpc = "2.0";
 const id = 0;
@@ -82,3 +85,29 @@ export async function applyBalances(
     await epochTokenLocker.withdraw(userAddress, tokenAddress);
   }
 }
+
+/**
+ * Makes deposit transactions from a list of Deposit Objects
+ * @param numTokens - number of tokens to be registered on this exchange.
+ * @param maxTokens - Maximum number of tokens (a contract contructor parameter)
+ */
+export const setupGenericStableX = async function (
+  numTokens = 2,
+  maxTokens = 2 ** 16 - 1,
+): Promise<BatchExchangeInstance> {
+  const MockContract = artifacts.require("MockContract");
+  const BatchExchange = artifacts.require("BatchExchange");
+
+  const feeToken = await MockContract.new();
+  await feeToken.givenAnyReturnBool(true);
+
+  const instance = await BatchExchange.new(maxTokens, feeToken.address);
+  const tokens = [feeToken];
+  for (let i = 0; i < numTokens - 1; i++) {
+    const token = await MockContract.new();
+    await instance.addToken(token.address);
+    await token.givenAnyReturnBool(true);
+    tokens.push(token);
+  }
+  return instance;
+};
