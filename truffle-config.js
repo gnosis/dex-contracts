@@ -1,5 +1,16 @@
 const truffleConfig = require("@gnosis.pm/util-contracts/src/util/truffleConfig")
-const minimist = require("minimist")
+const argv = require("yargs")
+  .option("gas", {
+    alias: "g",
+    type: "boolean",
+    describe: "Enable gas reporter",
+  })
+  .option("grep", {
+    type: "string",
+    describe: "Mocha test filter pattern",
+  })
+  .help(false)
+  .version(false).argv
 
 const DEFAULT_GAS_PRICE_GWEI = 25
 const DEFAULT_GAS_LIMIT = 8e6
@@ -34,8 +45,7 @@ const urlDevelopment = process.env.GANACHE_HOST || "localhost"
 // network key
 const infuraKey = process.env.INFURA_KEY || "9408f47dedf04716a03ef994182cf150"
 
-const { gas: gasLog } = minimist(process.argv.slice(2), { alias: { gas: "g" } })
-const { grep: grep } = minimist(process.argv.slice(2))
+const { gas: gasLog, grep } = argv
 
 module.exports = {
   ...truffleConfig({
