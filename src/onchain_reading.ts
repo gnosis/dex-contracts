@@ -14,7 +14,7 @@ import BN from "bn.js";
  * @param pageSize the number of items to fetch per page
  * @param blockNumber the block number to execute the query at, defaults to "latest" if omitted
  */
-export const getOpenOrdersPaginated = async function* (
+export async function* getOpenOrdersPaginated(
   contract: BatchExchangeViewer,
   pageSize: number,
   blockNumber: number | null,
@@ -40,7 +40,7 @@ export const getOpenOrdersPaginated = async function* (
     nextPageUser = page.nextPageUser;
     nextPageUserOffset = page.nextPageUserOffset;
   }
-};
+}
 
 /**
  * Returns open orders in the orderbook.
@@ -48,11 +48,11 @@ export const getOpenOrdersPaginated = async function* (
  * @param pageSize the number of items to fetch per page
  * @param blockNumber the block number to execute the query at, defaults to "latest" if omitted
  */
-export const getOpenOrders = async (
+export async function getOpenOrders(
   contract: BatchExchangeViewer,
   pageSize: number,
   blockNumber: number | null,
-): Promise<IndexedOrder<BN>[]> => {
+): Promise<IndexedOrder<BN>[]> {
   let allOrders: IndexedOrder<BN>[] = [];
   for await (const page of getOpenOrdersPaginated(
     contract,
@@ -62,7 +62,7 @@ export const getOpenOrders = async (
     allOrders = allOrders.concat(page);
   }
   return allOrders;
-};
+}
 
 /**
  * Returns all orders in the orderbook.
@@ -70,11 +70,11 @@ export const getOpenOrders = async (
  * @param pageSize the number of items to fetch per page
  * @param blockNumber the block number to execute the query at, defaults to "latest" if omitted
  */
-export const getOrdersPaginated = async (
+export async function getOrdersPaginated(
   contract: BatchExchange,
   pageSize: number,
   blockNumber: number | null,
-): Promise<Order<BN>[]> => {
+): Promise<Order<BN>[]> {
   let orders: Order<BN>[] = [];
   let currentUser = "0x0000000000000000000000000000000000000000";
   let currentOffSet = 0;
@@ -102,4 +102,4 @@ export const getOrdersPaginated = async (
     lastPageSize = page.length;
   }
   return orders;
-};
+}
