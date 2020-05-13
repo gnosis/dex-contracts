@@ -4,9 +4,8 @@ import {
   Order,
   IndexedOrder,
 } from "./encoding";
-import { BatchExchangeViewer } from "../build/types/BatchExchangeViewer";
-import { BatchExchange } from "../build/types/BatchExchange";
-import BN from "bn.js";
+import { BatchExchange, BatchExchangeViewer } from "./contracts";
+import type BN from "bn.js";
 
 /**
  * Returns an iterator yielding an item for each page of order in the orderbook that is currently being collected.

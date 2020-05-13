@@ -1,5 +1,5 @@
 import { Fraction, FractionJson } from "./fraction";
-import BN from "bn.js";
+import type BN from "bn.js";
 
 export class Offer {
   price: Fraction;

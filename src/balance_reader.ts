@@ -1,6 +1,6 @@
 import BN from "bn.js";
-import Web3 from "web3";
-import { BatchExchangeInstance } from "../types/truffle-typings";
+import type Web3 from "web3";
+import type { BatchExchangeInstance } from "../types/truffle-typings";
 
 const WORD_DATA_LENGTH = 64;
 
