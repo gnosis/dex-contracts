@@ -68,7 +68,7 @@ describe("Streamed Orderbook", () => {
       function toDiffableOrders<T>(
         orders: IndexedOrder<T>[],
       ): Record<string, IndexedOrder<T>> {
-        return orders.slice(0, 10).reduce((obj, order) => {
+        return orders.reduce((obj, order) => {
           const user = order.user.toLowerCase();
           obj[`${user}-${order.orderId}`] = { ...order, user };
           return obj;
