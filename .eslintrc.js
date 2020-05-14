@@ -17,9 +17,10 @@ module.exports = {
     ecmaVersion: 2020,
     sourceType: "module",
   },
-  plugins: ["@typescript-eslint", "prettier"],
+  plugins: ["@typescript-eslint", "prettier", "tsdoc"],
   rules: {
     "no-console": "error",
+    "tsdoc/syntax": "error",
 
     "@typescript-eslint/camelcase": "off",
     "@typescript-eslint/no-use-before-define": "off",
@@ -34,6 +35,7 @@ module.exports = {
     {
       files: ["*.js"],
       rules: {
+        "tsdoc/syntax": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/no-var-requires": "off",
       },

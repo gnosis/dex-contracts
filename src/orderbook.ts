@@ -125,7 +125,7 @@ export class Orderbook {
 
   /**
    * In-place adds the given orderbook to the current one, combining all bids and asks at the same price point
-   * @param orderbook the orderbook to be added to this one
+   * @param orderbook - the orderbook to be added to this one
    */
   add(orderbook: Orderbook): void {
     if (orderbook.pair() != this.pair()) {
@@ -142,8 +142,8 @@ export class Orderbook {
   }
 
   /**
-   * @param amount the amount of base tokens to be sold
-   * @return the price for which there are enough bids to fill the specified amount or undefined if there is not enough liquidity
+   * @param amount - the amount of base tokens to be sold
+   * @returns the price for which there are enough bids to fill the specified amount or undefined if there is not enough liquidity
    */
   priceToSellBaseToken(amount: number | BN): Fraction | undefined {
     const bids = Array.from(this.bids.values());
@@ -154,8 +154,8 @@ export class Orderbook {
   }
 
   /**
-   * @param amount the amount of base tokens to be bought
-   * @return the price for which there are enough asks to fill the specified amount or undefined if there is not enough liquidity
+   * @param amount - the amount of base tokens to be bought
+   * @returns the price for which there are enough asks to fill the specified amount or undefined if there is not enough liquidity
    */
   priceToBuyBaseToken(amount: number | BN): Fraction | undefined {
     const asks = Array.from(this.asks.values());
@@ -167,7 +167,7 @@ export class Orderbook {
 
   /**
    * Removes any overlapping bid/asks which could be matched in the current orderbook
-   * @return A new instance of the orderbook with no more overlapping orders.
+   * @returns A new instance of the orderbook with no more overlapping orders.
    */
   reduced(): Orderbook {
     const result = new Orderbook(this.baseToken, this.quoteToken);
@@ -220,7 +220,7 @@ export class Orderbook {
   /**
    * Computes the transitive closure of this orderbook (e.g. ETH/DAI) with another one (e.g. DAI/USDC).
    * Throws if the orderbooks cannot be combined (baseToken is not equal to quoteToken)
-   * @param orderbook The orderbook for which the transitive closure will be computed
+   * @param orderbook - The orderbook for which the transitive closure will be computed
    * @returns A new instance of an orderbook representing the resulting closure.
    */
   transitiveClosure(orderbook: Orderbook): Orderbook {
@@ -324,10 +324,10 @@ export interface OrderbookJson {
 /**
  * Given a list of direct orderbooks this method returns the transitive orderbook
  * between two tokens by computing the transitive closure via a certain number of "hops".
- * @param direct_orderbooks the map direct (non-transitive) orderbooks between tokens
- * @param base the base token for which the transitive orderbook should be computed
- * @param quote the quote token for which the transitive orderbook should be computed
- * @param hops the number of intermediate tokens that should be considered when computing the transitive orderbook
+ * @param direct_orderbooks - the map direct (non-transitive) orderbooks between tokens
+ * @param base - the base token for which the transitive orderbook should be computed
+ * @param quote - the quote token for which the transitive orderbook should be computed
+ * @param hops - the number of intermediate tokens that should be considered when computing the transitive orderbook
  */
 export function transitiveOrderbook(
   direct_orderbooks: Map<string, Orderbook>,

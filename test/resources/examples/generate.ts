@@ -18,10 +18,10 @@ import {
 /**
  * Generates a test case to be used for unit and e2e testing with the contract
  * with computed solution values and objective values.
- * @param input The input to the test case
- * @param debug Print debug information in case of
- * @param strict Throw when solution is determined to be invalid
- * @return The test case
+ * @param input - The input to the test case
+ * @param debug - Print debug information in case of
+ * @param strict - Throw when solution is determined to be invalid
+ * @returns The test case
  */
 export function generateTestCase(
   input: TestCaseInput,
@@ -110,9 +110,9 @@ export function generateTestCase(
 
 /**
  * Prints debug information for a test case.
- * @param testCase The test case
- * @param [orderIds] The optional order indices for display, defaults to [0...]
- * @param [accounts] The optional accounts for display, defaults to [1...]
+ * @param testCase - The test case
+ * @param orderIds - The optional order indices for display, defaults to [0...]
+ * @param accounts - The optional accounts for display, defaults to [1...]
  */
 export function debugTestCase(
   testCase: TestCase,
@@ -211,10 +211,10 @@ export function debugTestCase(
 /**
  * Generates `submitSolution` parameters for a given computed solution. Note
  * that thifrom  order indices as they are not known until runtime
- * @param solution The computed solution
- * @param accounts The order indices as they are on the contract
- * @param orderIds The order indices as they are on the contract
- * @return The parameters to submit the solution
+ * @param solution - The computed solution
+ * @param accounts - The order indices as they are on the contract
+ * @param orderIds - The order indices as they are on the contract
+ * @returns The parameters to submit the solution
  */
 export function solutionSubmissionParams(
   solution: ComputedSolution,
@@ -239,7 +239,7 @@ export function solutionSubmissionParams(
 
 /**
  * Prints debug information for an objective value compuation.
- * @param testCase The test case
+ * @param testCase - The test case
  */
 export function debugObjectiveValueComputation(
   objectiveValue: ObjectiveValueComputation,
