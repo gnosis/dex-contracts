@@ -364,7 +364,7 @@ contract("BatchExchange", async (accounts) => {
           [10],
           [20],
         ),
-        "invalid opcode",
+        truffleAssert.ErrorType.INVALID_OPCODE,
       );
     });
     it("places multiple orders with sepcified validFrom", async () => {
