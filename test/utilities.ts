@@ -29,8 +29,8 @@ const send = function <T>(
 // Wait for n blocks to pass
 /**
  * Wait for n (evm) seconds to pass
- * @param seconds: time to wait
- * @param web3Provider: potentially different in contract tests and system end-to-end testing.
+ * @param seconds - time to wait
+ * @param web3Provider - potentially different in contract tests and system end-to-end testing.
  */
 export async function waitForNSeconds(
   seconds: number,
@@ -65,15 +65,16 @@ export async function sendTxAndGetReturnValue(
  * Finalizes user's pending deposits by updating user's balances for all input tokens.
  * It assumes no withdrawals have been requested.
  * State of the contract after the execution of this function for tokenAddress:
- * balanceState[userAddress][tokenAddress] =
- * {
+ * ```
+ * balanceState[userAddress][tokenAddress] = {
  *   balance: pendingDepositAmount,
  *   pendingDeposits: null,
  *   pendingWithdraws: null,
  * }
- * @param userAddress address of the user who deposited
- * @param epochTokenLocker instance of the epoch token locker to which the user deposited
- * @param tokenAddresses list of token addresses for which a deposit is pending
+ * ```
+ * @param userAddress - address of the user who deposited
+ * @param epochTokenLocker - instance of the epoch token locker to which the user deposited
+ * @param tokenAddresses - list of token addresses for which a deposit is pending
  */
 export async function applyBalances(
   userAddress: string,

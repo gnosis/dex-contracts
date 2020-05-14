@@ -8,11 +8,11 @@ const WORD_DATA_LENGTH = 64;
  * Retrieves user's token balance as stored in the "balance" entry of the private exchange mapping balanceStates
  * Value is directly read from storage relying on Solidity's layout of storage variables
  * See https://solidity.readthedocs.io/en/develop/internals/layout_in_storage.html
- * @param userAddress address of the user
- * @param tokenAddress address of the token
- * @param batchExchangeAddress address of the batch exchange
- * @param web3Provider provider of Ethereum JavaScript API
- * @return balance of the token for the given user as stored in balanceStates[userAddress][tokenAddress].balance
+ * @param userAddress - address of the user
+ * @param tokenAddress - address of the token
+ * @param batchExchangeAddress - address of the batch exchange
+ * @param web3Provider - provider of Ethereum JavaScript API
+ * @returns balance of the token for the given user as stored in balanceStates[userAddress][tokenAddress].balance
  */
 export async function getBalanceState(
   userAddress: string,
@@ -63,11 +63,11 @@ export async function getBalanceState(
  * Computes amount of a token that a user can immediately withdraw from the exchange
  * It not only checks whether a withdrawal is pending, but also considers the balance available to the user,
  * pending deposits, and whether there were recent trades that would make withdrawing fail.
- * @param userAddress address of the user
- * @param tokenAddress address of the token
- * @param batchExchange object representing the batch exchange smart contract
- * @param web3Provider provider of Ethereum JavaScript API
- * @return amount of token that the user would receive by calling batchExchange.withdraw
+ * @param userAddress - address of the user
+ * @param tokenAddress - address of the token
+ * @param batchExchange - object representing the batch exchange smart contract
+ * @param web3Provider - provider of Ethereum JavaScript API
+ * @returns amount of token that the user would receive by calling batchExchange.withdraw
  */
 export async function getWithdrawableAmount(
   userAddress: string,

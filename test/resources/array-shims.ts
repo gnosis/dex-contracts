@@ -1,10 +1,10 @@
 /**
  * A shim for the `flat()` method that creates a new array with all sub-array
  * elements concatenated into it recursively up to the specified depth
- * @param arr The array.
- * @param depth The depth level specifying how deep a nested array
- *                           struction should be flattened. Defaults to 1.
- * @return {[]} A new array with the sub-array elements concatenated to it.
+ * @param arr - The array.
+ * @param depth - The depth level specifying how deep a nested array
+ *                struction should be flattened. Defaults to 1.
+ * @returns A new array with the sub-array elements concatenated to it.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function flat(arr: any[], depth = 1): any[] {
@@ -21,8 +21,8 @@ export function flat(arr: any[], depth = 1): any[] {
 
 /**
  * Deduplicates an array's element. Note that order is not preserved.
- * @param arr The array.
- * @return A new array containing only unique elements.
+ * @param arr - The array.
+ * @returns A new array containing only unique elements.
  */
 export function dedupe<T>(arr: T[]): T[] {
   return Array.from(new Set(arr));
