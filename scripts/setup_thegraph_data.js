@@ -1,6 +1,6 @@
 const { solutionSubmissionParams, basicTrade } = require("../build/common/test/resources/examples")
 
-const { makeDeposits, placeOrders } = require("../test/stablex/stablex_utils")
+const { makeDeposits, placeOrders } = require("../build/common/test/utilities")
 const {
   closeAuction,
   getOwl,

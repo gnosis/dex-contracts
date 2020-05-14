@@ -9,7 +9,7 @@ const truffleAssert = require("truffle-assertions")
 const { closeAuction } = require("../scripts/utilities.js")
 
 const { solutionSubmissionParams, basicTrade, utilityOverflow } = require("../build/common/test/resources/examples")
-const { makeDeposits, placeOrders, setupGenericStableX } = require("./stablex_utils")
+const { makeDeposits, placeOrders, setupGenericStableX } = require("../build/common/test/utilities")
 
 contract("BatchExchange", async (accounts) => {
   const solver = accounts[0]

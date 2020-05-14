@@ -72,7 +72,6 @@ contract("BatchExchange", async (accounts) => {
     await feeToken.givenAnyReturnBool(true);
     const lib1 = await IdToAddressBiMap.new();
     const lib2 = await IterableAppendOnlySet.new();
-    /* tslint:disable */
     await (BatchExchange as Linkable<BatchExchangeInstance>).link(
       "IdToAddressBiMap",
       lib1.address,
