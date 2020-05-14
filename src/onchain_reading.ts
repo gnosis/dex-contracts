@@ -16,7 +16,7 @@ import type BN from "bn.js";
 export async function* getOpenOrdersPaginated(
   contract: BatchExchangeViewer,
   pageSize: number,
-  blockNumber: number | null,
+  blockNumber?: number,
 ): AsyncGenerator<IndexedOrder<BN>[]> {
   let nextPageUser = "0x0000000000000000000000000000000000000000";
   let nextPageUserOffset = "0";
@@ -50,7 +50,7 @@ export async function* getOpenOrdersPaginated(
 export async function getOpenOrders(
   contract: BatchExchangeViewer,
   pageSize: number,
-  blockNumber: number | null,
+  blockNumber?: number,
 ): Promise<IndexedOrder<BN>[]> {
   let allOrders: IndexedOrder<BN>[] = [];
   for await (const page of getOpenOrdersPaginated(
@@ -72,7 +72,7 @@ export async function getOpenOrders(
 export async function getOrdersPaginated(
   contract: BatchExchange,
   pageSize: number,
-  blockNumber: number | null,
+  blockNumber?: number,
 ): Promise<Order<BN>[]> {
   let orders: Order<BN>[] = [];
   let currentUser = "0x0000000000000000000000000000000000000000";
