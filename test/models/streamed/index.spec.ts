@@ -49,8 +49,7 @@ describe("Streamed Orderbook", () => {
         endBlock,
         strict: true,
       });
-      const targetBlock = endBlock ?? (await orderbook.update());
-
+      const targetBlock = await orderbook.update(endBlock);
       const streamedOrders = orderbook.getOpenOrders();
 
       console.debug("==> querying onchain orderbook...");
