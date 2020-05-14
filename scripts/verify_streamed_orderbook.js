@@ -33,10 +33,7 @@ async function main() {
   // NOTE: We need `getChainId` which is not available in the truffle provided
   // web3 instance.
   const web3new = new Web3(web3.currentProvider)
-  const orderbook = await StreamedOrderbook.init(web3new, {
-    strict: true,
-    debug: (msg) => console.debug(msg),
-  })
+  const orderbook = await StreamedOrderbook.init(web3new, { strict: true })
 
   let done = false
   let latestBlock = await orderbook.update()
@@ -45,7 +42,6 @@ async function main() {
     while (!done) {
       await sleep(UPDATE_INTERVAL)
       try {
-        console.debug(`==> updating streamed orderbook...`)
         latestBlock = await orderbook.update()
       } catch (err) {
         console.warn(`error while updating orderbook: ${err}`)
@@ -57,9 +53,10 @@ async function main() {
     while (!done) {
       const streamedOrders = orderbook.getOpenOrders()
       try {
-        console.debug(`==> checked orderbooks at block ${latestBlock}...`)
-        const queriedOrders = await getOpenOrders(viewer, 300, latestBlock)
+        console.debug(`==> checking orderbooks at block ${latestBlock}...`)
+        const queriedOrders = await getOpenOrders(viewer.contract, 300, latestBlock)
         assert.deepEqual(toDiffableOrders(streamedOrders), toDiffableOrders(queriedOrders))
+        console.debug(`==> streamed and queried orderbooks match.`)
       } catch (err) {
         console.warn(`error while checking orderbook: ${err}`)
       }
@@ -67,7 +64,12 @@ async function main() {
     }
   })()
 
-  await Promise.any([updateFiber, checkFiber])
+  try {
+    await Promise.race([updateFiber, checkFiber])
+  } catch (err) {
+    console.error(`verification error: ${err}`)
+  }
+
   done = true
   await Promise.all([updateFiber, checkFiber])
 }

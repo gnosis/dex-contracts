@@ -25,7 +25,7 @@ export async function* getOpenOrdersPaginated(
 
   if (blockNumber) {
     contract = contract.clone();
-    contract.defaultBlock = blockNumber;
+    contract.defaultBlock = `0x${blockNumber.toString(16)}`;
   }
 
   while (hasNextPage) {
@@ -73,7 +73,7 @@ export async function getOpenOrders(
 export async function getOrdersPaginated(
   contract: BatchExchange,
   pageSize: number,
-  blockNumber: number | null,
+  blockNumber?: number,
 ): Promise<Order<BN>[]> {
   let orders: Order<BN>[] = [];
   let currentUser = "0x0000000000000000000000000000000000000000";
