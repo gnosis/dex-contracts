@@ -1,24 +1,30 @@
 import BN from "bn.js";
-import { Fraction } from "./fraction";
+import { Fraction } from "../fraction";
 
 const MAX128 = new BN(2).pow(new BN(128)).subn(1);
 
+type SellAmount = BN;
+type BuyAmount = BN;
+
 /**
  * Modifies the price to work with ERC20 units
- * @param price - Amount of quote token in exchange for one base token
- * @param baseTokenDecimals - Number of decimals of the base token
- * @param quoteTokenDecimals - Number of decimals of the quote token
- * @return Fraction representing the amount of units of quote tokens in exchange for one unit of base token
+ * @param price - Amount of buy token in exchange for one sell token
+ * @param sellTokenDecimals - Number of decimals of the sell token
+ * @param buyTokenDecimals - Number of decimals of the buy token
+ * @return Fraction representing the number of buy tokens in exchange for one unit of sell token
  */
 export function getUnitPrice(
   price: number,
-  baseTokenDecimals: number,
-  quoteTokenDecimals: number,
+  sellTokenDecimals: number,
+  buyTokenDecimals: number,
 ): Fraction {
+  assert(sellTokenDecimals > 0, "sell token decimals must be non-negative");
+  assert(buyTokenDecimals > 0, "buy token decimals must be non-negative");
+
   return Fraction.fromNumber(price).mul(
     new Fraction(
-      new BN(10).pow(new BN(quoteTokenDecimals)),
-      new BN(10).pow(new BN(baseTokenDecimals)),
+      new BN(10).pow(new BN(buyTokenDecimals)),
+      new BN(10).pow(new BN(sellTokenDecimals)),
     ),
   );
 }
@@ -26,10 +32,10 @@ export function getUnitPrice(
 /**
  * Computes the amount of output token units from their price and the amount of input token units
  * Note that the price is expressed in terms of tokens, while the amounts are in terms of token units
- * @param price - Amount of quote token in exchange for one base token
- * @param baseTokenAmount - Amount of base token units that are exchanged at price
- * @param baseTokenDecimals - Number of decimals of the base token
- * @param quoteTokenDecimals - Number of decimals of the quote token
+ * @param price - Amount of buy token in exchange for one sell token
+ * @param sellAmount - Amount of sell token units that are exchanged at price
+ * @param sellTokenDecimals - Number of decimals of the sell token
+ * @param sellTokenDecimals - Number of decimals of the buy token
  * @return Amount of output token units obtained
  */
 export function getOutputAmountFromPrice(
@@ -37,7 +43,7 @@ export function getOutputAmountFromPrice(
   sellAmount: BN,
   sellTokenDecimals: number,
   buyTokenDecimals: number,
-): BN {
+): BuyAmount {
   const unitPriceFraction = getUnitPrice(
     price,
     sellTokenDecimals,
@@ -50,7 +56,7 @@ export function getOutputAmountFromPrice(
 }
 
 /**
- * Computes the quote and base token amounts needed to set up an unlimited order in the exchange
+ * Computes the buy and sell token amounts required for an unlimited order in the exchange
  * @param price - price of buy token in relative to one sell token
  * @param sellTokenDecimals - Number of decimals of the sell token
  * @param buyTokenDecimals - Number of decimals of the buy token
@@ -60,7 +66,7 @@ export function getUnlimitedOrderAmounts(
   price: number,
   sellTokenDecimals: number,
   buyTokenDecimals: number,
-): [BN, BN] {
+): { base: SellAmount; quote: BuyAmount } {
   let sellAmount = MAX128.clone();
   let buyAmount = getOutputAmountFromPrice(
     price,
@@ -81,5 +87,5 @@ export function getUnlimitedOrderAmounts(
       "Error: unable to create unlimited order",
     );
   }
-  return [sellAmount, buyAmount];
+  return { base: sellAmount, quote: sellAmount };
 }
