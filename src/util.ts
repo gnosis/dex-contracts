@@ -5,10 +5,10 @@ const max128 = new BN(2).pow(new BN(128)).subn(1);
 
 /**
  * Modifies the price to work with ERC20 units
- * @param {number} price amount of quote token in exchange for one base token
- * @param {number} baseTokenDecimals number of decimals of the base token
- * @param {number} quoteTokenDecimals number of decimals of the quote token
- * @return {Fraction} fraction representing the amount of units of quote tokens in exchange for one unit of base token
+ * @param price - Amount of quote token in exchange for one base token
+ * @param baseTokenDecimals - Number of decimals of the base token
+ * @param quoteTokenDecimals - Number of decimals of the quote token
+ * @return Fraction representing the amount of units of quote tokens in exchange for one unit of base token
  */
 export function getUnitPrice(
   price: number,
