@@ -11,7 +11,7 @@ type BuyAmount = BN;
  * @param price - Amount of buy token in exchange for one sell token
  * @param sellTokenDecimals - Number of decimals of the sell token
  * @param buyTokenDecimals - Number of decimals of the buy token
- * @return Fraction representing the number of buy tokens in exchange for one unit of sell token
+ * Returns Fraction representing the number of buy tokens in exchange for one unit of sell token
  */
 export function getUnitPrice(
   price: number,
@@ -36,7 +36,7 @@ export function getUnitPrice(
  * @param sellAmount - Amount of sell token units that are exchanged at price
  * @param sellTokenDecimals - Number of decimals of the sell token
  * @param sellTokenDecimals - Number of decimals of the buy token
- * @return Amount of output token units obtained
+ * Returns amount of output token units obtained
  */
 export function getOutputAmountFromPrice(
   price: number,
@@ -60,7 +60,7 @@ export function getOutputAmountFromPrice(
  * @param price - price of buy token in relative to one sell token
  * @param sellTokenDecimals - Number of decimals of the sell token
  * @param buyTokenDecimals - Number of decimals of the buy token
- * @return Amounts of sell-buy token for an unlimited order at the input price
+ * Returns amounts of sell-buy token for an unlimited order at the input price
  */
 export function getUnlimitedOrderAmounts(
   price: number,
