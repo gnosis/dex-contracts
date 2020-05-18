@@ -285,10 +285,10 @@
   dependencies:
     source-map-support "^0.5.19"
 
-"@truffle/codec@^0.5.2":
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/@truffle/codec/-/codec-0.5.2.tgz#c384aac04c1d504c27ad8cf26731c19c34fe0604"
-  integrity sha512-aBis81tJJ6d5Rmgpfj9UcIH+qtY0lX1uI1eDe6dU5UTci184lc2bPIYz4QB8L26G2vCObrOWWHvjDWvCRwFKfA==
+"@truffle/codec@^0.5.3":
+  version "0.5.3"
+  resolved "https://registry.yarnpkg.com/@truffle/codec/-/codec-0.5.3.tgz#0f8a94e315a1c2f35bc98eed44c74115f9235e02"
+  integrity sha512-QU1LfNdx89lyZJgYGqbVukiOisoi8IObH2QG/OPrz5kqgWkTxL31BNXhP4ayXCGJ64VYOFyFgL+nFlM7PmqhnA==
   dependencies:
     big.js "^5.2.2"
     bn.js "^4.11.8"
@@ -311,14 +311,14 @@
     crypto-js "^3.1.9-1"
     debug "^4.1.0"
 
-"@truffle/contract@^4.2.4":
-  version "4.2.4"
-  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.2.4.tgz#850983d51f6bc123bd3d9e0272d23648c13dcdf7"
-  integrity sha512-91CELArpITxK8uDgGZlWPcuBBLY0Aa4bqEPZFx3nVH0p8n4ncj6pzUvBsis/zkp8XbwETIbbeocc8dM7dLgO0A==
+"@truffle/contract@^4.2.5":
+  version "4.2.5"
+  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.2.5.tgz#fdc2db4ca56eb0cb1b6c2821459303afbc1bebb9"
+  integrity sha512-UM6PnQa8pz1HF8zSEkcu8JRwejKgz7eSL59O+j8BRyEMaPiKuGZo2EGzupOkkSyhbG5SDi9brfhjAtEImjEkDA==
   dependencies:
     "@truffle/blockchain-utils" "^0.0.19"
     "@truffle/contract-schema" "^3.1.0"
-    "@truffle/debug-utils" "^4.1.2"
+    "@truffle/debug-utils" "^4.1.3"
     "@truffle/error" "^0.0.8"
     "@truffle/interface-adapter" "^0.4.7"
     bignumber.js "^7.2.1"
@@ -332,12 +332,12 @@
     web3-eth-abi "1.2.1"
     web3-utils "1.2.1"
 
-"@truffle/debug-utils@^4.1.2":
-  version "4.1.2"
-  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-4.1.2.tgz#1e88133fb5144105b5fccf94a6e381adcbed311c"
-  integrity sha512-fTqC7dpVED9NO5Yfns/t81e4qhi8Flngl2GSZhtI1aQGMK4XTSfgKGmR5VwFvCjHmYkvHqQdgo37EYpPgm/kDg==
+"@truffle/debug-utils@^4.1.3":
+  version "4.1.3"
+  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-4.1.3.tgz#5480c05e07b24e8c421be5aa2c9040155fcf4a04"
+  integrity sha512-w3BJ+g9TmAmVZl/A0XXK2C4IfF+v6LHsREyz1xYs37zQR5YCR542B0SdeWj9bcKy0EBywxBft2Zs4Y84bQroAg==
   dependencies:
-    "@truffle/codec" "^0.5.2"
+    "@truffle/codec" "^0.5.3"
     "@trufflesuite/chromafi" "^2.1.2"
     chalk "^2.4.2"
     debug "^4.1.0"
