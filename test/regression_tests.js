@@ -98,8 +98,6 @@ contract("BatchExchange", async (accounts) => {
 
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
 
-      solution.owners.push(solution.owners.slice(-1)[0])
-
       // Replace the last element of the basic trade volume with two coppies of half of it.
       const lastVolume = solution.volumes.slice(-1)[0]
       const ramifiedVolumes = solution.volumes.slice(-1).concat([lastVolume.divn(2), lastVolume.divn(2)])
