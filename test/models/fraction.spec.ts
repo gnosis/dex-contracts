@@ -49,6 +49,24 @@ describe("Fraction", () => {
     });
   });
 
+  describe("eq", () => {
+    it("returns true when identical", () => {
+      assert.isTrue(new Fraction(2, 3).eq(new Fraction(2, 3)));
+      assert.isTrue(new Fraction(2, 2).eq(new Fraction(2, 2)));
+      assert.isTrue(new Fraction(2, 1).eq(new Fraction(2, 1)));
+    });
+
+    it("returns true when reduced forms are equal", () => {
+      assert.isTrue(new Fraction(2, 3).eq(new Fraction(4, 6)));
+      assert.isTrue(new Fraction(2, 2).eq(new Fraction(3, 3)));
+      assert.isTrue(new Fraction(0, 2).eq(new Fraction(0, 3)));
+    });
+
+    it("return false when unequal (as fractions)", () => {
+      assert.isFalse(new Fraction(1, 2).eq(new Fraction(3, 4)));
+    });
+  });
+
   describe("inverted", () => {
     it("returns the reciprocal of the given fraction", () => {
       const f = new Fraction(new BN(2).mul(tenPow18), tenPow18);

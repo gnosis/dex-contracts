@@ -18,6 +18,11 @@ export class Fraction {
     return this.numerator.isZero();
   }
 
+  eq(other: Fraction): boolean {
+    const diff = this.sub(other);
+    return diff.isZero();
+  }
+
   gt(other: Fraction): boolean {
     const diff = this.sub(other);
     return diff.numerator.mul(diff.denominator).gt(new BN(0));
@@ -47,6 +52,10 @@ export class Fraction {
       this.numerator.mul(other.numerator),
       this.denominator.mul(other.denominator),
     );
+  }
+
+  abs(): Fraction {
+    return new Fraction(this.numerator.abs(), this.denominator.abs());
   }
 
   div(other: Fraction): Fraction {
