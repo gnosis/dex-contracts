@@ -40,7 +40,7 @@ export function getUnitPrice(
  */
 export function getBuyAmountFromPrice(
   price: number,
-  sellAmount: BN,
+  sellAmount: SellAmount,
   sellTokenDecimals: number,
   buyTokenDecimals: number,
 ): BuyAmount {
