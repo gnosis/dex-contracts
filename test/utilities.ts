@@ -5,6 +5,8 @@ import {
   BatchExchangeInstance,
 } from "../types/truffle-typings";
 
+import { Deposit, Order } from "./resources/examples/model";
+
 const jsonrpc = "2.0";
 const id = 0;
 const send = function <T>(
@@ -50,14 +52,17 @@ export async function closeAuction(
   await waitForNSeconds(time_remaining + 1, web3Provider);
 }
 
-export async function sendTxAndGetReturnValue(
+export async function sendTxAndGetReturnValue<T>(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  method: any,
+  method: {
+    sendTransaction: (...args: any[]) => Promise<string>;
+    call: (...args: any[]) => Promise<T>;
+  },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ...args: any[]
-): Promise<void> {
+): Promise<T> {
   const result = await method.call(...args);
-  await method(...args);
+  await method.sendTransaction(...args);
   return result;
 }
 
@@ -112,3 +117,58 @@ export const setupGenericStableX = async function (
   }
   return instance;
 };
+
+/**
+ * Makes deposit transactions from a list of Deposit Objects
+ * @param contract - BatchExchange smart contract
+ * @param accounts - An array of (unlocked) ethereum account addresses
+ * @param depositList - Array of Deposit Objects
+ * @param sufficiencyFactor - Factor of deposit amount to be deposited (default: 1)
+ */
+export async function makeDeposits(
+  contract: BatchExchangeInstance,
+  accounts: string[],
+  depositList: Deposit[],
+  sufficiencyFactor = 1,
+): Promise<void> {
+  for (const deposit of depositList) {
+    const tokenAddress = await contract.tokenIdToAddressMap(deposit.token);
+    await contract.deposit(
+      tokenAddress,
+      deposit.amount.muln(sufficiencyFactor),
+      { from: accounts[deposit.user] },
+    );
+  }
+}
+
+/**
+ * Makes placeOrder transactions from a list of Order Objects
+ * @param contract - BatchExchange smart contract
+ * @param accounts - An array of (unlocked) ethereum account addresses
+ * @param orderList - an array of Order Objects
+ * @param auctionIndex - the auction in which the order should be placed
+ */
+export async function placeOrders(
+  contract: BatchExchangeInstance,
+  accounts: string[],
+  orderList: Order[],
+  auctionIndex: number,
+): Promise<number[]> {
+  const orderIds: number[] = [];
+  for (const order of orderList) {
+    orderIds.push(
+      (
+        await sendTxAndGetReturnValue(
+          contract.placeOrder,
+          order.buyToken,
+          order.sellToken,
+          auctionIndex,
+          order.buyAmount,
+          order.sellAmount,
+          { from: accounts[order.user] },
+        )
+      ).toNumber(),
+    );
+  }
+  return orderIds;
+}

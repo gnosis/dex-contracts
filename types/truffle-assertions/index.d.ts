@@ -8,12 +8,14 @@ declare module "truffle-assertions" {
 
   class InvalidTxResultError extends Error {}
 
-  const enum ErrorType {
-    REVERT = "revert",
-    INVALID_OPCODE = "invalid opcode",
-    OUT_OF_GAS = "out of gas",
-    INVALID_JUMP = "invalid JUMP",
+  interface ErrorType {
+    REVERT: "revert";
+    INVALID_OPCODE: "invalid opcode";
+    OUT_OF_GAS: "out of gas";
+    INVALID_JUMP: "invalid JUMP";
   }
+
+  type ErrorTypeValue = ErrorType[keyof ErrorType];
 
   interface TransactionResult {
     tx: string;
@@ -49,7 +51,7 @@ declare module "truffle-assertions" {
     passes: (asyncFn: Promise<{}>, message?: string) => void;
     fails: (
       asyncFn: Promise<{}>,
-      errorType: ErrorType,
+      errorType: ErrorTypeValue,
       reason?: string,
       message?: string,
     ) => void;
