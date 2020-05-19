@@ -66,7 +66,7 @@ const toErc20Units = function (
   return representation;
 };
 
-describe.only("Amounts", () => {
+describe("Amounts", () => {
   describe("getUnitPrice(price, buyTokenDecmials, sellTokenDecmials)", () => {
     const testCases = [
       {

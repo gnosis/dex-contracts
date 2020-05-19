@@ -18,8 +18,8 @@ export function getUnitPrice(
   sellTokenDecimals: number,
   buyTokenDecimals: number,
 ): Fraction {
-  // assert(sellTokenDecimals > 0, "sell token decimals must be non-negative");
-  // assert(buyTokenDecimals > 0, "buy token decimals must be non-negative");
+  assert(sellTokenDecimals >= 0, "sell token decimals must be non-negative");
+  assert(buyTokenDecimals >= 0, "buy token decimals must be non-negative");
 
   return Fraction.fromNumber(price).mul(
     new Fraction(
@@ -76,10 +76,10 @@ export function getUnlimitedOrderAmounts(
       buyTokenDecimals,
       sellTokenDecimals,
     );
-    // assert(
-    //   buyAmount.gte(sellAmount),
-    //   "Error: unable to create unlimited order",
-    // );
+    assert(
+      buyAmount.gte(sellAmount),
+      "Error: unable to create unlimited order",
+    );
   }
   return { base: sellAmount, quote: buyAmount };
 }
