@@ -6,7 +6,7 @@ const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet")
 const BN = require("bn.js")
 const truffleAssert = require("truffle-assertions")
 
-const { closeAuction } = require("../scripts/utilities.js")
+const { closeAuction } = require("../scripts/utilities")
 
 const { solutionSubmissionParams, basicTrade, utilityOverflow } = require("../build/common/test/resources/examples")
 const { makeDeposits, placeOrders, setupGenericStableX } = require("../build/common/test/utilities")
@@ -86,6 +86,47 @@ contract("BatchExchange", async (accounts) => {
         ),
         "Amount exceeds user's balance"
       )
+    })
+    it("[Ramified Basic Trade] Touches one order twice in the same solution.", async () => {
+      const batchExchange = await setupGenericStableX()
+
+      // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
+      await makeDeposits(batchExchange, accounts, basicTrade.deposits)
+      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber()
+      const orderIds = await placeOrders(batchExchange, accounts, basicTrade.orders, batchId + 1)
+      await closeAuction(batchExchange)
+
+      const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
+
+      // Modifying owners so that last owner appears twice.
+      // That is, owners = [owner1, owner2, ... ownerN, ownerN]
+      solution.owners.push(solution.owners.slice(-1)[0])
+      // Modifying touched orders so that last orderID appears twice.
+      solution.touchedorderIds.push(solution.touchedorderIds.slice(-1)[0])
+      // Replace the last element of the basic trade volume with two coppies of half of it.
+      const lastVolume = solution.volumes.slice(-1)[0]
+      const ramifiedVolumes = solution.volumes.slice(0, -1).concat([lastVolume.divn(2), lastVolume.divn(2)])
+
+      const ramifiedSolution = {
+        objectiveValue: solution.objectiveValue,
+        owners: solution.owners,
+        touchedorderIds: solution.touchedorderIds,
+        volumes: ramifiedVolumes,
+        prices: solution.prices,
+        tokenIdsForPrice: solution.tokenIdsForPrice,
+      }
+      const objectiveValue = await batchExchange.submitSolution.call(
+        batchId,
+        ramifiedSolution.objectiveValue,
+        ramifiedSolution.owners,
+        ramifiedSolution.touchedorderIds,
+        ramifiedSolution.volumes,
+        ramifiedSolution.prices,
+        ramifiedSolution.tokenIdsForPrice,
+        { from: solver }
+      )
+      // Assertion that previous transaction passed.
+      assert(objectiveValue > 0, "the computed objective value is greater than 0")
     })
   })
 })
