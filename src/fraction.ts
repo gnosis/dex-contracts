@@ -54,6 +54,10 @@ export class Fraction {
     );
   }
 
+  abs(): Fraction {
+    return new Fraction(this.numerator.abs(), this.denominator.abs());
+  }
+
   div(other: Fraction): Fraction {
     return this.mul(other.inverted());
   }
