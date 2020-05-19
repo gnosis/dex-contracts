@@ -19,11 +19,11 @@ const containsSellOrderProvidingLiquidity = function (orders) {
   )
 }
 
-// This function checks whether it is likely that Gnosis has already povided liquidity for this token
+// This function checks whether it is likely that Gnosis has already provided liquidity for this token
 // with an liquidity-order. The check depends on the match of two order criteria: SellAmount and validUntil.
 // Despite being just an heuristic check, it should be sufficient for now.
 const hasOWLLiquidityOrderAlreadyBeenPlaced = function (orders) {
-  return orders.some((order) => order.priceDenominator.eq(SELL_ORDER_AMOUNT_OWL) && order.validUntil.eq(maxUint32))
+  return orders.some((order) => order.priceDenominator.eq(SELL_ORDER_AMOUNT_OWL) && new BN(order.validUntil).eq(maxUint32))
 }
 
 module.exports = async (callback) => {
