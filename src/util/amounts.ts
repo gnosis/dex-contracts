@@ -1,4 +1,5 @@
 import BN from "bn.js";
+import { assert } from "chai";
 import { Fraction } from "../fraction";
 
 const MAX128 = new BN(2).pow(new BN(128)).subn(1);
@@ -18,8 +19,14 @@ export function getUnitPrice(
   sellTokenDecimals: number,
   buyTokenDecimals: number,
 ): Fraction {
-  assert(sellTokenDecimals >= 0, "sell token decimals must be non-negative");
-  assert(buyTokenDecimals >= 0, "buy token decimals must be non-negative");
+  assert.isTrue(
+    sellTokenDecimals >= 0,
+    "sell token decimals must be non-negative",
+  );
+  assert.isTrue(
+    buyTokenDecimals >= 0,
+    "buy token decimals must be non-negative",
+  );
 
   return Fraction.fromNumber(price).mul(
     new Fraction(
@@ -76,7 +83,7 @@ export function getUnlimitedOrderAmounts(
       buyTokenDecimals,
       sellTokenDecimals,
     );
-    assert(
+    assert.isTrue(
       buyAmount.gte(sellAmount),
       "Error: unable to create unlimited order",
     );
