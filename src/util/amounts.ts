@@ -35,7 +35,7 @@ export function getUnitPrice(
  * @param price - Amount of buy token in exchange for one sell token
  * @param sellAmount - Amount of sell token units that are exchanged at price
  * @param sellTokenDecimals - Number of decimals of the sell token
- * @param sellTokenDecimals - Number of decimals of the buy token
+ * @param buyTokenDecimals - Number of decimals of the buy token
  * Returns amount of output token units obtained
  */
 export function getOutputAmountFromPrice(
