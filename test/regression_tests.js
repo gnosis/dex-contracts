@@ -98,17 +98,19 @@ contract("BatchExchange", async (accounts) => {
 
       const solution = solutionSubmissionParams(basicTrade.solutions[0], accounts, orderIds)
 
+      // Modifying owners so that last owner appears twice.
+      // That is, owners = [owner1, owner2, ... ownerN, ownerN]
+      solution.owners.push(solution.owners.slice(-1)[0])
+      // Modifying touched orders so that last orderID appears twice.
+      solution.touchedorderIds.push(solution.touchedorderIds.slice(-1)[0])
       // Replace the last element of the basic trade volume with two coppies of half of it.
       const lastVolume = solution.volumes.slice(-1)[0]
-      const ramifiedVolumes = solution.volumes.slice(-1).concat([lastVolume.divn(2), lastVolume.divn(2)])
+      const ramifiedVolumes = solution.volumes.slice(0, -1).concat([lastVolume.divn(2), lastVolume.divn(2)])
 
       const ramifiedSolution = {
         objectiveValue: solution.objectiveValue,
-        // Modifying owners so that last owner appears twice.
-        // That is, owners = [owner1, owner2, ... ownerN, ownerN]
-        owners: solution.owners.push(solution.owners.slice(-1)[0]),
-        // Modifying touched orders so that last orderID appears twice.
-        touchedorderIds: solution.touchedorderIds.push(solution.owners.slice(-1)[0]),
+        owners: solution.owners,
+        touchedorderIds: solution.touchedorderIds,
         volumes: ramifiedVolumes,
         prices: solution.prices,
         tokenIdsForPrice: solution.tokenIdsForPrice,
