@@ -18,8 +18,8 @@ export function getUnitPrice(
   sellTokenDecimals: number,
   buyTokenDecimals: number,
 ): Fraction {
-  assert(sellTokenDecimals > 0, "sell token decimals must be non-negative");
-  assert(buyTokenDecimals > 0, "buy token decimals must be non-negative");
+  // assert(sellTokenDecimals > 0, "sell token decimals must be non-negative");
+  // assert(buyTokenDecimals > 0, "buy token decimals must be non-negative");
 
   return Fraction.fromNumber(price).mul(
     new Fraction(
@@ -38,26 +38,20 @@ export function getUnitPrice(
  * @param sellTokenDecimals - Number of decimals of the buy token
  * Returns amount of output token units obtained
  */
-export function getOutputAmountFromPrice(
+export function getBuyAmountFromPrice(
   price: number,
   sellAmount: BN,
   sellTokenDecimals: number,
   buyTokenDecimals: number,
 ): BuyAmount {
-  const unitPriceFraction = getUnitPrice(
-    price,
-    sellTokenDecimals,
-    buyTokenDecimals,
-  );
-  const buyTokenAmountFraction = unitPriceFraction.mul(
-    new Fraction(sellAmount, 1),
-  );
-  return buyTokenAmountFraction.toBN();
+  const unitPrice = getUnitPrice(price, sellTokenDecimals, buyTokenDecimals);
+  const buyAmount = unitPrice.mul(new Fraction(sellAmount, 1));
+  return buyAmount.toBN();
 }
 
 /**
  * Computes the buy and sell token amounts required for an unlimited order in the exchange
- * @param price - price of buy token in relative to one sell token
+ * @param price - Price of the buyToken relative to one sell token
  * @param sellTokenDecimals - Number of decimals of the sell token
  * @param buyTokenDecimals - Number of decimals of the buy token
  * Returns amounts of sell-buy token for an unlimited order at the input price
@@ -68,7 +62,7 @@ export function getUnlimitedOrderAmounts(
   buyTokenDecimals: number,
 ): { base: SellAmount; quote: BuyAmount } {
   let sellAmount = MAX128.clone();
-  let buyAmount = getOutputAmountFromPrice(
+  let buyAmount = getBuyAmountFromPrice(
     price,
     sellAmount,
     sellTokenDecimals,
@@ -76,16 +70,16 @@ export function getUnlimitedOrderAmounts(
   );
   if (buyAmount.gt(sellAmount)) {
     buyAmount = MAX128.clone();
-    sellAmount = getOutputAmountFromPrice(
+    sellAmount = getBuyAmountFromPrice(
       1 / price,
       buyAmount,
       buyTokenDecimals,
       sellTokenDecimals,
     );
-    assert(
-      buyAmount.gte(sellAmount),
-      "Error: unable to create unlimited order",
-    );
+    // assert(
+    //   buyAmount.gte(sellAmount),
+    //   "Error: unable to create unlimited order",
+    // );
   }
-  return { base: sellAmount, quote: sellAmount };
+  return { base: sellAmount, quote: buyAmount };
 }

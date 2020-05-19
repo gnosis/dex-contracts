@@ -18,6 +18,11 @@ export class Fraction {
     return this.numerator.isZero();
   }
 
+  eq(other: Fraction): boolean {
+    const diff = this.sub(other);
+    return diff.isZero();
+  }
+
   gt(other: Fraction): boolean {
     const diff = this.sub(other);
     return diff.numerator.mul(diff.denominator).gt(new BN(0));
