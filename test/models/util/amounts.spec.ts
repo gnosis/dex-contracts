@@ -10,10 +10,7 @@ import "mocha";
 
 const MAX128 = new BN(2).pow(new BN(128)).subn(1);
 const FLOAT_TOLERANCE = new BN(2).pow(new BN(52)); // This is float precision
-const ZERO_BN = new BN(0);
 const TEN_BN = new BN(10);
-const MAX8 = new BN(2).pow(new BN(8)).subn(1);
-const MAX256 = new BN(2).pow(new BN(256)).subn(1);
 
 const essentiallyEqual = function (
   alpha: Fraction | BN,
@@ -29,7 +26,6 @@ const essentiallyEqual = function (
   return difference.mul(new Fraction(FLOAT_TOLERANCE, 1)).lt(beta);
 };
 
-// TODO: Move this into a separate codebase with generic Ethereum Utils (ERC20 utils).
 /**
  * A generalized version of "toWei" for ERC20 tokens with an arbitrary amount of decimals.
  * If the decimal representation has more decimals than the maximum amount possible, then the extra decimals are truncated.
@@ -37,18 +33,7 @@ const essentiallyEqual = function (
  * @param decimals - Maximum number of decimals of the token
  * Returns number of token units corresponding to the input amount
  */
-const toErc20Units = function (
-  amount: string,
-  decimals: number | string | BN,
-): BN {
-  // The BN library handles the type conversion of decimals
-  const bnDecimals = new BN(decimals);
-  if (bnDecimals.lt(ZERO_BN) || bnDecimals.gte(MAX8))
-    // ERC20 decimals is stored in a uint8
-    throw Error(
-      "Invalid number of decimals for ERC20 token: " + decimals.toString(),
-    );
-  decimals = bnDecimals.toNumber(); // safe conversion to num, since 0 <= decimals < 256  const re = /^(\d+)(\.(\d+))?$/ // a sequence of at least one digit (0-9), followed by optionally a dot and another sequence of at least one digit
+const toErc20Units = function (amount: string, decimals: number): BN {
   const re = /^(\d+)(\.(\d+))?$/; // a sequence of at least one digit (0-9), followed by optionally a dot and another sequence of at least one digit
   const match = re.exec(amount);
   if (match == null)
@@ -61,8 +46,6 @@ const toErc20Units = function (
   const representation = integerPart
     .mul(TEN_BN.pow(new BN(decimals)))
     .add(decimalPart);
-  if (representation.gt(MAX256))
-    throw Error("Number larger than ERC20 token maximum amount (uint256)");
   return representation;
 };
 
