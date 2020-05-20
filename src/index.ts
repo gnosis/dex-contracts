@@ -8,6 +8,7 @@
  * @packageDocumentation
  */
 
+export * from "./amounts";
 export * from "./balance_reader";
 export * from "./contracts";
 export * from "./encoding";
