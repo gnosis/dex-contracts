@@ -1,6 +1,6 @@
 {
   "name": "@gnosis.pm/dex-contracts",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Contracts for dFusion multi-token batch auction exchange",
   "main": "build/common/src/index.js",
   "types": "build/common/src/index.d.ts",
