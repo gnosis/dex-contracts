@@ -1,6 +1,6 @@
 import BN from "bn.js";
 import { assert } from "chai";
-import { Fraction } from "../fraction";
+import { Fraction } from "./fraction";
 
 const MAX128 = new BN(2).pow(new BN(128)).subn(1);
 

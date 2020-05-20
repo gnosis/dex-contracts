@@ -2,8 +2,8 @@ import {
   getUnitPrice,
   getBuyAmountFromPrice,
   getUnlimitedOrderAmounts,
-} from "../../../src/util/amounts";
-import { Fraction } from "../../../src/fraction";
+} from "../../src/amounts";
+import { Fraction } from "../../src/fraction";
 import BN from "bn.js";
 import { assert } from "chai";
 import "mocha";
