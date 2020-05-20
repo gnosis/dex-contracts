@@ -5,7 +5,7 @@ import {
 } from "../../src/amounts";
 import { Fraction } from "../../src/fraction";
 import BN from "bn.js";
-import assert from "assert";
+import { assert } from "chai";
 import "mocha";
 
 const MAX128 = new BN(2).pow(new BN(128)).subn(1);
@@ -109,7 +109,7 @@ describe("Amounts", () => {
         );
 
         // Either the resulting fractions are identicall, or results are "essentiallyEqual"
-        assert(
+        assert.isTrue(
           essentiallyEqual(unitPrice, expected),
           `${unitPrice.toNumber()} != ${expected.toNumber()}`,
         );
@@ -171,7 +171,7 @@ describe("Amounts", () => {
           sellTokenDecimals,
           buyTokenDecimals,
         );
-        assert(essentiallyEqual(output, expected));
+        assert.isTrue(essentiallyEqual(output, expected));
       });
     }
   });
@@ -241,8 +241,8 @@ describe("Amounts", () => {
           sellTokenDecimals,
           buyTokenDecimals,
         );
-        assert(essentiallyEqual(quote, expectedQuoteAmount));
-        assert(essentiallyEqual(base, expectedbaseAmount));
+        assert.isTrue(essentiallyEqual(quote, expectedQuoteAmount));
+        assert.isTrue(essentiallyEqual(base, expectedbaseAmount));
       });
     }
   });
