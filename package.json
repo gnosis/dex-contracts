@@ -115,7 +115,7 @@
     "typechain": "^2.0.0",
     "typechain-target-trufflehotfix": "^0.0.4-alpha",
     "typechain-target-web3-v1": "^1.0.4",
-    "typescript": "^3.9.2",
+    "typescript": "^3.9.3",
     "web3": "^1.2.7",
     "web3-core": "^1.2.7",
     "web3-eth-contract": "^1.2.7",
