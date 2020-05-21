@@ -6729,10 +6729,10 @@ prettier-linter-helpers@^1.0.0:
   dependencies:
     fast-diff "^1.1.2"
 
-prettier-plugin-solidity@^1.0.0-alpha.51:
-  version "1.0.0-alpha.51"
-  resolved "https://registry.yarnpkg.com/prettier-plugin-solidity/-/prettier-plugin-solidity-1.0.0-alpha.51.tgz#743fae6034a4f3d9a6bf3f9839c80fd9960172ef"
-  integrity sha512-YzklTx2YZklhW1kvUadyJcXSsOqDgYpcv69a2M3yYJ9owpq94JeGyA6TxKwZyXG9LMis9ZdSOKSyneAjpPCIkQ==
+prettier-plugin-solidity@^1.0.0-alpha.52:
+  version "1.0.0-alpha.52"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-solidity/-/prettier-plugin-solidity-1.0.0-alpha.52.tgz#9fa37bc13aa449bbd7d83d0d19410d1b51258a96"
+  integrity sha512-3Ep3GP+OHbDltvXX60GauvsFLS4TliGLohkWZ5CLGjKeUIikYsB7jlkiRMgVS2K+/eisu4O09hRNYdBaFqcX+g==
   dependencies:
     "@solidity-parser/parser" "^0.6.1"
     dir-to-object "^2.0.0"
