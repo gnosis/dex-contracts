@@ -30,6 +30,21 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
+"@ethersproject/abi@5.0.0-beta.153":
+  version "5.0.0-beta.153"
+  resolved "https://registry.yarnpkg.com/@ethersproject/abi/-/abi-5.0.0-beta.153.tgz#43a37172b33794e4562999f6e2d555b7599a8eee"
+  integrity sha512-aXweZ1Z7vMNzJdLpR1CZUAIgnwjrZeUSvN9syCwlBaEBUFJmFY+HHnfuTI5vIhVs/mRkfJVrbEyl51JZQqyjAg==
+  dependencies:
+    "@ethersproject/address" ">=5.0.0-beta.128"
+    "@ethersproject/bignumber" ">=5.0.0-beta.130"
+    "@ethersproject/bytes" ">=5.0.0-beta.129"
+    "@ethersproject/constants" ">=5.0.0-beta.128"
+    "@ethersproject/hash" ">=5.0.0-beta.128"
+    "@ethersproject/keccak256" ">=5.0.0-beta.127"
+    "@ethersproject/logger" ">=5.0.0-beta.129"
+    "@ethersproject/properties" ">=5.0.0-beta.131"
+    "@ethersproject/strings" ">=5.0.0-beta.130"
+
 "@ethersproject/abi@^5.0.0-beta.146":
   version "5.0.0-beta.152"
   resolved "https://registry.yarnpkg.com/@ethersproject/abi/-/abi-5.0.0-beta.152.tgz#371cd363c9d2df7ca23dcf970cd9c47ac776f1e9"
@@ -9091,7 +9106,7 @@ web3-core@1.2.7:
     web3-core-requestmanager "1.2.7"
     web3-utils "1.2.7"
 
-web3-core@^1.2.8:
+web3-core@1.2.8, web3-core@^1.2.8:
   version "1.2.8"
   resolved "https://registry.yarnpkg.com/web3-core/-/web3-core-1.2.8.tgz#2a488bb11519b71e7738265329bddc00fc200dd3"
   integrity sha512-hvlYWyE1UcLoGa6qF1GoxGgi1quFsZOdwIUIVsAp+sp0plXp/Nqva2lAjJ+FFyWtVKbC7Zq+qwTJ4iP1aN0vTg==
@@ -9139,6 +9154,15 @@ web3-eth-abi@1.2.7:
     ethers "4.0.0-beta.3"
     underscore "1.9.1"
     web3-utils "1.2.7"
+
+web3-eth-abi@1.2.8:
+  version "1.2.8"
+  resolved "https://registry.yarnpkg.com/web3-eth-abi/-/web3-eth-abi-1.2.8.tgz#7537138f3e5cd1ccf98233fa07f388aa8dc1fff1"
+  integrity sha512-OKp/maLdKHPpQxZhEd0HgnCJFQajsGe42WOG6SVftlgzyR8Jjv4KNm46TKvb3hv5OJTKZWU7nZIxkEG+fyI58w==
+  dependencies:
+    "@ethersproject/abi" "5.0.0-beta.153"
+    underscore "1.9.1"
+    web3-utils "1.2.8"
 
 web3-eth-accounts@1.2.1:
   version "1.2.1"
@@ -9254,7 +9278,7 @@ web3-eth-contract@1.2.6:
     web3-eth-abi "1.2.6"
     web3-utils "1.2.6"
 
-web3-eth-contract@1.2.7, web3-eth-contract@^1.2.7:
+web3-eth-contract@1.2.7:
   version "1.2.7"
   resolved "https://registry.yarnpkg.com/web3-eth-contract/-/web3-eth-contract-1.2.7.tgz#13d7f6003d6221f9a5fd61c2d3b5d039477c9674"
   integrity sha512-uW23Y0iL7XroRNbf9fWZ1N6OYhEYTJX8gTuYASuRnpYrISN5QGiQML6pq/NCzqypR1bl5E0fuINZQSK/xefIVw==
@@ -9268,6 +9292,21 @@ web3-eth-contract@1.2.7, web3-eth-contract@^1.2.7:
     web3-core-subscriptions "1.2.7"
     web3-eth-abi "1.2.7"
     web3-utils "1.2.7"
+
+web3-eth-contract@^1.2.8:
+  version "1.2.8"
+  resolved "https://registry.yarnpkg.com/web3-eth-contract/-/web3-eth-contract-1.2.8.tgz#ff75920ac698a70781edcebbf75287a6d0f14499"
+  integrity sha512-EWRLVhZksbzGAyHd7RaOsakjCJBA2BREWiJmBDlrxDBqw8HltXFzKdkRug/mwVNa5ZYMabKSRF/MMh0Sx06CFw==
+  dependencies:
+    "@types/bn.js" "^4.11.4"
+    underscore "1.9.1"
+    web3-core "1.2.8"
+    web3-core-helpers "1.2.8"
+    web3-core-method "1.2.8"
+    web3-core-promievent "1.2.8"
+    web3-core-subscriptions "1.2.8"
+    web3-eth-abi "1.2.8"
+    web3-utils "1.2.8"
 
 web3-eth-ens@1.2.1:
   version "1.2.1"
