@@ -110,7 +110,7 @@
     "solium": "^1.2.5",
     "truffle": "^5.1.26",
     "truffle-assertions": "^0.9.2",
-    "truffle-plugin-verify": "^0.3.10",
+    "truffle-plugin-verify": "^0.3.11",
     "ts-node": "^8.10.1",
     "typechain": "^2.0.0",
     "typechain-target-trufflehotfix": "^0.0.4-alpha",
