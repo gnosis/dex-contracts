@@ -82,7 +82,7 @@
     "@gnosis.pm/util-contracts": "^2.0.6",
     "@openeth/truffle-typings": "^0.0.5",
     "@openzeppelin/contracts": "=2.5.1",
-    "@truffle/contract": "^4.2.5",
+    "@truffle/contract": "^4.2.6",
     "@types/chai": "^4.2.11",
     "@typescript-eslint/eslint-plugin": "^2.34.0",
     "@typescript-eslint/parser": "^2.34.0",
