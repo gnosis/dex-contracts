@@ -13,7 +13,7 @@ const send = function <T>(
   method: string,
   params: T[],
   web3Provider: Web3,
-): Promise<{}> {
+): Promise<unknown> {
   return new Promise(function (resolve, reject) {
     (web3Provider.currentProvider as HttpProvider).send(
       { id, jsonrpc, method, params },
@@ -52,19 +52,19 @@ export async function closeAuction(
   await waitForNSeconds(time_remaining + 1, web3Provider);
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export async function sendTxAndGetReturnValue<T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   method: {
     sendTransaction: (...args: any[]) => Promise<string>;
     call: (...args: any[]) => Promise<T>;
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ...args: any[]
 ): Promise<T> {
   const result = await method.call(...args);
   await method.sendTransaction(...args);
   return result;
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 /**
  * Finalizes user's pending deposits by updating user's balances for all input tokens.

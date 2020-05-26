@@ -48,14 +48,18 @@ declare module "truffle-assertions" {
       transactionHash: string,
     ) => TransactionResult;
 
-    passes: (asyncFn: Promise<{}>, message?: string) => void;
+    passes: (asyncFn: Promise<unknown>, message?: string) => void;
     fails: (
-      asyncFn: Promise<{}>,
+      asyncFn: Promise<unknown>,
       errorType: ErrorTypeValue,
       reason?: string,
       message?: string,
     ) => void;
-    reverts: (asyncFn: Promise<{}>, reason?: string, message?: string) => void;
+    reverts: (
+      asyncFn: Promise<unknown>,
+      reason?: string,
+      message?: string,
+    ) => void;
 
     ErrorType: ErrorType;
     InvalidTxResultError: InvalidTxResultError;
