@@ -637,6 +637,61 @@ contract("BatchExchange", async (accounts) => {
       );
       assert(objectiveValue.eq(solution.objectiveValue));
     });
+    it("[Ramified Basic Trade] Touches one order twice in the same solution.", async () => {
+      const batchExchange = await setupGenericStableX();
+
+      // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
+      await makeDeposits(batchExchange, accounts, basicTrade.deposits);
+      const batchId = (await batchExchange.getCurrentBatchId()).toNumber();
+      const orderIds = await placeOrders(
+        batchExchange,
+        accounts,
+        basicTrade.orders,
+        batchId + 1,
+      );
+      await closeAuction(batchExchange);
+
+      const solution = solutionSubmissionParams(
+        basicTrade.solutions[0],
+        accounts,
+        orderIds,
+      );
+
+      // Modifying owners so that last owner appears twice.
+      // That is, owners = [owner1, owner2, ... ownerN, ownerN]
+      solution.owners.push(solution.owners.slice(-1)[0]);
+      // Modifying touched orders so that last orderID appears twice.
+      solution.touchedorderIds.push(solution.touchedorderIds.slice(-1)[0]);
+      // Replace the last element of the basic trade volume with two coppies of half of it.
+      const lastVolume = solution.volumes.slice(-1)[0];
+      const ramifiedVolumes = solution.volumes
+        .slice(0, -1)
+        .concat([lastVolume.divn(2), lastVolume.divn(2)]);
+
+      const ramifiedSolution = {
+        objectiveValue: solution.objectiveValue,
+        owners: solution.owners,
+        touchedorderIds: solution.touchedorderIds,
+        volumes: ramifiedVolumes,
+        prices: solution.prices,
+        tokenIdsForPrice: solution.tokenIdsForPrice,
+      };
+      const objectiveValue = await batchExchange.submitSolution.call(
+        batchId,
+        ramifiedSolution.objectiveValue,
+        ramifiedSolution.owners,
+        ramifiedSolution.touchedorderIds,
+        ramifiedSolution.volumes,
+        ramifiedSolution.prices,
+        ramifiedSolution.tokenIdsForPrice,
+        { from: solver },
+      );
+      // Assertion that previous transaction passed.
+      assert(
+        objectiveValue > new BN(0),
+        "the computed objective value is not greater than 0",
+      );
+    });
     it("rejects if fee token not traded", async () => {
       const batchExchange = await setupGenericStableX(3);
 
