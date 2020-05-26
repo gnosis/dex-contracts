@@ -43,7 +43,7 @@ export type EventValues<T> = T extends ContractEvent<infer U> ? U : never;
 export type EventDiscriminant<
   C extends Contract,
   T extends EventName<C>
-> = T extends {}
+> = T extends unknown
   ? {
       event: T;
       returnValues: EventValues<C["events"][T]>;
