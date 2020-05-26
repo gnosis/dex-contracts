@@ -69,6 +69,7 @@ async function createMintableToken(artifacts) {
   return ERC20Mintable.new()
 }
 
+// TODO - remove all call sites and use ts version (fetchTokenInfoFromExchange)
 const fetchTokenInfo = async function (
   exchangeContract,
   tokenIds,
@@ -226,8 +227,6 @@ async function mintOwl({ users, minter, amount, owl }) {
   }
 }
 
-const maxUint32 = new BN(2).pow(new BN(32)).sub(new BN(1))
-
 module.exports = {
   getArgumentsHelper,
   getOrderData,
@@ -238,8 +237,6 @@ module.exports = {
   closeAuction,
   token_list_url,
   fetchTokenInfo,
-  sendLiquidityOrders,
-  maxUint32,
   setAllowances,
   mintOwl,
   deleteOrders,

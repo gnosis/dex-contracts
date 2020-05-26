@@ -1,5 +1,6 @@
 import BN from "bn.js";
-import { closeAuction, sendLiquidityOrders } from "./utilities";
+import { closeAuction } from "./utilities";
+import { sendLiquidityOrders } from "../src";
 import { getOrdersPaginated } from "../src/onchain_reading";
 import {
   BatchExchangeInstance,
