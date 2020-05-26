@@ -642,7 +642,7 @@ contract("BatchExchange", async (accounts) => {
 
       // Make deposits, place orders and close auction[aka runAuctionScenario(basicTrade)]
       await makeDeposits(batchExchange, accounts, basicTrade.deposits);
-      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber();
+      const batchId = (await batchExchange.getCurrentBatchId()).toNumber();
       const orderIds = await placeOrders(
         batchExchange,
         accounts,

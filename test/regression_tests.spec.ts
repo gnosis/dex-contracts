@@ -5,19 +5,18 @@ const IterableAppendOnlySet = artifacts.require("IterableAppendOnlySet");
 
 import BN from "bn.js";
 import truffleAssert from "truffle-assertions";
-import { closeAuction } from "./utilities";
 
 import {
   solutionSubmissionParams,
   basicTrade,
   utilityOverflow,
-} from "../build/common/test/resources/examples";
-
+} from "./resources/examples";
 import {
+  closeAuction,
   makeDeposits,
   placeOrders,
   setupGenericStableX,
-} from "../build/common/test/utilities";
+} from "./utilities";
 import { BatchExchangeInstance, Linkable } from "../types/truffle-typings";
 
 contract("BatchExchange", async (accounts) => {
@@ -51,7 +50,7 @@ contract("BatchExchange", async (accounts) => {
       const batchExchange = await setupGenericStableX(3);
 
       await makeDeposits(batchExchange, accounts, utilityOverflow.deposits);
-      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber();
+      const batchId = (await batchExchange.getCurrentBatchId()).toNumber();
       const orderIds = await placeOrders(
         batchExchange,
         accounts,
@@ -82,7 +81,7 @@ contract("BatchExchange", async (accounts) => {
 
       await makeDeposits(batchExchange, accounts, basicTrade.deposits);
       const firstOrder = basicTrade.orders[0];
-      const tokenAddress = await batchExchange.tokenIdToAddressMap.call(
+      const tokenAddress = await batchExchange.tokenIdToAddressMap(
         firstOrder.sellToken,
       );
       const attackerAddress = accounts[firstOrder.user];
@@ -93,18 +92,18 @@ contract("BatchExchange", async (accounts) => {
       await closeAuction(batchExchange);
       // Ensure withdraw is claimable.
       assert(
-        await batchExchange.hasValidWithdrawRequest.call(
+        await batchExchange.hasValidWithdrawRequest(
           attackerAddress,
           tokenAddress,
         ),
         "Expected valid withdraw request",
       );
       assert.equal(
-        await batchExchange.getBalance.call(attackerAddress, tokenAddress),
-        0,
+        await batchExchange.getBalance(attackerAddress, tokenAddress),
+        new BN(0),
       );
 
-      const batchId = (await batchExchange.getCurrentBatchId.call()).toNumber();
+      const batchId = (await batchExchange.getCurrentBatchId()).toNumber();
       const orderIds = await placeOrders(
         batchExchange,
         accounts,
