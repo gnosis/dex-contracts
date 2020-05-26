@@ -2,8 +2,8 @@ const BatchExchange = artifacts.require("BatchExchange")
 const BN = require("bn.js")
 const readline = require("readline")
 
-const { sendTxAndGetReturnValue, fetchTokenInfo } = require("../test/utilities.js")
-
+const { sendTxAndGetReturnValue } = require("../test/utilities.js")
+const { fetchTokenInfoFromExchange } = require("../build/common/src/exchange")
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -62,7 +62,7 @@ module.exports = async (callback) => {
     const account = accounts[argv.accountId]
 
     const batch_index = (await instance.getCurrentBatchId.call()).toNumber()
-    const token_data = await fetchTokenInfo(instance, argv.tokens, artifacts)
+    const token_data = await fetchTokenInfoFromExchange(instance, argv.tokens, artifacts)
     const expectedReturnFactor = 1 + argv.spread / 100
     const sellAmount = argv.sellAmount
     const buyAmount = sellAmount * expectedReturnFactor

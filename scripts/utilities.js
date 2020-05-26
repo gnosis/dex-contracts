@@ -69,40 +69,6 @@ async function createMintableToken(artifacts) {
   return ERC20Mintable.new()
 }
 
-// TODO - remove all call sites and use ts version (fetchTokenInfoFromExchange)
-const fetchTokenInfo = async function (
-  exchangeContract,
-  tokenIds,
-  artifacts,
-  fallbackSymbolName = "UNKNOWN",
-  fallbackDecimals = "UNKNOWN"
-) {
-  const ERC20 = artifacts.require("ERC20Detailed")
-  console.log("Fetching token data from EVM")
-  const tokenObjects = {}
-  for (const id of tokenIds) {
-    const tokenAddress = await exchangeContract.tokenIdToAddressMap.call(id)
-    let tokenInfo
-    try {
-      const tokenInstance = await ERC20.at(tokenAddress)
-      tokenInfo = {
-        id: id,
-        symbol: await tokenInstance.symbol.call(),
-        decimals: (await tokenInstance.decimals.call()).toNumber(),
-      }
-    } catch (err) {
-      tokenInfo = {
-        id: id,
-        symbol: fallbackSymbolName,
-        decimals: fallbackDecimals,
-      }
-    }
-    tokenObjects[id] = tokenInfo
-    console.log(`Found Token ${tokenInfo.symbol} at ID ${tokenInfo.id} with ${tokenInfo.decimals} decimals`)
-  }
-  return tokenObjects
-}
-
 const addTokens = async function ({ tokenAddresses, account, batchExchange, owl }) {
   // Get amount of required OWL for listing all tokens
   const feeForAddingToken = await batchExchange.FEE_FOR_LISTING_TOKEN_IN_OWL.call()
@@ -236,7 +202,6 @@ module.exports = {
   addTokens,
   closeAuction,
   token_list_url,
-  fetchTokenInfo,
   setAllowances,
   mintOwl,
   deleteOrders,
