@@ -98,9 +98,10 @@ contract("BatchExchange", async (accounts) => {
         ),
         "Expected valid withdraw request",
       );
-      assert.equal(
-        await batchExchange.getBalance(attackerAddress, tokenAddress),
-        new BN(0),
+      assert(
+        (await batchExchange.getBalance(attackerAddress, tokenAddress)).eq(
+          new BN(0),
+        ),
       );
 
       const batchId = (await batchExchange.getCurrentBatchId()).toNumber();
