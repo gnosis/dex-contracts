@@ -1,6 +1,6 @@
 import BN from "bn.js";
 import { closeAuction } from "./utilities";
-import { sendLiquidityOrders } from "../src";
+import { placeFeeTokenLiquidityOrders } from "../src";
 import { getOrdersPaginated } from "../src/onchain_reading";
 import {
   BatchExchangeInstance,
@@ -55,7 +55,7 @@ contract("Liquidity order placement test", async (accounts) => {
         await batchExchange.addToken(token_1.address, { from: accounts[0] });
       }
       const tokenIds = [1, 3, 5];
-      await sendLiquidityOrders(
+      await placeFeeTokenLiquidityOrders(
         batchExchange,
         tokenIds,
         PRICE_FOR_LIQUIDITY_PROVISION,

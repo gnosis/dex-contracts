@@ -1,7 +1,7 @@
 const BatchExchange = artifacts.require("BatchExchange")
 
 const BN = require("bn.js")
-const { sendLiquidityOrders } = require("../build/common/src/exchange")
+const { placeFeeTokenLiquidityOrders } = require("../build/common/src/exchange")
 const { getOrdersPaginated } = require("../build/common/src/onchain_reading")
 
 const MAXU32 = new BN(2).pow(new BN(32)).sub(new BN(1))
@@ -58,7 +58,7 @@ module.exports = async (callback) => {
         console.log("Liquidity is given or has been provided in the past")
       }
     }
-    await sendLiquidityOrders(
+    await placeFeeTokenLiquidityOrders(
       instance,
       tokensRequiringLiquidityProvision,
       PRICE_FOR_LIQUIDITY_PROVISION,

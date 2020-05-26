@@ -1,9 +1,25 @@
 import BN from "bn.js";
-import { TokenInfo } from "../src";
 import { BatchExchangeInstance } from "../types/truffle-typings";
+
+export interface TokenInfo {
+  id: number;
+  symbol: string;
+  decimals: number;
+  address: string;
+}
 
 const MAXU32 = new BN(2).pow(new BN(32)).sub(new BN(1));
 
+/**
+ * Used to recover relevant {@link TokenInfo | TokenInfo} by ID from the exchange such as number of decimals or name.
+ * @param exchange - An instance of deployed Batch Exchange Contract
+ * @param tokenIds - An array of token ids as listed on the Batch Exchange.
+ * @param artifacts - A context-like object providing a gateway to Truffle contract ABIs.
+ * @param fallbackSymbolName - A name assigned to the token when if it doesn't exist
+ * @param fallbackDecimals - Configurable number of decimals be used when none exists.
+ * @returns A mapping of TokenInfo objects fetched from the exchange.
+ *   Note that Nullish TokenInfo objects are returned in places where the requested token ID failed to fetch.
+ */
 export async function fetchTokenInfoFromExchange(
   exchange: BatchExchangeInstance,
   tokenIds: number[],
@@ -26,6 +42,15 @@ export async function fetchTokenInfoFromExchange(
         address: tokenAddress,
       };
     } catch (err) {
+      // This generic try-catch is essentially a TokenNotFoundError
+      // Could occur when the given ID slot is not occupied by a registered token on the exhchange.
+      // Essentially, the return value is a bunch of useless values like
+      // {
+      //   id: id,
+      //   symbol: "UNKNOWN",
+      //   decimals: -1,
+      //   address: 0x00....0,
+      // }
       tokenInfo = {
         id: id,
         symbol: fallbackSymbolName,
@@ -40,22 +65,27 @@ export async function fetchTokenInfoFromExchange(
 }
 
 /**
- *
- * @param exchange - BatchExchange smart contract
- * @param tokenIds - An array of token indices as represented by exchange
+ * A handy function providing fee token liquidity by placing orders selling the fee token
+ * at the specified provision price for each specified token.
+ * @param exchange - BatchExchange Smart Contract
+ * @param tokenIds - An array of token indices as represented on the exchange
  * @param provisionPrice - Price at which liquidity is to be provided
- * @param auctionIndex - The auction in which the order should be placed
+ * @param sellAmountOwl - Amount of feeToken to be sold
+ * @param artifacts - A context-like object providing a gateway to Truffle contract ABIs.
+ * @returns Void Promise
  */
-export async function sendLiquidityOrders(
+export async function placeFeeTokenLiquidityOrders(
   exchange: BatchExchangeInstance,
   tokenIds: number[],
   provisionPrice: BN,
   sellAmountOwl: BN,
   artifacts: Truffle.Artifacts,
-  owlDigits = 18,
 ): Promise<void> {
-  const minBuyAmount = [];
+  const minBuyAmounts = [];
   const validTokenIds = [];
+  const feeToken = await fetchTokenInfoFromExchange(exchange, [0], artifacts);
+  // This is expected to always be OWL which has 18 digits.
+  const feeDigits = feeToken.get(0)?.decimals || 18;
   const tokenInfo = await fetchTokenInfoFromExchange(
     exchange,
     tokenIds,
@@ -65,17 +95,17 @@ export async function sendLiquidityOrders(
     const numDigits = tokenInfo.get(tokenId)?.decimals;
     if (numDigits && numDigits != -1) {
       validTokenIds.push(tokenId);
-      if (numDigits < owlDigits) {
-        minBuyAmount.push(
+      if (numDigits < feeDigits) {
+        minBuyAmounts.push(
           sellAmountOwl
             .mul(provisionPrice)
-            .div(new BN(10).pow(new BN(owlDigits - numDigits))),
+            .div(new BN(10).pow(new BN(feeDigits - numDigits))),
         );
       } else {
-        minBuyAmount.push(
+        minBuyAmounts.push(
           sellAmountOwl
             .mul(provisionPrice)
-            .mul(new BN(10).pow(new BN(numDigits - owlDigits))),
+            .mul(new BN(10).pow(new BN(numDigits - feeDigits))),
         );
       }
     }
@@ -83,15 +113,15 @@ export async function sendLiquidityOrders(
   const numOrders = validTokenIds.length;
   const batchId = (await exchange.getCurrentBatchId()).toNumber();
   if (numOrders == 0) {
-    // No liquidity orders added, as all tokens sufficiently funded, or their decimals could not be determined",
+    // No orders added since all tokens sufficiently funded or not found.
     return;
   }
   await exchange.placeValidFromOrders(
-    validTokenIds, // sellToken
-    Array(numOrders).fill(0), // buyToken always OWL?
-    Array(numOrders).fill(batchId + 2), // validFrom
-    Array(numOrders).fill(MAXU32), // validTo
-    minBuyAmount, // buyAmount
+    validTokenIds, // buyTokens
+    Array(numOrders).fill(0), // sellTokens
+    Array(numOrders).fill(batchId + 2), // validFroms (all to begin 2 batches from now)
+    Array(numOrders).fill(MAXU32), // validTos
+    minBuyAmounts, // buyAmounts
     Array(numOrders).fill(sellAmountOwl), // sellAmount
   );
   // "Placed liquidity sell orders for the following tokens",
