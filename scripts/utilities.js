@@ -148,58 +148,6 @@ const closeAuction = async (instance, web3Provider = web3) => {
   await waitForNSeconds(time_remaining + 1, web3Provider)
 }
 
-const sendLiquidityOrders = async function (
-  instance,
-  tokenIds,
-  PRICE_FOR_LIQUIDITY_PROVISION,
-  SELL_ORDER_AMOUNT_OWL,
-  artifacts,
-  OWL_NUMBER_DIGITS = 18
-) {
-  const minBuyAmount = []
-  const validTokenIds = []
-
-  for (const tokenId of tokenIds) {
-    const numberOfDigits = (await fetchTokenInfo(instance, [tokenId], artifacts))[tokenId].decimals
-    if (numberOfDigits !== "UNKNOWN") {
-      validTokenIds.push(tokenId)
-      if (numberOfDigits < OWL_NUMBER_DIGITS) {
-        minBuyAmount.push(
-          SELL_ORDER_AMOUNT_OWL.mul(PRICE_FOR_LIQUIDITY_PROVISION).div(
-            new BN(10).pow(new BN(OWL_NUMBER_DIGITS - numberOfDigits))
-          )
-        )
-      } else {
-        minBuyAmount.push(
-          SELL_ORDER_AMOUNT_OWL.mul(PRICE_FOR_LIQUIDITY_PROVISION).mul(
-            new BN(10).pow(new BN(numberOfDigits - OWL_NUMBER_DIGITS))
-          )
-        )
-      }
-    }
-  }
-  const numberOfOrders = validTokenIds.length
-  const batchId = (await instance.getCurrentBatchId()).toNumber()
-  if (numberOfOrders == 0) {
-    console.log(
-      "No liquidity orders will be added, as all tokens have already received liquidity, or their decimals could not be determined"
-    )
-    return
-  }
-  await instance.placeValidFromOrders(
-    validTokenIds, //sellToken
-    Array(numberOfOrders).fill(0), //buyToken
-    Array(numberOfOrders).fill(batchId + 2), //validFrom
-    Array(numberOfOrders).fill(maxUint32), //validTo
-    minBuyAmount, //buyAmount
-    Array(numberOfOrders).fill(SELL_ORDER_AMOUNT_OWL) //sellAmount
-  )
-  console.log(
-    "Placed liquidity sell orders for the following tokens",
-    await Promise.all(validTokenIds.map(async (i) => await instance.tokenIdToAddressMap.call(i)))
-  )
-}
-
 async function _mintOwl({ account, minter, amount, owl }) {
   console.log("Mint %d of OWL for user %s", amount, account)
   return owl.mintOWL(account, amount, { from: minter })
