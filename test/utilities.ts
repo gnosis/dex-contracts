@@ -53,9 +53,10 @@ export async function closeAuction(
 }
 
 export async function sendTxAndGetReturnValue<T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   method: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sendTransaction: (...args: any[]) => Promise<string>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     call: (...args: any[]) => Promise<T>;
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
