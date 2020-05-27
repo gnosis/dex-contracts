@@ -145,8 +145,8 @@ export async function makeDeposits(
  * Makes placeOrder transactions from a list of Order Objects
  * @param contract - BatchExchange smart contract
  * @param accounts - An array of (unlocked) ethereum account addresses
- * @param orderList - an array of Order Objects
- * @param auctionIndex - the auction in which the order should be placed
+ * @param orderList - An array of Order Objects
+ * @param auctionIndex - The auction in which the order should be placed
  */
 export async function placeOrders(
   contract: BatchExchangeInstance,
