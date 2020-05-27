@@ -15,7 +15,7 @@
 
 import type Web3 from "web3";
 import type { BlockNumber, TransactionReceipt } from "web3-core";
-import type { Contract } from "web3-eth-contract";
+import type { BaseContract } from "../../build/types/types";
 import {
   BatchExchange,
   BatchExchangeArtifact,
@@ -315,7 +315,7 @@ export class InvalidAuctionStateError extends Error {
  * @throws If the contract is not deployed on the network the web3 provider is
  * connected to.
  */
-export async function deployment<C extends Contract>(
+export async function deployment<C extends BaseContract>(
   web3: Web3,
   { abi, networks }: ContractArtifact,
 ): Promise<[C, TransactionReceipt]> {
@@ -328,5 +328,5 @@ export async function deployment<C extends Contract>(
   const tx = await web3.eth.getTransactionReceipt(network.transactionHash);
   const contract = new web3.eth.Contract(abi, network.address);
 
-  return [contract as C, tx];
+  return [(contract as unknown) as C, tx];
 }

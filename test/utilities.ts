@@ -43,7 +43,7 @@ export async function waitForNSeconds(
 }
 
 export async function closeAuction(
-  instance: EpochTokenLockerInstance,
+  instance: BatchExchangeInstance | EpochTokenLockerInstance,
   web3Provider = web3 as Web3,
 ): Promise<void> {
   const time_remaining = (
@@ -83,7 +83,7 @@ export async function sendTxAndGetReturnValue<T>(
  */
 export async function applyBalances(
   userAddress: string,
-  epochTokenLocker: EpochTokenLockerInstance,
+  epochTokenLocker: BatchExchangeInstance | EpochTokenLockerInstance,
   tokenAddresses: string[],
 ): Promise<void> {
   await closeAuction(epochTokenLocker);

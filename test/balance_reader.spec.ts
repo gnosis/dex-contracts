@@ -1,10 +1,13 @@
 import BN from "bn.js";
 
 import { closeAuction, applyBalances } from "./utilities";
+import { Withdraw } from "../build/truffle-typings/BatchExchange";
 import { getBalanceState, getWithdrawableAmount } from "../src/balance_reader";
 
 const MockContract = artifacts.require("MockContract");
 const BatchExchange = artifacts.require("BatchExchange");
+
+type WithdrawLog = Truffle.TransactionLog<Withdraw>;
 
 contract("BatchExchange utils", async (accounts) => {
   describe("getBalanceState()", async () => {
@@ -77,7 +80,7 @@ contract("BatchExchange utils", async (accounts) => {
       );
       assert.equal(
         withdrawableAmount.toString(),
-        transcript.logs[0].args.amount.toString(),
+        (transcript.logs[0] as WithdrawLog).args.amount.toString(),
       );
     });
 
@@ -107,7 +110,7 @@ contract("BatchExchange utils", async (accounts) => {
       );
       assert.equal(
         withdrawableAmount.toString(),
-        transcript.logs[0].args.amount.toString(),
+        (transcript.logs[0] as WithdrawLog).args.amount.toString(),
       );
     });
 
@@ -137,7 +140,7 @@ contract("BatchExchange utils", async (accounts) => {
       );
       assert.equal(
         withdrawableAmount.toString(),
-        transcript.logs[0].args.amount.toString(),
+        (transcript.logs[0] as WithdrawLog).args.amount.toString(),
       );
     });
 
@@ -167,7 +170,7 @@ contract("BatchExchange utils", async (accounts) => {
       );
       assert.equal(
         withdrawableAmount.toString(),
-        transcript.logs[0].args.amount.toString(),
+        (transcript.logs[0] as WithdrawLog).args.amount.toString(),
       );
     });
 
