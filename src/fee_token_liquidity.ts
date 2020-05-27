@@ -48,14 +48,8 @@ export async function fetchTokenInfoFromExchange(
       );
     } catch (err) {
       // This generic try-catch is essentially a TokenNotFoundError
-      // Could occur when the given ID slot is not occupied by a registered token on the exhchange.
-      // Essentially, the return value is a bunch of useless values like
-      // {
-      //   id: id,
-      //   symbol: null,
-      //   decimals: null,
-      //   address: 0x00....0,
-      // }
+      // Could occur when the given ID slot is not occupied by a registered token on the exhchange
+      // or if the code registered at address occupied by a token slot is not that of and ERC20 token
       log.warn(() => `Token Not Found: ${id} - ${tokenAddress}`);
       tokenInfo = {
         id: id,
