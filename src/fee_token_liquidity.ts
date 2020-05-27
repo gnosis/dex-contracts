@@ -34,8 +34,8 @@ export async function fetchTokenInfoFromExchange(
     let tokenInfo;
     try {
       const tokenInstance = await ERC20.at(tokenAddress);
-      const symbol = await tokenInstance.symbol.call();
-      const decimals = (await tokenInstance.decimals.call()).toNumber();
+      const symbol = await tokenInstance.symbol();
+      const decimals = (await tokenInstance.decimals()).toNumber();
       tokenInfo = {
         id: id,
         symbol: symbol,
@@ -54,8 +54,6 @@ export async function fetchTokenInfoFromExchange(
       tokenInfo = {
         id: id,
         address: tokenAddress,
-        symbol: null,
-        decimals: null,
       };
     }
     tokenObjects.set(id, tokenInfo);

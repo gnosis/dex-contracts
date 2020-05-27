@@ -1,11 +1,25 @@
-import type { Contract, EventData } from "web3-eth-contract";
-import type { ContractEvent } from "../../build/types/types";
+import type { EventEmitter } from "events";
+import type { EventLog } from "web3-core";
+import type {
+  BaseContract,
+  Callback,
+  ContractEventLog,
+  EventOptions,
+} from "../../build/types/types";
+
+/**
+ * Contract event function type.
+ */
+export type ContractEvent<T> = {
+  (cb?: Callback<ContractEventLog<T>>): EventEmitter;
+  (options?: EventOptions, cb?: Callback<ContractEventLog<T>>): EventEmitter;
+};
 
 /**
  * Event data type specified by name.
  */
 export type Event<
-  C extends Contract,
+  C extends BaseContract,
   T extends Exclude<keyof C["events"], "allEvents">
 > = EventValues<C["events"][T]>;
 
@@ -31,17 +45,17 @@ export type Event<
  * }
  * ```
  */
-export type AnyEvent<C extends Contract> = EventMetadata &
+export type AnyEvent<C extends BaseContract> = EventMetadata &
   EventDiscriminant<C, Exclude<keyof C["events"], "allEvents">>;
 
-export type EventMetadata = Omit<EventData, "event" | "returnValues">;
-export type EventName<C extends Contract> = Exclude<
+export type EventMetadata = Omit<EventLog, "event">;
+export type EventName<C extends BaseContract> = Exclude<
   keyof C["events"],
   "allEvents"
 >;
 export type EventValues<T> = T extends ContractEvent<infer U> ? U : never;
 export type EventDiscriminant<
-  C extends Contract,
+  C extends BaseContract,
   T extends EventName<C>
 > = T extends unknown
   ? {

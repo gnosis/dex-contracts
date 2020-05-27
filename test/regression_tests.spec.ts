@@ -17,7 +17,6 @@ import {
   placeOrders,
   setupGenericStableX,
 } from "./utilities";
-import { BatchExchangeInstance, Linkable } from "../types/truffle-typings";
 
 contract("BatchExchange", async (accounts) => {
   const solver = accounts[0];
@@ -27,14 +26,8 @@ contract("BatchExchange", async (accounts) => {
     await feeToken.givenAnyReturnBool(true);
     const lib1 = await IdToAddressBiMap.new();
     const lib2 = await IterableAppendOnlySet.new();
-    await (BatchExchange as Linkable<BatchExchangeInstance>).link(
-      "IdToAddressBiMap",
-      lib1.address,
-    );
-    await (BatchExchange as Linkable<BatchExchangeInstance>).link(
-      "IterableAppendOnlySet",
-      lib2.address,
-    );
+    await BatchExchange.link("IdToAddressBiMap", lib1.address);
+    await BatchExchange.link("IterableAppendOnlySet", lib2.address);
   });
 
   // In the following tests, it might be possible that an batchId is read from the blockchain

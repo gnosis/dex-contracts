@@ -7,7 +7,6 @@ const ERC20 = artifacts.require("ERC20");
 
 import BN from "bn.js";
 import truffleAssert from "truffle-assertions";
-import { BatchExchangeInstance, Linkable } from "../types/truffle-typings";
 
 import {
   closeAuction,
@@ -72,14 +71,8 @@ contract("BatchExchange", async (accounts) => {
     await feeToken.givenAnyReturnBool(true);
     const lib1 = await IdToAddressBiMap.new();
     const lib2 = await IterableAppendOnlySet.new();
-    await (BatchExchange as Linkable<BatchExchangeInstance>).link(
-      "IdToAddressBiMap",
-      lib1.address,
-    );
-    await (BatchExchange as Linkable<BatchExchangeInstance>).link(
-      "IterableAppendOnlySet",
-      lib2.address,
-    );
+    await BatchExchange.link("IdToAddressBiMap", lib1.address);
+    await BatchExchange.link("IterableAppendOnlySet", lib2.address);
     const batchExchange = await BatchExchange.new(
       2 ** 16 - 1,
       feeToken.address,
@@ -166,9 +159,7 @@ contract("BatchExchange", async (accounts) => {
       );
     });
     it("Burns 10 OWL when adding token", async () => {
-      const TokenOWLProxy = artifacts.require(
-        "../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy",
-      );
+      const TokenOWLProxy = artifacts.require("TokenOWLProxy");
       const owlToken = await TokenOWL.new();
       const owlProxyContract = await TokenOWLProxy.new(owlToken.address);
       const owlProxy = await TokenOWL.at(owlProxyContract.address);
@@ -189,9 +180,7 @@ contract("BatchExchange", async (accounts) => {
       assert((await owlProxy.balanceOf(user_1)).eq(new BN(0)));
     });
     it("throws if OWL is not burned", async () => {
-      const TokenOWLProxy = artifacts.require(
-        "../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy",
-      );
+      const TokenOWLProxy = artifacts.require("TokenOWLProxy");
       const owlToken = await TokenOWL.new();
       const owlProxyContract = await TokenOWLProxy.new(owlToken.address);
       const owlProxy = await TokenOWL.at(owlProxyContract.address);
@@ -1198,9 +1187,7 @@ contract("BatchExchange", async (accounts) => {
     });
     it("ensures half of the token imbalance (fees) is burned and that better solutions don't double-burn", async () => {
       // Fee token shouldn't be a mock here, because we need real return values from balanceOf calls.
-      const TokenOWLProxy = artifacts.require(
-        "../node_modules/@gnosis.pm/owl-token/build/contracts/TokenOWLProxy",
-      );
+      const TokenOWLProxy = artifacts.require("TokenOWLProxy");
       const owlToken = await TokenOWL.new();
       const owlProxyContract = await TokenOWLProxy.new(owlToken.address);
       const owlProxy = await TokenOWL.at(owlProxyContract.address);

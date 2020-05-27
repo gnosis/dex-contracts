@@ -2,11 +2,7 @@ import BN from "bn.js";
 import { closeAuction } from "./utilities";
 import { placeFeeTokenLiquidityOrders } from "../src";
 import { getOrdersPaginated } from "../src/onchain_reading";
-import {
-  BatchExchangeInstance,
-  Linkable,
-  MockContractInstance,
-} from "../types/truffle-typings";
+import { MockContractInstance } from "../types/truffle-typings";
 const BatchExchange = artifacts.require("BatchExchange");
 const MockContract = artifacts.require("MockContract");
 const IdToAddressBiMap = artifacts.require("IdToAddressBiMap");
@@ -20,14 +16,8 @@ contract("Liquidity order placement test", async (accounts) => {
     await feeToken.givenAnyReturnBool(true);
     const lib1 = await IdToAddressBiMap.new();
     const lib2 = await IterableAppendOnlySet.new();
-    await (BatchExchange as Linkable<BatchExchangeInstance>).link(
-      "IdToAddressBiMap",
-      lib1.address,
-    );
-    await (BatchExchange as Linkable<BatchExchangeInstance>).link(
-      "IterableAppendOnlySet",
-      lib2.address,
-    );
+    await BatchExchange.link("IdToAddressBiMap", lib1.address);
+    await BatchExchange.link("IterableAppendOnlySet", lib2.address);
   });
 
   // In the following tests, it might be possible that an batchId is read from the blockchain

@@ -1,5 +1,6 @@
 import assert from "assert";
-import type { EventData } from "web3-eth-contract";
+import { EventLog } from "web3-core";
+import { ContractEventLog } from "../../build/types/types";
 import { BatchExchange } from "../contracts";
 import { IndexedOrder } from "../encoding";
 import { OrderbookOptions } from ".";
@@ -621,7 +622,7 @@ export class AuctionState {
  * An error that is thrown on a unhandled contract event.
  */
 export class UnhandledEventError extends Error {
-  constructor(public readonly ev: EventData) {
+  constructor(public readonly ev: ContractEventLog<unknown>) {
     super(`unhandled ${ev.event} event`);
   }
 }
@@ -636,7 +637,7 @@ export class UnhandledEventError extends Error {
  */
 function assertEventsAreAfterBlockAndOrdered(
   block: number,
-  events: EventData[],
+  events: EventLog[],
 ): void {
   let blockNumber = block;
   let logIndex = +Infinity;

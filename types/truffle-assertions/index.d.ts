@@ -3,7 +3,6 @@
  */
 
 declare module "truffle-assertions" {
-  import "@openeth/truffle-typings";
   import { TransactionReceipt } from "web3-core";
 
   class InvalidTxResultError extends Error {}
@@ -20,7 +19,7 @@ declare module "truffle-assertions" {
   interface TransactionResult {
     tx: string;
     receipt: TransactionReceipt;
-    logs: Truffle.TransactionLog[];
+    logs: Truffle.TransactionLog<Truffle.AnyEvent>[];
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
