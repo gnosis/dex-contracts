@@ -1,5 +1,10 @@
 module.exports = {
-  rules: {
-    "no-console": "off",
-  },
+  overrides: [
+    {
+      files: ["*.js"],
+      rules: {
+        "no-console": "off",
+      },
+    },
+  ],
 }
