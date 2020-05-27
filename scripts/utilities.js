@@ -69,39 +69,6 @@ async function createMintableToken(artifacts) {
   return ERC20Mintable.new()
 }
 
-const fetchTokenInfo = async function (
-  exchangeContract,
-  tokenIds,
-  artifacts,
-  fallbackSymbolName = "UNKNOWN",
-  fallbackDecimals = "UNKNOWN"
-) {
-  const ERC20 = artifacts.require("ERC20Detailed")
-  console.log("Fetching token data from EVM")
-  const tokenObjects = {}
-  for (const id of tokenIds) {
-    const tokenAddress = await exchangeContract.tokenIdToAddressMap.call(id)
-    let tokenInfo
-    try {
-      const tokenInstance = await ERC20.at(tokenAddress)
-      tokenInfo = {
-        id: id,
-        symbol: await tokenInstance.symbol.call(),
-        decimals: (await tokenInstance.decimals.call()).toNumber(),
-      }
-    } catch (err) {
-      tokenInfo = {
-        id: id,
-        symbol: fallbackSymbolName,
-        decimals: fallbackDecimals,
-      }
-    }
-    tokenObjects[id] = tokenInfo
-    console.log(`Found Token ${tokenInfo.symbol} at ID ${tokenInfo.id} with ${tokenInfo.decimals} decimals`)
-  }
-  return tokenObjects
-}
-
 const addTokens = async function ({ tokenAddresses, account, batchExchange, owl }) {
   // Get amount of required OWL for listing all tokens
   const feeForAddingToken = await batchExchange.FEE_FOR_LISTING_TOKEN_IN_OWL.call()
@@ -146,58 +113,6 @@ const addTokens = async function ({ tokenAddresses, account, batchExchange, owl 
 const closeAuction = async (instance, web3Provider = web3) => {
   const time_remaining = (await instance.getSecondsRemainingInBatch()).toNumber()
   await waitForNSeconds(time_remaining + 1, web3Provider)
-}
-
-const sendLiquidityOrders = async function (
-  instance,
-  tokenIds,
-  PRICE_FOR_LIQUIDITY_PROVISION,
-  SELL_ORDER_AMOUNT_OWL,
-  artifacts,
-  OWL_NUMBER_DIGITS = 18
-) {
-  const minBuyAmount = []
-  const validTokenIds = []
-
-  for (const tokenId of tokenIds) {
-    const numberOfDigits = (await fetchTokenInfo(instance, [tokenId], artifacts))[tokenId].decimals
-    if (numberOfDigits !== "UNKNOWN") {
-      validTokenIds.push(tokenId)
-      if (numberOfDigits < OWL_NUMBER_DIGITS) {
-        minBuyAmount.push(
-          SELL_ORDER_AMOUNT_OWL.mul(PRICE_FOR_LIQUIDITY_PROVISION).div(
-            new BN(10).pow(new BN(OWL_NUMBER_DIGITS - numberOfDigits))
-          )
-        )
-      } else {
-        minBuyAmount.push(
-          SELL_ORDER_AMOUNT_OWL.mul(PRICE_FOR_LIQUIDITY_PROVISION).mul(
-            new BN(10).pow(new BN(numberOfDigits - OWL_NUMBER_DIGITS))
-          )
-        )
-      }
-    }
-  }
-  const numberOfOrders = validTokenIds.length
-  const batchId = (await instance.getCurrentBatchId()).toNumber()
-  if (numberOfOrders == 0) {
-    console.log(
-      "No liquidity orders will be added, as all tokens have already received liquidity, or their decimals could not be determined"
-    )
-    return
-  }
-  await instance.placeValidFromOrders(
-    validTokenIds, //sellToken
-    Array(numberOfOrders).fill(0), //buyToken
-    Array(numberOfOrders).fill(batchId + 2), //validFrom
-    Array(numberOfOrders).fill(maxUint32), //validTo
-    minBuyAmount, //buyAmount
-    Array(numberOfOrders).fill(SELL_ORDER_AMOUNT_OWL) //sellAmount
-  )
-  console.log(
-    "Placed liquidity sell orders for the following tokens",
-    await Promise.all(validTokenIds.map(async (i) => await instance.tokenIdToAddressMap.call(i)))
-  )
 }
 
 async function _mintOwl({ account, minter, amount, owl }) {
@@ -278,8 +193,6 @@ async function mintOwl({ users, minter, amount, owl }) {
   }
 }
 
-const maxUint32 = new BN(2).pow(new BN(32)).sub(new BN(1))
-
 module.exports = {
   getArgumentsHelper,
   getOrderData,
@@ -289,9 +202,6 @@ module.exports = {
   addTokens,
   closeAuction,
   token_list_url,
-  fetchTokenInfo,
-  sendLiquidityOrders,
-  maxUint32,
   setAllowances,
   mintOwl,
   deleteOrders,
