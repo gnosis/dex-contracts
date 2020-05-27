@@ -16,7 +16,7 @@ const argv = require("yargs")
 
 const zero_address = "0x0000000000000000000000000000000000000000";
 
-async function deposit(callback) {
+module.exports = async (callback: Truffle.ScriptCallback) => {
   try {
     const amount = web3.utils.toWei(String(argv.amount));
     const instance = await BatchExchange.deployed();
@@ -55,6 +55,4 @@ async function deposit(callback) {
   } catch (error) {
     callback(error);
   }
-}
-
-module.exports.deposit;
+};
