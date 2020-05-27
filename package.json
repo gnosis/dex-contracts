@@ -80,7 +80,7 @@
     "@gnosis.pm/owl-token": "^3.1.0",
     "@gnosis.pm/solidity-data-structures": "=1.2.4",
     "@gnosis.pm/util-contracts": "^2.0.6",
-    "@openeth/truffle-typings": "^0.0.5",
+    "@openeth/truffle-typings": "^0.0.6",
     "@openzeppelin/contracts": "=2.5.1",
     "@truffle/contract": "^4.2.6",
     "@types/chai": "^4.2.11",
