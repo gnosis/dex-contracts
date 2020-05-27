@@ -36,7 +36,7 @@ module.exports = async (callback: Truffle.ScriptCallback) => {
       await instance.getPendingWithdraw(withdrawer, token_address)
     )[1];
 
-    console.log(
+    log.info(
       `Withdraw request successful. Will be claimable in batch ${claimable_at}`,
     );
     callback();
