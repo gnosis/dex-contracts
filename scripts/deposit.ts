@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import { factory } from "../ConfigLog4";
+import { factory } from "../src/logging";
 const BatchExchange = artifacts.require("BatchExchange");
 const ERC20 = artifacts.require("ERC20");
 const argv = require("yargs")

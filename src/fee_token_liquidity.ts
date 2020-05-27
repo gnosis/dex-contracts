@@ -1,6 +1,6 @@
 import BN from "bn.js";
 import { BatchExchangeInstance } from "../types/truffle-typings";
-import { factory } from "../ConfigLog4";
+import { factory } from "./logging";
 
 const log = factory.getLogger("fee_token_liquidity");
 
