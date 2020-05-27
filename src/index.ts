@@ -12,7 +12,7 @@ export * from "./amounts";
 export * from "./balance_reader";
 export * from "./contracts";
 export * from "./encoding";
-export * from "./exchange";
+export * from "./fee_token_liquidity";
 export * from "./fraction";
 export * from "./onchain_reading";
 export * from "./orderbook";

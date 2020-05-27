@@ -1,7 +1,7 @@
 const BatchExchange = artifacts.require("BatchExchange")
 
 const BN = require("bn.js")
-const { placeFeeTokenLiquidityOrders } = require("../build/common/src/exchange")
+const { placeFeeTokenLiquidityOrders } = require("../build/common/src/fee_token_liquidity")
 const { getOrdersPaginated } = require("../build/common/src/onchain_reading")
 
 const MAXU32 = new BN(2).pow(new BN(32)).sub(new BN(1))
