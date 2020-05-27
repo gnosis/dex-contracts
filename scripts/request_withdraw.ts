@@ -20,7 +20,6 @@ const argv = require("yargs")
 module.exports = async (callback: Truffle.ScriptCallback) => {
   try {
     const amount = web3.utils.toWei(String(argv.amount));
-
     const instance = await BatchExchange.deployed();
     const accounts = await web3.eth.getAccounts();
     const withdrawer = accounts[argv.accountId];
@@ -32,9 +31,10 @@ module.exports = async (callback: Truffle.ScriptCallback) => {
     }
 
     await instance.requestWithdraw(token_address, amount, { from: withdrawer });
-    const claimable_at = (
-      await instance.getPendingWithdraw(withdrawer, token_address)
-    )[1];
+    const [, claimable_at] = await instance.getPendingWithdraw(
+      withdrawer,
+      token_address,
+    );
 
     log.info(
       `Withdraw request successful. Will be claimable in batch ${claimable_at}`,
