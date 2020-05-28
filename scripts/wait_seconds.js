@@ -1,4 +1,4 @@
-const { waitForNSeconds } = require("../test/utilities.js")
+const { waitForNSeconds } = require("../build/common/test/utilities")
 const { getArgumentsHelper } = require("./script_utilities.js")
 
 module.exports = async (callback) => {
