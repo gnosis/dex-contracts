@@ -4,23 +4,22 @@ node_js:
 cache: yarn
 env: NODE_OPTIONS=--max_old_space_size=4096
 before_install:
-  - rm -rf build
+  - rm -rf packages/*/build
   - npm install -g yarn@latest
   - yarn --version
 before_script:
-  - yarn run ganache > /dev/null &
+  - yarn --cwd packages/contracts run ganache > /dev/null &
 script:
-  - yarn lint
-  - yarn build
-  - solium -d contracts/
-  - yarn coverage && cat ./coverage/lcov.info | coveralls
-  - yarn test-js --grep @skip-on-coverage
-  - yarn test-ts
+  - yarn --cwd packages/contracts lint
+  - yarn --cwd packages/contracts build
+  - yarn --cwd packages/contracts coverage && cat ./coverage/lcov.info | coveralls
+  - yarn --cwd packages/contracts test-js --grep @skip-on-coverage
+  - yarn --cwd packages/contracts test-ts
 before_deploy:
-  - export PACKAGE_VERSION=$(jq -r '.version' package.json)
+  - export PACKAGE_VERSION=$(jq -r '.version' packages/contracts/package.json)
   - test "v$PACKAGE_VERSION" = "$TRAVIS_TAG"
   - mkdir -p deploy
-  - yarn pack --filename deploy/dex-contracts-$PACKAGE_VERSION.tgz
+  - yarn --cwd packages/contracts pack --filename deploy/dex-contracts-$PACKAGE_VERSION.tgz
 deploy:
   provider: s3
   bucket: $BUCKET_NAME
