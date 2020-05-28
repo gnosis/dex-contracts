@@ -74,6 +74,7 @@
   "sideEffects": false,
   "dependencies": {
     "bn.js": "^5.1.2",
+    "cross-fetch": "^3.0.4",
     "typescript-logging": "^0.6.4"
   },
   "devDependencies": {
@@ -102,7 +103,6 @@
     "ganache-cli": "^6.9.1",
     "husky": "^4.2.5",
     "mocha": "^7.2.0",
-    "node-fetch": "^2.6.0",
     "prettier": "^2.0.5",
     "prettier-plugin-solidity": "^1.0.0-alpha.52",
     "rimraf": "^3.0.2",
