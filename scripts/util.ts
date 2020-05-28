@@ -61,13 +61,8 @@ export async function addTokens(
     batchExchange.address,
   );
   if (totalFees.gt(allowanceOfOWL)) {
-    // Only approve the minimum required amount.
-    await setAllowance(
-      owl,
-      account,
-      totalFees.sub(allowanceOfOWL),
-      batchExchange,
-    );
+    // TODO: Only approve the minimum required amount totalFees.sub(allowanceOfOWL)
+    await setAllowance(owl, account, totalFees, batchExchange);
   }
 
   // List all tokens (if not listed previously)
