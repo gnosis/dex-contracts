@@ -1,5 +1,4 @@
 import { setAllowance } from "./util"
-const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
 const getArgumentsHelper = function () {
   const args = process.argv.slice(4)
@@ -132,7 +131,6 @@ module.exports = {
   getArgumentsHelper,
   getOrderData,
   invokeViewFunction,
-  token_list_url,
   mintOwl,
   deleteOrders,
   setAllowances,
