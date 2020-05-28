@@ -1,6 +1,6 @@
 import { addTokens, getBatchExchange, getOwl } from "./util";
 import { factory } from "../src/logging";
-const log = factory.getLogger("scripts.place_order");
+const log = factory.getLogger("scripts.add_token");
 
 const argv = require("yargs")
   .option("tokenAddress", {
