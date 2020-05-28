@@ -2,7 +2,7 @@ const BatchExchange = artifacts.require("BatchExchange")
 const BN = require("bn.js")
 const readline = require("readline")
 
-const { sendTxAndGetReturnValue } = require("../test/utilities.js")
+const { sendTxAndGetReturnValue } = require("../build/common/test/utilities")
 const { fetchTokenInfoFromExchange } = require("../build/common/src/exchange")
 const rl = readline.createInterface({
   input: process.stdin,

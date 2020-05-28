@@ -1,4 +1,5 @@
-const { addTokens, getBatchExchange, getOwl, token_list_url } = require("./utilities.js")
+import { addTokens, getBatchExchange, getOwl } from "../build/common/scripts/util"
+const { token_list_url } = require("./utilities.js")
 const fetch = require("node-fetch")
 const argv = require("yargs")
   .option("token_list_url", {

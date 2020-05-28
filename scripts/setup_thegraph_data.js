@@ -1,10 +1,8 @@
 const { solutionSubmissionParams, basicTrade } = require("../build/common/test/resources/examples")
 
-const { makeDeposits, placeOrders } = require("../build/common/test/utilities")
+const { makeDeposits, placeOrders, closeAuction, waitForNSeconds } = require("../build/common/test/utilities")
+const { getBatchExchange, getOwl } = require("../build/common/scripts/util")
 const {
-  closeAuction,
-  getOwl,
-  getBatchExchange,
   setAllowances,
   addTokens,
   deleteOrders,
@@ -16,7 +14,6 @@ const {
 } = require("./utilities.js")
 
 const { toETH } = require("../build/common/test/resources/math")
-const { waitForNSeconds } = require("../test/utilities")
 
 module.exports = async function (callback) {
   try {
