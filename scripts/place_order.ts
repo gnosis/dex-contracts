@@ -1,6 +1,6 @@
 import { sendTxAndGetReturnValue } from "../test/utilities";
 import { factory } from "../src/logging";
-const log = factory.getLogger("scripts.deposit");
+const log = factory.getLogger("scripts.place_order");
 
 const BatchExchange = artifacts.require("BatchExchange");
 
