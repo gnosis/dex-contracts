@@ -12,7 +12,7 @@ before_script:
 script:
   - yarn workspace @gnosis.pm/dex-contracts lint
   - yarn workspace @gnosis.pm/dex-contracts build
-  - yarn workspace @gnosis.pm/dex-contracts coverage && cat ./coverage/lcov.info | coveralls
+  - yarn workspace @gnosis.pm/dex-contracts coverage && cat packages/contracts/coverage/lcov.info | coveralls
   - yarn workspace @gnosis.pm/dex-contracts test-js --grep @skip-on-coverage
   - yarn workspace @gnosis.pm/dex-contracts test-ts
 before_deploy:
