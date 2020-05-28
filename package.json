@@ -74,7 +74,6 @@
   "sideEffects": false,
   "dependencies": {
     "bn.js": "^5.1.2",
-    "cross-fetch": "^3.0.4",
     "typescript-logging": "^0.6.4"
   },
   "devDependencies": {
@@ -93,6 +92,7 @@
     "bignumber.js": "^9.0.0",
     "chai": "^4.2.0",
     "coveralls": "^3.1.0",
+    "cross-fetch": "^3.0.4",
     "dotenv": "^8.2.0",
     "eslint": "^7.1.0",
     "eslint-config-prettier": "^6.11.0",
