@@ -8,18 +8,18 @@ before_install:
   - npm install -g yarn@latest
   - yarn --version
 before_script:
-  - yarn --cwd packages/contracts run ganache > /dev/null &
+  - yarn workspace @gnosis.pm/dex-contracts run ganache > /dev/null &
 script:
-  - yarn --cwd packages/contracts lint
-  - yarn --cwd packages/contracts build
-  - yarn --cwd packages/contracts coverage && cat ./coverage/lcov.info | coveralls
-  - yarn --cwd packages/contracts test-js --grep @skip-on-coverage
-  - yarn --cwd packages/contracts test-ts
+  - yarn workspace @gnosis.pm/dex-contracts lint
+  - yarn workspace @gnosis.pm/dex-contracts build
+  - yarn workspace @gnosis.pm/dex-contracts coverage && cat ./coverage/lcov.info | coveralls
+  - yarn workspace @gnosis.pm/dex-contracts test-js --grep @skip-on-coverage
+  - yarn workspace @gnosis.pm/dex-contracts test-ts
 before_deploy:
   - export PACKAGE_VERSION=$(jq -r '.version' packages/contracts/package.json)
   - test "v$PACKAGE_VERSION" = "$TRAVIS_TAG"
   - mkdir -p deploy
-  - yarn --cwd packages/contracts pack --filename deploy/dex-contracts-$PACKAGE_VERSION.tgz
+  - yarn workspace @gnosis.pm/dex-contracts pack --filename deploy/dex-contracts-$PACKAGE_VERSION.tgz
 deploy:
   provider: s3
   bucket: $BUCKET_NAME

@@ -1,6 +1,12 @@
 {
   "private": true,
-  "workspaces": [
-    "packages/contracts"
-  ]
+  "workspaces": {
+    "packages": ["packages/*"],
+    "nohoist": [
+      "**/@gnosis.pm/util-contracts",
+      "**/@typechain/truffle-v5",
+      "**/@typechain/web3-v1",
+      "**/typechain"
+    ]
+  }
 }
