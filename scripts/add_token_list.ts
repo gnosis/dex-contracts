@@ -29,19 +29,19 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
       await fetch(argv.token_list_url)
     ).json();
     const networkId = String(await web3.eth.net.getId());
-    const tokenAddresses = new Set(
-      tokenList.map((token) => {
-        return token.addressByNetwork[networkId] ?? "";
-      }),
-    );
-    // Ensure any non result is removed
-    tokenAddresses.delete("");
+    const tokenAddresses = [];
+    for (const token of tokenList) {
+      const address = token.addressByNetwork[networkId];
+      if (address) {
+        tokenAddresses.push(address);
+      }
+    }
 
     const [account] = await web3.eth.getAccounts();
     const batchExchange = await getBatchExchange(artifacts);
     const owl = await getOwl(artifacts);
-    log.info(`Attempting to register ${tokenAddresses.size} tokens`);
-    await addTokens(Array.from(tokenAddresses), account, batchExchange, owl);
+    log.info(`Attempting to register ${tokenAddresses.length} tokens`);
+    await addTokens(tokenAddresses, account, batchExchange, owl);
 
     callback();
   } catch (error) {
