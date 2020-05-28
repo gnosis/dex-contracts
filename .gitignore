@@ -1,9 +1,8 @@
-build/*
-coverage/*
-coverage.json
-deploy/*
-node_modules/*
-build/
+packages/*/build/*
+packages/*/coverage/*
+packages/*/coverage.json
+packages/*/deploy/*
+**/node_modules/*
 
 package-lock.json
 yarn-error.log
