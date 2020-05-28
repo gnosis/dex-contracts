@@ -88,3 +88,12 @@ export async function addTokens(
   // Return token information
   return tokens;
 }
+
+export function parseArgs(): string[] {
+  const args = process.argv.slice(4);
+  const index = args.indexOf("--network");
+  if (index > -1) {
+    args.splice(index, 2);
+  }
+  return args;
+}
