@@ -1,5 +1,4 @@
-const BN = require("bn.js")
-const { waitForNSeconds } = require("../build/common/test/utilities.js")
+import { setAllowance } from "./util"
 const token_list_url = "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json"
 
 const getArgumentsHelper = function () {
@@ -51,68 +50,9 @@ const invokeViewFunction = async function (contract, callback) {
   }
 }
 
-async function getBatchExchange(artifacts) {
-  const BatchExchange = artifacts.require("BatchExchange")
-  return BatchExchange.deployed()
-}
-
-async function getOwl(artifacts) {
-  const TokenOWL = artifacts.require("TokenOWL")
-  const batchExchange = await getBatchExchange(artifacts)
-  const owlAddress = await batchExchange.feeToken.call()
-
-  return TokenOWL.at(owlAddress)
-}
-
 async function createMintableToken(artifacts) {
   const ERC20Mintable = artifacts.require("ERC20Mintable")
   return ERC20Mintable.new()
-}
-
-const addTokens = async function ({ tokenAddresses, account, batchExchange, owl }) {
-  // Get amount of required OWL for listing all tokens
-  const feeForAddingToken = await batchExchange.FEE_FOR_LISTING_TOKEN_IN_OWL.call()
-  const totalFees = feeForAddingToken.mul(new BN(tokenAddresses.length))
-
-  // Ensure the user has enough OWL balance
-  const balanceOfOWL = await owl.balanceOf.call(account)
-  if (totalFees.gt(balanceOfOWL)) {
-    throw new Error("More fee tokens are required to add all tokens")
-  }
-
-  // Set OWL allowance if necessary
-  const allowanceOfOWL = await owl.allowance.call(account, batchExchange.address)
-  if (totalFees.gt(allowanceOfOWL)) {
-    await setAllowance({ token: owl, account, amount: totalFees, batchExchange })
-  }
-
-  // List all tokens (if not listed previously)
-  const tokens = []
-  for (const tokenAddress of tokenAddresses) {
-    const isTokenListed = await batchExchange.hasToken.call(tokenAddress)
-
-    if (!isTokenListed) {
-      await batchExchange.addToken(tokenAddress)
-      console.log(`Successfully added token ${tokenAddress}`)
-    } else {
-      console.log(`The token ${tokenAddress} was already added`)
-    }
-
-    // Get token information
-    const tokenId = await batchExchange.tokenAddressToIdMap(tokenAddress)
-    tokens.push({
-      id: tokenId.toNumber(),
-      address: tokenAddress,
-    })
-  }
-
-  // Return token information
-  return tokens
-}
-
-const closeAuction = async (instance, web3Provider = web3) => {
-  const time_remaining = (await instance.getSecondsRemainingInBatch()).toNumber()
-  await waitForNSeconds(time_remaining + 1, web3Provider)
 }
 
 async function _mintOwl({ account, minter, amount, owl }) {
@@ -182,11 +122,6 @@ async function setAllowances({ users, amount, batchExchange, tokens }) {
   }
 }
 
-async function setAllowance({ token, account, amount, batchExchange }) {
-  console.log("Set allowance of %d for token %s and user %s", amount, token.address, account)
-  await token.approve(batchExchange.address, amount, { from: account })
-}
-
 async function mintOwl({ users, minter, amount, owl }) {
   for (let i = 0; i < users.length; i++) {
     await _mintOwl({ account: users[i], minter, amount, owl })
@@ -197,14 +132,10 @@ module.exports = {
   getArgumentsHelper,
   getOrderData,
   invokeViewFunction,
-  getOwl,
-  getBatchExchange,
-  addTokens,
-  closeAuction,
   token_list_url,
-  setAllowances,
   mintOwl,
   deleteOrders,
+  setAllowances,
   submitSolution,
   getBatchId,
   createMintableToken,
