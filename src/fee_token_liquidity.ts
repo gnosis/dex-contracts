@@ -82,7 +82,7 @@ export async function placeFeeTokenLiquidityOrders(
   );
   for (const tokenId of tokenIds) {
     const numDigits = tokenInfo.get(tokenId)?.decimals;
-    if (numDigits && numDigits != -1) {
+    if (numDigits) {
       validTokenIds.push(tokenId);
       if (numDigits < feeDigits) {
         minBuyAmounts.push(
