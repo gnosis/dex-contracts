@@ -1,9 +1,9 @@
 const { waitForNSeconds } = require("../build/common/test/utilities")
-const { getArgumentsHelper } = require("./script_utilities.js")
+const { parseArgs } = require("../build/common/scripts/util")
 
 module.exports = async (callback) => {
   try {
-    const args = getArgumentsHelper()
+    const args = parseArgs()
     if (args.length != 1) {
       callback("Error: This script requires arguments - <seconds>")
     }
