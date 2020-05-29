@@ -113,8 +113,5 @@ export async function placeFeeTokenLiquidityOrders(
     Array(numOrders).fill(sellAmountOwl), // sellAmount
   );
 
-  // Question: Does this really need to be an async mapping?
-  return await Promise.all(
-    validTokenIds.map(async (i) => await tokenInfo.get(i)?.address),
-  );
+  return await Promise.all(validTokenIds.map((i) => tokenInfo.get(i)?.address));
 }
