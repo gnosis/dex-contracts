@@ -69,9 +69,9 @@ export async function placeFeeTokenLiquidityOrders(
   provisionPrice: BN,
   sellAmountOwl: BN,
   artifacts: Truffle.Artifacts,
-): Promise<(string | undefined)[]> {
+): Promise<number[]> {
   const minBuyAmounts = [];
-  const validTokenIds = [];
+  const validTokenIds: number[] = [];
   const feeToken = await fetchTokenInfoFromExchange(exchange, [0], artifacts);
   // This is expected to always be OWL which has 18 digits.
   const feeDigits = feeToken.get(0)?.decimals || 18;
@@ -113,5 +113,5 @@ export async function placeFeeTokenLiquidityOrders(
     Array(numOrders).fill(sellAmountOwl), // sellAmount
   );
 
-  return await Promise.all(validTokenIds.map((i) => tokenInfo.get(i)?.address));
+  return validTokenIds;
 }

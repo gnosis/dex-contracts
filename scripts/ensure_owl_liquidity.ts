@@ -85,18 +85,26 @@ module.exports = async (callback: Truffle.ScriptCallback) => {
       log.info(
         `Attempting to place orders for tokens ${tokensRequiringLiquidity}`,
       );
-      const res = await placeFeeTokenLiquidityOrders(
+      const successTokens = await placeFeeTokenLiquidityOrders(
         exchange,
         tokensRequiringLiquidity,
         PRICE_FOR_PROVISION,
         SELL_AMOUNT_OWL,
         artifacts,
       );
-      if (res && res.length) {
-        log.info(`Placed fee token liquidity orders for tokens: ${res}`);
-      } else {
+      if (successTokens && successTokens.length) {
+        log.info(
+          `Successfully placed fee token liquidity orders for tokens: ${successTokens}`,
+        );
+      }
+      // This scenario is actually quite common. In fact, always
+      // happens once a non-ERC20 token has been registered on exchange.
+      const failedTokens = tokensRequiringLiquidity.filter(
+        (x) => !successTokens.includes(x),
+      );
+      if (failedTokens && failedTokens.length) {
         log.warn(
-          `No orders placed. Tokens ${tokensRequiringLiquidity} may not be ERC20s on this network.`,
+          `No orders placed for ${failedTokens} (Likely not ERC20s on this network).`,
         );
       }
     } else {
