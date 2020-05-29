@@ -10,7 +10,7 @@ const argv = require("yargs")
     type: "string",
     describe: "Order IDs to be canceled",
     coerce: (str: string) => {
-      return str.split(",").map((o) => parseInt(o));
+      return str.split(",").map((o) => parseInt(o.trim()));
     },
   })
   .demand(["accountId", "orderIds"])

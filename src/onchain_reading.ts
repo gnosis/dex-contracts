@@ -34,7 +34,7 @@ export async function* getOpenOrdersPaginated(
     const elements = decodeIndexedOrders(page.elements);
     yield elements;
 
-    //Update page info
+    // Update page info
     hasNextPage = page.hasNextPage;
     nextPageUser = page.nextPageUser;
     nextPageUserOffset = page.nextPageUserOffset;

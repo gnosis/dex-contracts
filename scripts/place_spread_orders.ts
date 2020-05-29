@@ -33,7 +33,7 @@ const argv = require("yargs")
     type: "string",
     describe: "Collection of trusted tokenIds",
     coerce: (str: string) => {
-      return str.split(",").map((t) => parseInt(t));
+      return str.split(",").map((t) => parseInt(t.trim()));
     },
   })
   .option("accountId", {
