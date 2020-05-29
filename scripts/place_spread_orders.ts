@@ -74,11 +74,18 @@ module.exports = async (callback: Truffle.ScriptCallback) => {
     const account = accounts[argv.accountId];
 
     const batch_index = (await instance.getCurrentBatchId()).toNumber();
+    log.info("Communicating with exchange for requested token info...");
     const token_data = await fetchTokenInfoFromExchange(
       instance,
       argv.tokens,
       artifacts,
     );
+    argv.tokens.map((id: number) => {
+      const token = token_data.get(id);
+      log.info(
+        `Found ${token?.symbol} with ID ${id} at ${token?.address} having ${token?.decimals} decimals`,
+      );
+    });
     const expectedReturnFactor = 1 + argv.spread / 100;
     const sellAmount = argv.sellAmount;
     const buyAmount = sellAmount * expectedReturnFactor;

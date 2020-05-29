@@ -1,8 +1,5 @@
 import BN from "bn.js";
 import { BatchExchangeInstance } from "../types/truffle-typings";
-import { factory } from "./logging";
-
-const log = factory.getLogger("fee_token_liquidity");
 
 export interface TokenInfo {
   id: number;
@@ -19,7 +16,7 @@ const MAXU32 = new BN(2).pow(new BN(32)).sub(new BN(1));
  * @param tokenIds - An array of token ids as listed on the Batch Exchange.
  * @param artifacts - A context-like object providing a gateway to Truffle contract ABIs.
  * @returns A mapping of TokenInfo objects fetched from the exchange.
- *   Note that Nullish TokenInfo objects are returned in places where the requested token ID failed to fetch.
+ *   Note that nullish TokenInfo objects are returned in places where the requested token ID failed to fetch.
  */
 export async function fetchTokenInfoFromExchange(
   exchange: BatchExchangeInstance,
@@ -42,15 +39,10 @@ export async function fetchTokenInfoFromExchange(
         decimals: decimals,
         address: tokenAddress,
       };
-      log.info(
-        () =>
-          `Found Token ${symbol} with ID ${id} at address ${tokenAddress} having ${decimals} decimals`,
-      );
     } catch (err) {
       // This generic try-catch is essentially a TokenNotFoundError
       // Could occur when the given ID slot is not occupied by a registered token on the exhchange
       // or if the code registered at address occupied by a token slot is not that of and ERC20 token
-      log.warn(() => `Token Not Found: ${id} - ${tokenAddress}`);
       tokenInfo = {
         id: id,
         address: tokenAddress,
@@ -77,7 +69,7 @@ export async function placeFeeTokenLiquidityOrders(
   provisionPrice: BN,
   sellAmountOwl: BN,
   artifacts: Truffle.Artifacts,
-): Promise<void> {
+): Promise<(string | undefined)[]> {
   const minBuyAmounts = [];
   const validTokenIds = [];
   const feeToken = await fetchTokenInfoFromExchange(exchange, [0], artifacts);
@@ -110,10 +102,7 @@ export async function placeFeeTokenLiquidityOrders(
   const numOrders = validTokenIds.length;
   const batchId = (await exchange.getCurrentBatchId()).toNumber();
   if (numOrders == 0) {
-    log.info(
-      "No orders added since all tokens sufficiently funded or not found.",
-    );
-    return;
+    return [];
   }
   await exchange.placeValidFromOrders(
     validTokenIds, // buyTokens
@@ -123,10 +112,9 @@ export async function placeFeeTokenLiquidityOrders(
     minBuyAmounts, // buyAmounts
     Array(numOrders).fill(sellAmountOwl), // sellAmount
   );
-  log.info(
-    "Placed fee token liquidity orders for the following tokens" +
-      (await Promise.all(
-        validTokenIds.map(async (i) => await tokenInfo.get(i)?.address),
-      )),
+
+  // Question: Does this really need to be an async mapping?
+  return await Promise.all(
+    validTokenIds.map(async (i) => await tokenInfo.get(i)?.address),
   );
 }
