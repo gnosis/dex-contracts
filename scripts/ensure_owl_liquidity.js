@@ -65,7 +65,6 @@ module.exports = async (callback) => {
       SELL_ORDER_AMOUNT_OWL,
       artifacts
     )
-    // log.info(`Placed fee token liquidity orders for tokens: ${res}`)
     callback()
   } catch (error) {
     callback(error)
