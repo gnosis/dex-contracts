@@ -66,7 +66,7 @@ module.exports = async (callback: Truffle.ScriptCallback) => {
     const tokensRequiringLiquidity = [];
     for (let tokenId = 1; tokenId < numTokens; tokenId++) {
       const tokenAddress = await exchange.tokenIdToAddressMap(tokenId);
-      log.info(`Checking liquidity for token ${tokenAddress}`);
+      log.info(`Checking liquidity for token ${tokenId} - ${tokenAddress}`);
       const ordersForTokenId = orders.filter(
         (order) => order.buyToken == tokenId && order.sellToken == 0,
       );
@@ -77,19 +77,31 @@ module.exports = async (callback: Truffle.ScriptCallback) => {
         tokensRequiringLiquidity.push(tokenId);
       } else {
         log.info(
-          `Liquidity for ${tokenAddress} is given or has been provided in the past`,
+          `    Liquidity for ${tokenAddress} is given or has been provided in the past`,
         );
       }
     }
-
-    const res = await placeFeeTokenLiquidityOrders(
-      exchange,
-      tokensRequiringLiquidity,
-      PRICE_FOR_PROVISION,
-      SELL_AMOUNT_OWL,
-      artifacts,
-    );
-    log.info(`Placed fee token liquidity orders for tokens: ${res}`);
+    if (tokensRequiringLiquidity) {
+      log.info(
+        `Attempting to place orders for tokens ${tokensRequiringLiquidity}`,
+      );
+      const res = await placeFeeTokenLiquidityOrders(
+        exchange,
+        tokensRequiringLiquidity,
+        PRICE_FOR_PROVISION,
+        SELL_AMOUNT_OWL,
+        artifacts,
+      );
+      if (res && res.length) {
+        log.info(`Placed fee token liquidity orders for tokens: ${res}`);
+      } else {
+        log.warn(
+          `No orders placed. Tokens ${tokensRequiringLiquidity} may not be ERC20s on this network.`,
+        );
+      }
+    } else {
+      log.info("Did not detect any tokens requiring liquidity");
+    }
     callback();
   } catch (error) {
     callback(error);
