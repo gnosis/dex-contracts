@@ -1,6 +1,8 @@
 import BN from "bn.js";
 import { getOrdersPaginated } from "../src/onchain_reading";
 import type { Order } from "../src/encoding";
+import { factory } from "../src/logging";
+const log = factory.getLogger("scripts.get_auction_elements");
 
 const BatchExchange = artifacts.require("BatchExchange");
 const argv = require("yargs")
@@ -106,6 +108,7 @@ const printOrder = function (order: Order<BN>, currentBatchId: number) {
 module.exports = async (callback: Truffle.ScriptCallback) => {
   try {
     const exchange = await BatchExchange.deployed();
+    log.info("Retrieving auction elements from EVM. This may take a while...");
     let auctionElementsDecoded = await getOrdersPaginated(
       exchange.contract,
       argv.pageSize,
@@ -134,8 +137,7 @@ module.exports = async (callback: Truffle.ScriptCallback) => {
     }
 
     auctionElementsDecoded.forEach((order) => printOrder(order, batchId));
-    // eslint-disable-next-line no-console
-    console.log(`Found ${auctionElementsDecoded.length} orders`);
+    log.info(`Found ${auctionElementsDecoded.length} orders`);
 
     callback();
   } catch (error) {
