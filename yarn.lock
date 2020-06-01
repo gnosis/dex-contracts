@@ -317,16 +317,16 @@
     crypto-js "^3.1.9-1"
     debug "^4.1.0"
 
-"@truffle/contract@^4.2.6":
-  version "4.2.6"
-  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.2.6.tgz#548fb67340dfc686e14d7dc94f0750dc18f93454"
-  integrity sha512-x+XV7/JBAFiLCdw7YR90qRTu5Y9AprPQES9hNwr2n9RO/o7on+ZUeD4CG3BsKDchO2aRnUfkc4R5byJiJ/sXBw==
+"@truffle/contract@^4.2.7":
+  version "4.2.7"
+  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.2.7.tgz#09f8c5a4288e37c36c0850752f8fc2c6d31bccd1"
+  integrity sha512-3CbLnC2isPmwcQdkRkHPzGbJRgKjiOupIocA9xTvrBMBorS7jKFx+dUc7m04Z+2+iqgOYOUYdZkYvxZQkLOjMA==
   dependencies:
     "@truffle/blockchain-utils" "^0.0.20"
     "@truffle/contract-schema" "^3.2.0"
-    "@truffle/debug-utils" "^4.1.4"
+    "@truffle/debug-utils" "^4.1.5"
     "@truffle/error" "^0.0.8"
-    "@truffle/interface-adapter" "^0.4.8"
+    "@truffle/interface-adapter" "^0.4.9"
     bignumber.js "^7.2.1"
     ethereum-ens "^0.8.0"
     ethers "^4.0.0-beta.1"
@@ -337,10 +337,10 @@
     web3-eth-abi "1.2.1"
     web3-utils "1.2.1"
 
-"@truffle/debug-utils@^4.1.4":
-  version "4.1.4"
-  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-4.1.4.tgz#c89fa30ac554bc04a8d6aa22064a05d72b2b2fe2"
-  integrity sha512-IU9tjr1rem2AwogDPPnH3wACMs3wjVyimqmPzSKX6zCe/XFAh4nUu/qwaigZjr8fP6bNzlwaH9CMLWMWljB7WA==
+"@truffle/debug-utils@^4.1.5":
+  version "4.1.5"
+  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-4.1.5.tgz#76cc1194a0557e0a8ebf9e9697c020c7710f6eea"
+  integrity sha512-A92poHLZ48pmT4vUcjbTxlgWHB69TOKeVvj5MP2gflu1FqT+MYyPFig2h8hAjYP6xhBh9QuHzn7n1NIhpQffYQ==
   dependencies:
     "@truffle/codec" "^0.5.4"
     "@trufflesuite/chromafi" "^2.1.2"
@@ -386,10 +386,10 @@
     lodash "^4.17.13"
     web3 "1.2.2"
 
-"@truffle/interface-adapter@^0.4.8":
-  version "0.4.8"
-  resolved "https://registry.yarnpkg.com/@truffle/interface-adapter/-/interface-adapter-0.4.8.tgz#fa7cb1d35f45093f996b692529d4d78ab5a12b05"
-  integrity sha512-pTD4Vr5vfYcMTCUPefznA2mM060vKScn24o1QhfUYyBbas/fc0dDstrnCv886l0dhqnV/q2ebSzaxVWUyPSfgg==
+"@truffle/interface-adapter@^0.4.9":
+  version "0.4.9"
+  resolved "https://registry.yarnpkg.com/@truffle/interface-adapter/-/interface-adapter-0.4.9.tgz#f00cdbeee62a9262c3c53ba5b5d8ae5dd18d08c8"
+  integrity sha512-2dYccf7lAwx90NVYmn89QABpd3dx7BxvDAaHgzVa2YVOUkTUpkZiaIsD2YlsVQ1rew17wMNi5WXH2RFnmzQ82A==
   dependencies:
     bn.js "^4.11.8"
     ethers "^4.0.32"
