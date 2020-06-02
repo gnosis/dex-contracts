@@ -31,11 +31,11 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
     await owlProxy.approve(instance.address, amount);
 
     log.info(
-      `Beginning environment setup with ${argv.numAccounts} accounts and ${argv.numTokens} tokens`,
+      `Beginning setup with ${argv.numAccounts} accounts and ${argv.numTokens} tokens`,
     );
 
     // Create and register tokens (feeToken is already registered)
-    const tokens = [owlProxy];
+    const tokens = [];
     for (let i = 1; i < argv.numTokens; i++) {
       const token = await ERC20Mintable.new();
       await instance.addToken(token.address);
@@ -44,13 +44,15 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
 
     // Create balance and approval for tokens
     for (let account = 0; account < argv.numAccounts; account++) {
-      for (let token = 0; token < argv.numTokens; token++) {
-        if (token == 0) {
-          await owlProxy.mintOWL(accounts[account], amount);
-        } else {
-          await tokens[token].contract.methods.mint(accounts[account], amount);
-        }
-        await tokens[token].approve(instance.address, amount, {
+      // Mint and approve OWL
+      await owlProxy.mintOWL(accounts[account], amount);
+      await owlProxy.approve(instance.address, amount, {
+        from: accounts[account],
+      });
+      // Mint and approve other tokens.
+      for (const token of tokens) {
+        await token.mint(accounts[account], amount);
+        await token.approve(instance.address, amount, {
           from: accounts[account],
         });
       }
