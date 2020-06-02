@@ -1,17 +1,22 @@
 {
   "extends": "solhint:default",
-  "plugins": ["prettier"],
+  "plugins": [
+    "prettier"
+  ],
   "rules": {
-    "indent": ["error", 4],
-    "quotes": ["error", "double"],
-    "max-line-length": ["error", 129],
-    "max-states-count": ["error", 18],
+    "quotes": [
+      "error",
+      "double"
+    ],
+    "max-line-length": [
+      "error",
+      129
+    ],
+    "max-states-count": [
+      "error",
+      18
+    ],
     "not-rely-on-time": "error",
-    "compiler-fixed": true,
-    "no-simple-event-func-name": true,
-    "two-lines-top-level-separator": "off",
-    "separate-by-one-line-in-contract": "warn",
-    "bracket-align": "warn",
     "prettier/prettier": "error"
   }
 }
