@@ -4,7 +4,6 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./BatchExchange.sol";
 
-
 contract BatchExchangeViewer {
     using BytesLib for bytes;
     using SafeMath for uint256;

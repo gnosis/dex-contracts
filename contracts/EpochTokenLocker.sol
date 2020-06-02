@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-
 /** @title Epoch Token Locker
  *  EpochTokenLocker saveguards tokens for applications with constant-balances during discrete epochs
  *  It allows to deposit a token which become credited in the next epoch and allows to request a token-withdraw
