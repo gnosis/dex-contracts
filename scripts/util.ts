@@ -2,6 +2,7 @@ import BN from "bn.js";
 import type {
   BatchExchangeInstance,
   TokenOwlInstance,
+  Erc20MintableInstance,
 } from "../types/truffle-typings";
 import type { SolutionSubmission } from "../test/resources/examples/model";
 import { factory } from "../src/logging";
@@ -30,15 +31,15 @@ export async function getOwl(
 }
 
 async function setAllowance(
-  token: Truffle.ContractInstance,
+  token: TokenOwlInstance | Erc20MintableInstance,
   account: string,
   amount: string | BN,
   exchange: BatchExchangeInstance,
 ) {
   log.info(
-    `Approving BatchExchange at ${exchange.address} for ${amount} of token ${token.address}`,
+    `Approving BatchExchange at ${exchange.address} for ${amount} token ${token.address}`,
   );
-  await token.contract.methods.approve(exchange.address, amount, {
+  await token.approve(exchange.address, amount, {
     from: account,
   });
 }
@@ -47,7 +48,7 @@ export async function setAllowances(
   users: string[],
   amount: string | BN,
   exchange: BatchExchangeInstance,
-  tokens: Truffle.ContractInstance[],
+  tokens: (TokenOwlInstance | Erc20MintableInstance)[],
 ): Promise<void> {
   for (let i = 0; i < users.length; i++) {
     for (let j = 0; j < tokens.length; j++) {
@@ -60,23 +61,20 @@ export async function addTokens(
   tokenAddresses: string[],
   account: string,
   exchange: BatchExchangeInstance,
-  owl: Truffle.ContractInstance,
+  owl: TokenOwlInstance,
 ): Promise<ExchangeToken[]> {
   // Get amount of required OWL for listing all tokens
   const feeForAddingToken = await exchange.FEE_FOR_LISTING_TOKEN_IN_OWL();
   const totalFees = feeForAddingToken.mul(new BN(tokenAddresses.length));
 
   // Ensure the user has enough OWL balance
-  const balanceOfOWL = await owl.contract.methods.balanceOf(account);
+  const balanceOfOWL = await owl.balanceOf(account);
   if (totalFees.gt(balanceOfOWL)) {
     throw new Error("Insufficient balance of fee token to complete request.");
   }
 
   // Set OWL allowance if necessary
-  const allowanceOfOWL = await owl.contract.methods.allowance(
-    account,
-    exchange.address,
-  );
+  const allowanceOfOWL = await owl.allowance(account, exchange.address);
   if (totalFees.gt(allowanceOfOWL)) {
     // TODO: Only approve the minimum required amount totalFees.sub(allowanceOfOWL)
     await setAllowance(owl, account, totalFees, exchange);
@@ -88,7 +86,7 @@ export async function addTokens(
     const isTokenListed = await exchange.hasToken(tokenAddress);
 
     if (!isTokenListed) {
-      await exchange.addToken(tokenAddress);
+      await exchange.addToken(tokenAddress, { from: account });
       log.info(`Successfully added token ${tokenAddress}`);
     } else {
       log.info(`The token ${tokenAddress} was already added`);
@@ -169,32 +167,32 @@ export async function getBatchId(
 
 export async function createMintableToken(
   artifacts: Truffle.Artifacts,
-): Promise<Truffle.ContractInstance> {
+): Promise<Erc20MintableInstance> {
   const ERC20Mintable = artifacts.require("ERC20Mintable");
   return ERC20Mintable.new();
 }
 
 async function mintToken(
-  token: Truffle.ContractInstance,
+  token: Erc20MintableInstance,
   account: string,
-  minter: string,
   amount: string,
+  minter: string,
 ) {
   log.info(
     `Mint ${amount} of token ${token.address} for user ${account}. Using ${minter} as the minter`,
   );
-  await token.contract.methods.mint(account, amount, { from: minter });
+  await token.mint(account, amount, { from: minter });
 }
 
 export async function mintTokens(
-  tokens: Truffle.ContractInstance[],
+  tokens: Erc20MintableInstance[],
   users: string[],
-  minter: string,
   amount: string,
+  minter: string,
 ): Promise<void> {
   for (let i = 0; i < tokens.length; i++) {
     for (let j = 0; j < users.length; j++) {
-      await mintToken(tokens[i], users[j], minter, amount);
+      await mintToken(tokens[i], users[j], amount, minter);
     }
   }
 }

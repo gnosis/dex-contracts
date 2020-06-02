@@ -10,10 +10,10 @@ import {
   waitForNSeconds,
 } from "../test/utilities";
 import {
+  addTokens,
   getBatchExchange,
   getOwl,
   setAllowances,
-  addTokens,
   deleteOrders,
   submitSolution,
   getBatchId,
@@ -34,12 +34,12 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
     // Prepare user accounts
     const [user1Address, user2Address] = await web3.eth.getAccounts();
     const userAddresses = [user1Address, user2Address];
-    const solverAddress = user1Address;
+    const solverAddress = user2Address;
     const minter = user1Address;
 
     // Get current batch id
     let batchId = await getBatchId(batchExchange);
-    log.info(`Current batch id: ${batchId}`);
+    log.info(`Current batchId: ${batchId}`);
 
     // Set user1 as minter of OWL
     await owl.setMinter(minter);
@@ -53,14 +53,11 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
     const tokensInstances = [token1Instance];
 
     // Set allowances for OWL and the tokens
-    await setAllowances(
-      userAddresses,
-      amount,
-      batchExchange,
-      tokensInstances.concat([owl]),
-    );
+    await setAllowances(userAddresses, amount, batchExchange, [owl]);
+    await setAllowances(userAddresses, amount, batchExchange, tokensInstances);
 
     // List the tokens in the exchange
+    log.info("Registering tokens in the exchange");
     const tokenAddresses = [token1Instance.address];
     const [token1] = await addTokens(
       tokenAddresses,
@@ -69,7 +66,7 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
       owl,
     );
 
-    // Mint tokens for every user
+    log.info("Mint tokens for every user");
     await mintTokens(tokensInstances, userAddresses, amount, minter);
 
     // Make deposits, place orders and close auction [aka runAuctionScenario(basicTrade)]
