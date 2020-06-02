@@ -27,7 +27,7 @@ const log = factory.getLogger("scripts.setup_thegraph");
 
 module.exports = async function (callback: Truffle.ScriptCallback) {
   try {
-    const batchExchange = await getBatchExchange(artifacts);
+    const exchange = await getBatchExchange(artifacts);
     const owl = await getOwl(artifacts);
     log.info(`OWL address ${owl.address}`);
 
@@ -38,7 +38,7 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
     const minter = user1Address;
 
     // Get current batch id
-    let batchId = await getBatchId(batchExchange);
+    let batchId = await getBatchId(exchange);
     log.info(`Current batchId: ${batchId}`);
 
     // Set user1 as minter of OWL
@@ -53,28 +53,27 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
     const tokensInstances = [token1Instance];
 
     // Set allowances for OWL and the tokens
-    await setAllowances(userAddresses, amount, batchExchange, [owl]);
-    await setAllowances(userAddresses, amount, batchExchange, tokensInstances);
+    await setAllowances(userAddresses, amount, exchange, [owl]);
+    await setAllowances(userAddresses, amount, exchange, tokensInstances);
 
     // List the tokens in the exchange
-    log.info("Registering tokens in the exchange");
     const tokenAddresses = [token1Instance.address];
     const [token1] = await addTokens(
       tokenAddresses,
       user1Address,
-      batchExchange,
+      exchange,
       owl,
     );
 
-    log.info("Mint tokens for every user");
+    // Mint tokens for all users
     await mintTokens(tokensInstances, userAddresses, amount, minter);
 
     // Make deposits, place orders and close auction [aka runAuctionScenario(basicTrade)]
-    await makeDeposits(batchExchange, userAddresses, basicTrade.deposits);
+    await makeDeposits(exchange, userAddresses, basicTrade.deposits);
 
     // Place orders
     let orderIds = await placeOrders(
-      batchExchange,
+      exchange,
       userAddresses,
       basicTrade.orders,
       batchId + 1,
@@ -84,19 +83,19 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
     log.info(
       `Request withdraw for user ${user1Address}, token ${token1.address} (${token1.id})`,
     );
-    await batchExchange.requestWithdraw(token1.address, 5, {
+    await exchange.requestWithdraw(token1.address, 5, {
       from: user1Address,
     });
 
     // Close the auction
     log.info("Closing auction so we can withdraw the tokens");
-    await closeAuction(batchExchange, web3);
+    await closeAuction(exchange, web3);
 
     // Withdraw tokens
     log.info(
       `Withdraw for user ${user1Address}, token ${token1.address} (${token1.id})`,
     );
-    await batchExchange.withdraw(user1Address, token1.address, {
+    await exchange.withdraw(user1Address, token1.address, {
       from: user1Address,
     });
 
@@ -110,19 +109,19 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
         orderIds,
       ),
       solverAddress,
-      batchExchange,
+      exchange,
     );
 
     // Close auction
     log.info("Close auction after solution has been applied");
-    await closeAuction(batchExchange, web3);
+    await closeAuction(exchange, web3);
 
     // Cancel the 2 orders
     log.info("Cancel the two orders");
-    await deleteOrders(orderIds, userAddresses, batchExchange);
+    await deleteOrders(orderIds, userAddresses, exchange);
 
     // Create a new order with validity only for next batch
-    batchId = await getBatchId(batchExchange);
+    batchId = await getBatchId(exchange);
     const newOrder = {
       sellToken: 0,
       buyToken: token1.id,
@@ -132,7 +131,7 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
     };
     log.info(`Place new order: ${JSON.stringify(newOrder)}`);
     orderIds = await placeOrders(
-      batchExchange,
+      exchange,
       [user1Address],
       [newOrder],
       batchId + 1,
@@ -144,10 +143,10 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
     await waitForNSeconds(1800, web3);
 
     // Delete the new order
-    await deleteOrders(orderIds, [user1Address], batchExchange);
+    await deleteOrders(orderIds, [user1Address], exchange);
 
     log.info(
-      `Environment setup complete for BatchExchange with address ${batchExchange.address}`,
+      `Environment setup complete for BatchExchange with address ${exchange.address}`,
     );
     callback();
   } catch (error) {
