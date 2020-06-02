@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/utils/SafeCast.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
 
-
 /** @title BatchExchange - A decentralized exchange for any ERC20 token as a multi-token batch
  *  auction with uniform clearing prices.
  *  For more information visit: <https://github.com/gnosis/dex-contracts>
