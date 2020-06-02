@@ -39,12 +39,12 @@ export class Orderbook {
   private bids: Map<number, Offer>; // Mapping from price to cumulative offers at this point.
 
   constructor(
-    baseToken: string,
-    quoteToken: string,
+    baseToken: string | number,
+    quoteToken: string | number,
     options: Fee | RemainingFractionAfterFee = { fee: new Fraction(1, 1000) },
   ) {
-    this.baseToken = baseToken;
-    this.quoteToken = quoteToken;
+    this.baseToken = baseToken.toString();
+    this.quoteToken = quoteToken.toString();
     if ("fee" in options) {
       this.remainingFractionAfterFee = new Fraction(1, 1).sub(options.fee);
     } else {
