@@ -1,4 +1,13 @@
-import { parseArgs, getBatchExchange } from "./util";
+import { getBatchExchange } from "./util";
+
+function parseArgs(): string[] {
+  const args = process.argv.slice(4);
+  const index = args.indexOf("--network");
+  if (index > -1) {
+    args.splice(index, 2);
+  }
+  return args;
+}
 
 module.exports = async (callback: Truffle.ScriptCallback) => {
   try {
