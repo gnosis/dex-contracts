@@ -1,5 +1,7 @@
 import BN from "bn.js";
 import { factory } from "../src/logging";
+const log = factory.getLogger("scripts.deposit");
+
 const BatchExchange = artifacts.require("BatchExchange");
 const ERC20 = artifacts.require("ERC20");
 const argv = require("yargs")
@@ -17,7 +19,6 @@ const argv = require("yargs")
   .version(false).argv;
 
 const zero_address = "0x0000000000000000000000000000000000000000";
-const log = factory.getLogger("deposit");
 
 module.exports = async (callback: Truffle.ScriptCallback) => {
   try {
