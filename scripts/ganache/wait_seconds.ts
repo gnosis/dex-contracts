@@ -1,5 +1,5 @@
-import { waitForNSeconds } from "..//test/utilities";
-import { factory } from "../src/logging";
+import { waitForNSeconds } from "../../test/utilities";
+import { factory } from "../../src/logging";
 const log = factory.getLogger("scripts.wait_seconds");
 
 const argv = require("yargs")

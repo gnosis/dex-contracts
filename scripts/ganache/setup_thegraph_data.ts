@@ -1,14 +1,14 @@
-import { toETH } from "../test/resources/math";
+import { toETH } from "../../test/resources/math";
 import {
   solutionSubmissionParams,
   basicTrade,
-} from "../test/resources/examples";
+} from "../../test/resources/examples";
 import {
   makeDeposits,
   placeOrders,
   closeAuction,
   waitForNSeconds,
-} from "../test/utilities";
+} from "../../test/utilities";
 import {
   addTokens,
   getBatchExchange,
@@ -20,9 +20,9 @@ import {
   createMintableToken,
   mintTokens,
   mintOwl,
-} from "./util";
+} from "../util";
 
-import { factory } from "../src/logging";
+import { factory } from "../../src/logging";
 const log = factory.getLogger("scripts.setup_thegraph");
 
 module.exports = async function (callback: Truffle.ScriptCallback) {

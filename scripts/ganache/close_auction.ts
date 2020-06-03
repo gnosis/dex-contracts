@@ -1,5 +1,5 @@
-import { closeAuction } from "../test/utilities";
-import { factory } from "../src/logging";
+import { closeAuction } from "../../test/utilities";
+import { factory } from "../../src/logging";
 const log = factory.getLogger("scripts.close_auction");
 
 // Note that this script only works in local blockchains
