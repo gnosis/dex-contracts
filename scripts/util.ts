@@ -116,7 +116,9 @@ export async function deleteOrders(
     const cancelReceipt = await exchange.cancelOrders([orderId], {
       from: account,
     });
-    const events = cancelReceipt.logs.map((log: any) => log.event).join(", ");
+    const events = cancelReceipt.logs
+      .map((log: Truffle.TransactionLog<Truffle.AnyEvent>) => log.event)
+      .join(", ");
     log.info(
       `Canceled/Deleted order ${orderId} for user {${account}}. Emitted events: ${events}`,
     );
