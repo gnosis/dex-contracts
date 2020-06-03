@@ -188,23 +188,23 @@ export async function mintTokens(
   }
 }
 
-async function _mintOwl(
-  account: string,
-  minter: string,
-  amount: string,
+async function mintOwlForUser(
   owl: TokenOwlInstance,
+  user: string,
+  amount: string,
+  minter: string,
 ) {
-  log.info(`Mint ${amount} of OWL for user ${account}`);
-  return owl.mintOWL(account, amount, { from: minter });
+  log.info(`Mint ${amount} OWL to ${user}`);
+  return owl.mintOWL(user, amount, { from: minter });
 }
 
 export async function mintOwl(
-  users: string[],
-  minter: string,
-  amount: string,
   owl: TokenOwlInstance,
+  users: string[],
+  amount: string,
+  minter: string,
 ): Promise<void> {
   for (let i = 0; i < users.length; i++) {
-    await _mintOwl(users[i], minter, amount, owl);
+    await mintOwlForUser(owl, users[i], amount, minter);
   }
 }

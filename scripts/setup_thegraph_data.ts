@@ -46,7 +46,7 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
 
     // Mint OWL for every user
     const amount = web3.utils.toWei("3000");
-    await mintOwl(userAddresses, minter, amount, owl);
+    await mintOwl(owl, userAddresses, amount, minter);
 
     // Create 1 token
     const token1Instance = await createMintableToken(artifacts);
