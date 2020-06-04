@@ -1,14 +1,16 @@
 language: node_js
 node_js:
-  - 10
+  - 12
 cache: yarn
-env: NODE_OPTIONS=--max_old_space_size=4096
+env:
+  global:
+    NODE_OPTIONS=--max_old_space_size=4096
 before_install:
   - rm -rf build
   - npm install -g yarn@latest
   - yarn --version
 before_script:
-  - yarn run ganache > /dev/null &
+  - yarn ganache > /dev/null &
 script:
   - yarn lint
   - yarn build
