@@ -1,4 +1,4 @@
-# Script Usage:
+# Script Usage
 
 This directory contains a mix of a few different types of scripts that are useful for interacting with the Gnosis Protocol in several different envronments (i.e. Mainnet, Rinkeby & Development) and for a variety of different purposes such as
 
@@ -168,6 +168,6 @@ npx truffle exec build/common/scripts/ganache/wait_seconds.js  10
 
 ### Close Auction
 
-```
+```sh
 npx truffle exec build/common/scripts/ganache/close_auction.js
 ```
