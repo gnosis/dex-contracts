@@ -1,4 +1,4 @@
-import { factory } from "../src/logging";
+import { factory } from "../../src/logging";
 const log = factory.getLogger("scripts.setup_environment");
 
 const BatchExchange = artifacts.require("BatchExchange");
