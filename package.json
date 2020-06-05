@@ -37,7 +37,7 @@
     "ts-contracts:truffle": "typechain --target truffle-v5 --outDir build/truffle-typings \"build/contracts/*.json\"",
     "ts-contracts:web3": "typechain --target web3-v1 --outDir build/types \"build/contracts/{BatchExchange,BatchExchangeViewer}.json\"",
     "ganache": "ganache-cli --host 0.0.0.0 --gasLimit 8e6 --deterministic",
-    "texec": "sh -c 'yarn truffle exec build/common/${0%.*}.js $@'"
+    "texec": "sh -c 'npx truffle exec build/common/${0%.*}.js $@'"
   },
   "repository": {
     "type": "git",
