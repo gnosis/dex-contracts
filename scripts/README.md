@@ -132,7 +132,9 @@ None of the development scripts will work on any live ethereum networks since th
 Before executing any of these scripts, please ensure you have a running instance of ganache (with a gas limit of at least 8e6) and that the appropriate contracts have been deployed to your local network
 
 ```sh
-ganche-cli -l 8e6
+# Terminal 1
+yarn ganache
+# Terminal 2
 truffle migrate
 ```
 
