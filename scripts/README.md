@@ -87,6 +87,8 @@ Be warned that this may take a while!
 
 ### Transitive Orderbook
 
+Computes a price at which the given amount of `sellToken` can be sold for `buyToken` given the orderbook of the batch that is currently collecting orders.
+
 ```sh
 npx truffle exec build/common/scripts/transitive_orderbook.js --network rinkeby --sellToken 1 --buyToken 4 --sellAmount 1000
 ```
