@@ -107,7 +107,7 @@ npx truffle exec build/common/scripts/add_token_list.js
 
 ### Ensure OWL Liquidity
 
-This is meant to check and ensure that there are orders selling OWL at an appropriate price between all listed token on the exchange.
+This is meant to check and ensure that there are orders selling OWL at an appropriate price between all listed token on the exchange. Note, that this will place orders if there is not enough liquidity.
 
 ```sh
 npx truffle exec build/common/scripts/ensure_owl_liquidity.js --network rinkeby
