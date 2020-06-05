@@ -4,8 +4,8 @@ import BN from "bn.js";
 import {
   getExecutedSellAmount,
   solutionObjectiveValueComputation,
-} from "../math.js";
-import { flat, dedupe } from "../array-shims.js";
+} from "../math";
+import { flat, dedupe } from "../array-shims";
 import {
   TestCase,
   TestCaseInput,
