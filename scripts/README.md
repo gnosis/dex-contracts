@@ -138,7 +138,7 @@ truffle migrate
 
 ### Setup Environment
 
-In generall, setting up an account (from scratch) that is prepared to fully interact with the BatchExchange contract, there are several phases that must be completed. In brief, we must
+In general, setting up an account (from scratch) that is prepared to fully interact with the BatchExchange contract, there are several phases that must be completed. In brief, we must
 
 - Deploy ERC20 tokens to the development network and mint some to a user
 - Regester these newly minted tokens on the exchange
