@@ -1,4 +1,3 @@
-require("ts-node/register");
 import { addTokens, getBatchExchange, getOwl } from "./util";
 import { factory } from "../src/logging";
 const log = factory.getLogger("scripts.add_token");
