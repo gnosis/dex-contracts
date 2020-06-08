@@ -1,6 +1,6 @@
 import assert from "assert";
 import BN from "bn.js";
-import { flat } from "./array-shims.js";
+import { flat } from "./array-shims";
 import { Order, Solution, ObjectiveValueComputation } from "./examples/model";
 
 /**

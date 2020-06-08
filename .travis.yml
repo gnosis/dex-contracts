@@ -3,8 +3,7 @@ node_js:
   - 12
 cache: yarn
 env:
-  global:
-    NODE_OPTIONS=--max_old_space_size=4096
+  global: NODE_OPTIONS=--max_old_space_size=4096
 before_install:
   - rm -rf build
   - npm install -g yarn@latest
@@ -16,7 +15,7 @@ script:
   - yarn build
   - solium -d contracts/
   - yarn coverage && cat ./coverage/lcov.info | coveralls
-  - yarn test-js --grep @skip-on-coverage
+  - yarn test-contracts --grep @skip-on-coverage
   - yarn test-ts
 before_deploy:
   - export PACKAGE_VERSION=$(jq -r '.version' package.json)

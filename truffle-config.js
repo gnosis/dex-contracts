@@ -1,4 +1,5 @@
 const truffleConfig = require("@gnosis.pm/util-contracts/src/util/truffleConfig")
+require("ts-node/register")
 const argv = require("yargs")
   .option("gas", {
     alias: "g",
@@ -72,7 +73,6 @@ module.exports = {
     },
     grep,
   },
-  test_file_extension_regexp: /.*\.js$/,
   plugins: ["truffle-plugin-verify", "solidity-coverage"],
   api_keys: {
     etherscan: process.env.MY_ETHERSCAN_API_KEY,
