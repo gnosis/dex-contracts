@@ -118,7 +118,7 @@
     "typescript": "^3.9.5",
     "typescript-logging": "^0.6.4",
     "web3": "^1.2.8",
-    "web3-core": "^1.2.8",
+    "web3-core": "^1.2.9",
     "web3-eth-contract": "^1.2.8",
     "web3-utils": "^1.2.8",
     "yargs": "^15.3.1"
