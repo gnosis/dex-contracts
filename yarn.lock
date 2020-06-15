@@ -394,10 +394,10 @@
     crypto-js "^3.1.9-1"
     debug "^4.1.0"
 
-"@truffle/contract@^4.2.8":
-  version "4.2.8"
-  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.2.8.tgz#b63302b8a6330f2bf14142a44b6cc233090b321f"
-  integrity sha512-k6dme7e3xYU3NKV+ROM3rS2II/FMhDDDxVWPs4jT9pUAeLNeRUnFoSfIW+tmwAbrQmvBb69T5MYf92xDve7Cjg==
+"@truffle/contract@^4.2.9":
+  version "4.2.9"
+  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.2.9.tgz#22073aead1532ae92d160d5efe32e150a9203eee"
+  integrity sha512-eDr7nqY4d/KeM/PUrjuSLimz80pLkDJz7j42wMl592dDn/9Pfp2Ff8INM6ypFZ4fAcTZZaNg5wiApI0+pv4mWg==
   dependencies:
     "@truffle/blockchain-utils" "^0.0.20"
     "@truffle/contract-schema" "^3.2.0"
