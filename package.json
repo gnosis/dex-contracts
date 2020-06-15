@@ -92,7 +92,7 @@
     "bignumber.js": "^9.0.0",
     "chai": "^4.2.0",
     "coveralls": "^3.1.0",
-    "cross-fetch": "^3.0.4",
+    "cross-fetch": "^3.0.5",
     "dotenv": "^8.2.0",
     "eslint": "^7.2.0",
     "eslint-config-prettier": "^6.11.0",
