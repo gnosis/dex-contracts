@@ -358,8 +358,10 @@ contract BatchExchangeViewer {
             uint8 decimals
         )
     {
-        ERC20Detailed token = ERC20Detailed(batchExchange.tokenIdToAddressMap(tokenId));
-        return (address(token), token.symbol(), token.decimals());
+        address tokenAddress = batchExchange.tokenIdToAddressMap(tokenId);
+        (bool hasSymbol, ) = tokenAddress.staticcall(abi.encodeWithSignature("symbol()"));
+        ERC20Detailed token = ERC20Detailed(tokenAddress);
+        return (address(token), hasSymbol ? token.symbol() : "Unknown", token.decimals());
     }
 
     /**

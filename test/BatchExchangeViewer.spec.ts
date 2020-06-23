@@ -552,7 +552,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       assert.equal(result[1], "SCAM");
       assert.equal(result[2].toNumber(), 42);
     });
-    it("Reverts if token doesn't implement symbol or decimals", async () => {
+    it("Returns unknown if token doesn't implement symbol", async () => {
       const erc20detailed = await ERC20Detailed.at(token_1.address);
       const symbolMethod = erc20detailed.contract.methods.symbol().encodeABI();
       await token_1.givenMethodRevert(symbolMethod);
@@ -560,11 +560,29 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       const decimalsMethod = erc20detailed.contract.methods
         .decimals()
         .encodeABI();
-      await token_2.givenMethodRevert(decimalsMethod);
+      await token_1.givenMethodReturnUint(decimalsMethod, 42);
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address);
+      const result = await viewer.getTokenInfo(1);
+      assert.equal(result[0], token_1.address);
+      assert.equal(result[1], "Unknown");
+      assert.equal(result[2].toNumber(), 42);
+    });
+    it("Reverts if token doesn't implement decimals", async () => {
+      const erc20detailed = await ERC20Detailed.at(token_1.address);
+      const symbolMethod = erc20detailed.contract.methods.symbol().encodeABI();
+      await token_1.givenMethodReturn(
+        symbolMethod,
+        web3.eth.abi.encodeParameter("string", "SCAM"),
+      );
+
+      const decimalsMethod = erc20detailed.contract.methods
+        .decimals()
+        .encodeABI();
+      await token_1.givenMethodRevert(decimalsMethod);
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address);
       await truffleAssert.reverts(viewer.getTokenInfo(1));
-      await truffleAssert.reverts(viewer.getTokenInfo(2));
     });
   });
 });
