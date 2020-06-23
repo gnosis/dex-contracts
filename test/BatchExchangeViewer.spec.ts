@@ -532,7 +532,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       assert.equal(decodeIndexedOrders(result.elements).length, 1);
     });
   });
-  describe.only("getTokenInfo", () => {
+  describe("getTokenInfo", () => {
     it("Allows to get token address, symbol and decimals by ID", async () => {
       const erc20detailed = await ERC20Detailed.at(token_1.address);
       const symbolMethod = erc20detailed.contract.methods.symbol().encodeABI();
