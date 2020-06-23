@@ -532,7 +532,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       assert.equal(decodeIndexedOrders(result.elements).length, 1);
     });
   });
-  describe("getTokenInfo", () => {
+  describe.only("getTokenInfo", () => {
     it("Allows to get token address, symbol and decimals by ID", async () => {
       const erc20detailed = await ERC20Detailed.at(token_1.address);
       const symbolMethod = erc20detailed.contract.methods.symbol().encodeABI();
@@ -583,6 +583,26 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
 
       const viewer = await BatchExchangeViewer.new(batchExchange.address);
       await truffleAssert.reverts(viewer.getTokenInfo(1));
+    });
+    it("Can fetch MKR token ", async () => {
+      const erc20detailed = await ERC20Detailed.at(token_1.address);
+      const symbolMethod = erc20detailed.contract.methods.symbol().encodeABI();
+      // cf. https://etherscan.io/token/0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2#readContract
+      await token_1.givenMethodReturn(
+        symbolMethod,
+        "0x4d4b520000000000000000000000000000000000000000000000000000000000",
+      );
+
+      const decimalsMethod = erc20detailed.contract.methods
+        .decimals()
+        .encodeABI();
+      await token_1.givenMethodReturnUint(decimalsMethod, 18);
+
+      const viewer = await BatchExchangeViewer.new(batchExchange.address);
+      const result = await viewer.getTokenInfo(1);
+      assert.equal(result[0], token_1.address);
+      assert.equal(result[1], "MKR");
+      assert.equal(result[2].toNumber(), 18);
     });
   });
 });
