@@ -366,7 +366,7 @@ contract BatchExchangeViewer {
         )
     {
         address tokenAddress = batchExchange.tokenIdToAddressMap(tokenId);
-        symbol = "Unknown";
+        symbol = "";
         (bool hasStringSymbol, ) = address(this).staticcall(
             abi.encodeWithSignature("getTokenSymbolString(address)", tokenAddress)
         );
