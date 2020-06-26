@@ -26,30 +26,32 @@ export async function fetchTokenInfoFromExchange(
   const ERC20 = artifacts.require("ERC20Detailed");
   // Fetching token data from EVM
   const tokenObjects: Map<number, TokenInfo> = new Map();
-  for (const id of tokenIds) {
-    const tokenAddress = await exchange.tokenIdToAddressMap(id);
-    let tokenInfo;
-    try {
-      const tokenInstance = await ERC20.at(tokenAddress);
-      const symbol = await tokenInstance.symbol();
-      const decimals = (await tokenInstance.decimals()).toNumber();
-      tokenInfo = {
-        id: id,
-        symbol: symbol,
-        decimals: decimals,
-        address: tokenAddress,
-      };
-    } catch (err) {
-      // This generic try-catch is essentially a TokenNotFoundError
-      // Could occur when the given ID slot is not occupied by a registered token on the exhchange
-      // or if the code registered at address occupied by a token slot is not that of and ERC20 token
-      tokenInfo = {
-        id: id,
-        address: tokenAddress,
-      };
-    }
-    tokenObjects.set(id, tokenInfo);
-  }
+  await Promise.all(
+    tokenIds.map(async (id) => {
+      const tokenAddress = await exchange.tokenIdToAddressMap(id);
+      let tokenInfo;
+      try {
+        const tokenInstance = await ERC20.at(tokenAddress);
+        const symbol = await tokenInstance.symbol();
+        const decimals = (await tokenInstance.decimals()).toNumber();
+        tokenInfo = {
+          id: id,
+          symbol: symbol,
+          decimals: decimals,
+          address: tokenAddress,
+        };
+      } catch (err) {
+        // This generic try-catch is essentially a TokenNotFoundError
+        // Could occur when the given ID slot is not occupied by a registered token on the exhchange
+        // or if the code registered at address occupied by a token slot is not that of and ERC20 token
+        tokenInfo = {
+          id: id,
+          address: tokenAddress,
+        };
+      }
+      tokenObjects.set(id, tokenInfo);
+    }),
+  );
   return tokenObjects;
 }
 
