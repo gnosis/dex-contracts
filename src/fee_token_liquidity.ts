@@ -32,16 +32,16 @@ export async function fetchTokenInfoFromExchange(
       let tokenInfo;
       try {
         const tokenInstance = await ERC20.at(tokenAddress);
-      const [symbol, decimals] = await Promise.all([
-        tokenInstance.symbol(),
-        tokenInstance.decimals(),
-      ]);
-      tokenInfo = {
-        id: id,
-        symbol: symbol,
-        decimals: decimals.toNumber(),
-        address: tokenAddress,
-      };
+        const [symbol, decimals] = await Promise.all([
+          tokenInstance.symbol(),
+          tokenInstance.decimals(),
+        ]);
+        tokenInfo = {
+          id: id,
+          symbol: symbol,
+          decimals: decimals.toNumber(),
+          address: tokenAddress,
+        };
       } catch (err) {
         // This generic try-catch is essentially a TokenNotFoundError
         // Could occur when the given ID slot is not occupied by a registered token on the exhchange
