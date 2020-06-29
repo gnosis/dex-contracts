@@ -1,6 +1,7 @@
 pragma solidity ^0.5.10;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./BatchExchange.sol";
 
@@ -346,6 +347,71 @@ contract BatchExchangeViewer {
             sellTokenBalance = sellTokenBalance.sub(Math.min(sellTokenBalance, withdrawAmount));
         }
         return updateSellTokenBalance(element, sellTokenBalance);
+    }
+
+    /**
+     * @dev Queries the token information for the given tokenId. Can handle symbols of type string and bytes (e.g. MKR).
+     * Returns "Unknown" as symbol value if it cannot be retrieved and reverts if decimals can not be fetched
+     * (to avoid ambiguity with a "valid" value).
+     * @param tokenId the ID of a token listed on BatchExchange
+     * @return the address, symbol and decimals of the token contract
+     */
+    function getTokenInfo(uint16 tokenId)
+        public
+        view
+        returns (
+            address,
+            string memory symbol,
+            uint8 decimals
+        )
+    {
+        address tokenAddress = batchExchange.tokenIdToAddressMap(tokenId);
+        symbol = "";
+        (bool hasStringSymbol, ) = address(this).staticcall(
+            abi.encodeWithSignature("getTokenSymbolString(address)", tokenAddress)
+        );
+        if (hasStringSymbol) {
+            symbol = getTokenSymbolString(tokenAddress);
+        } else {
+            (bool hasBytesSymbol, ) = address(this).staticcall(
+                abi.encodeWithSignature("getTokenSymbolBytes(address)", tokenAddress)
+            );
+            if (hasBytesSymbol) {
+                symbol = getTokenSymbolBytes(tokenAddress);
+            }
+        }
+        return (tokenAddress, symbol, ERC20Detailed(tokenAddress).decimals());
+    }
+
+    /**
+     * @dev returns the symbol() of the given address assuming it is returned as a string.
+     * Reverts if method does not exist or returns data that is not a valid string.
+     * @param token the token address from which to receive the symbol
+     * @return the token's symbol
+     */
+    function getTokenSymbolString(address token) public view returns (string memory) {
+        return ERC20Detailed(token).symbol();
+    }
+
+    /**
+     * @dev returns the symbol() of the given address assuming it is returned as a bytes.
+     * Reverts if method does not exist or returns data that cannot be casted into a string.
+     * @param token the token address from which to receive the symbol
+     * @return the token's symbol converted into a trimmed (trailing 0 bytes remove) string.
+     */
+    function getTokenSymbolBytes(address token) public view returns (string memory) {
+        (bool success, bytes memory result) = token.staticcall(abi.encodeWithSignature("symbol()"));
+        if (!success) {
+            revert("Cannot get symbol");
+        }
+        //Find last non-zero byte
+        for (uint256 index = 0; index < result.length; index++) {
+            if (result[index] == 0) {
+                setLength(result, index);
+                break;
+            }
+        }
+        return string(result);
     }
 
     /**
