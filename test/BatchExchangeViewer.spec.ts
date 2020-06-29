@@ -552,7 +552,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       assert.equal(result[1], "SCAM");
       assert.equal(result[2].toNumber(), 42);
     });
-    it("Returns unknown if token doesn't implement symbol", async () => {
+    it("Returns empty string if token doesn't implement symbol", async () => {
       const erc20detailed = await ERC20Detailed.at(token_1.address);
       const symbolMethod = erc20detailed.contract.methods.symbol().encodeABI();
       await token_1.givenMethodRevert(symbolMethod);
@@ -565,7 +565,7 @@ contract("BatchExchangeViewer [ @skip-on-coverage ]", (accounts) => {
       const viewer = await BatchExchangeViewer.new(batchExchange.address);
       const result = await viewer.getTokenInfo(1);
       assert.equal(result[0], token_1.address);
-      assert.equal(result[1], "Unknown");
+      assert.equal(result[1], "");
       assert.equal(result[2].toNumber(), 42);
     });
     it("Reverts if token doesn't implement decimals", async () => {
