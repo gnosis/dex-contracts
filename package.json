@@ -121,6 +121,6 @@
     "web3-core": "^1.2.9",
     "web3-eth-contract": "^1.2.9",
     "web3-utils": "^1.2.9",
-    "yargs": "^15.3.1"
+    "yargs": "^15.4.0"
   }
 }
