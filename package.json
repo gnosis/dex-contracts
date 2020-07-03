@@ -82,7 +82,7 @@
     "@gnosis.pm/solidity-data-structures": "=1.2.4",
     "@gnosis.pm/util-contracts": "^2.0.6",
     "@openzeppelin/contracts": "=2.5.1",
-    "@truffle/contract": "^4.2.10",
+    "@truffle/contract": "^4.2.11",
     "@typechain/truffle-v5": "^2.0.2",
     "@typechain/web3-v1": "^1.0.0",
     "@types/chai": "^4.2.11",
