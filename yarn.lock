@@ -7863,10 +7863,10 @@ solhint-plugin-prettier@0.0.4:
   dependencies:
     prettier-linter-helpers "^1.0.0"
 
-solhint@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/solhint/-/solhint-3.0.0.tgz#78e185e84fb7da7d5394ddf1fda7c01cb987519d"
-  integrity sha512-z6JBNrtWZ51g/tkuZGc0ywQVskRqIGjXppR4g30bjPgOrxSBWJp3qX2pcI9+FbSI3uu1RqqbZ89CeURkZUF+RA==
+solhint@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/solhint/-/solhint-3.1.0.tgz#50d58c9af921a01350164350144a9809d5ec2975"
+  integrity sha512-Cc0wqKzg0NviDF7H5zsrGJ/hVwwkGqi0Hkc3YtedTev4alkJv4YADdJg4y586MpfEvMX4QPp7LugsmJzoeChkQ==
   dependencies:
     "@solidity-parser/parser" "^0.6.0"
     ajv "^6.6.1"
