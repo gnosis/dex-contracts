@@ -77,7 +77,7 @@
     "bn.js": "^5.1.2"
   },
   "devDependencies": {
-    "@gnosis.pm/mock-contract": "^3.0.8",
+    "@gnosis.pm/mock-contract": "^4.0.0",
     "@gnosis.pm/owl-token": "^3.1.0",
     "@gnosis.pm/solidity-data-structures": "=1.2.4",
     "@gnosis.pm/util-contracts": "^2.0.6",
