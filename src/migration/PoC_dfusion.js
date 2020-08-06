@@ -1,4 +1,4 @@
-const { isDevelopmentNetwork, getArtifactFromNpmImport, getArtifactFromBuildFolderOrImport } = require("./utilities.js")
+const { isDevelopmentNetwork, getArtifactFromNpmImport } = require("./utilities.js")
 const deployOwl = require("@gnosis.pm/owl-token/src/migrations-truffle-5/3_deploy_OWL")
 
 async function migrate({ artifacts, deployer, network, account, web3, maxTokens = 2 ** 16 - 1 }) {
@@ -34,13 +34,7 @@ async function migrate({ artifacts, deployer, network, account, web3, maxTokens 
     await IterableAppendOnlySet.deployed()
   }
 
-  const BatchExchange = getArtifactFromBuildFolderOrImport(
-    artifacts,
-    network,
-    deployer,
-    account,
-    "@gnosis.pm/dex-contracts/build/contracts/BatchExchange"
-  )
+  const BatchExchange = artifacts.require("BatchExchange")
   //linking libraries
   await deployer.link(BiMap, BatchExchange)
   await deployer.link(IterableAppendOnlySet, BatchExchange)
