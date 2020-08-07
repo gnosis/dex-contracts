@@ -39,7 +39,7 @@ async function migrate({ artifacts, deployer, network, account, web3, forceRedep
     network,
     deployer,
     account,
-    "@gnosis.pm/dex-contracts/build/contracts/BatchExchange.json"
+    "@gnosis.pm/dex-contracts/build/contracts/BatchExchange"
   )
 
   // When external projects depend on us we don't want to redeploy e.g. on Rinkeby/Mainnet
