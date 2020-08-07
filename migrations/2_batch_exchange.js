@@ -7,5 +7,6 @@ module.exports = async function (deployer, network, accounts, web3) {
     network,
     account: accounts[0],
     web3,
+    forceRedeploy: true,
   })
 }
