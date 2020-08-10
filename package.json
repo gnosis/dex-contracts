@@ -116,7 +116,7 @@
     "ts-node": "^8.10.2",
     "typechain": "^2.0.0",
     "typescript": "^3.9.7",
-    "typescript-logging": "^0.6.4",
+    "typescript-logging": "^1.0.0",
     "web3": "^1.2.11",
     "web3-core": "^1.2.9",
     "web3-eth-contract": "^1.2.11",
