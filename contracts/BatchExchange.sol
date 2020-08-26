@@ -445,7 +445,7 @@ contract BatchExchange is EpochTokenLocker {
      * @return encoded packed bytes of user addresses
      */
     function getUsersPaginated(address previousPageUser, uint16 pageSize) public view returns (bytes memory users) {
-        if (allUsers.size() == 0) {
+        if (allUsers.size == 0) {
             return users;
         }
         uint16 count = 0;
@@ -482,7 +482,7 @@ contract BatchExchange is EpochTokenLocker {
         uint16 previousPageUserOffset,
         uint16 pageSize
     ) public view returns (bytes memory elements) {
-        if (allUsers.size() == 0) {
+        if (allUsers.size == 0) {
             return elements;
         }
         uint16 currentOffset = previousPageUserOffset;
@@ -510,7 +510,7 @@ contract BatchExchange is EpochTokenLocker {
      * @return encoded bytes representing all orders ordered by (user, index)
      */
     function getEncodedOrders() public view returns (bytes memory elements) {
-        if (allUsers.size() > 0) {
+        if (allUsers.size > 0) {
             address user = allUsers.first();
             bool stop = false;
             while (!stop) {
