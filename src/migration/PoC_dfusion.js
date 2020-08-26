@@ -1,7 +1,16 @@
 const { isDevelopmentNetwork, getArtifactFromNpmImport, getArtifactFromBuildFolderOrImport } = require("./utilities.js")
 const deployOwl = require("@gnosis.pm/owl-token/src/migrations-truffle-5/3_deploy_OWL")
 
-async function migrate({ artifacts, deployer, network, account, web3, forceRedeploy, maxTokens = 2 ** 16 - 1 }) {
+async function migrate({
+  artifacts,
+  deployer,
+  network,
+  account,
+  web3,
+  forceRedeploy,
+  maxTokens = 2 ** 16 - 1,
+  feeTokenAddress = null,
+}) {
   let feeToken
 
   const BiMap = getArtifactFromNpmImport(
@@ -14,6 +23,7 @@ async function migrate({ artifacts, deployer, network, account, web3, forceRedep
     deployer,
     account
   )
+
   if (isDevelopmentNetwork(network)) {
     await deployOwl({
       artifacts,
@@ -22,21 +32,26 @@ async function migrate({ artifacts, deployer, network, account, web3, forceRedep
       account,
       web3,
     })
-
-    const TokenOWLProxy = artifacts.require("TokenOWLProxy")
-    feeToken = await TokenOWLProxy.deployed()
     await deployer.deploy(BiMap)
     await deployer.deploy(IterableAppendOnlySet)
   } else {
-    const TokenOWLProxy = getArtifactFromNpmImport("@gnosis.pm/owl-token/build/contracts/TokenOWLProxy", deployer, account)
-    feeToken = await TokenOWLProxy.deployed()
     await BiMap.deployed()
     await IterableAppendOnlySet.deployed()
   }
 
+  if (feeTokenAddress === null) {
+    const TokenOWLProxy = getArtifactFromBuildFolderOrImport(
+      artifacts,
+      deployer,
+      account,
+      "@gnosis.pm/owl-token/build/contracts/TokenOWLProxy"
+    )
+    feeToken = await TokenOWLProxy.deployed()
+    feeTokenAddress = feeToken.address
+  }
+
   const BatchExchange = getArtifactFromBuildFolderOrImport(
     artifacts,
-    network,
     deployer,
     account,
     "@gnosis.pm/dex-contracts/build/contracts/BatchExchange"
@@ -50,7 +65,7 @@ async function migrate({ artifacts, deployer, network, account, web3, forceRedep
 
     // eslint-disable-next-line no-console
     console.log("Deploy BatchExchange contract")
-    await deployer.deploy(BatchExchange, maxTokens, feeToken.address)
+    await deployer.deploy(BatchExchange, maxTokens, feeTokenAddress)
   }
 
   return BatchExchange
