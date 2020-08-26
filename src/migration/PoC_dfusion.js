@@ -39,7 +39,7 @@ async function migrate({
     await IterableAppendOnlySet.deployed()
   }
 
-  if (feeTokenAddress === null) {
+  if (feeTokenAddress == null) {
     const TokenOWLProxy = getArtifactFromBuildFolderOrImport(
       artifacts,
       deployer,
