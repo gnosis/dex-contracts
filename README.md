@@ -40,6 +40,14 @@ If you are building for a local development network, ganache has to be running l
 yarn run ganache # start a development network (blocking)
 ```
 
+If you want to deploy the contracts with an already existing fee token (tokenId 0), you can set the env variable
+
+```
+export FEE_TOKEN_ADDRESS=...
+```
+
+before running the migration script.
+
 3. Verify the contracts for some cool Etherscan.io goodies (see below for more help)
 
 ```sh

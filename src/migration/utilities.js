@@ -11,7 +11,7 @@ function getArtifactFromNpmImport(path, deployer, account) {
   return contract
 }
 
-function getArtifactFromBuildFolderOrImport(artifacts, network, deployer, account, path) {
+function getArtifactFromBuildFolderOrImport(artifacts, deployer, account, path) {
   let contract
   // If this migration script is used from the repository dex-contracts, the contract
   // data is received via the artificats.require.
