@@ -286,10 +286,10 @@
     "@gnosis.pm/util-contracts" "^2.0.0"
     verify-on-etherscan "^1.1.1"
 
-"@gnosis.pm/solidity-data-structures@=1.2.4":
-  version "1.2.4"
-  resolved "https://registry.yarnpkg.com/@gnosis.pm/solidity-data-structures/-/solidity-data-structures-1.2.4.tgz#e7e0a2e4c3460a0166e7b985e7851e3a54e86607"
-  integrity sha512-s5AV1cTf1ERYPCWdC8+Zgx0oZDJTClpkbtXs8RcBFnuhADLd0QTwBowlS8iDsnQtfLNhcF0bDB1rzokJOSUGhg==
+"@gnosis.pm/solidity-data-structures@1.3.5":
+  version "1.3.5"
+  resolved "https://registry.yarnpkg.com/@gnosis.pm/solidity-data-structures/-/solidity-data-structures-1.3.5.tgz#a38cab984a5a4c7d379454d5e82a2ac2f1a6b65e"
+  integrity sha512-qU32sUlH1cE26uhSSTbCYpskYzMm4KBXaIZdpu9v2xsO6jjedgfg9rKxJcor1V4ZRBp4EQyFqWzPx7fPTTPoUQ==
   dependencies:
     "@gnosis.pm/util-contracts" "^2.0.4"
     ethereumjs-util "^6.1.0"
