@@ -80,7 +80,7 @@
     "@gnosis.pm/mock-contract": "^3.0.8",
     "@gnosis.pm/owl-token": "^3.1.0",
     "@gnosis.pm/solidity-data-structures": "1.3.5",
-    "@gnosis.pm/util-contracts": "^2.0.6",
+    "@gnosis.pm/util-contracts": "2.0.7",
     "@openzeppelin/contracts": "=2.5.1",
     "@truffle/contract": "^4.2.19",
     "@typechain/truffle-v5": "^2.0.2",
