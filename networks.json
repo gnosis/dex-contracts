@@ -21,8 +21,8 @@
         "IdToAddressBiMap": "0x048E53A455a058462eA58442E1D94Fbc955495cB",
         "IterableAppendOnlySet": "0x57E6B987c2ccd421859A244dd22a0D5a62D88f91"
       },
-      "address": "0x904E0Cf33773244A392faB455d3991aB10554691",
-      "transactionHash": "0x82fd89d1de010bee0dd1d795ed758306f07fb234b5e939a30454b7b4ea386964"
+      "address": "0x66b89680A34394Cd73A4964AF60f56c9669C2452",
+      "transactionHash": "0x61c641256f7ca31f95f2e8a96e4a641758ceff3213905baf35efe5cc5a73256f"
     }
   },
   "BatchExchangeViewer": {
@@ -38,8 +38,8 @@
     },
     "100": {
       "links": {},
-      "address": "0x33F4EcDa8E8d9e0C2C698f73f3523223f8f50a1A",
-      "transactionHash": "0xb820baca9304ea61e88ff6d2b6c064229eaa580ff9b3a9c8b03d73d8f405490c"
+      "address": "0xFEb8DD5671c7ADecC07A9f18dC5904A0E28f8aaa",
+      "transactionHash": "0x61b6d1612566c435ee284c8cba841dad874ad2e9eafc86fdc2e43ba28aae8e63"
     }
   },
   "Migrations": {
@@ -55,8 +55,8 @@
     },
     "100": {
       "links": {},
-      "address": "0xa0A77f3bA69f8402C102D60fd8f6530D8F0b666E",
-      "transactionHash": "0xac37eaba7da639baf7155dd906a3fac247cd66714c37b1d6796091e087ac94aa"
+      "address": "0x327E7C9b10531E66323884D2195976B0b6ea2468",
+      "transactionHash": "0x53ef3bb0dc615ab9d550a5cad41c1cd59ee8d8466d198d4754091bf897aadb85"
     }
   }
 }
