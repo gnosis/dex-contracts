@@ -36,6 +36,10 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
     }
 
     const networkId = String(await web3.eth.net.getId());
+    log.info(
+      `Token list with ${tokenList.length} tokens, filtering for network '${networkId}'`,
+    );
+
     const tokenAddresses = [];
     for (const token of tokenList) {
       const address = token.addressByNetwork[networkId];
