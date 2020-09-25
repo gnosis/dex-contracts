@@ -104,7 +104,7 @@
     "prettier": "^2.1.2",
     "prettier-plugin-solidity": "^1.0.0-alpha.57",
     "rimraf": "^3.0.2",
-    "solhint": "^3.2.0",
+    "solhint": "^3.2.1",
     "solhint-plugin-prettier": "0.0.5",
     "solidity-bytes-utils": "0.0.9",
     "solidity-coverage": "^0.7.10",
