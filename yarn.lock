@@ -444,10 +444,10 @@
   dependencies:
     source-map-support "^0.5.19"
 
-"@truffle/codec@^0.6.1":
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/@truffle/codec/-/codec-0.6.1.tgz#ed26bb4948d8a3d4b5884538ae41b1c7f9f900ba"
-  integrity sha512-HrInHX9yLVVRCGOsXG2mZNG5P724KHZH3Pez6tMn39yLPsiKm9CzHcAHF5uX7ExhponOTEtKViudQ4MAFfh9Jg==
+"@truffle/codec@^0.6.2":
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/@truffle/codec/-/codec-0.6.2.tgz#64c475f2a4176210088f78b64b94437f20c176f8"
+  integrity sha512-vFLk4M/o3cggQRK3fwbgIbuI5oEtJjocYaqxJtyNnfrHtziPOWjzhHEKaA6AVCl3GqUXus3wJVSRr1IINSQLUA==
   dependencies:
     big.js "^5.2.2"
     bn.js "^4.11.8"
@@ -471,14 +471,14 @@
     crypto-js "^3.1.9-1"
     debug "^4.1.0"
 
-"@truffle/contract@^4.2.22":
-  version "4.2.22"
-  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.2.22.tgz#48219634ec7a1f970d2be4819d2d115cdb33d896"
-  integrity sha512-mkkuQucuZb+kHlnDwcEF5CXKa7c3hZRTN7y0NSVGlNKPMAd+VMoGi4RsJy3o0ALAumsxi714sGMHJagqoz/RmA==
+"@truffle/contract@^4.2.23":
+  version "4.2.23"
+  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.2.23.tgz#eb8d3c66c242a26f364b8d98e95f0b3650ea684c"
+  integrity sha512-2o6xh+IQ2Xl0sX3Asw38LdYl7vi4znmVFM/RKBqFORVC6fVrFnMYzaot1geJJaC+5aEeDHAAAd9pLFRSiNU0mw==
   dependencies:
     "@truffle/blockchain-utils" "^0.0.25"
     "@truffle/contract-schema" "^3.2.5"
-    "@truffle/debug-utils" "^4.2.8"
+    "@truffle/debug-utils" "^4.2.9"
     "@truffle/error" "^0.0.11"
     "@truffle/interface-adapter" "^0.4.16"
     bignumber.js "^7.2.1"
@@ -491,13 +491,13 @@
     web3-eth-abi "1.2.1"
     web3-utils "1.2.1"
 
-"@truffle/debug-utils@^4.2.8":
-  version "4.2.8"
-  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-4.2.8.tgz#2e5f865b9fea26884344396aef29a332bc1a7a75"
-  integrity sha512-o1apbR4FpQDVNCtT7nnXDAmHKGHEOVGuXyz9QG/IhjRdqxwZEE0pzBAW13tdIwduNaj6TQQVTB/Fx8uz914qzg==
+"@truffle/debug-utils@^4.2.9":
+  version "4.2.9"
+  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-4.2.9.tgz#d5a480d49fcb195fc030b8970ad6d9b2bb6cb142"
+  integrity sha512-3sUiOrS8bAqQzc6PYC+/U488bWkRY7wE0dDawj2g+k5bAelHoE9UjOpxNkybhHNfu60fX0FM8xyw7X0sqznHhA==
   dependencies:
-    "@truffle/codec" "^0.6.1"
-    "@trufflesuite/chromafi" "^2.1.2"
+    "@truffle/codec" "^0.6.2"
+    "@trufflesuite/chromafi" "^2.2.0"
     chalk "^2.4.2"
     debug "^4.1.0"
     highlight.js "^9.15.8"
@@ -574,10 +574,10 @@
     "@truffle/interface-adapter" "^0.3.0"
     web3 "1.2.1"
 
-"@trufflesuite/chromafi@^2.1.2":
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/@trufflesuite/chromafi/-/chromafi-2.1.2.tgz#50715070093c5543a406a2cc85fa70fc8d1a36ab"
-  integrity sha512-KcfjcH3B8+lHfSTfugFPBpMZmppLNCnM6/PP8ByrQLSACyjh9UOMUWHAW3FDHKEt1cOCzIFXrx2f4AFFrQFxSg==
+"@trufflesuite/chromafi@^2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@trufflesuite/chromafi/-/chromafi-2.2.0.tgz#18cceacbb44f1e22ec956dd7ad21a2ed414b09c7"
+  integrity sha512-km4Px34wZ015PDjAK0wfYBx+zoCE4qR3AY9NWLUvtjnnzhCUkaRFCpZdvwDEyB75EzFBoLwV9iiqboz+mMXwBA==
   dependencies:
     ansi-mark "^1.0.0"
     ansi-regex "^3.0.0"
