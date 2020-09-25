@@ -1,13 +1,13 @@
-import { addTokens, getBatchExchange, getOwl } from "./util";
-import fetch from "cross-fetch";
+import { promises as fs } from "fs";
 import { factory } from "../src/logging";
+import { addTokens, getBatchExchange, getOwl } from "./util";
+import DefaultTokenList from "./data/tokenList.json";
 const log = factory.getLogger("scripts.add_token_list");
 
 const argv = require("yargs")
-  .option("token_list_url", {
-    describe: "A url which can be fetched with cross-fetch",
-    default:
-      "https://raw.githubusercontent.com/gnosis/dex-js/master/src/tokenList.json",
+  .option("token_list", {
+    describe:
+      "A path to a token list, a default list will be used if not specified",
   })
   .help(false)
   .version(false).argv;
@@ -25,10 +25,21 @@ interface TokenObject {
 
 module.exports = async function (callback: Truffle.ScriptCallback) {
   try {
-    const tokenList: TokenObject[] = await (
-      await fetch(argv.token_list_url)
-    ).json();
+    let tokenList: TokenObject[];
+    if (argv.token_list) {
+      log.info(`Reading token list from '${argv.token_list}'`);
+      const json = await fs.readFile(argv.token_list, "utf-8");
+      tokenList = JSON.parse(json);
+    } else {
+      log.info("Using default token list");
+      tokenList = DefaultTokenList as TokenObject[];
+    }
+
     const networkId = String(await web3.eth.net.getId());
+    log.info(
+      `Token list with ${tokenList.length} tokens, filtering for network '${networkId}'`,
+    );
+
     const tokenAddresses = [];
     for (const token of tokenList) {
       const address = token.addressByNetwork[networkId];
