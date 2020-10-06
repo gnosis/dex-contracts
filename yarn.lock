@@ -9085,10 +9085,10 @@ type@^2.0.0:
   resolved "https://registry.yarnpkg.com/type/-/type-2.0.0.tgz#5f16ff6ef2eb44f260494dae271033b29c09a9c3"
   integrity sha512-KBt58xCHry4Cejnc2ISQAF7QY+ORngsWfxezO68+12hKV6lQY8P/psIkcbjeHWn7MqcgciWJyCCevFMJdIXpow==
 
-typechain@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/typechain/-/typechain-2.0.0.tgz#62143b48cdf8f95a777f1b76617af077b2d44eee"
-  integrity sha512-O+hsAUwtBpqCfoq46Grm52OEdm0GBEu78LxrEzkkGdwUdCoCZpNb2HPzPoNB1MXiRnNhEOGMFyf05UbT2/bUEw==
+typechain@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/typechain/-/typechain-2.0.1.tgz#4fa91006d871e5805d41f265880603d0817b74d6"
+  integrity sha512-GVigpARnr2tV9L+8WecF5huK+qEonNgh+Vp9UR/EayoTV4+3G8Yabhvf+p/QJVOz3JLM4Eo3ERxYmjjJMRXc/A==
   dependencies:
     command-line-args "^4.0.7"
     debug "^4.1.1"
