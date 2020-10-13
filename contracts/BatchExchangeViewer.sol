@@ -293,7 +293,7 @@ contract BatchExchangeViewer {
 
     function getSellTokenBalance(bytes memory element) public pure returns (uint256) {
         bytes memory slice = element.slice(ADDRESS_WIDTH, 52);
-        return slice.toUint(0);
+        return slice.toUint256(0);
     }
 
     function updateSellTokenBalance(bytes memory element, uint256 amount) public pure returns (bytes memory) {
