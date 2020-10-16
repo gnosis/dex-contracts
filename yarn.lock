@@ -424,10 +424,10 @@
   dependencies:
     source-map-support "^0.5.19"
 
-"@truffle/codec@^0.6.4":
-  version "0.6.4"
-  resolved "https://registry.yarnpkg.com/@truffle/codec/-/codec-0.6.4.tgz#674074553f9baec1a1a1f37e89b59fabbf865e57"
-  integrity sha512-inTYczuEnml9OjqQyYmg6EG8M2WdwgQn3X3lhzmwfg19JNO1Z3rwjRRu3Hx0vD3OR6moaAjMXy6VBoPhyuoJLQ==
+"@truffle/codec@^0.7.0":
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/@truffle/codec/-/codec-0.7.0.tgz#256efe174961744671f0df44190211e20b5e0c98"
+  integrity sha512-MBTXyCIdzseSN95K+igwaX0098tx97+1d6vD2Oi6UMM3af6VSD8qUJ/h1GngeDkQ8WAS61H4KVlIl9CKhdAQgQ==
   dependencies:
     big.js "^5.2.2"
     bn.js "^4.11.8"
@@ -442,25 +442,25 @@
     utf8 "^3.0.0"
     web3-utils "1.2.1"
 
-"@truffle/contract-schema@^3.3.0":
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/@truffle/contract-schema/-/contract-schema-3.3.0.tgz#3cf6bcc18fe34cc21e35889b40e9afc1647f3c3c"
-  integrity sha512-HjD2tByID6KvR1jfy4z+oXKZ0pQVWrBDynGL7T3mNqApzbYXNWlwk2oEBIGgugWH17B1WxVu5CC00Lq67jFQIw==
+"@truffle/contract-schema@^3.3.1":
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/@truffle/contract-schema/-/contract-schema-3.3.1.tgz#66385613d54d76df68a7a2c431fa9d352145a74b"
+  integrity sha512-xGBiYiCCW8hKuD/G8xb9w0WUuhdJDmQuz18A2Ens3Y8MO+jWA+Zw7xxZjCtiXAu9440Fj2V/BCXWcV6RxGKgBQ==
   dependencies:
     ajv "^6.10.0"
     crypto-js "^3.1.9-1"
     debug "^4.1.0"
 
-"@truffle/contract@^4.2.25":
-  version "4.2.25"
-  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.2.25.tgz#600575864d8ad18c5c8cab25ba0be39d84ec6252"
-  integrity sha512-VPeMY5ofJuoS9LFO/9OkLMZPyMTi4ErC2D8f9L+6vwbHFEbIJdL+qdRA6KYK1l+/SBCmrhfFUK7sdIg3+9E48w==
+"@truffle/contract@^4.2.26":
+  version "4.2.26"
+  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.2.26.tgz#c68ae32ff5c96a3dccafb3a196a21ba7374151e2"
+  integrity sha512-MKVb7Prf6IsY8rVjIBGrcAJoSTbw3Hx18htq+PuGZT/12r6ntzhnehKplaQbZC7thTFn7Yv1qrj3cdJ6insZ2A==
   dependencies:
     "@truffle/blockchain-utils" "^0.0.25"
-    "@truffle/contract-schema" "^3.3.0"
-    "@truffle/debug-utils" "^4.2.11"
+    "@truffle/contract-schema" "^3.3.1"
+    "@truffle/debug-utils" "^4.2.12"
     "@truffle/error" "^0.0.11"
-    "@truffle/interface-adapter" "^0.4.16"
+    "@truffle/interface-adapter" "^0.4.17"
     bignumber.js "^7.2.1"
     ethereum-ens "^0.8.0"
     ethers "^4.0.0-beta.1"
@@ -471,12 +471,12 @@
     web3-eth-abi "1.2.1"
     web3-utils "1.2.1"
 
-"@truffle/debug-utils@^4.2.11":
-  version "4.2.11"
-  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-4.2.11.tgz#8bb47a9efd020a9dcd4e12e24221af2cef1bf82b"
-  integrity sha512-mcu5vhVLRUoOXm6yKn+X7Z7gTtNNk9k7czNGRQyS6dD0K4cTSwap0UjTBR9a4P9eAo7aTcr1dChLS5Ups6cdXg==
+"@truffle/debug-utils@^4.2.12":
+  version "4.2.12"
+  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-4.2.12.tgz#0e7be451b6396da11e8a24293ad66ca3491ada7a"
+  integrity sha512-M/XUUWc/5Vh6ukHshHxxuC92DsrXJoNaLRqA1LTzA2UhCT67RYdWWT9Vi40DXiQqKh/k9+XGAqk9syJ0JGXd9A==
   dependencies:
-    "@truffle/codec" "^0.6.4"
+    "@truffle/codec" "^0.7.0"
     "@trufflesuite/chromafi" "^2.2.0"
     chalk "^2.4.2"
     debug "^4.1.0"
@@ -535,10 +535,10 @@
     lodash "^4.17.13"
     web3 "1.2.2"
 
-"@truffle/interface-adapter@^0.4.16":
-  version "0.4.16"
-  resolved "https://registry.yarnpkg.com/@truffle/interface-adapter/-/interface-adapter-0.4.16.tgz#6bd65d9d17b4a2a51f39d05dd8b467daa8855792"
-  integrity sha512-lsxk26Lz/h0n8fe37K1ZxowxokXj0AZeNR10QHltDvkHukuTIC4L6fXvrUi74mCwI9hShl4CSBas1Q8kAyJyOA==
+"@truffle/interface-adapter@^0.4.17":
+  version "0.4.17"
+  resolved "https://registry.yarnpkg.com/@truffle/interface-adapter/-/interface-adapter-0.4.17.tgz#516086dbeaed5cac0f94e05565f23a9c9f03cb35"
+  integrity sha512-PEo/8eggi6YldqNv5XQxVBsTdzw0QRzxTa/wWeCd+netSyJGuqvou0jO1KBBc0nSuBbfvhE68tZ5OPlElRIQ1Q==
   dependencies:
     bn.js "^4.11.8"
     ethers "^4.0.32"
