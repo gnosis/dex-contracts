@@ -2,6 +2,7 @@ const { isDevelopmentNetwork, getArtifactFromNpmImport, getArtifactFromBuildFold
 const deployOwl = require("@gnosis.pm/owl-token/src/migrations-truffle-5/3_deploy_OWL")
 
 async function migrate({
+  BatchExchange,
   artifacts,
   deployer,
   network,
@@ -50,13 +51,6 @@ async function migrate({
     feeTokenAddress = feeToken.address
   }
 
-  const BatchExchange = getArtifactFromBuildFolderOrImport(
-    artifacts,
-    deployer,
-    account,
-    "@gnosis.pm/dex-contracts/build/contracts/BatchExchange"
-  )
-
   // When external projects depend on us we don't want to redeploy e.g. on Rinkeby/Mainnet
   if (!BatchExchange.isDeployed() || forceRedeploy) {
     //linking libraries
@@ -67,7 +61,8 @@ async function migrate({
     console.log("Deploy BatchExchange contract")
     await deployer.deploy(BatchExchange, maxTokens, feeTokenAddress)
   }
-
+  // eslint-disable-next-line no-console
+  console.log("  - BatchExchange at address:", BatchExchange.address)
   return BatchExchange
 }
 
