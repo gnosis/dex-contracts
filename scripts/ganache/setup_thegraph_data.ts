@@ -99,7 +99,20 @@ module.exports = async function (callback: Truffle.ScriptCallback) {
       from: user1Address,
     });
 
-    // Submit solution
+    // Submit suboptimal solution
+    await submitSolution(
+      "Partial solution",
+      batchId,
+      solutionSubmissionParams(
+        basicTrade.solutions[1],
+        userAddresses,
+        orderIds,
+      ),
+      solverAddress,
+      exchange,
+    );
+
+    // Submit optimal solution
     await submitSolution(
       "Full solution",
       batchId,
