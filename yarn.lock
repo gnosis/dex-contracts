@@ -278,13 +278,14 @@
   dependencies:
     ethereumjs-abi "^0.6.5"
 
-"@gnosis.pm/owl-token@^3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@gnosis.pm/owl-token/-/owl-token-3.1.0.tgz#f7da8c43cd6bbcc8c871a44eaef767c86ac23458"
-  integrity sha512-DxM22gk/PRY24Y4FXPfvr+F5rNB6JDPkd0NAEBE9sjLICfn5VK0X4kRc33obUP9mG1nyUFroWUPSeqHQQ7iXAQ==
+"@gnosis.pm/owl-token@^3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@gnosis.pm/owl-token/-/owl-token-3.2.0.tgz#1226ac55ca8a8cb2cdbd2f293ae2ae10b689881e"
+  integrity sha512-dK4+dMlHmYewG284zPFhggEfTh+PYqaoPREQg+2k3HwkhwqWr/ZXEz98MQf1IhZoFnGKD0mrCqsye3RBm7fRsw==
   dependencies:
     "@gnosis.pm/gno-token" "^2.0.0"
     "@gnosis.pm/util-contracts" "^2.0.0"
+    openzeppelin-solidity "1.12.0"
     verify-on-etherscan "^1.1.1"
 
 "@gnosis.pm/solidity-data-structures@1.3.5":
@@ -6909,6 +6910,11 @@ onetime@^2.0.0:
   integrity sha1-BnQoIw/WdEOyeUsiu6UotoZ5YtQ=
   dependencies:
     mimic-fn "^1.0.0"
+
+openzeppelin-solidity@1.12.0:
+  version "1.12.0"
+  resolved "https://registry.yarnpkg.com/openzeppelin-solidity/-/openzeppelin-solidity-1.12.0.tgz#7b9c55975e73370d4541e3442b30cb3d91ac973a"
+  integrity sha512-WlorzMXIIurugiSdw121RVD5qA3EfSI7GybTn+/Du0mPNgairjt29NpVTAaH8eLjAeAwlw46y7uQKy0NYem/gA==
 
 optionator@^0.8.1, optionator@^0.8.2:
   version "0.8.3"
