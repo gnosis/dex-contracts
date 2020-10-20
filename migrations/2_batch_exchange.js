@@ -1,7 +1,9 @@
-const migrateBatchExchange = require("../src/migration/PoC_dfusion")
+const migrateBatchExchange = require("../src/migration/migrate_BatchExchange")
+const BatchExchange = artifacts.require("../build/contracts/BatchExchange")
 
 module.exports = async function (deployer, network, accounts, web3) {
   return migrateBatchExchange({
+    BatchExchange,
     artifacts,
     deployer,
     network,
