@@ -1,13 +1,7 @@
 const migrateBatchExchange = require("../src/migration/migrate_BatchExchange")
-const { getArtifactFromBuildFolderOrImport } = require("../src/migration/utilities")
+const BatchExchange = artifacts.require("../build/contracts/BatchExchange")
 
 module.exports = async function (deployer, network, accounts, web3) {
-  const BatchExchange = getArtifactFromBuildFolderOrImport(
-    artifacts,
-    deployer,
-    accounts[0],
-    "@gnosis.pm/dex-contracts/build/contracts/BatchExchange"
-  )
   return migrateBatchExchange({
     BatchExchange,
     artifacts,
