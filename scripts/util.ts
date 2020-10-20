@@ -140,7 +140,7 @@ export async function submitSolution(
   - Token ids for prices: ${solution.tokenIdsForPrice.join(", ")}`);
   const objectiveValue = await exchange.submitSolution(
     batchId,
-    1,
+    solution.objectiveValue,
     solution.owners,
     solution.touchedorderIds,
     solution.volumes,
