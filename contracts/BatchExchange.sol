@@ -3,7 +3,7 @@ pragma solidity ^0.5.0;
 import "./EpochTokenLocker.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IdToAddressBiMap.sol";
 import "@gnosis.pm/solidity-data-structures/contracts/libraries/IterableAppendOnlySet.sol";
-import "@gnosis.pm/owl-token/contracts/TokenOWL.sol";
+import "@gnosis.pm/owl-token/contracts/5/TokenOWL.sol";
 import "@openzeppelin/contracts/utils/SafeCast.sol";
 import "solidity-bytes-utils/contracts/BytesLib.sol";
 import "./libraries/TokenConservation.sol";
