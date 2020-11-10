@@ -37,6 +37,7 @@ contract SolutionSubmitter is Ownable {
      * Allow the owner to execute arbitrary code (e.g. transfer out solution fee rewards from BatchExchange)
      */
     function execute(address target, bytes calldata data) external onlyOwner returns (bool, bytes memory) {
+        // solium-disable-next-line security/no-low-level-calls
         return target.call(data);
     }
 
