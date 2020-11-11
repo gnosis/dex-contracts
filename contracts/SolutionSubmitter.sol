@@ -25,11 +25,11 @@ contract SolutionSubmitter is Ownable {
         setGasPriceThreshold(_gasPriceThreshold);
     }
 
-    function setGasToken(GasToken _gasToken) public {
+    function setGasToken(GasToken _gasToken) public onlyOwner {
         gasToken = _gasToken;
     }
 
-    function setGasPriceThreshold(uint256 _gasPriceThreshold) public {
+    function setGasPriceThreshold(uint256 _gasPriceThreshold) public onlyOwner {
         gasPriceThreshold = _gasPriceThreshold;
     }
 

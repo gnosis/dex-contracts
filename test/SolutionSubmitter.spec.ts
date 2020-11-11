@@ -14,7 +14,7 @@ import { solutionSubmissionParams, basicRingTrade } from "./resources/examples";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-contract.only("SolutionSubmitter", (accounts) => {
+contract("SolutionSubmitter", (accounts) => {
   const [owner, non_owner] = accounts;
   describe("execute", () => {
     it("allows arbitrary functions calls on behalf of instance from owner", async function () {
