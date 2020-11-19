@@ -16,6 +16,7 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract("SolutionSubmitter", (accounts) => {
   const [owner, non_owner] = accounts;
+
   describe("execute", () => {
     it("allows arbitrary functions calls on behalf of instance from owner", async function () {
       const instance = await SolutionSubmitter.new(
@@ -38,6 +39,7 @@ contract("SolutionSubmitter", (accounts) => {
       );
       assert.equal(1, invocationCount.toNumber());
     });
+
     it("reverts functions calls from non-owner", async function () {
       const instance = await SolutionSubmitter.new(
         ZERO_ADDRESS,
@@ -56,6 +58,7 @@ contract("SolutionSubmitter", (accounts) => {
       );
     });
   });
+
   describe("submit solution", () => {
     it("frees gas tokens to get ~50% of estimated gas", async () => {
       // Use real BatchExchange so we incur some significant gas costs
@@ -111,6 +114,7 @@ contract("SolutionSubmitter", (accounts) => {
         ).toNumber(),
       );
     });
+
     it("respects gasThreshold", async () => {
       const exchange = await MockContract.new();
       const gasToken = await MockContract.new();
