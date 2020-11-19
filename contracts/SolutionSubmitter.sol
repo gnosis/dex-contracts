@@ -16,21 +16,21 @@ contract SolutionSubmitter is Ownable {
     uint256 public gasPriceThreshold;
 
     constructor(
-        BatchExchange _exchange,
-        GasToken _gasToken,
-        uint256 _gasPriceThreshold
+        BatchExchange exchange_,
+        GasToken gasToken_,
+        uint256 gasPriceThreshold_
     ) public {
-        exchange = _exchange;
-        setGasToken(_gasToken);
-        setGasPriceThreshold(_gasPriceThreshold);
+        exchange = exchange_;
+        setGasToken(gasToken_);
+        setGasPriceThreshold(gasPriceThreshold_);
     }
 
-    function setGasToken(GasToken _gasToken) public onlyOwner {
-        gasToken = _gasToken;
+    function setGasToken(GasToken gasToken_) public onlyOwner {
+        gasToken = gasToken_;
     }
 
-    function setGasPriceThreshold(uint256 _gasPriceThreshold) public onlyOwner {
-        gasPriceThreshold = _gasPriceThreshold;
+    function setGasPriceThreshold(uint256 gasPriceThreshold_) public onlyOwner {
+        gasPriceThreshold = gasPriceThreshold_;
     }
 
     /**
