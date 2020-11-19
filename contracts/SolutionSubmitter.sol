@@ -65,7 +65,11 @@ contract SolutionSubmitter is Ownable {
             uint256 gasStart = gasleft();
             _;
             uint256 gasSpent = 21000 + gasStart - gasleft() + (16 * msg.data.length);
-            gasToken.freeUpTo((gasSpent + 14154) / 41947);
+            // The refund is 24k per token and since we can refund up to half of the total gas spent,
+            // we should free one gas token for every 48k gas spent. This doesn't account for the cost
+            // of freeUpTo itself and this slightly underestimating the amout of tokens to burn. This is
+            // fine as we cannot account for other refunds coming from the solution submission intself.
+            gasToken.freeUpTo((gasSpent) / 48000);
         } else {
             _;
         }
