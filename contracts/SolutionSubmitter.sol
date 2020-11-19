@@ -34,7 +34,7 @@ contract SolutionSubmitter is Ownable {
     }
 
     /**
-     * Allow the owner to execute arbitrary code (e.g. transfer out solution fee rewards from BatchExchange)
+     * @dev Allow the owner to execute arbitrary code (e.g. transfer out solution fee rewards from BatchExchange)
      */
     function execute(address target, bytes calldata data) external onlyOwner returns (bool, bytes memory) {
         // solium-disable-next-line security/no-low-level-calls
@@ -42,7 +42,7 @@ contract SolutionSubmitter is Ownable {
     }
 
     /**
-     * Wrapper around actual solution submission that uses gas tokens for discounts
+     * @dev Wrapper around actual solution submission that uses gas tokens for discounts
      */
     function submitSolution(
         uint32 batchId,
@@ -57,7 +57,7 @@ contract SolutionSubmitter is Ownable {
     }
 
     /**
-     * Modifier to invoke original method and freeing up to half the maximum gas refund in gas tokens.
+     * @dev Modifier to invoke original method and freeing up to half the maximum gas refund in gas tokens.
      * Logic adjusted from https://1inch-exchange.medium.com/1inch-introduces-chi-gastoken-d0bd5bb0f92b
      */
     modifier gasDiscounted {
