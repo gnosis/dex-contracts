@@ -58,5 +58,12 @@
       "address": "0xA18c8F9Ae6c18d177Aa369C64fa4a6956146e1A5",
       "transactionHash": "0xb77ad5c1a273826f8882be1919ec31c122d4710ac46ab2973d3b69138833c4b8"
     }
+  },
+  "SolutionSubmitter": {
+    "1": {
+      "links": {},
+      "address": "0xA1c956d7C3D8Ea7fd7E3757062e4aC563F07e68a",
+      "transactionHash": "0x071caa3075e6cc259b0c59e67e3a9439f7c295b518c609f1b8c55be00b44d6bb"
+    }
   }
 }
