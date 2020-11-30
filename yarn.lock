@@ -425,10 +425,10 @@
   dependencies:
     source-map-support "^0.5.19"
 
-"@truffle/codec@^0.8.1":
-  version "0.8.1"
-  resolved "https://registry.yarnpkg.com/@truffle/codec/-/codec-0.8.1.tgz#1f7b62a9d4063ed1b91ecb81d2d83be4ff97389d"
-  integrity sha512-X6BcpS97zpmLWRoAg9zJJIPoEiAJ3MRRJd5zf+qTmLbYXVhek9frreDMhs4WoaQSe3/DOYjVxtPmwmY4+alVvw==
+"@truffle/codec@^0.9.0":
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/@truffle/codec/-/codec-0.9.0.tgz#ccdc9f79c6784447c70925bebc26319cd8bca155"
+  integrity sha512-lAkycqrvALZn677H9/CWxmpWVBejYCWbytNeFuHHM69gqNtwzZjDjbIyEUHQNiH5ZWed4XkIdJj7AxvlaCc5jw==
   dependencies:
     big.js "^5.2.2"
     bn.js "^4.11.8"
@@ -452,14 +452,14 @@
     crypto-js "^3.1.9-1"
     debug "^4.1.0"
 
-"@truffle/contract@^4.2.30":
-  version "4.2.30"
-  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.2.30.tgz#44a2a20e4baa6b40cbb0748a6bce997c22865bcd"
-  integrity sha512-BXQC+ddH18W9cVoRTlKH7hqnyrOo0HN7/Hyv7UiAgPh4JNpkZVUxFSd+/MLaE5r8NEG2hykDusOVJ3OaR9wvmw==
+"@truffle/contract@^4.3.0":
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.3.0.tgz#37458d9f9fbf287d45130a09d855f68a1923cb77"
+  integrity sha512-3x9dhBuDElRixR8bxknPfuGH7bBaOlYGF2FsUsuK3CoXo7hblXSQg8VZ/ns55oTSxDzRkwmI0EnRtwzGObaoGA==
   dependencies:
     "@truffle/blockchain-utils" "^0.0.25"
     "@truffle/contract-schema" "^3.3.2"
-    "@truffle/debug-utils" "^5.0.1"
+    "@truffle/debug-utils" "^5.0.3"
     "@truffle/error" "^0.0.11"
     "@truffle/interface-adapter" "^0.4.18"
     bignumber.js "^7.2.1"
@@ -472,17 +472,17 @@
     web3-eth-abi "1.2.9"
     web3-utils "1.2.9"
 
-"@truffle/debug-utils@^5.0.1":
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-5.0.1.tgz#7650f273ddba704377f3a25bd4a10ffb338da8e0"
-  integrity sha512-CDt92c6YmCE72TMxmXMcbK3MPXHPRzhrYshFKY0jlo0T3IhLn3xBMqdqXi7SL9y0gV5U386R2l2lK5a+TGE6vw==
+"@truffle/debug-utils@^5.0.3":
+  version "5.0.3"
+  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-5.0.3.tgz#c4e5f9489adb3f85d055934625e0d9c84fdd6599"
+  integrity sha512-pVbYg13gsCWTUQzEycr2fy0knIeegkj/yxJi2xf3BwEIAw4poYPl4ItxDMX9MTgNTwSe7ta+BykECj6djMuQNw==
   dependencies:
-    "@truffle/codec" "^0.8.1"
+    "@truffle/codec" "^0.9.0"
     "@trufflesuite/chromafi" "^2.2.1"
     chalk "^2.4.2"
     debug "^4.1.0"
-    highlight.js "^9.15.8"
-    highlightjs-solidity "^1.0.18"
+    highlight.js "^10.4.0"
+    highlightjs-solidity "^1.0.19"
 
 "@truffle/error@^0.0.11":
   version "0.0.11"
@@ -5069,15 +5069,20 @@ he@1.2.0, he@^1.1.1:
   resolved "https://registry.yarnpkg.com/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
   integrity sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==
 
-highlight.js@^9.12.0, highlight.js@^9.15.8:
+highlight.js@^10.4.0:
+  version "10.4.0"
+  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-10.4.0.tgz#ef3ce475e5dfa7a48484260b49ea242ddab823a0"
+  integrity sha512-EfrUGcQ63oLJbj0J0RI9ebX6TAITbsDBLbsjr881L/X5fMO9+oadKzEF21C7R3ULKG6Gv3uoab2HiqVJa/4+oA==
+
+highlight.js@^9.12.0:
   version "9.18.5"
   resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-9.18.5.tgz#d18a359867f378c138d6819edfc2a8acd5f29825"
   integrity sha512-a5bFyofd/BHCX52/8i8uJkjr9DYwXIPnM/plwI6W7ezItLGqzt7X2G2nXuYSfsIJdkwwj/g9DG1LkcGJI/dDoA==
 
-highlightjs-solidity@^1.0.18:
-  version "1.0.18"
-  resolved "https://registry.yarnpkg.com/highlightjs-solidity/-/highlightjs-solidity-1.0.18.tgz#3deb0593689a26fbadf98e631bf2cd305a6417c9"
-  integrity sha512-k15h0br4oCRT0F0jTRuZbimerVt5V4n0k25h7oWi0kVqlBNeXPbSr5ddw02/2ukJmYfB8jauFDmxSauJjwM7Eg==
+highlightjs-solidity@^1.0.19:
+  version "1.0.19"
+  resolved "https://registry.yarnpkg.com/highlightjs-solidity/-/highlightjs-solidity-1.0.19.tgz#a2f05bcfadd295a8eefb9cc20dcb18a3ba48e49c"
+  integrity sha512-ZIzMlxZxkcNnzWC1LeOeUjQjywzXnGyDxexOPKzz8hWFqdE2uRvz1BxD0joOkr41z4SU2ABXVGDx6EWlbzTBLQ==
 
 hmac-drbg@^1.0.0:
   version "1.0.1"
