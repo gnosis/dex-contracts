@@ -99,7 +99,7 @@
     "eslint-plugin-no-only-tests": "^2.4.0",
     "eslint-plugin-prettier": "^3.2.0",
     "eslint-plugin-tsdoc": "^0.2.10",
-    "eth-gas-reporter": "^0.2.19",
+    "eth-gas-reporter": "^0.2.20",
     "ganache-cli": "6.12.0",
     "mocha": "^8.2.0",
     "prettier": "^2.2.1",
