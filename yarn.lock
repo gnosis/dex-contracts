@@ -420,10 +420,10 @@
   dependencies:
     source-map-support "^0.5.19"
 
-"@truffle/codec@^0.9.1":
-  version "0.9.1"
-  resolved "https://registry.yarnpkg.com/@truffle/codec/-/codec-0.9.1.tgz#24fdb3f7f7471592db50756531d47094cae82343"
-  integrity sha512-U+n5ZYWSJzPVoj4zNMta2glUV4rRVcFNANE4r3SQyogbdZpp/HRioacqkF3wVPXRhX3F0hOcySK4MeuMOSseOg==
+"@truffle/codec@^0.9.2":
+  version "0.9.2"
+  resolved "https://registry.yarnpkg.com/@truffle/codec/-/codec-0.9.2.tgz#7cd3d6e9004f4da1c1728aa4d923778b04779876"
+  integrity sha512-YGO7a1EJoHFmubpBm2jG6qfE3xNcwlrd6p01GporZPQtIC/JPZ8MaRw9YKj4r7cJRszSto6gXCdsmZpOFQs5Bg==
   dependencies:
     big.js "^5.2.2"
     bn.js "^4.11.8"
@@ -438,23 +438,23 @@
     utf8 "^3.0.0"
     web3-utils "1.2.9"
 
-"@truffle/contract-schema@^3.3.2":
-  version "3.3.2"
-  resolved "https://registry.yarnpkg.com/@truffle/contract-schema/-/contract-schema-3.3.2.tgz#6450738c35859ed087760d826031a8247f7bc907"
-  integrity sha512-PFNUHlcMFh6CDLDXTYCpm1G5rM5EJlneA9ml5y1TbkLgjLMICI2XLilimFZ/DC0THQekHpoQC+W/QMD/OTiTiw==
+"@truffle/contract-schema@^3.3.3":
+  version "3.3.3"
+  resolved "https://registry.yarnpkg.com/@truffle/contract-schema/-/contract-schema-3.3.3.tgz#3e9567596d5dd9843df195cc3a874b83246c2505"
+  integrity sha512-4bvcEoGycopJBPoCiqHP5Q72/1t/ixYS/pVHru+Rzvad641BgvoGrkd4YnyJ+E/MVb4ZLrndL7whmdGqV5B7SA==
   dependencies:
     ajv "^6.10.0"
     crypto-js "^3.1.9-1"
     debug "^4.1.0"
 
-"@truffle/contract@^4.3.2":
-  version "4.3.2"
-  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.3.2.tgz#1009030a6dd393a62a99f6904b2926b82d3eab2f"
-  integrity sha512-xH8rwJ94KpJAE+bYjZJ8W9eKB20uxxnOL9RDUEpN5DjN81zedq3Cp8C8o9FR3SgCxwEy8YLN/RAlLRZX/UDpLg==
+"@truffle/contract@^4.3.3":
+  version "4.3.3"
+  resolved "https://registry.yarnpkg.com/@truffle/contract/-/contract-4.3.3.tgz#629f0c70d9f3c3dfade8ed95d407e63030306000"
+  integrity sha512-pY4G3CxzbVd46lm6AEmeLNa4qIuLcdwBfMcYARlQ7R0+hAoLT694lYC9ucAPA2VEarm4e0383dD53bHES4TMbQ==
   dependencies:
     "@truffle/blockchain-utils" "^0.0.25"
-    "@truffle/contract-schema" "^3.3.2"
-    "@truffle/debug-utils" "^5.0.5"
+    "@truffle/contract-schema" "^3.3.3"
+    "@truffle/debug-utils" "^5.0.6"
     "@truffle/error" "^0.0.11"
     "@truffle/interface-adapter" "^0.4.18"
     bignumber.js "^7.2.1"
@@ -467,17 +467,17 @@
     web3-eth-abi "1.2.9"
     web3-utils "1.2.9"
 
-"@truffle/debug-utils@^5.0.5":
-  version "5.0.5"
-  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-5.0.5.tgz#6657fd232f18bd25bae7a2595866356c52aa6dde"
-  integrity sha512-auPolwGaG9tUm0NIagzyc9jAALFGYUfR8WRh1l+c0g9mOE4bkgJsGtbK/JXDVoIqf7uh73byPCAVsfctFre09g==
+"@truffle/debug-utils@^5.0.6":
+  version "5.0.6"
+  resolved "https://registry.yarnpkg.com/@truffle/debug-utils/-/debug-utils-5.0.6.tgz#255ad3f08d61a1182f2f9ae29528d31bbdc7ae25"
+  integrity sha512-XcXHXGTgzRW6lcjm8o/XPks7B0fa/rFR4ROsN+mzipL5U+mD43o2W8l3qVYTx2BOy1sTl8pOzJ4IqQOtvv7n2w==
   dependencies:
-    "@truffle/codec" "^0.9.1"
+    "@truffle/codec" "^0.9.2"
     "@trufflesuite/chromafi" "^2.2.2"
     chalk "^2.4.2"
     debug "^4.1.0"
     highlight.js "^10.4.0"
-    highlightjs-solidity "^1.0.19"
+    highlightjs-solidity "^1.0.20"
 
 "@truffle/error@^0.0.11":
   version "0.0.11"
@@ -5129,10 +5129,10 @@ highlight.js@^10.4.0, highlight.js@^10.4.1:
   resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-10.4.1.tgz#d48fbcf4a9971c4361b3f95f302747afe19dbad0"
   integrity sha512-yR5lWvNz7c85OhVAEAeFhVCc/GV4C30Fjzc/rCP0aCWzc1UUOPUk55dK/qdwTZHBvMZo+eZ2jpk62ndX/xMFlg==
 
-highlightjs-solidity@^1.0.19:
-  version "1.0.19"
-  resolved "https://registry.yarnpkg.com/highlightjs-solidity/-/highlightjs-solidity-1.0.19.tgz#a2f05bcfadd295a8eefb9cc20dcb18a3ba48e49c"
-  integrity sha512-ZIzMlxZxkcNnzWC1LeOeUjQjywzXnGyDxexOPKzz8hWFqdE2uRvz1BxD0joOkr41z4SU2ABXVGDx6EWlbzTBLQ==
+highlightjs-solidity@^1.0.20:
+  version "1.0.20"
+  resolved "https://registry.yarnpkg.com/highlightjs-solidity/-/highlightjs-solidity-1.0.20.tgz#37482fd47deda617994e1d1262df5a319c0a8580"
+  integrity sha512-Ixb87/4huazRJ7mriimL0DP2GvE5zgSk11VdMPGKMQCNwszDe8qK0PySySsuB88iXyDT/H2gdmvC2bgfrOi3qQ==
 
 hmac-drbg@^1.0.0:
   version "1.0.1"
