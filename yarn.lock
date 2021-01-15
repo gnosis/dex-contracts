@@ -570,6 +570,11 @@
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.14.0.tgz#9fb3a3cf3132328151f353de4632e01e52102bea"
   integrity sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==
 
+"@solidity-parser/parser@^0.11.0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@solidity-parser/parser/-/parser-0.11.0.tgz#28bc1972e1620f7b388b485bca76a78ac2cb5c59"
+  integrity sha512-IaC4IaW8uoOB8lmEkw6c19y1vJBK/+7SzAbGQ+LmBYRPXSLNB+UgpORvmcAJEXhB04kWKyz/Os1U8onqm6U/+w==
+
 "@solidity-parser/parser@^0.6.0":
   version "0.6.2"
   resolved "https://registry.yarnpkg.com/@solidity-parser/parser/-/parser-0.6.2.tgz#49707fc4e06649d39d6b25bdab2e9093d372ce50"
@@ -8480,12 +8485,12 @@ solidity-bytes-utils@0.1.2:
   dependencies:
     "@truffle/hdwallet-provider" latest
 
-solidity-coverage@^0.7.13:
-  version "0.7.13"
-  resolved "https://registry.yarnpkg.com/solidity-coverage/-/solidity-coverage-0.7.13.tgz#eca0659e857aef25580742ae1fae9bdc1d9f3dd4"
-  integrity sha512-06r0R+/j8lgl5/Z57VwxWNFZId0ZavcQU45W2gCfsBmEt/1Y6Xgm96oMSa6JBIvwrPR8H4T3icxTLiUVsMFNeg==
+solidity-coverage@^0.7.14:
+  version "0.7.14"
+  resolved "https://registry.yarnpkg.com/solidity-coverage/-/solidity-coverage-0.7.14.tgz#88aa9d663dc82e9927275835703542a5e7931a03"
+  integrity sha512-2X9oNtu4yBbtDXtVe2tc9vYHtwON6QRqNvVylKdkhcJgAdCzP/OkJy9fWcWH/g3fnNCIOFssHoe0LPGZ2ppMZg==
   dependencies:
-    "@solidity-parser/parser" "^0.8.1"
+    "@solidity-parser/parser" "^0.11.0"
     "@truffle/provider" "^0.2.24"
     chalk "^2.4.2"
     death "^1.1.0"
