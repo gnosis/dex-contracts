@@ -476,10 +476,10 @@
   resolved "https://registry.yarnpkg.com/@gnosis.pm/util-contracts/-/util-contracts-2.0.0.tgz#562b14a2d6cb4a59189476dd0f6aaeba5f65abe2"
   integrity sha512-vRgTV36d4ZFdcetKcNbnAtSDrP3OSWEj8YmG3RHK4DBMulPX2asRh8VnopTrZnZQ8enZIDbT1pT7buW+UJqd4g==
 
-"@gnosis.pm/util-contracts@2.0.7":
-  version "2.0.7"
-  resolved "https://registry.yarnpkg.com/@gnosis.pm/util-contracts/-/util-contracts-2.0.7.tgz#b28073890a6a6be8458a7d7952c8541788fd020f"
-  integrity sha512-+8V0C/E4aGMudeMQBNDLidE3GwfM4XSySuT39wON8wpj9ocNyIsV4U+4YTfEOyUQ9PafKloWr78W5OhkOX9eqQ==
+"@gnosis.pm/util-contracts@3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@gnosis.pm/util-contracts/-/util-contracts-3.0.1.tgz#6fe9b4577e10b07b645b5284f2577e3a5ab5f201"
+  integrity sha512-M+6ntjS5qD8c8c5HlQELM0OPWZf/cWdJKO3MLEPdKAwo/Ej1J6AUi5wIZgjkIVA6MyOb5wf/DleXjIrFjplYlQ==
   dependencies:
     "@truffle/hdwallet-provider" "^1.0.42"
 
