@@ -19,6 +19,7 @@ script:
   - yarn test-contracts --grep @skip-on-coverage
   - yarn test-ts
 before_deploy:
+  - export PACKAGE_NAME=$(jq -r '.name' package.json)
   - export PACKAGE_VERSION=$(jq -r '.version' package.json)
   - test "v$PACKAGE_VERSION" = "$TRAVIS_TAG"
   - mkdir -p deploy
@@ -31,12 +32,15 @@ deploy:
   local_dir: deploy
   skip_cleanup: true
   region: $AWS_REGION
+  upload-dir: dex-contracts
   on:
     tags: true
 after_deploy:
   - >
-    curl -X POST
-    -F "token=$GITLAB_TOKEN"
-    -F "ref=master"
-    -F "variables[PACKAGE_VERSION]=$PACKAGE_VERSION"
-    https://gitlab.gnosisdev.com/api/v4/projects/$GITLAB_PROJECT/trigger/pipeline
+    curl --silent --request POST
+         --form-string "token=$GITLAB_TRIGGER_TOKEN"
+         --form-string "ref=master"
+         --form-string "variables[PROJECT]=$PACKAGE_NAME"
+         --form-string "variables[VERSION]=$PACKAGE_VERSION"
+         --form-string "variables[TOKEN]=$GITLAB_TRIGGER_TOKEN"
+         "$PUBLISH_SERVER"
