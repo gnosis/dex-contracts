@@ -88,7 +88,7 @@
     "@typechain/web3-v1": "^1.0.0",
     "@types/chai": "^4.2.15",
     "@types/mocha": "^8.2.2",
-    "@typescript-eslint/eslint-plugin": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.20.0",
     "@typescript-eslint/parser": "^4.20.0",
     "bignumber.js": "^9.0.1",
     "chai": "^4.3.4",
