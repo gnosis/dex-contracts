@@ -86,7 +86,7 @@
     "@truffle/contract": "^4.3.9",
     "@typechain/truffle-v5": "^2.0.2",
     "@typechain/web3-v1": "^1.0.0",
-    "@types/chai": "^4.2.15",
+    "@types/chai": "^4.2.16",
     "@types/mocha": "^8.2.2",
     "@typescript-eslint/eslint-plugin": "^4.20.0",
     "@typescript-eslint/parser": "^4.20.0",
