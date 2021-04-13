@@ -107,7 +107,7 @@
     "rimraf": "^3.0.2",
     "solhint": "^3.3.4",
     "solhint-plugin-prettier": "0.0.5",
-    "solidity-bytes-utils": "0.1.2",
+    "solidity-bytes-utils": "0.8.0",
     "solidity-coverage": "^0.7.16",
     "solium": "^1.2.5",
     "truffle": "^5.1.51",
