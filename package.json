@@ -103,7 +103,7 @@
     "ganache-cli": "6.12.0",
     "mocha": "^8.2.0",
     "prettier": "^2.2.1",
-    "prettier-plugin-solidity": "^1.0.0-alpha.59",
+    "prettier-plugin-solidity": "^1.0.0-beta.10",
     "rimraf": "^3.0.2",
     "solhint": "^3.3.4",
     "solhint-plugin-prettier": "0.0.5",
